@@ -237,6 +237,110 @@ class DashboardController extends Controller
             $activeUsersPerYear[$yr] = $row->total;
         }
 
+         /**
+         * SEZIONE DASHBOARD RICERCHE (Sostituzione Registrazioni con Interviste Complete)
+         */
+
+        // Inizializziamo array con i mesi dell'anno
+        $monthlyCompleteMillebytes = array_fill(1, 12, 0);
+        $monthlyCompleteCint = array_fill(1, 12, 0);
+
+        // Anno corrente
+        $currentYear = date("Y");
+
+        // Query per contare le interviste complete per mese
+        $completes = DB::select("
+            SELECT MONTH(event_date) AS month, event_type, COUNT(*) AS total
+            FROM t_user_history
+            WHERE YEAR(event_date) = :currentYear
+              AND event_type IN ('interview_complete', 'interview_complete_cint')
+            GROUP BY month, event_type
+        ", ['currentYear' => $currentYear]);
+
+        foreach ($completes as $row) {
+            $m = $row->month;
+            if ($row->event_type == 'interview_complete') {
+                $monthlyCompleteMillebytes[$m] = $row->total;
+            } elseif ($row->event_type == 'interview_complete_cint') {
+                $monthlyCompleteCint[$m] = $row->total;
+            }
+        }
+
+        /**
+ *  Numero di progetti aperti nel 2025 (suddivisi per mese)
+ */
+$monthlyOpenProjects = array_fill(1, 12, 0);
+
+$openProjects = DB::select("
+    SELECT MONTH(sur_date) AS month, COUNT(*) AS total
+    FROM t_panel_control
+    WHERE YEAR(sur_date) = 2025
+    GROUP BY month
+");
+
+foreach ($openProjects as $row) {
+    $m = $row->month;
+    $monthlyOpenProjects[$m] = $row->total;
+}
+
+
+/**
+ * 11) Numero totale di contatti nel 2025
+ */
+$resultTotalContacts = DB::select("
+    SELECT SUM(contatti) AS total_contacts
+    FROM t_panel_control
+    WHERE YEAR(sur_date) = 2025
+");
+
+$totalContacts = $resultTotalContacts[0]->total_contacts ?? 0;
+
+$totalContacts = $resultTotalContacts[0]->total_contacts ?? 0;
+
+/**
+ * 12) Media di red_panel e media di red_surv
+ */
+$resultAvgRed = DB::select("
+    SELECT AVG(red_panel) AS avg_red_panel, AVG(red_surv) AS avg_red_surv
+    FROM t_panel_control
+    WHERE YEAR(sur_date) = 2025
+");
+
+$avgRedPanel = round($resultAvgRed[0]->avg_red_panel ?? 0, 2);
+$avgRedSurv = round($resultAvgRed[0]->avg_red_surv ?? 0, 2);
+
+/**
+ * 13) Distribuzione per Nazione (somma delle complete, esclusa Italia)
+ */
+$projectsByCountry = DB::select("
+    SELECT paese, SUM(complete) AS total_complete
+    FROM t_panel_control
+    WHERE YEAR(sur_date) = 2025
+      AND paese <> 'Italia'
+    GROUP BY paese
+");
+
+$countryStats = [];
+foreach ($projectsByCountry as $row) {
+    $countryStats[$row->paese] = $row->total_complete;
+}
+
+/**
+ * 14) Divisione per cliente dei progetti eseguiti nel 2025
+ */
+$projectsByClient = DB::select("
+    SELECT cliente, COUNT(*) AS total
+    FROM t_panel_control
+    WHERE YEAR(sur_date) = 2025
+    GROUP BY cliente
+");
+
+$clientStats = [];
+foreach ($projectsByClient as $row) {
+    $clientStats[$row->cliente] = $row->total;
+}
+
+
         // A questo punto abbiamo TUTTI i dati pronti come nel codice "vecchio".
         // Passiamo i dati alla vista index.blade.php tramite compact().
         return view('index', compact(
@@ -255,6 +359,14 @@ class DashboardController extends Controller
             'areaGroups',
             'monthlyRegistrations',
             'monthlyActiveRegistrations',
+            'monthlyCompleteMillebytes',
+            'monthlyCompleteCint',
+            'totalContacts',
+            'avgRedPanel',
+            'avgRedSurv',
+            'countryStats',
+            'clientStats',
+            'monthlyOpenProjects',
             'currentYear',
             'activeUsersPerYear'
         ));

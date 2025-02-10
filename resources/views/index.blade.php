@@ -276,6 +276,138 @@
                     </div>
                 </div>
 
+                  {{-- ================== SEZIONE DASHBOARD RICERCHE ================== --}}
+                <div class="row">
+                    {{-- Colonna sinistra: Registrazioni e Attività --}}
+                    <div class="col-xl-6 col-xxl-7">
+                        <div class="card flex-fill w-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    Interviste completate - {{ $currentYear }}
+                                </h5>
+                            </div>
+                            <div class="card-body py-3">
+                                {{-- Grafico Registrazioni Mensili --}}
+                                <div class="chart-container" style="position: relative; width: 100%; height: 202px;">
+                                    <canvas id="completesChart"></canvas>
+                                </div>
+                                <hr>
+                                {{-- Grafico Attività ultimi 5 anni --}}
+                                <h5 class="card-title mb-0">Progetti Aperti - {{ $currentYear }}</h5>
+                                <br/>
+                                <div class="chart-container" style="position: relative; width: 100%; height: 202px;">
+                                    <canvas id="projectsChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- Fine colonna sinistra --}}
+
+                    {{-- Colonna destra: Card statistiche utenti --}}
+                    <div class="col-xl-6 col-xxl-5 d-flex">
+                        <div class="w-100">
+                            <div class="row">
+
+
+
+
+
+                                 {{-- Card: Distribuzione per Nazione (Grafico + Tabella) --}}
+                                 <div class="col-sm-6">
+                                    <div class="card shadow">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col mt-0">
+                                                    <h5 class="card-title text-uppercase">Progetti per Nazione (2025)</h5>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <div class="stat text-primary">
+                                                        <i class="align-middle fas fa-globe fa-2x"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            {{-- Grafico a Barre --}}
+                                            <div class="chart-container mt-3" style="position: relative; width: 100%; height: 149px;">
+                                                <canvas id="countryChart"></canvas>
+                                            </div>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Card: Media Red Panel / Red Surv --}}
+                                <div class="col-sm-6">
+                                    <div class="card shadow">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col mt-0">
+                                                    <h5 class="card-title text-uppercase">Redemption - {{ $currentYear }}</h5>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <div class="stat text-primary">
+                                                        <i class="align-middle fas fa-chart-line fa-2x"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Tabella per la media --}}
+                                            <div class="table-responsive mt-3">
+                                                <table class="table table-bordered text-center">
+                                                    <thead class="table-primary">
+                                                        <tr>
+                                                            <th>Indicatore</th>
+                                                            <th>Media (%)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td><strong>Red Panel</strong></td>
+                                                            <td class="text-success"><b>{{ number_format($avgRedPanel, 2) }}%</b></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td><strong>Red Surv</strong></td>
+                                                            <td class="text-warning"><b>{{ number_format($avgRedSurv, 2) }}%</b></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+
+                                {{-- Card: Distribuzione per Cliente (grafico a barre) --}}
+                                <div class="col-sm-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col mt-0">
+                                                    <h5 class="card-title">Progetti per Cliente (2025)</h5>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <div class="stat text-primary">
+                                                        <i class="align-middle" data-feather="briefcase"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="chart-container" style="position: relative; width: 100%; height: 205px;">
+                                                <canvas id="clientChart"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>{{-- Fine row interna --}}
+
+                        </div>
+                    </div>
+                </div>
+
+
     </div>{{-- Fine container-fluid --}}
 </main>
 @endsection
@@ -415,15 +547,15 @@
                         {
                             label: 'Registrati',
                             data: Object.values(monthlyRegistrations),
-                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 0.7)',
                             fill: true
                         },
                         {
                             label: 'Attivi',
                             data: Object.values(monthlyActiveRegistrations),
-                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                            borderColor: 'rgba(255, 159, 64, 0.7)',
                             fill: true
                         }
                     ]
@@ -482,5 +614,172 @@
 
     });
 </script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let monthlyCompleteMillebytes = @json($monthlyCompleteMillebytes);
+    let monthlyCompleteCint = @json($monthlyCompleteCint);
+
+    let months = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
+                  "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+
+    let ctx = document.getElementById('completesChart').getContext('2d');
+
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [
+                    {
+                        label: 'Millebytes',
+                        data: Object.values(monthlyCompleteMillebytes),
+                        borderColor: 'rgba(255, 159, 64, 1)', // Blu
+                        backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3 // Linea leggermente curva
+                    },
+                    {
+                        label: 'Cint',
+                        data: Object.values(monthlyCompleteCint),
+                        borderColor: 'rgba(54, 162, 235, 1)', // Rosso
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3 // Linea leggermente curva
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+});
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let monthlyOpenProjects = @json($monthlyOpenProjects);
+
+        let months = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
+                      "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+
+        let ctx = document.getElementById('projectsChart').getContext('2d');
+
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Progetti Aperti',
+                            data: Object.values(monthlyOpenProjects),
+                            backgroundColor: [
+                        "rgba(255, 99, 132, 0.7)", // Rosso
+                        "rgba(54, 162, 235, 0.7)", // Blu
+                        "rgba(255, 206, 86, 0.7)", // Giallo
+                        "rgba(75, 192, 192, 0.7)", // Verde
+                        "rgba(255, 159, 64, 0.7)", // Arancione
+                        "rgba(153, 102, 255, 0.7)", // Viola
+                        "rgba(201, 203, 207, 0.7)"  // Grigio
+                    ],
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+    });
+    </script>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Grafico per i Progetti per Nazione
+    let countryData = @json($countryStats);
+    let countryLabels = Object.keys(countryData);
+    let countryValues = Object.values(countryData);
+
+    let countryCtx = document.getElementById('countryChart').getContext('2d');
+    if (countryCtx) {
+        new Chart(countryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: countryLabels,
+                datasets: [{
+                    data: countryValues,
+                    backgroundColor: [
+                        "rgba(255, 99, 132, 0.7)",
+                        "rgba(54, 162, 235, 0.7)",
+                        "rgba(255, 206, 86, 0.7)",
+                        "rgba(75, 192, 192, 0.7)",
+                        "rgba(153, 102, 255, 0.7)"
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                           display: false
+                           }
+            }
+        });
+    }
+
+    // Grafico per i Progetti per Cliente
+    let clientData = @json($clientStats);
+    let clientLabels = Object.keys(clientData);
+    let clientValues = Object.values(clientData);
+
+    let clientCtx = document.getElementById('clientChart').getContext('2d');
+    if (clientCtx) {
+        new Chart(clientCtx, {
+            type: 'bar',
+            data: {
+                labels: clientLabels,
+                datasets: [{
+                    label: "Progetti",
+                    data: clientValues,
+                    backgroundColor: [
+                        "rgba(255, 99, 132, 0.7)", // Rosso
+                        "rgba(54, 162, 235, 0.7)", // Blu
+                        "rgba(255, 206, 86, 0.7)", // Giallo
+                        "rgba(75, 192, 192, 0.7)", // Verde
+                        "rgba(255, 159, 64, 0.7)", // Arancione
+                        "rgba(153, 102, 255, 0.7)", // Viola
+                        "rgba(201, 203, 207, 0.7)"  // Grigio
+                    ],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                           display: false
+                           },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+});
+</script>
+
 @endsection
 
