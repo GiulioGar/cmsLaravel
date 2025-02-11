@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SurveyController;
 
 // Rotte per il login e logout
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -17,3 +18,10 @@ Route::get('/index', function () {
 
 // Rotta per la pagina index che mostra i progetti in corso
 Route::get('/index', [DashboardController::class, 'index'])->name('index');
+
+// Rotte per la gestione delle survey
+Route::get('/surveys', [SurveyController::class, 'index'])->name('surveys.index');
+Route::get('/surveys/data', [SurveyController::class, 'getData'])->name('surveys.data');
+// Se hai un link "Modifica" nella colonna 'campo_edit', devi avere anche:
+Route::get('/surveys/{id}/edit', [SurveyController::class, 'edit'])->name('surveys.edit');
+

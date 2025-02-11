@@ -310,19 +310,44 @@ $avgRedPanel = round($resultAvgRed[0]->avg_red_panel ?? 0, 2);
 $avgRedSurv = round($resultAvgRed[0]->avg_red_surv ?? 0, 2);
 
 /**
- * 13) Distribuzione per Nazione (somma delle complete, esclusa Italia)
+ * 13) Ultime 20 attività (log attività da t_user_history)
  */
-$projectsByCountry = DB::select("
-    SELECT paese, SUM(complete) AS total_complete
-    FROM t_panel_control
-    WHERE YEAR(sur_date) = 2025
-      AND paese <> 'Italia'
-    GROUP BY paese
+$activityLog = DB::select("
+    SELECT event_date, event_info
+    FROM t_user_history
+    ORDER BY event_date DESC
+    LIMIT 20
 ");
 
-$countryStats = [];
-foreach ($projectsByCountry as $row) {
-    $countryStats[$row->paese] = $row->total_complete;
+$formattedActivities = [];
+foreach ($activityLog as $row) {
+    // Formattiamo la data come "gg-mm hh:mm"
+    $formattedDate = Carbon::parse($row->event_date)->format('d-m H:i');
+
+    // Mapping delle descrizioni personalizzate
+    $eventInfo = $row->event_info;
+
+    if ($eventInfo == 'Interview Complete Cint') {
+        $eventInfo = "Completa per Cint";
+    } elseif (preg_match('/\((\d+),([A-Z0-9]+),([A-Z]+)\)/', $eventInfo, $matches)) {
+        $eventInfo = "Completa per {$matches[2]}-{$matches[3]}";
+    } elseif (str_contains($eventInfo, 'Buono Amazon')) {
+        $eventInfo = "Richiesta Buono " . preg_replace('/[^0-9]/', '', $eventInfo) . " €";
+    } elseif (str_contains($eventInfo, 'Ricarica Paypal')) {
+        $eventInfo = "Richiesta Paypal " . preg_replace('/[^0-9]/', '', $eventInfo) . " €";
+    } elseif ($eventInfo == 'New user has been created') {
+        $eventInfo = "Utente registrato";
+    } elseif ($eventInfo == 'User has been canceled') {
+        $eventInfo = "Utente cancellato";
+    } elseif (preg_match('/1, ([A-Z0-9]+), ([A-Z]+)/', $eventInfo, $matches)) {
+        $eventInfo = "{$matches[1]}-{$matches[2]}";
+    }
+
+    // Aggiungiamo l'evento formattato
+    $formattedActivities[] = [
+        'date' => $formattedDate,
+        'info' => $eventInfo
+    ];
 }
 
 /**
@@ -364,7 +389,7 @@ foreach ($projectsByClient as $row) {
             'totalContacts',
             'avgRedPanel',
             'avgRedSurv',
-            'countryStats',
+            'formattedActivities',
             'clientStats',
             'monthlyOpenProjects',
             'currentYear',

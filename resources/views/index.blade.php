@@ -303,109 +303,112 @@
                     </div>
                     {{-- Fine colonna sinistra --}}
 
-                    {{-- Colonna destra: Card statistiche utenti --}}
-                    <div class="col-xl-6 col-xxl-5 d-flex">
-                        <div class="w-100">
-                            <div class="row">
 
 
+                    {{-- Colonna destra: Log Attività Recenti su tutta la larghezza --}}
+{{-- Colonna destra: Log Attività Recenti su tutta la larghezza --}}
+<div class="col-xl-6 col-xxl-5 d-flex">
+    <div class="w-100">
+        <div class="row">
+            {{-- Log Attività Recenti (occupa tutta la larghezza) --}}
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-body p-2">
+                        <div class="row">
+                            <div class="col">
+                                <h6 class="card-title text-uppercase text-center mb-2">Log Attività Recenti</h6>
+                            </div>
+                        </div>
 
+                        {{-- Contenitore per effetto di scorrimento --}}
+                        <div class="table-responsive" style="max-height: 200px; overflow-y: hidden; font-size: 12px;">
+                            <table class="table table-sm table-striped text-center" id="activityLogTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th style="width: 25%;">Data</th>
+                                        <th>Attività</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($formattedActivities as $activity)
+                                    <tr>
+                                        <td class="text-muted">{{ $activity['date'] }}</td>
+                                        <td class="text-info">{{ $activity['info'] }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
 
+                        <div class="text-muted text-center mt-1" style="font-size: 10px;">Aggiornamento in tempo reale</div>
+                    </div>
+                </div>
+            </div>
 
-                                 {{-- Card: Distribuzione per Nazione (Grafico + Tabella) --}}
-                                 <div class="col-sm-6">
-                                    <div class="card shadow">
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col mt-0">
-                                                    <h5 class="card-title text-uppercase">Progetti per Nazione (2025)</h5>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <div class="stat text-primary">
-                                                        <i class="align-middle fas fa-globe fa-2x"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
+            {{-- Sezione con Redemption 2025 e Progetti per Cliente affiancati --}}
+            <div class="col-12">
+                <div class="row">
+                    {{-- Redemption 2025 --}}
+                    <div class="col-md-6">
+                        <div class="card shadow">
+                            <div class="card-body p-3">
+                                <h6 class="card-title text-uppercase text-center">Redemption - {{ $currentYear }}</h6>
+                                <div class="table-responsive mt-2">
+                                    <table class="table table-sm table-bordered text-center">
+                                        <thead class="table-primary">
+                                            <tr>
+                                                <th>Indicatore</th>
+                                                <th>Media (%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Red Panel</strong></td>
+                                                <td class="text-success"><b>{{ number_format($avgRedPanel, 2) }}%</b></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Red Surv</strong></td>
+                                                <td class="text-warning"><b>{{ number_format($avgRedSurv, 2) }}%</b></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-
-                                            {{-- Grafico a Barre --}}
-                                            <div class="chart-container mt-3" style="position: relative; width: 100%; height: 149px;">
-                                                <canvas id="countryChart"></canvas>
-                                            </div>
-
-
-                                        </div>
-                                    </div>
+                    {{-- Progetti per Cliente --}}
+                    <div class="col-md-6">
+                        <div class="card shadow">
+                            <div class="card-body p-3">
+                                <h6 class="card-title text-uppercase text-center">Progetti per Cliente (2025)</h6>
+                                <div class="table-responsive mt-2">
+                                    <table class="table table-sm table-striped text-center">
+                                        <thead class="table-info">
+                                            <tr>
+                                                <th>Cliente</th>
+                                                <th>Progetti</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($clientStats as $client => $total)
+                                            <tr>
+                                                <td><strong>{{ $client }}</strong></td>
+                                                <td class="text-primary"><b>{{ number_format($total) }}</b></td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
 
-                                {{-- Card: Media Red Panel / Red Surv --}}
-                                <div class="col-sm-6">
-                                    <div class="card shadow">
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col mt-0">
-                                                    <h5 class="card-title text-uppercase">Redemption - {{ $currentYear }}</h5>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <div class="stat text-primary">
-                                                        <i class="align-middle fas fa-chart-line fa-2x"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {{-- Tabella per la media --}}
-                                            <div class="table-responsive mt-3">
-                                                <table class="table table-bordered text-center">
-                                                    <thead class="table-primary">
-                                                        <tr>
-                                                            <th>Indicatore</th>
-                                                            <th>Media (%)</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td><strong>Red Panel</strong></td>
-                                                            <td class="text-success"><b>{{ number_format($avgRedPanel, 2) }}%</b></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td><strong>Red Surv</strong></td>
-                                                            <td class="text-warning"><b>{{ number_format($avgRedSurv, 2) }}%</b></td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-
-
-
-                                {{-- Card: Distribuzione per Cliente (grafico a barre) --}}
-                                <div class="col-sm-12">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col mt-0">
-                                                    <h5 class="card-title">Progetti per Cliente (2025)</h5>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <div class="stat text-primary">
-                                                        <i class="align-middle" data-feather="briefcase"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="chart-container" style="position: relative; width: 100%; height: 205px;">
-                                                <canvas id="clientChart"></canvas>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>{{-- Fine row interna --}}
-
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div> {{-- Fine row interna --}}
+        </div>
+    </div>
+</div>
 
 
     </div>{{-- Fine container-fluid --}}
@@ -709,38 +712,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // Grafico per i Progetti per Nazione
-    let countryData = @json($countryStats);
-    let countryLabels = Object.keys(countryData);
-    let countryValues = Object.values(countryData);
-
-    let countryCtx = document.getElementById('countryChart').getContext('2d');
-    if (countryCtx) {
-        new Chart(countryCtx, {
-            type: 'doughnut',
-            data: {
-                labels: countryLabels,
-                datasets: [{
-                    data: countryValues,
-                    backgroundColor: [
-                        "rgba(255, 99, 132, 0.7)",
-                        "rgba(54, 162, 235, 0.7)",
-                        "rgba(255, 206, 86, 0.7)",
-                        "rgba(75, 192, 192, 0.7)",
-                        "rgba(153, 102, 255, 0.7)"
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                legend: {
-                           display: false
-                           }
-            }
-        });
-    }
-
     // Grafico per i Progetti per Cliente
     let clientData = @json($clientStats);
     let clientLabels = Object.keys(clientData);
@@ -780,6 +751,19 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        function scrollTable() {
+            let table = document.querySelector("#activityLogTable tbody");
+            if (table) {
+                table.insertBefore(table.lastElementChild, table.firstElementChild);
+            }
+        }
+
+        setInterval(scrollTable, 3000); // Scorrimento automatico ogni 3 secondi
+    });
+    </script>
 
 @endsection
 

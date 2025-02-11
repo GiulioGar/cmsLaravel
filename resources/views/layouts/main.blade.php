@@ -13,6 +13,25 @@
     <link rel="shortcut icon" href="{{ asset('img/icons/logoSmall.png') }}" />
     <link rel="canonical" href="https://demo-basic.adminkit.io/" />
 
+    <!-- CSS di Bootstrap 5 (qui un esempio CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<!-- DataTables + Bootstrap 5 CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+
+<!-- ... -->
+
+<!-- jQuery prima di DataTables -->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+<!-- JS di Bootstrap 5 -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- DataTables + Bootstrap 5 JS -->
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+
     <title>Gestionale Interactive</title>
 
     <!-- Carica il CSS dalla cartella public -->
@@ -34,14 +53,16 @@
                     <li class="sidebar-header">Pages</li>
                     <li class="sidebar-item active">
                         <a class="sidebar-link" href="{{ route('index') }}">
-                            <i class="align-middle" data-feather="sliders"></i> <span class="align-middle">Dashboard</span>
+                            <i class="align-middle" data-feather="home"></i> <span class="align-middle">Dashboard</span>
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="">
-                            <i class="align-middle" data-feather="user"></i> <span class="align-middle">Profile</span>
+                        <a class="sidebar-link" href="{{ route('surveys.index') }}">
+                            <i class="align-middle" data-feather="folder"></i>
+                            <span class="align-middle">Ricerche</span>
                         </a>
                     </li>
+
                     <li class="sidebar-item">
                         <a class="sidebar-link" href="">
                             <i class="align-middle" data-feather="log-in"></i> <span class="align-middle">Sign In</span>
@@ -179,8 +200,8 @@
                     <div class="row text-muted">
                         <div class="col-6 text-start">
                             <p class="mb-0">
-                                <a class="text-muted" href="https://adminkit.io/" target="_blank"><strong>AdminKit</strong></a> -
-                                <a class="text-muted" href="https://adminkit.io/" target="_blank"><strong>Bootstrap Admin Template</strong></a>&copy;
+                                <a class="text-muted" href="https://interactive-mr.com" target="_blank"><strong>Interactive-MR</strong></a>
+
                             </p>
                         </div>
                         <div class="col-6 text-end">
