@@ -27,6 +27,18 @@ Route::get('/surveys/{id}/edit', [SurveyController::class, 'edit'])->name('surve
 // Se vogliamo un update con PATCH/PUT
 Route::put('/surveys/{id}', [SurveyController::class, 'update'])->name('surveys.update');
 Route::post('/surveys/{id}/update', [SurveyController::class, 'update'])->name('surveys.update');
+Route::post('/surveys', [SurveyController::class, 'store'])->name('surveys.store');
+Route::get('/surveys/available-sids', [SurveyController::class, 'getAvailableSurIds'])
+    ->name('surveys.available-sids');
+Route::get('/surveys/prj-info', [SurveyController::class, 'getPrjInfo'])
+    ->name('surveys.prj-info');
+Route::get('/surveys/get-client-by-prj', [SurveyController::class, 'getClientByPrj'])
+    ->name('surveys.getClientByPrj');
+
+
+
+
+
 
 
 

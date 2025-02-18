@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\PanelControl;
 use DataTables;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB; // se usi query builder
 
 class SurveyController extends Controller
 {
@@ -187,7 +188,113 @@ class SurveyController extends Controller
             }
 
 
+            public function store(Request $request)
+            {
+                // 1. Valida i campi inseriti
+                //    Adatta i nomi ai campi del DB (es. sid, prj, cliente, etc.)
+                $request->validate([
+                    'sid'          => 'required|string|max:50',
+                    'prj'          => 'required|string|max:50',
+                    'cliente'      => 'required|string|max:100',
+                    'tipologia'    => 'required|string|max:10',
+                    'panel'        => 'in:0,1,2',
+                    'ir'           => 'required|integer|min:0',
+                    'loi'          => 'required|integer|min:0', // duration
+                    'point'        => 'required|integer|min:0', // punteggio
+                    'argomento'    => 'required|string|max:255',
+                    'sex_target'   => 'in:1,2,3', // 1=Uomo, 2=Donna, 3=Uomo/Donna
+                    'age1_target'  => 'nullable|integer|min:0',
+                    'age2_target'  => 'nullable|integer|min:0',
+                    'goal'         => 'required|integer|min:0',  // interviste
+                    'end_date'     => 'nullable|date',
+                    'descrizione'  => 'required|string|max:255',
+                    'paese'        => 'required|string|max:50'
+                ]);
 
+                // 2. Crea un nuovo record
+                //    Supponiamo tu abbia un modello PanelControl (o come preferisci)
+                $survey = new PanelControl();
+                $survey->sur_id      = $request->input('sid');        // es. "Codice SID Progetto"
+                $survey->codice_prj  = $request->input('prj');        // se hai questa colonna in DB
+                $survey->cliente     = $request->input('cliente');
+                $survey->tipologia   = $request->input('tipologia');
+                $survey->panel       = $request->input('panel');
+                $survey->ir          = $request->input('ir');
+                $survey->loi         = $request->input('loi');
+                $survey->point       = $request->input('point');
+                $survey->argomento   = $request->input('argomento');
+                $survey->sex_target  = $request->input('sex_target');
+                $survey->age1_target = $request->input('age1_target');
+                $survey->age2_target = $request->input('age2_target');
+                $survey->complete    = $request->input('goal');       // se la colonna si chiama "complete"
+                $survey->end_field   = $request->input('end_date');   // se nel DB hai un DATETIME
+                $survey->description = $request->input('descrizione');
+                $survey->paese       = $request->input('paese');
+                // Imposta eventuali default, "stato=0" se è "Aperto" di default, ecc.
+
+                $survey->save();
+
+                // 3. Restituisci JSON di successo (usando AJAX)
+                return response()->json(['success' => true]);
+            }
+
+            public function getAvailableSurIds()
+            {
+                // Elenco di sur_id già presenti in t_panel_control
+                // (cioè i sid che abbiamo già associato a un progetto)
+                $usedSurIds = DB::table('t_panel_control')->pluck('sur_id')->toArray();
+
+                // Seleziona i record da t_surveys:
+                // - colonna "sid"
+                // - where status=2
+                // - excluding i sid presenti in $usedSurIds
+                // - ordina in modo decrescente (descending) per sid
+                $available = DB::table('t_surveys')
+                    ->select('sid')
+                    ->where('status', 2)
+                    ->whereNotIn('sid', $usedSurIds)
+                    ->orderBy('sid', 'desc')  // Decrescente
+                    ->get();
+
+                return response()->json($available);
+            }
+
+            public function getPrjInfo(Request $request)
+                {
+                    $sid = $request->input('sid'); // recupera ?sid=...
+                    // Leggi la colonna prj_name (o come si chiama) dalla tabella t_surveys
+                    $row = DB::table('t_surveys')
+                        ->select('prj_name')      // Se il campo si chiama in modo diverso, adegua
+                        ->where('sid', $sid)
+                        ->first();
+
+                    // Se trovi il record, restituisci prj_name in JSON
+                    if ($row) {
+                        return response()->json(['prj_name' => $row->prj_name]);
+                    } else {
+                        // Se non trovato, restituisci un oggetto vuoto o errore
+                        return response()->json(['prj_name' => null], 404);
+                    }
+                }
+
+                public function getClientByPrj(Request $request)
+                    {
+                        $prj = $request->input('prj');
+
+                        // Se usi QueryBuilder
+                        $record = DB::table('t_panel_control')
+                            ->select('cliente')
+                            ->where('prj', $prj)
+                            ->first();
+
+                        if ($record && !empty($record->cliente)) {
+                            // Restituisci il cliente trovato
+                            return response()->json(['cliente' => $record->cliente]);
+                        }
+
+                        // Altrimenti, se non trovato o vuoto, restituisci stringa vuota
+                        return response()->json(['cliente' => '']);
+                    }
 
 
 
