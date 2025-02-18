@@ -22,6 +22,12 @@ Route::get('/index', [DashboardController::class, 'index'])->name('index');
 // Rotte per la gestione delle survey
 Route::get('/surveys', [SurveyController::class, 'index'])->name('surveys.index');
 Route::get('/surveys/data', [SurveyController::class, 'getData'])->name('surveys.data');
-// Se hai un link "Modifica" nella colonna 'campo_edit', devi avere anche:
+// "Modifica" nella colonna 'campo_edit':
 Route::get('/surveys/{id}/edit', [SurveyController::class, 'edit'])->name('surveys.edit');
+// Se vogliamo un update con PATCH/PUT
+Route::put('/surveys/{id}', [SurveyController::class, 'update'])->name('surveys.update');
+Route::post('/surveys/{id}/update', [SurveyController::class, 'update'])->name('surveys.update');
+
+
+
 
