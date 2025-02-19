@@ -104,7 +104,7 @@ table.dataTable thead th {
                 <label class="input-group-text" for="panel">Panel:</label>
               </div>
               <!-- Esempio: 1=Millebytes, 0=Esterno, 2=Target -->
-              <select name="panel" required class="custom-select" id="panel">
+              <select name="panelMod" required class="custom-select" id="panelMod">
                 <option value="1">Millebytes</option>
                 <option value="0">Esterno</option>
                 <option value="2">Target</option>
@@ -201,6 +201,8 @@ table.dataTable thead th {
   </div>
 
 
+<!-- /modale Nuova ricerca -->
+
 
 <div class="modal fade" id="createSurveyModal" tabindex="-1" aria-labelledby="createSurveyModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
@@ -246,29 +248,36 @@ table.dataTable thead th {
             </div>
           </div>
 
-          <!-- 4) Tipologia -->
-          <div class="input-group mb-3">
-            <div class="input-group-prepend">
-              <label class="input-group-text" for="tipologia">Tipologia:</label>
+          <div class="row">
+            <!-- Colonna per Tipologia -->
+            <div class="col-3">
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="tipologia">Tipologia:</label>
+                    </div>
+                    <select name="tipologia" required class="custom-select" id="tipologia">
+                        <option value="CAWI">CAWI</option>
+                        <option value="CATI">CATI</option>
+                        <option value="CAPI">CAPI</option>
+                    </select>
+                </div>
             </div>
-            <select name="tipologia" required class="custom-select" id="tipologia">
-              <option value="CAWI">CAWI</option>
-              <option value="CATI">CATI</option>
-              <option value="CAPI">CAPI</option>
-            </select>
-          </div>
 
-          <!-- 5) Panel -->
-          <div class="input-group mb-3">
-            <div class="input-group-prepend">
-              <label class="input-group-text" for="panel">Panel:</label>
+            <!-- Colonna per Panel -->
+            <div class="col-3">
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="panel">Panel:</label>
+                    </div>
+                    <select name="panel" required class="custom-select" id="panel">
+                        <option value="1">Millebytes</option>
+                        <option value="0">Esterno</option>
+                        <option value="2">Target</option>
+                    </select>
+                </div>
             </div>
-            <select name="panel" required class="custom-select" id="panel">
-              <option value="1">Millebytes</option>
-              <option value="0">Esterno</option>
-              <option value="2">Target</option>
-            </select>
-          </div>
+        </div>
+
 
           <!-- 6) IR, Durata (loi), Punti (point), Argomento -->
           <div id="infoRicerca">
@@ -276,29 +285,30 @@ table.dataTable thead th {
               <div class="input-group-prepend">
                 <span class="input-group-text">IR:</span>
               </div>
-              <input required type="number" class="form-control" name="ir">
+              <input  type="number" class="form-control" id="ir" name="ir">
 
               <div class="input-group-prepend">
                 <span class="input-group-text">Durata:</span>
               </div>
-              <input required type="number" class="form-control" name="loi">
+              <input  type="number" class="form-control" id="loi" name="loi">
 
               <div class="input-group-prepend">
                 <span class="input-group-text">Punti:</span>
               </div>
-              <input required type="number" class="form-control" name="point" placeholder="Infinity">
+              <input type="number" class="form-control" name="point" id="point" placeholder="Infinity">
             </div>
 
             <div class="input-group mb-3">
               <div class="input-group-prepend">
                 <span class="input-group-text">Argomento:</span>
               </div>
-              <input required type="text" class="form-control" name="argomento">
+              <input id="argomento" type="text" class="form-control" name="argomento">
             </div>
           </div>
 
           <!-- 7) Genere / Età (sex_target, age1_target, age2_target) -->
-          <div class="input-group mb-3">
+          <div id="genderAge">
+           <div class="input-group mb-3">
             <div class="input-group-prepend">
               <label class="input-group-text" for="sex_target">Genere:</label>
             </div>
@@ -317,6 +327,7 @@ table.dataTable thead th {
             <input name="age2_target" type="number" class="form-control" placeholder="65">
           </div>
 
+          </div>
           <!-- 8) Interviste / Chiusura Field / Descrizione / Nazione -->
           <div class="input-group mb-3">
             <div class="input-group-prepend">
@@ -344,12 +355,109 @@ table.dataTable thead th {
               <label class="input-group-text" for="paese">Nazione:</label>
             </div>
             <select required name="paese" class="custom-select" id="paese">
-              <option value="Italia">Italia</option>
-              <option value="Uk">Uk</option>
-              <option value="Germania">Germania</option>
-              <option value="Francia">Francia</option>
-              <option value="Spagna">Spagna</option>
-              <option value="Altro">Altro</option>
+                <option value="Italia">Italia</option>
+                <option value="Albania">Albania</option>
+                <option value="Algeria">Algeria</option>
+                <option value="Arabia Saudita">Arabia Saudita</option>
+                <option value="Argentina">Argentina</option>
+                <option value="Australia">Australia</option>
+                <option value="Austria">Austria</option>
+                <option value="Belgio">Belgio</option>
+                <option value="Bielorussia">Bielorussia</option>
+                <option value="Bolivia">Bolivia</option>
+                <option value="Bosnia ed Erzegovina">Bosnia ed Erzegovina</option>
+                <option value="Brasile">Brasile</option>
+                <option value="Bulgaria">Bulgaria</option>
+                <option value="Cambogia">Cambogia</option>
+                <option value="Camerun">Camerun</option>
+                <option value="Canada">Canada</option>
+                <option value="Ciad">Ciad</option>
+                <option value="Cile">Cile</option>
+                <option value="Cina">Cina</option>
+                <option value="Cipro">Cipro</option>
+                <option value="Colombia">Colombia</option>
+                <option value="Corea del Nord">Corea del Nord</option>
+                <option value="Corea del Sud">Corea del Sud</option>
+                <option value="Costa d'Avorio">Costa d'Avorio</option>
+                <option value="Costa Rica">Costa Rica</option>
+                <option value="Croazia">Croazia</option>
+                <option value="Cuba">Cuba</option>
+                <option value="Danimarca">Danimarca</option>
+                <option value="Ecuador">Ecuador</option>
+                <option value="Egitto">Egitto</option>
+                <option value="El Salvador">El Salvador</option>
+                <option value="Emirati Arabi Uniti">Emirati Arabi Uniti</option>
+                <option value="Eritrea">Eritrea</option>
+                <option value="Estonia">Estonia</option>
+                <option value="Etiopia">Etiopia</option>
+                <option value="Filippine">Filippine</option>
+                <option value="Finlandia">Finlandia</option>
+                <option value="Francia">Francia</option>
+                <option value="Gabon">Gabon</option>
+                <option value="Gambia">Gambia</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Germania">Germania</option>
+                <option value="Ghana">Ghana</option>
+                <option value="Giappone">Giappone</option>
+                <option value="Giordania">Giordania</option>
+                <option value="Grecia">Grecia</option>
+                <option value="Guinea">Guinea</option>
+                <option value="Honduras">Honduras</option>
+                <option value="India">India</option>
+                <option value="Indonesia">Indonesia</option>
+                <option value="Iran">Iran</option>
+                <option value="Iraq">Iraq</option>
+                <option value="Irlanda">Irlanda</option>
+                <option value="Islanda">Islanda</option>
+                <option value="Israele">Israele</option>
+                <option value="Jamaica">Jamaica</option>
+                <option value="Kazakistan">Kazakistan</option>
+                <option value="Kenya">Kenya</option>
+                <option value="Kuwait">Kuwait</option>
+                <option value="Laos">Laos</option>
+                <option value="Lettonia">Lettonia</option>
+                <option value="Libano">Libano</option>
+                <option value="Libia">Libia</option>
+                <option value="Lussemburgo">Lussemburgo</option>
+                <option value="Madagascar">Madagascar</option>
+                <option value="Malaysia">Malaysia</option>
+                <option value="Mali">Mali</option>
+                <option value="Malta">Malta</option>
+                <option value="Marocco">Marocco</option>
+                <option value="Messico">Messico</option>
+                <option value="Mozambico">Mozambico</option>
+                <option value="Nepal">Nepal</option>
+                <option value="Norvegia">Norvegia</option>
+                <option value="Nuova Zelanda">Nuova Zelanda</option>
+                <option value="Olanda">Olanda</option>
+                <option value="Pakistan">Pakistan</option>
+                <option value="Panama">Panama</option>
+                <option value="Paraguay">Paraguay</option>
+                <option value="Perù">Perù</option>
+                <option value="Polonia">Polonia</option>
+                <option value="Portogallo">Portogallo</option>
+                <option value="Regno Unito">Regno Unito</option>
+                <option value="Repubblica Ceca">Repubblica Ceca</option>
+                <option value="Romania">Romania</option>
+                <option value="Russia">Russia</option>
+                <option value="Senegal">Senegal</option>
+                <option value="Serbia">Serbia</option>
+                <option value="Singapore">Singapore</option>
+                <option value="Slovenia">Slovenia</option>
+                <option value="Spagna">Spagna</option>
+                <option value="Stati Uniti">Stati Uniti</option>
+                <option value="Sudafrica">Sudafrica</option>
+                <option value="Svezia">Svezia</option>
+                <option value="Svizzera">Svizzera</option>
+                <option value="Thailandia">Thailandia</option>
+                <option value="Turchia">Turchia</option>
+                <option value="Ucraina">Ucraina</option>
+                <option value="Ungheria">Ungheria</option>
+                <option value="Uruguay">Uruguay</option>
+                <option value="Vietnam">Vietnam</option>
+                <option value="Zambia">Zambia</option>
+                <option value="Zimbabwe">Zimbabwe</option>
+                <option value="Altro">Altro</option>
             </select>
           </div>
 
@@ -398,6 +506,8 @@ table.dataTable thead th {
             lengthMenu: [30, 50, 100],
             pagingType: "full_numbers",
             scrollX: true,
+            order: [],
+            ordering: false,
             columns: [
                 { data: 'sur_id',            name: 'sur_id' },
                 { data: 'description',       name: 'description' },
@@ -475,7 +585,11 @@ $('#surveys-table').on('click', '.btn-edit', function() {
                         // Chiudi la modale
                         $('#editSurveyModal').modal('hide');
                         // Ricarica la tabella
-                        table.ajax.reload(null, false);
+                        table.ajax.reload(function() {
+                            // callback: appena ha finito di ricaricare i dati
+                            table.draw(false);
+                        }, false);
+
                     } else {
                         alert('Errore in aggiornamento');
                     }
@@ -498,7 +612,7 @@ $('#createSurveyForm')[0].reset();
         url: '{{ route('surveys.available-sids') }}',
         method: 'GET',
         success: function(response) {
-            console.log(response);
+           // console.log(response);
             // 2) Svuota il <select> e poi aggiungi le option
             $('#sid').empty();
 
@@ -533,7 +647,11 @@ $('#createSurveyForm')[0].reset();
                     // Chiudi la modale
                     $('#createSurveyModal').modal('hide');
                     // Ricarica la DataTable
-                    table.ajax.reload(null, false);
+                    table.ajax.reload(function() {
+                    // callback: appena ha finito di ricaricare i dati
+                    table.draw(false);
+                }, false);
+
                 } else {
                     alert('Errore nella creazione del progetto');
                 }
@@ -545,80 +663,139 @@ $('#createSurveyForm')[0].reset();
     });
 
 
-  // Quando l'utente seleziona un SID
+ // Quando l'utente seleziona (o cambia) un SID
  $('#sid').on('change', function() {
-                var selectedSid = $(this).val();
-                // Se l'utente non ha scelto nulla (value = ""), svuota prj
-                if (!selectedSid) {
-                    $('#prj').val('');
-                    return;
-                }
+        var selectedSid = $(this).val();
 
-                // Chiamata AJAX a /surveys/prj-info?sid=XYZ
-                $.ajax({
-                    url: '{{ route("surveys.prj-info") }}',
-                    type: 'GET',
-                    data: { sid: selectedSid },
-                    success: function(response) {
-                        // Imposta il valore di prj_name
-                        $('#prj').val(response.prj_name || '');
-                    },
-                    error: function() {
-                        // In caso di errore (404 o altro), svuota
-                        $('#prj').val('');
-                    }
-                });
-            });
-
-$('#sid').on('change', function(){
-        var prjValue = $(this).val();
-        if (!prjValue) {
-            // Se prj è vuoto, rendiamo "cliente" un input vuoto
+        // Se l'utente non ha scelto nulla, svuota prj e cliente
+        if (!selectedSid) {
+            $('#prj').val('');
             showClienteAsInput('');
             return;
         }
-        // Altrimenti, chiama l'endpoint
+
+        // 1) Recupera 'prj_name' in base al SID
         $.ajax({
-            url: '{{ route("surveys.getClientByPrj") }}',
-            method: 'GET',
-            data: { prj: prjValue },
-            success: function(resp){
-                if (resp.cliente) {
-                    // Abbiamo un cliente => crea <select>
-                    showClienteAsSelect(resp.cliente);
-                } else {
-                    // Vuoto => lascia input libero
+            url: '{{ route("surveys.prj-info") }}', // /surveys/prj-info?sid=...
+            type: 'GET',
+            data: { sid: selectedSid },
+            success: function(response) {
+                // Imposta il valore di #prj
+                var prjValue = response.prj_name || '';
+                $('#prj').val(prjValue);
+                console.log(prjValue);
+
+                // 2) In base a prjValue, recupera 'cliente'
+                if (!prjValue) {
+                    // Se prjValue è vuoto, non ha senso cercare in t_panel_control
                     showClienteAsInput('');
+                } else {
+                    // Chiamata per ottenere il cliente
+                    $.ajax({
+                        url: '{{ route("surveys.getClientByPrj") }}', // /surveys/get-client-by-prj?prj=...
+                        type: 'GET',
+                        data: { prj: prjValue },
+                        success: function(resp) {
+                            if (resp.cliente) {
+                                // Cliente trovato => mostriamo un <select> con l’unica opzione
+                                showClienteAsSelect(resp.cliente);
+                            } else {
+                                // Cliente vuoto => abilitiamo l'input testo
+                                showClienteAsInput('');
+                            }
+                        },
+                        error: function() {
+                            // Errore => abilitiamo input testo
+                            showClienteAsInput('');
+                        }
+                    });
                 }
             },
-            error: function(){
-                // In caso di errore => input di testo
+            error: function() {
+                // Primo step fallito => svuotiamo #prj e campo "cliente"
+                $('#prj').val('');
                 showClienteAsInput('');
             }
         });
     });
 
+    // Funzioni di supporto per popolare il campo "cliente"
 
-    function showClienteAsSelect(clienteVal){
-        // Generiamo un <select name="cliente" id="cliente"> con l'opzione fissa
+    function showClienteAsSelect(clienteVal) {
         var html = '<select name="cliente" id="cliente" class="form-control">'
                  + '  <option value="'+ clienteVal +'" selected>'+ clienteVal +'</option>'
                  + '</select>';
         $('#clienteFieldWrapper').html(html);
     }
 
-    function showClienteAsInput(clienteVal){
-        // Generiamo un <input type="text" name="cliente" id="cliente" ...>
+    function showClienteAsInput(clienteVal) {
         var html = '<input type="text" name="cliente" id="cliente" '
-                 + '  class="form-control" '
-                 + '  placeholder="Inserisci cliente..." '
-                 + '  value="'+ clienteVal +'" />';
+                 + ' class="form-control" '
+                 + ' placeholder="Inserisci cliente..." '
+                 + ' value="'+ clienteVal +'" />';
         $('#clienteFieldWrapper').html(html);
     }
 
+
     </script>
 
+<script>
 
+        // Funzione che aggiorna la visibilità dei campi in base al valore di #panel
+
+        // E ogni volta che cambia la select #panel
+        $(document).on('change', '#panel', function() {
+
+    console.log('change event triggered on #panel!');
+    console.log('Selected text:', $(this).find('option:selected').text());
+    console.log('Selected value:', $(this).val());
+
+            var panelVal = $('#panel').val();
+            console.log(panelVal);
+
+            if (panelVal === '1') {
+                // Se panel=1 (Millebytes), MOSTRA i campi
+                $('#ir, #loi, #point, #argomento').prop('required', true);
+                $('#infoRicerca').show();
+                $('#genderAge').show();
+            }
+            else {
+                // Altrimenti li NASCONDI
+                $('#ir, #loi, #point, #argomento').prop('required', false);
+                $('#infoRicerca').hide();
+                $('#genderAge').hide();
+            }
+
+        });
+    </script>
+
+<script>
+
+$(document).on('change', 'input', function() {
+
+let valIr=$('input[name="ir"]').val();
+let valLoi=$('input[name="loi"]').val();
+
+// Nuovi parametri ottimizzati
+const k = 125.66;
+const alpha = 0.699;
+const beta = 0.172;
+
+// Calcolo del punteggio con la nuova formula
+let points = k * Math.pow(valLoi, alpha) / Math.pow(valIr, beta);
+points = Math.round(points);
+
+$('input[name="point"]').attr("placeholder", points);
+
+console.log("Ir:"+valIr);
+console.log("Loi:"+valLoi);
+console.log("Punti:"+points);
+
+
+
+});
+
+</script>
 
 
 @endsection

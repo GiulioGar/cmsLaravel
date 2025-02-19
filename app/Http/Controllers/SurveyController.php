@@ -37,18 +37,27 @@ class SurveyController extends Controller
             'bytes',
             'stato',  // << NOTA: usiamo "stato" al posto di "status"
             'id'
-        ])
+        ]);
+
         // Ordinamento: prima ricerche con stato=0, poi stato=1, poi le altre
-        ->orderByRaw("CASE WHEN stato = 0 THEN 0 WHEN stato = 1 THEN 1 ELSE 2 END ASC")
+       // ->orderByRaw("CASE WHEN stato = 0 THEN 0 WHEN stato = 1 THEN 1 ELSE 2 END ASC")
         // Quindi, all’interno di ogni gruppo, ordina per ID decrescente
-        ->orderBy('id', 'desc');
+        //->orderBy('id', 'desc');
 
         return DataTables::of($query)
+
+                // 2. Forza l’ordinamento con la callback `->order(...)`
+                ->order(function($q) {
+                    // QUI imponi l'ordine che desideri
+                    $q->orderByRaw("CASE WHEN stato = 0 THEN 0 WHEN stato = 1 THEN 1 ELSE 2 END")
+                      ->orderBy('id', 'desc');
+                })
+
             // Se vuoi convertire i valori di "panel" in stringhe
             ->editColumn('panel', function($row) {
                 switch ($row->panel) {
-                    case 0: return 'Interactive';
-                    case 1: return 'Esterno';
+                    case 1: return 'Interactive';
+                    case 0: return 'Esterno';
                     case 2: return 'Lista';
                     default: return $row->panel;
                 }
@@ -190,53 +199,79 @@ class SurveyController extends Controller
 
             public function store(Request $request)
             {
-                // 1. Valida i campi inseriti
-                //    Adatta i nomi ai campi del DB (es. sid, prj, cliente, etc.)
-                $request->validate([
+                // 1. Preleva il valore di "panel"
+                $panelVal = $request->input('panel');
+
+                // 2. Crea un array di regole "base" (sempre valide)
+                $rules = [
                     'sid'          => 'required|string|max:50',
                     'prj'          => 'required|string|max:50',
                     'cliente'      => 'required|string|max:100',
                     'tipologia'    => 'required|string|max:10',
-                    'panel'        => 'in:0,1,2',
-                    'ir'           => 'required|integer|min:0',
-                    'loi'          => 'required|integer|min:0', // duration
-                    'point'        => 'required|integer|min:0', // punteggio
-                    'argomento'    => 'required|string|max:255',
-                    'sex_target'   => 'in:1,2,3', // 1=Uomo, 2=Donna, 3=Uomo/Donna
-                    'age1_target'  => 'nullable|integer|min:0',
-                    'age2_target'  => 'nullable|integer|min:0',
-                    'goal'         => 'required|integer|min:0',  // interviste
+                    'panel'        => 'required|in:0,1,2',
+                    'goal'         => 'required|integer|min:0',   // interviste => "complete"
                     'end_date'     => 'nullable|date',
                     'descrizione'  => 'required|string|max:255',
-                    'paese'        => 'required|string|max:50'
-                ]);
+                    'paese'        => 'required|string|max:50',
+                    'sex_target'   => 'nullable|in:1,2,3',        // di default nullable
+                    'age1_target'  => 'nullable|integer|min:0',
+                    'age2_target'  => 'nullable|integer|min:0',
+                ];
 
-                // 2. Crea un nuovo record
-                //    Supponiamo tu abbia un modello PanelControl (o come preferisci)
+                // 3. Se panel=1 (Millebytes), i campi "ir, loi, point, argomento, sex_target" diventano obbligatori
+                if ($panelVal == '1') {
+                    $rules['ir']         = 'required|integer|min:0';
+                    $rules['loi']        = 'required|integer|min:0';
+                    $rules['point']      = 'required|integer|min:0';
+                    $rules['argomento']  = 'required|string|max:255';
+                    $rules['sex_target'] = 'required|in:1,2,3';  // se vuoi che genere sia obbligatorio
+                }
+                else {
+                    // Se panel ≠ 1, questi campi possono essere semplicemente "nullable"
+                    $rules['ir']         = 'nullable|integer|min:0';
+                    $rules['loi']        = 'nullable|integer|min:0';
+                    $rules['point']      = 'nullable|integer|min:0';
+                    $rules['argomento']  = 'nullable|string|max:255';
+                    // sex_target è già "nullable|in:1,2,3" di default
+                }
+
+                // 4. Valida l'input in base alle regole finali
+                $validated = $request->validate($rules);
+
+                // 5. Crea un nuovo record in t_panel_control
+                //    — Ricordati che i campi ir, loi, point, argomento NON esistono nel DB (quindi non li assegnamo).
                 $survey = new PanelControl();
-                $survey->sur_id      = $request->input('sid');        // es. "Codice SID Progetto"
-                $survey->codice_prj  = $request->input('prj');        // se hai questa colonna in DB
-                $survey->cliente     = $request->input('cliente');
-                $survey->tipologia   = $request->input('tipologia');
-                $survey->panel       = $request->input('panel');
-                $survey->ir          = $request->input('ir');
-                $survey->loi         = $request->input('loi');
-                $survey->point       = $request->input('point');
-                $survey->argomento   = $request->input('argomento');
-                $survey->sex_target  = $request->input('sex_target');
-                $survey->age1_target = $request->input('age1_target');
-                $survey->age2_target = $request->input('age2_target');
-                $survey->complete    = $request->input('goal');       // se la colonna si chiama "complete"
-                $survey->end_field   = $request->input('end_date');   // se nel DB hai un DATETIME
-                $survey->description = $request->input('descrizione');
-                $survey->paese       = $request->input('paese');
-                // Imposta eventuali default, "stato=0" se è "Aperto" di default, ecc.
+                $survey->sur_id      = $validated['sid'];        // "Codice SID Progetto"
+                $survey->prj  = $validated['prj'];        // se presente in DB
+                $survey->cliente     = $validated['cliente'];
+                $survey->tipologia   = $validated['tipologia'];
+                $survey->panel       = $validated['panel'];
 
+                // "goal" => nel DB la colonna si chiama "complete"
+                $survey->goal    = $validated['goal'];
+
+                // end_field nel DB è un DATETIME
+                $survey->end_field   = $validated['end_date'] ?? null;
+
+                $survey->description = $validated['descrizione'];
+                $survey->paese       = $validated['paese'];
+                $survey->sur_date = \Carbon\Carbon::now();
+                $survey->stato    = 0;
+
+                // 6. Se hai campi come sex_target, age1_target, etc. nel DB, li assegni sempre
+                //    (o in modo condizionale se preferisci azzerarli in panel≠1)
+                $survey->sex_target  = $validated['sex_target'] ?? null;
+                $survey->age1_target = $validated['age1_target'] ?? null;
+                $survey->age2_target = $validated['age2_target'] ?? null;
+
+                // 7. Salva il record
                 $survey->save();
 
-                // 3. Restituisci JSON di successo (usando AJAX)
+                // 8. Rispondi in JSON per AJAX
                 return response()->json(['success' => true]);
             }
+
+
 
             public function getAvailableSurIds()
             {
