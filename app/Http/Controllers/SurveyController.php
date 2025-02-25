@@ -26,6 +26,7 @@ class SurveyController extends Controller
     {
         $query = PanelControl::select([
             'sur_id',
+            'prj',
             'description',
             'panel',
             'complete',
@@ -64,16 +65,25 @@ class SurveyController extends Controller
             })
             // Pallino rosso lampeggiante accanto a sur_id se stato=0
             ->editColumn('sur_id', function($row) {
-                // Base: escapare il sur_id (sicurezza)
-                $base = e($row->sur_id);
+                // 1) Ricaviamo il codice (sur_id) e lo “escapiamo” per sicurezza
+                $codice = e($row->sur_id);
 
-                // Se stato=0, aggiungiamo il pallino rosso lampeggiante
+                // 2) Eventuale pallino rosso lampeggiante se stato=0
+                $dot = '';
                 if ($row->stato == 0) {
                     $dot = '<span class="blinking-dot"></span> ';
-                    $base = $dot . $base;
                 }
 
-                return $base;
+                // 3) Creiamo l’URL dove passiamo prj e sid
+                //    Ad esempio: /fieldControl?prj=XXX&sid=YYY
+                $url = '/fieldControl?prj=' . urlencode($row->prj)
+                     . '&sid=' . urlencode($row->sur_id);
+
+                // 4) Costruiamo il link con un effetto hover (class bootstrap o stile personalizzato)
+                //    Mettiamo "title" per un tooltip, e un eventuale classe per hover
+                $link = "<a href=\"{$url}\" class=\"link-sur-id\" title=\"Vai a FieldControl\">{$dot}{$codice}</a>";
+
+                return $link;
             })
             // Formattazione end_field (es: "Lun 1 Gen 25")
             ->editColumn('end_field', function($row) {
@@ -319,7 +329,7 @@ class SurveyController extends Controller
                         // Se usi QueryBuilder
                         $record = DB::table('t_panel_control')
                             ->select('cliente')
-                            ->where('prj', $prj)
+                            ->where('prj', trim($prj))
                             ->first();
 
                         if ($record && !empty($record->cliente)) {

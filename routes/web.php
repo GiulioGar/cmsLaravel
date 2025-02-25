@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SurveyController;
+use App\Http\Controllers\FieldControlController;
 
 // Rotte per il login e logout
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -34,6 +35,9 @@ Route::get('/surveys/prj-info', [SurveyController::class, 'getPrjInfo'])
     ->name('surveys.prj-info');
 Route::get('/surveys/get-client-by-prj', [SurveyController::class, 'getClientByPrj'])
     ->name('surveys.getClientByPrj');
+
+
+Route::get('/fieldControl', [FieldControlController::class, 'index']);
 
 
 

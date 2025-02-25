@@ -1,0 +1,59 @@
+.field-control-container {
+    margin-top: 1%;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-badge {
+    display: inline-block;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+    color: white;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.stat-text {
+    font-size: 14px;
+}
+
+.text-positive {
+    color: green;
+}
+
+.text-negative {
+    color: red;
+}
+
+/* Badge Colors */
+.badge-dark {
+    background-color: black;
+}
+
+.badge-red {
+    background-color: #e63946;
+}
+
+.badge-green {
+    background-color: #2a9d8f;
+}
+
+.badge-blue {
+    background-color: #457b9d;
+}

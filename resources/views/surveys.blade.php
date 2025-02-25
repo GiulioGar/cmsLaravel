@@ -31,14 +31,22 @@ table.dataTable thead th {
   50% { opacity: 0; }
 }
 
+.link-sur-id:hover {
+    text-decoration: underline;
+    color: #007bff; /* ad es. blu */
+}
+
 </style>
 
 <main class="content">
 
     <div class="container">
-        <h1>Elenco Ricerche</h1>
-        <button class="btn btn-success mb-3" id="btnOpenCreateModal">Nuovo Progetto</button>
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h1 class="mb-0">Elenco Ricerche</h1>
+            <button class="btn btn-success" id="btnOpenCreateModal">Nuovo Progetto</button>
+        </div>
         <hr>
+
 
         <table id="surveys-table"
         class="table table-striped table-bordered table-sm"
@@ -474,7 +482,6 @@ table.dataTable thead th {
 
 
 @endsection
-
 @section('scripts')
     <!-- jQuery (necessario per DataTables) -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
@@ -484,173 +491,168 @@ table.dataTable thead th {
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 
     <style>
-        /* Riduci ulteriormente il font anche nella paginazione, se vuoi */
         div.dataTables_wrapper .dataTables_paginate .paginate_button {
             font-size: 0.7rem !important;
         }
-        /* Centra eventualmente la paginazione: */
         .dataTables_paginate {
             text-align: center !important;
         }
     </style>
 
 <script>
-    $(document).ready(function ()
-    {
+$(document).ready(function() {
 
-        var table = $('#surveys-table').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: '{{ route('surveys.data') }}',
-            pageLength: 30,
-            lengthMenu: [30, 50, 100],
-            pagingType: "full_numbers",
-            scrollX: true,
-            order: [],
-            ordering: false,
-            columns: [
-                { data: 'sur_id',            name: 'sur_id' },
-                { data: 'description',       name: 'description' },
-                { data: 'panel',             name: 'panel' },
-                { data: 'complete',          name: 'complete' },
-                { data: 'red_panel',         name: 'red_panel' },
-                { data: 'red_surv',          name: 'red_surv' },
-                { data: 'end_field',         name: 'end_field' },
-                { data: 'giorni_rimanenti',  name: 'giorni_rimanenti' },
-                { data: 'Costo',             name: 'Costo' },
-                { data: 'bytes',             name: 'bytes' },
-                {
-                    data: 'campo_edit',
-                    name: 'campo_edit',
-                    orderable: false,
-                    searchable: false
-                },
-            ],
-            language: {
-                url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json"
-            }
-        });
+    /********************************************************
+     * 1) Inizializziamo la tabella DataTables
+     ********************************************************/
+    var table = $('#surveys-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '{{ route('surveys.data') }}',
+        pageLength: 30,
+        lengthMenu: [30, 50, 100],
+        pagingType: "full_numbers",
+        scrollX: true,
+        // order: [],
+        // ordering: false,
+        columns: [
+            { data: 'sur_id',            name: 'sur_id' },
+            { data: 'description',       name: 'description' },
+            { data: 'panel',             name: 'panel' },
+            { data: 'complete',          name: 'complete' },
+            { data: 'red_panel',         name: 'red_panel' },
+            { data: 'red_surv',          name: 'red_surv' },
+            { data: 'end_field',         name: 'end_field' },
+            { data: 'giorni_rimanenti',  name: 'giorni_rimanenti' },
+            { data: 'Costo',             name: 'Costo' },
+            { data: 'bytes',             name: 'bytes' },
+            {
+                data: 'campo_edit',
+                name: 'campo_edit',
+                orderable: false,
+                searchable: false
+            },
+        ],
+        language: {
+            url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json"
+        }
+    });
 
-$('#surveys-table').on('click', '.btn-edit', function() {
-  var id = $(this).data('id');
 
-  // GET /surveys/{id}/edit per avere JSON con tutti i campi
-                $.ajax({
-                    url: '/surveys/' + id + '/edit',
-                    type: 'GET',
-                    success: function(response) {
-                    // Riempie i campi
-                    $('#survey-id').val(response.id); // hidden
-                    $('#sur_id').val(response.sur_id);
-                    $('#panel').val(response.panel);
-                    $('#sex_target').val(response.sex_target);
-                    $('#age1_target').val(response.age1_target);
-                    $('#age2_target').val(response.age2_target);
-                    $('#complete').val(response.complete);
-                    if (response.end_field) {
-                    // Esempio: "2024-10-09 00:00:00"
-                    // Divido in base allo spazio
+    /********************************************************
+     * 2) Form di Modifica (#editSurveyForm)
+     ********************************************************/
+    // Click su bottone "Modifica"
+    $('#surveys-table').on('click', '.btn-edit', function() {
+        var id = $(this).data('id');
+
+        $.ajax({
+            url: '/surveys/' + id + '/edit',
+            type: 'GET',
+            success: function(response) {
+                // Riempi i campi
+                $('#survey-id').val(response.id);
+                $('#sur_id').val(response.sur_id);
+                $('#panel').val(response.panel);
+                $('#sex_target').val(response.sex_target);
+                $('#age1_target').val(response.age1_target);
+                $('#age2_target').val(response.age2_target);
+                $('#complete').val(response.complete);
+
+                if (response.end_field) {
                     let dateTimeParts = response.end_field.split(' ');
-                    let dateOnly = dateTimeParts[0]; // "2024-10-09"
+                    let dateOnly = dateTimeParts[0];
                     $('#end_field').val(dateOnly);
                 } else {
                     $('#end_field').val('');
                 }
-                    $('#descrizione').val(response.description);
-                    $('#stato').val(response.stato);
+                $('#descrizione').val(response.description);
+                $('#stato').val(response.stato);
 
-                    // Mostra la modale
-                    $('#editSurveyModal').modal('show');
-                    },
-                    error: function() {
-                    alert('Errore nel caricamento dati');
-                    }
-                });
-            });
+                // Mostra la modale
+                $('#editSurveyModal').modal('show');
+            },
+            error: function() {
+                alert('Errore nel caricamento dati');
+            }
+        });
+    });
 
+    // Submit del form di modifica
+    $('#editSurveyForm').on('submit', function(e){
+        e.preventDefault();
 
-        // 3) Submit del form modale per salvare modifiche
-        $('#editSurveyForm').on('submit', function(e){
-            e.preventDefault();
+        var id = $('#survey-id').val();
+        var formData = $(this).serialize();
 
-            var id = $('#survey-id').val();
-            var formData = $(this).serialize(); // include _method=PUT e csrf
+        $.ajax({
+            url: '/surveys/' + id,
+            type: 'POST', // method spoofing _method=PUT
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#editSurveyModal').modal('hide');
+                    // Ricarica la tabella
+                    table.ajax.reload(function() {
+                        table.page('first').draw('page');
+                    }, false);
 
-            $.ajax({
-                url: '/surveys/' + id,
-                type: 'POST', // se stai usando PUT, allora usi method spoofing
-                data: formData,
-                success: function(response) {
-                    if (response.success) {
-                        // Chiudi la modale
-                        $('#editSurveyModal').modal('hide');
-                        // Ricarica la tabella
-                        table.ajax.reload(function() {
-                            // callback: appena ha finito di ricaricare i dati
-                            table.draw(false);
-                        }, false);
-
-                    } else {
-                        alert('Errore in aggiornamento');
-                    }
-                },
-                error: function(xhr) {
-                    alert('Errore di rete o validazione');
+                } else {
+                    alert('Errore in aggiornamento');
                 }
-            });
+            },
+            error: function(xhr) {
+                alert('Errore di rete o validazione');
+            }
         });
     });
 
 
-// 1) Al click su "Nuovo Progetto", apri la modale
-$('#btnOpenCreateModal').on('click', function() {
-// Svuota i campi se necessario
-$('#createSurveyForm')[0].reset();
-
-    // 1) Richiama l'endpoint che restituisce i sur_id disponibili
-    $.ajax({
-        url: '{{ route('surveys.available-sids') }}',
-        method: 'GET',
-        success: function(response) {
-           // console.log(response);
-            // 2) Svuota il <select> e poi aggiungi le option
-            $('#sid').empty();
-
-            // Aggiungi un <option> vuoto o di default, se vuoi
-            // $('#sid').append('<option value="">Seleziona un codice</option>');
-
-            // 3) Cicla la lista
-            response.forEach(function(item) {
-                    $('#sid').append('<option value="' + item.sid + '">' + item.sid + '</option>');
-                    });
-
-            // Infine, mostra la modale
-            $('#createSurveyModal').modal('show');
-        },
-        error: function(){
-            alert('Impossibile caricare i codici SID disponibili.');
-        }
-    });
-    });
-
-    // 2) Submit del form per creare un nuovo record
-    $('#createSurveyForm').on('submit', function(e){
-        e.preventDefault();
-        var formData = $(this).serialize(); // include i campi e il CSRF token
+    /********************************************************
+     * 3) Bottone "Nuovo Progetto"
+     ********************************************************/
+    $('#btnOpenCreateModal').on('click', function() {
+        // Svuota i campi
+        $('#createSurveyForm')[0].reset();
 
         $.ajax({
-            url: '{{ route('surveys.store') }}', // POST /surveys
+            url: '{{ route('surveys.available-sids') }}',
+            method: 'GET',
+            success: function(response) {
+                $('#sid').empty();
+                // Aggiungi option
+                response.forEach(function(item) {
+                    $('#sid').append('<option value="' + item.sid + '">' + item.sid + '</option>');
+                });
+                $('#createSurveyModal').modal('show');
+            },
+            error: function(){
+                alert('Impossibile caricare i codici SID disponibili.');
+            }
+        });
+    });
+
+
+    /********************************************************
+     * 4) Form di Creazione (#createSurveyForm)
+     ********************************************************/
+    $('#createSurveyForm').on('submit', function(e){
+        e.preventDefault();
+        var formData = $(this).serialize();
+
+        $.ajax({
+            url: '{{ route('surveys.store') }}',
             type: 'POST',
             data: formData,
             success: function(response) {
                 if (response.success) {
-                    // Chiudi la modale
                     $('#createSurveyModal').modal('hide');
-                    // Ricarica la DataTable
+
+                    // Ricarica la tabella
                     table.ajax.reload(function() {
-                    // callback: appena ha finito di ricaricare i dati
-                    table.draw(false);
-                }, false);
+                        table.page('first');
+                        table.search('').draw(false);
+                    }, false);
 
                 } else {
                     alert('Errore nella creazione del progetto');
@@ -663,139 +665,102 @@ $('#createSurveyForm')[0].reset();
     });
 
 
- // Quando l'utente seleziona (o cambia) un SID
- $('#sid').on('change', function() {
+    /********************************************************
+     * 5) Gestione "sid" -> "prj" -> "cliente"
+     ********************************************************/
+    $('#sid').on('change', function() {
         var selectedSid = $(this).val();
-
-        // Se l'utente non ha scelto nulla, svuota prj e cliente
         if (!selectedSid) {
             $('#prj').val('');
             showClienteAsInput('');
             return;
         }
 
-        // 1) Recupera 'prj_name' in base al SID
+        // Recupera 'prj_name'
         $.ajax({
-            url: '{{ route("surveys.prj-info") }}', // /surveys/prj-info?sid=...
+            url: '{{ route("surveys.prj-info") }}',
             type: 'GET',
             data: { sid: selectedSid },
-            success: function(response) {
-                // Imposta il valore di #prj
-                var prjValue = response.prj_name || '';
+            success: function(resp) {
+                var prjValue = resp.prj_name || '';
                 $('#prj').val(prjValue);
-                console.log(prjValue);
 
-                // 2) In base a prjValue, recupera 'cliente'
                 if (!prjValue) {
-                    // Se prjValue è vuoto, non ha senso cercare in t_panel_control
                     showClienteAsInput('');
                 } else {
-                    // Chiamata per ottenere il cliente
                     $.ajax({
-                        url: '{{ route("surveys.getClientByPrj") }}', // /surveys/get-client-by-prj?prj=...
+                        url: '{{ route("surveys.getClientByPrj") }}',
                         type: 'GET',
                         data: { prj: prjValue },
-                        success: function(resp) {
-                            if (resp.cliente) {
-                                // Cliente trovato => mostriamo un <select> con l’unica opzione
-                                showClienteAsSelect(resp.cliente);
+                        success: function(rsp) {
+                            if (rsp.cliente) {
+                                showClienteAsSelect(rsp.cliente);
                             } else {
-                                // Cliente vuoto => abilitiamo l'input testo
                                 showClienteAsInput('');
                             }
                         },
                         error: function() {
-                            // Errore => abilitiamo input testo
                             showClienteAsInput('');
                         }
                     });
                 }
             },
             error: function() {
-                // Primo step fallito => svuotiamo #prj e campo "cliente"
                 $('#prj').val('');
                 showClienteAsInput('');
             }
         });
     });
 
-    // Funzioni di supporto per popolare il campo "cliente"
-
     function showClienteAsSelect(clienteVal) {
         var html = '<select name="cliente" id="cliente" class="form-control">'
-                 + '  <option value="'+ clienteVal +'" selected>'+ clienteVal +'</option>'
+                 + '<option value="'+ clienteVal +'" selected>'+ clienteVal +'</option>'
                  + '</select>';
         $('#clienteFieldWrapper').html(html);
     }
 
     function showClienteAsInput(clienteVal) {
-        var html = '<input type="text" name="cliente" id="cliente" '
-                 + ' class="form-control" '
-                 + ' placeholder="Inserisci cliente..." '
-                 + ' value="'+ clienteVal +'" />';
+        var html = '<input type="text" name="cliente" id="cliente" class="form-control" '
+                 + ' placeholder="Inserisci cliente..." value="'+ clienteVal +'" />';
         $('#clienteFieldWrapper').html(html);
     }
 
 
-    </script>
-
-<script>
-
-        // Funzione che aggiorna la visibilità dei campi in base al valore di #panel
-
-        // E ogni volta che cambia la select #panel
-        $(document).on('change', '#panel', function() {
-
-    console.log('change event triggered on #panel!');
-    console.log('Selected text:', $(this).find('option:selected').text());
-    console.log('Selected value:', $(this).val());
-
-            var panelVal = $('#panel').val();
-            console.log(panelVal);
-
-            if (panelVal === '1') {
-                // Se panel=1 (Millebytes), MOSTRA i campi
-                $('#ir, #loi, #point, #argomento').prop('required', true);
-                $('#infoRicerca').show();
-                $('#genderAge').show();
-            }
-            else {
-                // Altrimenti li NASCONDI
-                $('#ir, #loi, #point, #argomento').prop('required', false);
-                $('#infoRicerca').hide();
-                $('#genderAge').hide();
-            }
-
-        });
-    </script>
-
-<script>
-
-$(document).on('change', 'input', function() {
-
-let valIr=$('input[name="ir"]').val();
-let valLoi=$('input[name="loi"]').val();
-
-// Nuovi parametri ottimizzati
-const k = 125.66;
-const alpha = 0.699;
-const beta = 0.172;
-
-// Calcolo del punteggio con la nuova formula
-let points = k * Math.pow(valLoi, alpha) / Math.pow(valIr, beta);
-points = Math.round(points);
-
-$('input[name="point"]').attr("placeholder", points);
-
-console.log("Ir:"+valIr);
-console.log("Loi:"+valLoi);
-console.log("Punti:"+points);
+    /********************************************************
+     * 6) Mostra/Nascondi campi IR, LOI, etc. se panel=1
+     ********************************************************/
+    $(document).on('change', '#panel', function() {
+        var panelVal = $(this).val();
+        if (panelVal === '1') {
+            $('#ir, #loi, #point, #argomento').prop('required', true);
+            $('#infoRicerca').show();
+            $('#genderAge').show();
+        } else {
+            $('#ir, #loi, #point, #argomento').prop('required', false);
+            $('#infoRicerca').hide();
+            $('#genderAge').hide();
+        }
+    });
 
 
+    /********************************************************
+     * 7) Calcolo punti
+     ********************************************************/
+    $(document).on('change', 'input', function() {
+        let valIr  = $('input[name="ir"]').val();
+        let valLoi = $('input[name="loi"]').val();
+
+        const k     = 125.66;
+        const alpha = 0.699;
+        const beta  = 0.172;
+
+        let points = k * Math.pow(valLoi, alpha) / Math.pow(valIr, beta);
+        points = Math.round(points);
+
+        $('input[name="point"]').attr("placeholder", points);
+    });
 
 });
-
 </script>
-
-
 @endsection
+
