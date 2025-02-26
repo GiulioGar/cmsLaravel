@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1552;DLVAEO66GO;20/02/2025 13:40:18 CET;20/02/2025 13:40:31 CET;13;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=DLVAEO66GO;lang=it;sysIID=1552
+choice;4;2;0
+choice;5;6;0
+choice;10;20;4
+choice;20;2;1
+open;30;34
+choice;31;6;1
+choice;121;4;1
+choice;310;2;1

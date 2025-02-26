@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1790;40RUYTP5SN;20/02/2025 22:22:01 CET;20/02/2025 22:22:33 CET;32;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=40RUYTP5SN;lang=it;sysIID=1790
+choice;4;2;0
+choice;5;6;0
+choice;10;20;16
+choice;20;2;1
+open;30;58
+choice;31;6;4
+choice;121;4;1
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;7;-1;-1;-1;-1

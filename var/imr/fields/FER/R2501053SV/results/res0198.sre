@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;198;T1A8XLZ8CB;17/02/2025 16:58:38 CET;17/02/2025 17:11:55 CET;797;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=T1A8XLZ8CB;pok=si;mok=no;lang=it;sysIID=198
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;0
+open;30;37
+choice;31;6;2
+choice;40;3;1
+choice;41;13;1101110001010;3
+scale;42;4;5;1;1;1;1
+choice;43;4;0
+open;70;Torte e pasticcini a forma di cuore.
+choice;80;11;11100000000;0;comp0:Caramelle;comp2:Baci Perugina;comp1:Cioccolatini
+open;90;Baci Perugina
+choice;100;11;10000000000;0;comp0:Lindor
+scale;110;19;3;2;2;2;0;2;0;2;2;2;0;1;0;2;1;2;2;1;2;-1
+choice;120;19;0001010001010000000;5
+choice;121;4;0
+scale;130;22;4;2;2;2;2;1;1;2;0;0;2;2;0;2;2;2;2;2;2;2;2;3;-1
+choice;140;22;0000000110010000000000;7
+scale;150;22;10;-1;-1;-1;-1;7;1;-1;1;0;-1;-1;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+scale;151;22;10;-1;-1;-1;-1;6;2;-1;2;2;-1;-1;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+ordering;152;22;11;7;8;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;2
+choice;180;7;1
+choice;190;3;0
+choice;200;9;0
+choice;210;10;7
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;3;-1;-1;-1;-1

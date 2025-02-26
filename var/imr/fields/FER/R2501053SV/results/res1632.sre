@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1632;PT30E279FZ;20/02/2025 15:31:09 CET;20/02/2025 15:31:44 CET;35;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=PT30E279FZ;lang=it;sysIID=1632
+choice;4;2;0
+choice;5;6;0
+choice;10;20;10
+choice;20;2;1
+open;30;34
+choice;31;6;1
+choice;121;4;3
+choice;310;2;1

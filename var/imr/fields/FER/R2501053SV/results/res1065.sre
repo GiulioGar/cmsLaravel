@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;1065;6MZ05XP1GN;19/02/2025 12:43:09 CET;19/02/2025 12:54:48 CET;699;3;200;sysSID=R2501053SV;sysPRJ=FER;sysUID=6MZ05XP1GN;pok=no;mok=no;lang=it;sysIID=1065
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;55
+choice;31;6;4
+choice;40;3;0
+choice;41;13;0000000000100;10
+scale;42;4;5;0;0;0;0
+choice;43;4;1
+open;70;Pasticcini torte e dolci vari 
+choice;80;11;11110000000;0;comp0:torte ;comp3:prodotti da forno freschi dolci ;comp2:dolci vari confezionati ;comp1:pasticcini confezionati 
+open;90;Tre balconi 
+choice;100;11;11100000000;0;comp0:tre balconi ;comp2:Ferrero ;comp1:bauli 
+scale;110;19;3;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;-1
+choice;120;19;0101010001011011000;5
+choice;121;4;0
+scale;130;22;4;0;0;1;2;0;1;1;0;0;0;1;2;0;1;1;2;2;1;0;1;0;-1
+open;131;Tre balconi 
+choice;140;22;1010110100000000010000;0
+scale;150;22;10;0;0;0;-1;0;0;0;0;0;0;0;-1;1;0;1;-1;-1;0;1;1;0;-1
+scale;151;22;10;0;0;0;-1;0;0;1;0;0;0;0;-1;1;1;1;-1;-1;0;2;1;0;-1
+ordering;152;22;4;17;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;3
+choice;180;7;3
+choice;190;3;0
+choice;200;9;6
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;6;5;-1;-1;-1

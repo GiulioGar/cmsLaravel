@@ -1,0 +1,22 @@
+2.0;FER;R2501053SV;130;MUXDZ2PHI6;17/02/2025 13:32:17 CET;17/02/2025 13:48:55 CET;998;7;131;sysSID=R2501053SV;sysPRJ=FER;sysUID=MUXDZ2PHI6;pok=no;mok=no;lang=it;sysIID=130
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;0
+open;30;55
+choice;31;6;4
+choice;40;3;0
+choice;41;13;0000000000001;12
+scale;42;4;5;3;2;3;3
+choice;43;4;2
+open;70;Cioccolatini 
+choice;80;11;00000000001;10
+open;90;Lindt Perugina Venchi Caffarel
+choice;100;11;10000000000;0;comp0:Lindor
+scale;110;19;3;2;2;1;0;1;2;2;2;2;0;2;1;1;2;1;2;2;2;-1
+choice;120;19;0000000001000000000;9
+choice;121;4;0
+scale;130;22;4;2;2;2;2;2;1;2;0;0;2;2;0;1;2;2;1;0;2;2;2;2;-1
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;6;7;-1;-1;-1

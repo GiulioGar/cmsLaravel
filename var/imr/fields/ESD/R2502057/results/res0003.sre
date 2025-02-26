@@ -1,0 +1,63 @@
+2.0;ESD;R2502057;3;IDEXDYUMTBARGMVOS7;17/02/2025 11:12:44 CET;17/02/2025 11:21:04 CET;500;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYUMTBARGMVOS7;psid=-SpSK_Db-An9QuVPvLx8Iw**;lang=en;sysIID=3;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;1
+open;60;30
+choice;65;6;0
+choice;105;4;0
+scale;106;7;5;1;1;1;0;1;1;2
+choice;110;9;000010000;4
+choice;120;9;4
+scale;140;9;14;000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000
+choice;160;2;0
+choice;170;8;4
+choice;180;4;3
+choice;181;2;0
+choice;190;8;2
+ordering;200;15;6;11;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;1
+choice;320;5;1
+choice;330;5;0
+choice;340;5;1
+choice;341;5;1
+choice;342;5;1
+concept;343
+choice;344;5;3
+choice;345;5;1
+choice;346;5;4
+choice;347;5;1
+choice;360;5;1
+open;440;Easy to use functionality 
+open;450;The price is a bit too steep 
+choice;451;5;1
+open;452;Easy to understand 
+choice;511;3;1
+scale;512;6;5;1;0;0;0;0;0
+scale;513;12;6;000100001000010000001000100000010000010000001000111000111111001000100000
+ordering;514;11;4;0;1;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;I can’t think of 
+choice;520;12;8
+choice;521;5;4
+choice;530;4;0
+choice;550;6;4
+choice;560;13;2
+choice;570;14;13
+choice;575;9;5
+choice;1141;12;001000000000;2
+choice;5000;21;18
+choice;5002;21;19
+choice;5004;21;20
+choice;5006;21;19
+choice;5008;5;0
+choice;5010;5;2
+concept;5012
+choice;5100;21;20
+choice;5102;21;4
+choice;5104;21;20
+choice;5106;21;6
+choice;5108;5;1
+choice;5110;5;3
+concept;5112
+choice;9004;14;9

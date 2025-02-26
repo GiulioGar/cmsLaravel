@@ -1,0 +1,66 @@
+2.0;ESD;R2502057;428;IDEXDYAXYKQRYGDPN431;17/02/2025 19:05:00 CET;17/02/2025 19:21:07 CET;967;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYAXYKQRYGDPN431;psid=-SpSK_Db-AnovZn2XpeOWg**;lang=en;sysIID=428;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;1
+open;60;51
+choice;65;6;3
+choice;80;7;1
+scale;100;6;8;6;6;-1;-1;-1;-1
+choice;105;4;0
+scale;106;7;5;0;1;2;1;1;0;2
+choice;110;9;000000100;6
+choice;120;9;6
+scale;140;9;14;000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000
+choice;160;2;1
+choice;170;8;1
+choice;180;4;2
+choice;190;8;3
+ordering;200;15;4;6;8;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;2
+choice;320;5;1
+choice;330;5;1
+choice;340;5;4
+choice;341;5;0
+choice;342;5;1
+concept;343
+choice;344;5;0
+choice;345;5;3
+choice;346;5;2
+choice;347;5;2
+choice;360;5;2
+open;440;I like it it's very accurate and worth its money 
+open;450;More colours would be nice
+choice;451;5;1
+open;452;Brilliant looks good make you want to buy it
+choice;460;2;0
+choice;470;8;5
+choice;511;3;1
+scale;512;6;5;0;1;0;0;1;1
+scale;513;12;6;010000110000010000100000001000010000001000100000001000100000001000101000
+ordering;514;11;5;3;4;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;Colour coded and also big numbers
+choice;520;12;3
+choice;521;5;2
+choice;530;4;1
+choice;550;6;2
+choice;560;13;7
+choice;570;14;6
+choice;575;9;3
+choice;2000;8;00000100;5
+choice;5000;21;2
+choice;5002;21;18
+choice;5004;21;18
+choice;5006;21;20
+choice;5008;5;2
+choice;5010;5;2
+concept;5012
+choice;5100;21;20
+choice;5102;21;13
+choice;5104;21;20
+choice;5106;21;15
+choice;5108;5;2
+choice;5110;5;3
+concept;5112
+choice;9006;14;8

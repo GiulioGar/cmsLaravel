@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;952;BIGLUG555;19/02/2025 06:50:18 CET;19/02/2025 06:55:45 CET;327;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=BIGLUG555;pok=si;mok=no;lang=it;sysIID=952
+choice;4;2;0
+choice;5;6;0
+choice;10;20;11
+choice;20;2;0
+open;30;46
+choice;31;6;3
+choice;40;3;0
+choice;41;13;0001101111010;9
+scale;42;4;5;0;1;0;2
+choice;43;4;1
+open;70;Lint
+choice;80;11;11111110000;0;comp0:Ferrero ;comp6:Mu mu;comp5:Marca discount ;comp4:Tre marie ;comp3:Motta;comp2:Bauli;comp1:Moncary
+open;90;Kinder 
+choice;100;11;11100000000;0;comp0:Bauli;comp2:Tre marie ;comp1:Lint
+scale;110;19;3;1;2;1;1;2;2;2;0;0;1;0;1;0;2;0;0;1;0;-1
+choice;120;19;0011000000100000000;3
+choice;121;4;0
+scale;130;22;4;0;1;0;1;0;0;0;2;0;0;1;0;1;1;1;1;2;2;1;1;3;-1
+choice;140;22;0010101000010001000000;2
+scale;150;22;10;7;4;3;5;0;7;3;-1;4;4;7;0;6;8;7;0;-1;-1;4;6;-1;-1
+scale;151;22;10;0;6;3;5;3;8;2;-1;2;6;7;0;5;5;7;0;-1;-1;4;5;-1;-1
+ordering;152;22;11;6;4;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;2
+choice;180;7;1
+choice;190;3;0
+choice;200;9;0
+choice;210;10;7
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;2;-1;-1;-1;-1

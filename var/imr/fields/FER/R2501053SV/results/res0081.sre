@@ -1,0 +1,24 @@
+2.0;FER;R2501053SV;81;MNJ3YLLKN9;17/02/2025 11:49:47 CET;17/02/2025 11:58:06 CET;499;7;150;sysSID=R2501053SV;sysPRJ=FER;sysUID=MNJ3YLLKN9;pok=no;mok=no;lang=it;sysIID=81
+choice;4;2;0
+choice;5;6;0
+choice;10;20;0
+choice;20;2;1
+open;30;55
+choice;31;6;4
+choice;40;3;1
+choice;41;13;0100100001000;9
+scale;42;4;5;0;0;0;0
+choice;43;4;0
+open;70;Cioccolatini lind a forma di cuore
+choice;80;11;10000000000;0;comp0:Baci perugina
+open;90;Lind
+choice;100;11;10000000000;0;comp0:Perugina
+scale;110;19;3;1;0;1;0;1;0;0;0;0;0;0;0;0;0;0;2;1;2;-1
+choice;120;19;0001010100001000100;3
+choice;121;4;3
+scale;130;22;4;1;1;2;0;0;0;0;0;0;2;1;0;1;1;2;0;0;0;1;1;1;-1
+open;131;Haribo
+choice;140;22;0001111110010101110000;3
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;7;-1;-1;-1;-1

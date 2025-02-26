@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;102;6OMIG84PZM;17/02/2025 12:15:00 CET;17/02/2025 14:20:39 CET;7539;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=6OMIG84PZM;pok=si;mok=si;lang=it;sysIID=102
+choice;4;2;0
+choice;5;6;0
+choice;10;20;14
+choice;20;2;1
+open;30;45
+choice;31;6;3
+choice;40;3;0
+choice;41;13;1011110011100;4
+scale;42;4;5;1;0;0;0
+choice;43;4;0
+open;70;ferrero,kinder
+choice;80;11;11100000000;0;comp0:ferrero;comp2:perugina;comp1:kinder
+open;90;perugina
+choice;100;11;11100000000;0;comp0:kinder;comp2:dolci pre;comp1:ferrero
+scale;110;19;3;0;0;0;0;0;0;0;1;0;1;0;1;0;0;1;1;0;1;-1
+choice;120;19;1001101110001000100;3
+choice;121;4;3
+scale;130;22;4;1;1;1;1;0;0;0;1;0;1;1;0;1;1;1;0;1;0;1;1;3;-1
+choice;140;22;0000110000000001000000;5
+scale;150;22;10;5;5;5;3;3;3;2;5;3;5;5;3;5;4;6;4;4;6;6;6;-1;-1
+scale;151;22;10;4;4;5;3;2;2;2;4;3;4;4;1;5;5;3;3;4;5;6;6;-1;-1
+ordering;152;22;6;11;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;3
+choice;180;7;3
+choice;190;3;0
+choice;200;9;0
+choice;210;10;7
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;3;1;-1;-1;-1

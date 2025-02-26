@@ -1,0 +1,22 @@
+2.0;FER;R2501053SV;1385;TW3P5O5SYS;19/02/2025 21:06:18 CET;19/02/2025 21:11:09 CET;291;7;131;sysSID=R2501053SV;sysPRJ=FER;sysUID=TW3P5O5SYS;pok=no;mok=no;lang=it;sysIID=1385
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;56
+choice;31;6;4
+choice;40;3;0
+choice;41;13;0110000000000;2
+scale;42;4;5;4;4;4;4
+choice;43;4;3
+open;70;Baci perugina 
+choice;80;11;10000000000;0;comp0:Baci perugina 
+open;90;Baci perugina 
+choice;100;11;10000000000;0;comp0:Baci perugina
+scale;110;19;3;2;2;2;0;2;2;2;2;2;1;2;2;2;2;2;2;2;2;-1
+choice;120;19;0000000000000000001;18
+choice;121;4;0
+scale;130;22;4;2;2;2;2;2;2;2;2;2;2;2;0;2;2;2;2;2;2;2;2;2;-1
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;5;-1;-1;-1;-1

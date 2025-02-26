@@ -1,0 +1,66 @@
+2.0;ESD;R2502057;563;IDEXDYYNSWWCQDPSU567;18/02/2025 10:16:27 CET;18/02/2025 10:28:16 CET;709;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYYNSWWCQDPSU567;psid=-SpSK_Db-An1vuTaekiQPA**;lang=en;sysIID=563;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;0
+choice;40;3;1
+choice;50;2;0
+open;60;57
+choice;65;6;1
+choice;80;7;6
+choice;105;4;0
+scale;106;7;5;1;1;1;1;1;1;2
+choice;110;9;000010000;4
+choice;120;9;4
+scale;140;9;14;000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000
+choice;160;2;1
+choice;170;8;0
+choice;180;4;1
+choice;190;8;2
+ordering;200;15;1;5;10;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;0
+choice;320;5;2
+choice;330;5;1
+choice;340;5;1
+choice;341;5;1
+choice;342;5;1
+concept;343
+choice;344;5;2
+choice;345;5;2
+choice;346;5;3
+choice;347;5;2
+choice;360;5;1
+open;440;i like the versatility and ease of use
+open;450;there is nothing to dislike
+choice;451;5;1
+open;452;it makes it very easy to read and understand
+choice;460;2;1
+choice;470;8;0
+choice;511;3;0
+scale;512;6;5;0;0;0;1;0;1
+scale;513;12;6;101000101010000100000001010010101100000010100100100110111111010000001000
+ordering;514;11;9;6;1;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;smaller form factor
+choice;520;12;4
+choice;521;5;2
+choice;530;4;1
+choice;550;6;3
+choice;560;13;0
+choice;570;14;0
+choice;575;9;3
+choice;1141;12;000000000100;9
+choice;5000;21;9
+choice;5002;21;19
+choice;5004;21;20
+choice;5006;21;20
+choice;5008;5;0
+choice;5010;5;3
+concept;5012
+choice;5100;21;15
+choice;5102;21;10
+choice;5104;21;20
+choice;5106;21;11
+choice;5108;5;1
+choice;5110;5;3
+concept;5112
+choice;9004;14;9

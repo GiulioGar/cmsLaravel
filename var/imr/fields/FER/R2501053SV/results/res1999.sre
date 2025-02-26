@@ -1,0 +1,25 @@
+2.0;FER;R2501053SV;1999;IDEXDYRFFBZCGDJAY116;21/02/2025 14:37:36 CET;21/02/2025 14:42:26 CET;290;7;152;pok=si;lang=it;sysIID=1999;sysPRJ=FER;mok=si;sysSID=R2501053SV;pan=2;sysUID=IDEXDYRFFBZCGDJAY116;psid=N25Jkd8Ji1GjpgO1Lsa_9A**
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;40
+choice;31;6;2
+choice;40;3;0
+choice;41;13;0111100000100;3
+scale;42;4;5;2;2;2;2
+choice;43;4;2
+open;70;Torte a cuore 
+choice;80;11;10000000000;0;comp0:Torta a cuore 
+open;90;Pasticceria moro
+choice;100;11;10000000000;0;comp0:Baci perugina
+scale;110;19;3;1;2;2;1;2;1;2;2;2;1;2;2;2;2;2;2;1;2;-1
+choice;120;19;0001010001000000100;16
+choice;121;4;0
+scale;130;22;4;2;2;2;2;1;1;1;1;1;2;1;0;1;2;2;1;1;1;2;1;3;-1
+choice;140;22;0000111010010000000100;4
+scale;150;22;10;-1;-1;-1;-1;2;2;1;2;2;-1;3;0;2;-1;-1;2;2;2;-1;1;-1;-1
+scale;151;22;10;-1;-1;-1;-1;2;1;0;2;2;-1;3;1;2;-1;-1;2;2;2;-1;1;-1;-1
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;1;-1;-1;-1;-1

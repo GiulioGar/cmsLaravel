@@ -1,0 +1,64 @@
+2.0;ESD;R2502057;976;IDEXDYKWVAYQNYLXS974;20/02/2025 10:39:06 CET;20/02/2025 10:49:07 CET;601;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYKWVAYQNYLXS974;psid=-SpSK_Db-AkXNlEtaNL-VA**;lang=en;sysIID=976;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;0
+open;60;53
+choice;65;6;2
+choice;80;7;6
+choice;105;4;0
+scale;106;7;5;1;1;1;1;1;1;0
+choice;110;9;000010000;4
+choice;120;9;4
+scale;140;9;14;000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000
+choice;160;2;1
+choice;170;8;0
+choice;180;4;1
+choice;190;8;1
+ordering;200;15;1;8;13;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;2
+choice;320;5;1
+choice;330;5;1
+choice;340;5;1
+choice;341;5;1
+choice;342;5;1
+concept;343
+choice;344;5;2
+choice;345;5;2
+choice;346;5;2
+choice;347;5;2
+choice;360;5;2
+open;440;easy to use accurate figures and also would be trusted when i need it to be
+open;450;the price is quite high as I dont use them very often but when you need it it will be perfect so i think price wise it is a one off purchase
+choice;451;5;1
+open;452;i know when to worry as the colours warn me
+choice;460;2;1
+choice;470;8;0
+choice;511;3;1
+scale;512;6;5;0;1;0;1;1;1
+scale;513;12;6;010110010110010110010110010110010010010110010110010010010010010110010010
+ordering;514;11;10;2;7;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;a link to the people in family so you can check temps for different patients
+choice;520;12;6
+choice;521;5;1
+choice;530;4;1
+choice;550;6;2
+choice;560;13;1
+choice;570;14;8
+choice;575;9;3
+choice;5000;21;1
+choice;5002;21;20
+choice;5004;21;19
+choice;5006;21;20
+choice;5008;5;1
+choice;5010;5;2
+concept;5012
+choice;5100;21;9
+choice;5102;21;15
+choice;5104;21;20
+choice;5106;21;18
+choice;5108;5;2
+choice;5110;5;3
+concept;5112
+choice;9004;14;1

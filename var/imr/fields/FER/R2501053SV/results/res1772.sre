@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1772;CY50TXA91A;20/02/2025 21:32:45 CET;20/02/2025 21:33:27 CET;42;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=CY50TXA91A;lang=it;sysIID=1772
+choice;4;2;0
+choice;5;6;0
+choice;10;20;16
+choice;20;2;1
+open;30;35
+choice;31;6;2
+choice;121;4;1
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;0;0;-1;-1;-1

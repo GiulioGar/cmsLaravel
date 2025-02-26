@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1768;MG3M111141;20/02/2025 21:21:36 CET;20/02/2025 21:21:54 CET;18;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=MG3M111141;lang=it;sysIID=1768
+choice;4;2;0
+choice;5;6;0
+choice;10;20;12
+choice;20;2;1
+open;30;38
+choice;31;6;2
+choice;121;4;3
+choice;310;2;1

@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;693;470OBRKIYH;18/02/2025 14:06:25 CET;18/02/2025 14:18:29 CET;724;3;200;sysSID=R2501053SV;sysPRJ=FER;sysUID=470OBRKIYH;pok=no;mok=no;lang=it;sysIID=693
+choice;4;2;0
+choice;5;6;0
+choice;10;20;6
+choice;20;2;1
+open;30;53
+choice;31;6;3
+choice;40;3;0
+choice;41;13;0001101000100;6
+scale;42;4;5;3;4;2;4
+choice;43;4;2
+open;70;Baci perugina
+choice;80;11;11111111000;0;comp0:Lindt ;comp7:Eurospin;comp6:Venchi;comp5:Raffaello;comp4:Lindor;comp3:Moncheri ;comp2:Kinder;comp1:Perugina
+open;90;Perugina
+choice;100;11;11000000000;0;comp0:Lindor;comp1:Linddt
+scale;110;19;3;0;0;0;0;0;0;2;2;2;1;0;1;0;0;0;0;2;2;-1
+choice;120;19;1001000000000000000;3
+choice;121;4;2
+scale;130;22;4;2;2;2;2;0;0;0;0;0;2;2;0;1;2;2;0;0;0;2;2;2;-1
+open;131;Eurospin 
+choice;140;22;0000100100010000000000;4
+scale;150;22;10;-1;-1;-1;-1;2;1;1;0;2;-1;-1;1;1;-1;-1;1;2;1;-1;-1;-1;-1
+scale;151;22;10;-1;-1;-1;-1;2;2;1;0;3;-1;-1;0;2;-1;-1;1;2;2;-1;-1;-1;-1
+ordering;152;22;7;11;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;2
+choice;180;7;3
+choice;190;3;2
+choice;200;9;6
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;6;5;-1;-1;-1

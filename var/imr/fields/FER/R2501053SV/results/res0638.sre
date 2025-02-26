@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;638;Q5X7PE6G2A;18/02/2025 12:51:47 CET;18/02/2025 13:03:20 CET;693;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=Q5X7PE6G2A;pok=no;mok=no;lang=it;sysIID=638
+choice;4;2;0
+choice;5;6;0
+choice;10;20;0
+choice;20;2;0
+open;30;60
+choice;31;6;4
+choice;40;3;0
+choice;41;13;1110010111000;7
+scale;42;4;5;0;0;0;0
+choice;43;4;0
+open;70;confezioni a forma di cioccolatini misti
+choice;80;11;11000000000;0;comp0:baci perugina;comp1:ferrero non chery
+open;90;PERUGINA
+choice;100;11;11000000000;0;comp0:FERRERO;comp1:LINDT
+scale;110;19;3;2;2;2;0;2;2;2;2;2;0;0;2;2;2;2;2;1;2;-1
+choice;120;19;0001000001100000100;10
+choice;121;4;3
+scale;130;22;4;2;2;2;2;0;0;2;0;0;2;2;0;2;2;2;0;0;0;2;2;3;-1
+choice;140;22;0000100100010000000000;4
+scale;150;22;10;-1;-1;-1;-1;0;2;-1;0;2;-1;-1;0;-1;-1;-1;2;2;2;-1;-1;-1;-1
+scale;151;22;10;-1;-1;-1;-1;0;2;-1;0;2;-1;-1;0;-1;-1;-1;2;2;2;-1;-1;-1;-1
+ordering;152;22;7;11;4;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;3
+choice;180;7;1
+choice;190;3;0
+choice;200;9;0
+choice;210;10;3
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;4;4;-1;-1;-1

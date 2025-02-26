@@ -1,0 +1,65 @@
+2.0;ESD;R2502057;304;IDEXDYBIFCLJMSZGR308;17/02/2025 16:04:43 CET;17/02/2025 16:19:30 CET;887;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYBIFCLJMSZGR308;psid=-SpSK_Db-AlLtHRpF0XybQ**;lang=en;sysIID=304;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;0
+choice;40;3;0
+choice;50;2;0
+open;60;49
+choice;65;6;0
+choice;105;4;0
+scale;106;7;5;1;1;1;1;1;1;0
+choice;110;9;100010000;0
+choice;120;9;4
+scale;140;9;14;000000000001000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000
+choice;160;2;1
+choice;170;8;0
+choice;180;4;1
+choice;190;8;1
+ordering;200;15;3;6;10;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;1
+choice;320;5;2
+choice;330;5;1
+choice;340;5;1
+choice;341;5;2
+choice;342;5;0
+concept;343
+choice;344;5;1
+choice;345;5;2
+choice;346;5;2
+choice;347;5;1
+choice;360;5;1
+open;440;The colour coded fever guidance and audio alert. And the caps.
+open;450;It is a bit pricey.
+choice;451;5;2
+open;452;Its instinctive to understand.
+choice;460;2;0
+choice;470;8;3
+choice;511;3;1
+scale;512;6;5;0;1;2;1;1;1
+scale;513;12;6;000010001110000010001010000010000010000010000010000010111111000010000010
+ordering;514;11;1;0;10;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;Connected to an app.
+choice;520;12;8
+choice;521;5;4
+choice;530;4;0
+choice;550;6;3
+choice;560;13;3
+choice;570;14;13
+choice;575;9;3
+choice;5000;21;20
+choice;5002;21;15
+choice;5004;21;20
+choice;5006;21;20
+choice;5008;5;1
+choice;5010;5;3
+concept;5012
+choice;5100;21;20
+choice;5102;21;16
+choice;5104;21;20
+choice;5106;21;20
+choice;5108;5;1
+choice;5110;5;2
+concept;5112
+choice;9000;14;11
+choice;9004;14;4

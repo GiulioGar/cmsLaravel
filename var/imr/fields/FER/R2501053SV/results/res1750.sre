@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1750;YOWLXRPI5S;20/02/2025 20:31:29 CET;20/02/2025 20:32:25 CET;56;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=YOWLXRPI5S;lang=it;sysIID=1750
+choice;4;2;0
+choice;5;6;0
+choice;10;20;0
+choice;20;2;0
+open;30;57
+choice;31;6;4
+choice;121;4;3
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;5;6;-1;-1;-1

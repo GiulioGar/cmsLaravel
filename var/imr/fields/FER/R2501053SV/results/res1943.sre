@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1943;QPYSIDHQYX;21/02/2025 13:51:40 CET;21/02/2025 13:51:53 CET;13;4;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=QPYSIDHQYX;lang=it;sysIID=1943
+choice;4;2;0
+choice;5;6;0
+choice;10;20;6
+choice;20;2;1
+open;30;35
+choice;31;6;2
+choice;121;4;2
+choice;310;2;1

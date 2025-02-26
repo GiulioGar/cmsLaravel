@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1856;QDG396F39G;21/02/2025 10:18:32 CET;21/02/2025 10:19:40 CET;68;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=QDG396F39G;lang=en;sysIID=1856
+choice;4;2;0
+choice;5;6;0
+choice;10;20;6
+choice;20;2;1
+open;30;28
+choice;31;6;1
+choice;121;4;2
+choice;310;2;1

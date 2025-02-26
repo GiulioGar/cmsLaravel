@@ -1,0 +1,20 @@
+2.0;FER;R2501053SV;122;JLOOS4KUZV;17/02/2025 13:16:15 CET;17/02/2025 13:21:45 CET;330;7;131;sysSID=R2501053SV;sysPRJ=FER;sysUID=JLOOS4KUZV;pok=no;mok=no;lang=it;sysIID=122
+choice;4;2;0
+choice;5;6;0
+choice;10;20;11
+choice;20;2;0
+open;30;58
+choice;31;6;4
+choice;40;3;0
+choice;41;13;0010000000000;2
+scale;42;4;5;3;3;3;4
+choice;43;4;2
+open;70;Cioccolato 
+choice;80;11;10000000000;0;comp0:Torte
+open;90;Baci
+choice;100;11;10000000000;0;comp0:Ferrero
+scale;110;19;3;0;0;0;0;1;0;1;1;1;0;1;2;1;0;1;2;1;2;-1
+choice;120;19;0100110000000000000;1
+choice;121;4;0
+scale;130;22;4;2;1;1;0;1;0;1;0;0;0;0;0;2;2;2;0;0;1;1;1;2;-1
+choice;310;2;1

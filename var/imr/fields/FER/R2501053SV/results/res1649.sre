@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1649;9I95E5MAT1;20/02/2025 15:45:16 CET;20/02/2025 15:45:36 CET;20;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=9I95E5MAT1;lang=it;sysIID=1649
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;35
+choice;31;6;2
+choice;121;4;0
+choice;310;2;1

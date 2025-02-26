@@ -1,0 +1,19 @@
+2.0;FER;R2501053SV;582;DRG9161FIB;18/02/2025 11:49:49 CET;18/02/2025 12:04:53 CET;904;7;130;sysSID=R2501053SV;sysPRJ=FER;sysUID=DRG9161FIB;pok=no;mok=no;lang=it;sysIID=582
+choice;4;2;0
+choice;5;6;0
+choice;10;20;13
+choice;20;2;1
+open;30;31
+choice;31;6;1
+choice;40;3;1
+choice;41;13;0000000000001;12
+scale;42;4;5;4;4;4;4
+choice;43;4;2
+open;70;Cioccolato, fragole e panne, torte 
+choice;80;11;10000000000;0;comp0:Caramelle
+open;90;Baci perugina
+choice;100;11;00000000001;10
+scale;110;19;3;0;0;0;0;1;2;1;2;2;1;2;1;1;0;1;2;2;2;-1
+choice;120;19;0011100000011100000;3
+choice;121;4;3
+choice;310;2;1

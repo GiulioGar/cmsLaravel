@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;1045;ZYATNX5E3M;19/02/2025 11:46:47 CET;19/02/2025 11:55:48 CET;541;3;200;sysSID=R2501053SV;sysPRJ=FER;sysUID=ZYATNX5E3M;pok=si;mok=si;lang=it;sysIID=1045
+choice;4;2;0
+choice;5;6;0
+choice;10;20;12
+choice;20;2;1
+open;30;48
+choice;31;6;3
+choice;40;3;1
+choice;41;13;0000000000001;12
+scale;42;4;5;4;4;4;4
+choice;43;4;3
+open;70;Cioccolatini
+choice;80;11;11000000000;0;comp0:Marsh mellow forma cuore;comp1:Torte
+open;90;Lindt
+choice;100;11;10000000000;0;comp0:Perugina
+scale;110;19;3;2;1;2;0;0;0;2;1;2;1;1;1;2;1;2;2;2;2;-1
+choice;120;19;0000000000010000000;11
+choice;121;4;3
+scale;130;22;4;1;1;2;1;1;0;1;0;0;1;1;0;0;0;1;0;1;0;2;1;2;-1
+open;131;Non mi viene in mente
+choice;140;22;0000000010000010000000;8
+scale;150;22;10;4;4;-1;4;4;3;3;7;0;4;9;0;3;3;9;4;3;3;-1;6;-1;-1
+scale;151;22;10;5;5;-1;5;4;3;4;6;0;4;9;0;2;4;9;4;5;4;-1;5;-1;-1
+ordering;152;22;8;11;12;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;3
+choice;180;7;3
+choice;190;3;0
+choice;200;9;6
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;4;3;-1;-1;-1

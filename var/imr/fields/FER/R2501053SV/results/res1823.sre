@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1823;55CSLOA7EA;21/02/2025 07:01:12 CET;21/02/2025 07:01:31 CET;19;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=55CSLOA7EA;lang=it;sysIID=1823
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;63
+choice;31;6;4
+choice;121;4;0
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;7;-1;-1;-1;-1

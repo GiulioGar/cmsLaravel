@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;1015;VBV9IUPAIH;19/02/2025 10:28:00 CET;19/02/2025 10:33:39 CET;339;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=VBV9IUPAIH;pok=si;mok=si;lang=it;sysIID=1015
+choice;4;2;0
+choice;5;6;0
+choice;10;20;13
+choice;20;2;1
+open;30;51
+choice;31;6;3
+choice;40;3;0
+choice;41;13;0011100000100;3
+scale;42;4;5;0;0;0;0
+choice;43;4;1
+open;70;paste 
+choice;80;11;11100000000;0;comp0:cuori kinder;comp2:baci perugina;comp1:lindt cioccolatini
+open;90;lindt
+choice;100;11;11000000000;0;comp0:KINDER;comp1:CAFFAREL
+scale;110;19;3;2;2;2;0;2;1;2;2;2;0;2;2;2;2;2;2;1;2;-1
+choice;120;19;0001000001000000100;9
+choice;121;4;3
+scale;130;22;4;2;2;2;2;2;2;0;2;0;2;1;1;2;2;2;2;1;2;2;2;3;-1
+choice;140;22;0000001010000000000000;6
+scale;150;22;10;-1;-1;-1;-1;-1;-1;0;-1;1;-1;2;3;-1;-1;-1;-1;2;-1;-1;-1;-1;-1
+scale;151;22;10;-1;-1;-1;-1;-1;-1;0;-1;1;-1;0;5;-1;-1;-1;-1;2;-1;-1;-1;-1;-1
+ordering;152;22;6;8;10;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;5
+choice;180;7;3
+choice;190;3;0
+choice;200;9;1
+choice;210;10;7
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;6;3;-1;-1;-1

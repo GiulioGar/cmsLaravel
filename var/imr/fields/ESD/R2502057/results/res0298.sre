@@ -1,0 +1,64 @@
+2.0;ESD;R2502057;298;IDEXDYWSWPREVKFHT301;17/02/2025 15:11:44 CET;17/02/2025 15:20:02 CET;498;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYWSWPREVKFHT301;psid=-SpSK_Db-AlleS6DsMWLoA**;lang=en;sysIID=298;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;0
+choice;40;3;1
+choice;50;2;0
+open;60;44
+choice;65;6;1
+choice;80;7;6
+choice;105;4;0
+scale;106;7;5;0;0;0;0;0;0;1
+choice;110;9;000010000;4
+choice;120;9;4
+scale;140;9;14;000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000
+choice;160;2;1
+choice;170;8;1
+choice;180;4;1
+choice;190;8;0
+ordering;200;15;4;3;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;3
+choice;320;5;3
+choice;330;5;4
+choice;340;5;2
+choice;341;5;2
+choice;342;5;1
+concept;343
+choice;344;5;4
+choice;345;5;3
+choice;346;5;4
+choice;347;5;2
+choice;360;5;1
+open;440;The claims and the measuring quickly
+open;450;The price
+choice;451;5;1
+open;452;It is easy to use
+choice;511;3;0
+scale;512;6;5;2;3;1;2;3;2
+scale;513;12;6;000001000010010000000100111100010000010000010000010000100000001000100000
+ordering;514;11;4;0;1;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;Consistent accurate readings
+choice;520;12;1
+choice;521;5;1
+choice;530;4;1
+choice;550;6;4
+choice;560;13;2
+choice;570;14;2
+choice;575;9;2
+choice;1141;12;000000001000;8
+choice;5000;21;20
+choice;5002;21;2
+choice;5004;21;20
+choice;5006;21;3
+choice;5008;5;2
+choice;5010;5;3
+concept;5012
+choice;5100;21;20
+choice;5102;21;1
+choice;5104;21;20
+choice;5106;21;2
+choice;5108;5;2
+choice;5110;5;3
+concept;5112
+choice;9004;14;9

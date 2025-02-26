@@ -1,0 +1,32 @@
+2.0;FER;R2501053SV;810;RXVGR1ILJE;18/02/2025 17:48:59 CET;18/02/2025 18:04:39 CET;940;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=RXVGR1ILJE;pok=si;mok=no;lang=it;sysIID=810
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;0
+open;30;57
+choice;31;6;4
+choice;40;3;0
+choice;41;13;0011101011010;4
+scale;42;4;5;0;1;0;1
+choice;43;4;1
+open;70;Cioccolatino 
+choice;80;11;11100000000;0;comp0:Fiori ;comp2:Gioielli ;comp1:Profumi
+open;90;Baci Perugina 
+choice;100;11;11100000000;0;comp0:Rocher;comp2:Baratti;comp1:Lindor 
+scale;110;19;3;2;2;2;0;2;1;2;2;2;0;2;2;2;2;2;2;2;2;-1
+choice;120;19;0001000000000000000;3
+choice;121;4;0
+scale;130;22;4;1;1;2;2;2;0;2;1;0;1;1;0;2;2;2;0;0;1;2;2;1;-1
+open;131;Nd
+choice;140;22;0000000000010000000000;11
+scale;150;22;10;6;7;-1;-1;-1;6;-1;6;6;5;6;7;-1;-1;-1;4;4;6;-1;-1;9;-1
+scale;151;22;10;3;3;-1;-1;-1;1;-1;1;1;4;3;1;-1;-1;-1;2;2;4;-1;-1;9;-1
+ordering;152;22;11;5;8;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;2
+choice;180;7;1
+choice;190;3;0
+choice;200;9;0
+choice;210;10;2
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;3;-1;-1;-1;-1

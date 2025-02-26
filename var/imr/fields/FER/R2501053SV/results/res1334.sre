@@ -1,0 +1,12 @@
+2.0;FER;R2501053SV;1334;1TVT3BWV0Z;19/02/2025 19:17:19 CET;19/02/2025 19:18:18 CET;59;4;40;sysSID=R2501053SV;sysPRJ=FER;sysUID=1TVT3BWV0Z;pok=no;mok=no;lang=it;sysIID=1334
+choice;4;2;0
+choice;5;6;0
+choice;10;20;15
+choice;20;2;0
+open;30;57
+choice;31;6;4
+choice;40;3;2
+choice;121;4;2
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;6;5;-1;-1;-1

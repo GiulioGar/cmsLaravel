@@ -1,0 +1,9 @@
+2.0;ESD;R2502057;308;IDEXDYWHVNTJSXJGL312;17/02/2025 16:05:30 CET;<unknown>;0;0;105;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYWHVNTJSXJGL312;psid=-SpSK_Db-AlrC8LZn_XzzQ**;lang=en;sysIID=308;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;1
+open;60;60
+choice;65;6;1
+choice;80;7;6
+choice;105;4;1

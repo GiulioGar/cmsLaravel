@@ -1,0 +1,64 @@
+2.0;ESD;R2502057;858;IDEXDYFIGRVSMDRZG855;19/02/2025 12:04:55 CET;19/02/2025 12:13:57 CET;542;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYFIGRVSMDRZG855;psid=-SpSK_Db-AmuUCzwgkvDXA**;lang=en;sysIID=858;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;1
+open;60;47
+choice;65;6;0
+choice;105;4;0
+scale;106;7;5;0;0;1;0;0;1;1
+choice;110;9;000000100;6
+choice;120;9;6
+scale;140;9;14;000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000101000000000000000000000000000000
+choice;160;2;0
+choice;170;8;3
+choice;180;4;0
+choice;190;8;2
+ordering;200;15;11;4;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;0
+choice;320;5;0
+choice;330;5;0
+choice;340;5;0
+choice;341;5;0
+choice;342;5;0
+concept;343
+choice;344;5;2
+choice;345;5;0
+choice;346;5;2
+choice;347;5;0
+choice;360;5;1
+open;440;great set of feature, much more advanced than my current one
+open;450;just the price its a bit high for me
+choice;451;5;0
+open;452;great to get a clear read out quickly
+choice;460;2;0
+choice;470;8;3
+choice;511;3;0
+scale;512;6;5;0;1;0;0;0;1
+scale;513;12;6;000010000010000010000010000010000010000010000010000010111111000010000010
+ordering;514;11;1;2;0;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;more light on the display would be handy for viewing in the dark
+choice;520;12;10
+choice;521;5;1
+choice;530;4;0
+choice;550;6;4
+choice;560;13;12
+choice;570;14;13
+choice;575;9;0
+choice;1141;12;000010000000;4
+choice;5000;21;9
+choice;5002;21;20
+choice;5004;21;20
+choice;5006;21;20
+choice;5008;5;1
+choice;5010;5;3
+concept;5012
+choice;5100;21;14
+choice;5102;21;16
+choice;5104;21;20
+choice;5106;21;20
+choice;5108;5;1
+choice;5110;5;3
+concept;5112
+choice;9006;14;9

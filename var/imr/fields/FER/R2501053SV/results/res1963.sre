@@ -1,0 +1,16 @@
+2.0;FER;R2501053SV;1963;IDEXDYQEQWGOROBFS81;21/02/2025 14:12:15 CET;21/02/2025 14:13:48 CET;93;7;80;pok=si;lang=it;sysIID=1963;sysPRJ=FER;mok=si;sysSID=R2501053SV;pan=2;sysUID=IDEXDYQEQWGOROBFS81;psid=N25Jkd8Ji1FCH_s6mZEW-w**
+choice;4;2;0
+choice;5;6;0
+choice;10;20;4
+choice;20;2;1
+open;30;40
+choice;31;6;2
+choice;40;3;0
+choice;41;13;0000000000001;12
+scale;42;4;5;4;4;4;4
+choice;43;4;3
+open;70;Baci Perugina 
+choice;121;4;1
+choice;310;2;0
+choice;320;6;2
+scale;330;5;8;2;1;0;-1;-1

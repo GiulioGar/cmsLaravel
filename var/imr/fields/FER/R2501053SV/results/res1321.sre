@@ -1,0 +1,24 @@
+2.0;FER;R2501053SV;1321;L9EX53BZR3;19/02/2025 18:53:25 CET;19/02/2025 18:55:02 CET;97;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=L9EX53BZR3;pok=no;mok=no;lang=en;sysIID=1321
+choice;4;2;0
+choice;5;6;0
+choice;10;20;4
+choice;20;2;0
+open;30;34
+choice;31;6;1
+choice;40;3;0
+choice;41;13;0000000000001;12
+scale;42;4;5;4;4;4;4
+choice;43;4;3
+open;70;Cioccolatini 
+choice;80;11;00000000001;10
+open;90;Incerti 
+choice;100;11;00000000001;10
+scale;110;19;3;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;-1
+choice;121;4;1
+scale;130;22;4;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;3;-1
+choice;170;7;0
+choice;180;7;1
+choice;190;3;1
+choice;200;9;0
+choice;210;10;7
+choice;310;2;1

@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1654;PURHDV1AX8;20/02/2025 15:53:50 CET;20/02/2025 15:54:09 CET;19;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=PURHDV1AX8;lang=it;sysIID=1654
+choice;4;2;0
+choice;5;6;0
+choice;10;20;6
+choice;20;2;1
+open;30;35
+choice;31;6;2
+choice;121;4;2
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;0;-1;-1;-1;-1

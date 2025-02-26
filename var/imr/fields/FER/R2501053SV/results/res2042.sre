@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;2042;1KCMT65999;25/02/2025 17:01:52 CET;25/02/2025 17:02:14 CET;22;4;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=1KCMT65999;lang=it;sysIID=2042
+choice;4;2;0
+choice;5;6;0
+choice;10;20;11
+choice;20;2;0
+open;30;36
+choice;31;6;2
+choice;121;4;0
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;1;1;-1;-1;-1

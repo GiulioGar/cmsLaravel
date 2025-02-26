@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1503;PD32N3PS71;20/02/2025 10:05:08 CET;20/02/2025 10:05:26 CET;18;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=PD32N3PS71;lang=it;sysIID=1503
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;0
+open;30;57
+choice;31;6;4
+choice;121;4;0
+choice;310;2;1

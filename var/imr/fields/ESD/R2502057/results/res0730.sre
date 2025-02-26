@@ -1,0 +1,63 @@
+2.0;ESD;R2502057;730;IDEXDYFYAMOLIBGDU726;18/02/2025 10:22:57 CET;18/02/2025 10:30:27 CET;450;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYFYAMOLIBGDU726;psid=-SpSK_Db-AmbchceF2inYQ**;lang=en;sysIID=730;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;0
+choice;40;3;2
+choice;50;2;1
+open;60;57
+choice;65;6;1
+choice;80;7;6
+choice;105;4;1
+scale;106;7;5;2;1;0;1;2;2;1
+choice;110;9;000010000;4
+choice;120;9;4
+scale;140;9;14;000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000
+choice;160;2;1
+choice;170;8;0
+choice;180;4;1
+choice;190;8;1
+ordering;200;15;3;11;9;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;0
+choice;320;5;1
+choice;330;5;0
+choice;340;5;0
+choice;341;5;1
+choice;342;5;0
+concept;343
+choice;344;5;3
+choice;345;5;2
+choice;346;5;3
+choice;347;5;1
+choice;360;5;1
+open;440;Size and display 
+open;450;The ear inserter colour
+choice;451;5;0
+open;452;Easy to see what the issue is
+choice;511;3;1
+scale;512;6;5;0;0;1;4;0;0
+scale;513;12;6;010000110000100000011000011000001000011000110000010000111000011000111000
+ordering;514;11;8;10;4;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;Long lasting batteries and quick recharge
+choice;520;12;6
+choice;521;5;0
+choice;530;4;1
+choice;550;6;3
+choice;560;13;3
+choice;570;14;0
+choice;575;9;5
+choice;5000;21;2
+choice;5002;21;20
+choice;5004;21;20
+choice;5006;21;20
+choice;5008;5;1
+choice;5010;5;2
+concept;5012
+choice;5100;21;20
+choice;5102;21;6
+choice;5104;21;20
+choice;5106;21;8
+choice;5108;5;0
+choice;5110;5;2
+concept;5112
+choice;9004;14;11

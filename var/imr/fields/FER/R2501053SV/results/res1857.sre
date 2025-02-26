@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1857;DBN64KD2T1;21/02/2025 10:25:48 CET;21/02/2025 10:26:09 CET;21;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=DBN64KD2T1;lang=it;sysIID=1857
+choice;4;2;0
+choice;5;6;0
+choice;10;20;7
+choice;20;2;0
+open;30;63
+choice;31;6;4
+choice;121;4;0
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;7;-1;-1;-1;-1

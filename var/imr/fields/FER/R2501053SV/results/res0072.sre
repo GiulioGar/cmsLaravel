@@ -1,0 +1,22 @@
+2.0;FER;R2501053SV;72;QZCNQFJGJ1;17/02/2025 11:40:51 CET;17/02/2025 11:43:52 CET;181;7;131;sysSID=R2501053SV;sysPRJ=FER;sysUID=QZCNQFJGJ1;pok=no;mok=no;lang=it;sysIID=72
+choice;4;2;0
+choice;5;6;0
+choice;10;20;6
+choice;20;2;1
+open;30;60
+choice;31;6;4
+choice;40;3;0
+choice;41;13;0100000000000;1
+scale;42;4;5;2;2;2;2
+choice;43;4;3
+open;70;Baci perugina
+choice;80;11;10000000000;0;comp0:Cioccolatini
+open;90;Baci perugina
+choice;100;11;10000000000;0;comp0:Nessuna
+scale;110;19;3;2;2;2;0;2;2;2;2;2;2;2;2;2;2;2;2;2;2;-1
+choice;120;19;0001000000000000000;3
+choice;121;4;2
+scale;130;22;4;2;2;2;2;2;2;2;0;0;2;2;0;2;2;2;0;0;2;2;2;2;-1
+choice;310;2;0
+choice;320;6;2
+scale;330;5;8;7;7;7;-1;-1

@@ -1,0 +1,841 @@
+#export vars "mok"
+#export vars "pok"
+#export vars "Svar0"
+#export vars "Svar1"
+#export vars "Svar2"
+#export vars "Svar3"
+#export vars "Svar4"
+#export vars "Svar5"
+#export vars "Svar6"
+#export vars "Svar7"
+#export vars "Svar8"
+#export vars "Svar9"
+#export vars "psid"
+
+void main() {
+
+// variabili comuni
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+string label2;
+string label3;
+string label4;
+string labelold;
+string labelcheck;
+boolean selcheck;
+int contanascosti;
+int r1;
+int selint;
+int selintb;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+boolean selb;
+string cpt;
+int preQid;
+int conta;
+int n;
+int reCod;
+int reCod2=1;
+int salvai;
+string nascondi_item;
+int selintfigli;
+ 
+///LEGGERE VARIABILI DI SISTEMA
+string uid = system.getProperty("sysUID");
+string prj = system.getProperty("sysPRJ");
+string sid = system.getProperty("sysSID");
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "scripts:mod.js");
+ 
+string autotest=system.getProperty("test");
+ 
+string cod_concept="<script type='text/javascript' src='https://www.primisoft.com/fields/script/dinNone.js'></script>";
+ 
+if (autotest=="1") {system.setProperty("env", "scripts:modtest.js");}
+ 
+ 
+if (autotest=="1" || uid=="GUEST" || uid=="null") {
+    system.setProperty("env", "debug:true");  system.setProperty("env", "browser:variables");
+}
+ 
+ 
+//allinea(colonne, margine_altezza,margine_larghezza)
+string all="<script type='text/javascript' src='https://www.primisoft.com/fields/script/all.js'></script>";
+string mozCode="<script type='text/javascript'>$(window).load(function() {allinea(4,40,120,250);});</script>";
+string allinea=all+mozCode;
+ 
+//allinea(colonne, margine_altezza,margine_larghezza)
+string all_r="<script type='text/javascript' src='https://www.primisoft.com/fields/FER/R2301011/resources/all_rank.js'></script>";
+string mozCode_r="<script type='text/javascript'>$(window).load(function() {allinea_r(4,40,300);});</script>";
+string allinea_r=all_r+mozCode_r;	
+ 
+string scriptzoom="<script type='text/javascript' src='https://www.primisoft.com/fields/BRS/ITA1405062/resources/jquery.fancybox.js?v=2.1.5'></script>";
+string altroscript="<script type='text/javascript'> $(document).ready(function() { $('.fancybox').fancybox();});</script>";
+string fogliostile="<link rel='stylesheet' href='https://www.primisoft.com/fields/BRS/ITA1405062/resources/jquery.fancybox.css?v=2.1.5' type='text/css' media='screen' />";
+ 
+string imgpiccola=scriptzoom+fogliostile+altroscript+"<p class='info'><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/ITA1902033/resources/Diapositiva6.JPG'><img src='https://www.primisoft.com/fields/FER/ITA1902033/resources/Diapositiva6.JPG'  width='450px' alt='' /></a><br>clicca per ingrandire</p>";
+ 
+ 
+ 
+string deviceType = system.getProperty("user_agent:deviceType");
+string osType = system.getProperty("user_agent:osType");
+string browserType = system.getProperty("user_agent:browserType");
+ 
+/*
+qtext = "<p>System Information</p>"+
+		"<ul>"+
+			"<li>OS Type: "+osType+"</li>"+
+			"<li>Browser Type: "+browserType+"</li>"+
+			"<li>Device Type: "+deviceType+"</li>"+
+		"</ul>";
+qst = new question("concept", 5);
+qst.setProperty("text", qtext);
+send qst;
+*/
+ 
+boolean controllomob;
+ 
+string s1 = deviceType.trim();
+ 
+ 
+controllomob=s1.contains("mobile");
+if (controllomob==true){
+allinea_r="";
+allinea="";
+system.setProperty("env", "stylesheet:modmob.css");
+}
+
+string propanel=system.getProperty("pan");
+//if (propanel=="cint"){return 5;}
+
+int festivita;
+
+//festivita=0 San Valentino
+//festivita=1 Carnevale
+//festivita=2 Pasqua
+//festivita=3 Halloween
+//festivita=4 Natale
+//festivita=5 Epifania
+
+//SELEZIONO FESTIVITA'
+
+festivita=0;
+
+qst = new question("choice", 5);
+qst.setProperty("text", "Festività");
+qst.setProperty("code", "festivita");
+vector q5_opts = new vector {
+"San Valentino",
+"Carnevale",
+"Pasqua",
+"Halloween",
+"Natale",
+"Epifania"
+};
+qst.setProperty("options", q5_opts);
+qst.setProperty("hidden", true);
+qst.setProperty("default_answer", "{ 'selection': ["+festivita+"] }");
+send qst;
+
+
+	if (festivita==0){label="di San Valentino";}
+	if (festivita==1){label="di Carnevale";}
+	if (festivita==2){label="di Pasqua";}
+	if (festivita==3){label="di <b>Halloween</b>";}
+	if (festivita==4){label="di Natale";}
+	if (festivita==5){label="<b>dell'Epifania</b>";}
+
+	if (festivita==0){label2="a San Valentino";}
+	if (festivita==1){label2="a Carnevale";}
+	if (festivita==2){label2="a Pasqua";}
+	if (festivita==3){label2="ad <b>Halloween</b>";}
+	if (festivita==4){label2="al Natale";}
+	if (festivita==5){label2="<b>all'Epifania</b>";}
+
+	if (festivita==0){label3="San Valentino";}
+	if (festivita==1){label3="Carnevale";}
+	if (festivita==2){label3="Pasqua";}
+	if (festivita==3){label3="<b>Halloween</b>";}
+	if (festivita==4){label3="Natale";}
+	if (festivita==5){label3="<b>l'Epifania</b>";}
+
+	if (festivita==0){label4="a San Valentino";}
+	if (festivita==1){label4="al Carnevale";}
+	if (festivita==2){label4="alla Pasqua";}
+	if (festivita==3){label4="ad <b>Halloween</b>";}
+	if (festivita==4){label4="al Natale";}
+	if (festivita==5){label4="<b>all'Epifania</b>";}
+
+
+qst = new question("choice", 4);
+qst.setProperty("text", "Se deciderà di partecipare a questo sondaggio, le verranno fornite alcune informazioni riservate di proprietà di un importante produttore. Queste informazioni potrebbero includere, ma non solamente, idee e concetti per nuovi prodotti/iniziative sperimentali.<br>In cambio della sua partecipazione a questo progetto e in considerazione delle informazioni riservate che le verranno fornite, le chiediamo di impegnarsi a non utilizzare o divulgare le informazioni di cui verrà a conoscenza in questo studio a nessuna persona, inclusi amici e famigliari, o entità. Lei si impegna a non tentare di copiare, stampare o scaricare alcuna informazione fornitale nell’ambito di questo studio.<br><br>Selezionando “Accetto” qui sotto, dichiara di aver letto, compreso e accettato questi termini.");
+qst.setProperty("code", "aut");
+vector q4_opts = new vector {
+"Accetto",
+"Non accetto"
+};
+qst.setProperty("options", q4_opts);
+send qst;
+selint=system.getProperty("ans4");
+if (selint==1){return 4;}
+
+
+qst = new question("choice", 10);
+qst.setProperty("text", "In quale regione vive?");
+qst.setProperty("code", "s1");
+vector q10_opts = new vector {
+"ABRUZZO",
+"BASILICATA",
+"CALABRIA",
+"CAMPANIA",
+"EMILIA-ROMAGNA",
+"FRIULI-VENEZIA GIULIA",
+"LAZIO",
+"LIGURIA",
+"LOMBARDIA",
+"MARCHE",
+"MOLISE",
+"PIEMONTE",
+"PUGLIA",
+"SARDEGNA",
+"SICILIA",
+"TOSCANA",
+"TRENTINO-ALTO ADIGE",
+"UMBRIA",
+"VALLE D'AOSTA",
+"VENETO"
+};
+qst.setProperty("options", q10_opts);
+send qst;
+int regione=system.getProperty("ans10");
+////// RICODIFICA REGIONE IN AREA ///////
+
+reCod=3;
+    switch(regione)
+        {
+        case 7,8,11,18:{reCod=0;}
+        case 4,5,16,19:{reCod=1;}
+        case 6,9,15,17:{reCod=2;}
+        }
+		
+	
+qst = new question("choice", 121);
+qst.setProperty("text", "Codifica Aree:");
+qst.setProperty("code", "RecArea");
+vector q121_opts = new vector {
+"Nord Ovest: Piemonte, Val d&#39;Aosta, Liguria, Lombardia",
+"Nord Est: Trentino-Alto Adige, Veneto, Friuli-Venezia Giulia, Emilia-Romagna",
+"Centro: Toscana, Umbria, Marche, Lazio",
+"Sud+Isole: Abruzzo, Molise, Puglia, Campania, Basilicata, Calabria, Sicilia, Sardegna"
+};
+qst.setProperty("options", q121_opts);
+qst.setProperty("hidden", true);
+qst.setProperty("default_answer", "{ 'selection': ["+reCod+"] }");
+send qst;
+
+cmd=q121_opts.get(reCod);
+system.out("<div>Area geografica: "+cmd+"</div>"); 	
+
+
+int areageog=system.getProperty("ans121");	
+	
+	
+	
+	
+	qst = new question("choice", 20);
+	qst.setProperty("text", "Lei &egrave;..");
+	qst.setProperty("code", "s2");
+	vector q20_opts = new vector {
+		"Uomo",
+		"Donna"
+	};
+	qst.setProperty("options", q20_opts);
+	send qst;
+	
+	selint=system.getProperty("ans20");
+	int sex=selint;
+
+
+	
+	cmd=q20_opts.get(sex);
+	system.out("<div>Sesso: "+cmd+"</div>");
+	
+	
+	
+	qst = new question("open", 30);
+	qst.setProperty("text", "Indichi la sua et&agrave;.");
+	qst.setProperty("view", "numeric");
+	qst.setProperty("code", "s3");
+	send qst;
+	
+	int eta=(int)system.getProperty("ans30");
+	
+	if (eta<25 || eta>65){return 4;}
+	
+	
+	if(eta<25) { reCod=0;}
+	if(eta>=25 && eta<=34) { reCod=1;}
+	if(eta>=35 && eta<=44) { reCod=2;}
+	if(eta>=45 && eta<=54) { reCod=3;}
+	if(eta>=55 && eta<=65) { reCod=4;}
+	if(eta>65) { reCod=5;}
+	
+	
+qst = new question("choice", 31);
+qst.setProperty("text", "RECODE IN TO:");
+qst.setProperty("code", "recAge");
+vector q31_opts = new vector {
+"Meno di 25 anni",
+"25 - 34 anni",
+"35 - 44 anni",
+"45 - 54 anni",
+"55 – 65 anni",
+"Più di 65 anni"
+};
+qst.setProperty("options", q31_opts);
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+
+cmd=q31_opts.get(reCod);
+system.out("<div>Fascia di età: "+cmd+"</div>");
+
+
+qst = new question("choice", 310);
+	qst.setProperty("text", "Ha figli?");
+	qst.setProperty("code", "s4a");
+	vector q310_opts = new vector {
+		"S&igrave;",
+		"No"
+	};
+	qst.setProperty("options", q310_opts);
+	send qst;
+	
+	selintfigli=system.getProperty("ans310");
+	reCod=1;
+	
+	int nfigli;
+	
+	if (selintfigli==0)
+	{
+	qst = new question("choice", 320);
+	qst.setProperty("text", "Quanti figli ha?");
+	qst.setProperty("code", "s4b");
+	vector q320_opts = new vector {
+		"Uno",
+		"Due",
+		"Tre",
+		"Quattro",
+		"Cinque",
+		"Pi&ugrave; di cinque"
+	};
+	qst.setProperty("options", q320_opts);
+	send qst;
+	
+	selint=system.getProperty("ans320");
+	nfigli=selint;
+	
+	
+	vector q330_rows = new vector {
+		"1° figlio/a",
+		"2° figlio/a",
+		"3° figlio/a",
+		"4° figlio/a",
+		"5° figlio/a"
+	};
+	
+	conta=0;
+	for (int i=0,4)
+	{
+	if (i>selint)
+				{
+				nascondi_item="nascondi#sh"+i;
+				q330_rows.set(i, nascondi_item);
+				conta=conta+1;
+				}
+	
+	}
+	
+	if (conta==4){labelold="Qual è l’età di suo figlio/a? ";}
+	else {labelold="Qual &egrave; l’et&agrave; di ciascuno dei suoi figli?";}
+	
+	qst = new question("scale", 330);
+	qst.setProperty("text", labelold+" <br>Se non ha ancora compiuto l’anno metta 0.");
+	qst.setProperty("code", "s4c");
+	qst.setProperty("rows", q330_rows);
+	vector q330_cols = new vector {
+		"Da 0 a 2 anni",
+		"Da 3 a 6 anni",
+		"Da 7 a 9 anni",
+		"Da 10 a 12 anni",
+		"Da 13 a 17 anni",
+		"Da 18 a 21 ani",
+		"Da 22 a 25 anni",
+		"26 anni o pi&ugrave;"
+	};
+	qst.setProperty("cols", q330_cols);
+	qst.setProperty("view", "columns");
+	send qst;
+	
+	
+	count=0;
+	for(int i=0,4)
+	{
+	
+		for(int j=1,3)
+		{
+		sel=system.getProperty("ans330_"+i+"_"+j);
+		if (sel==true) { count=count+1; }
+		}
+	}
+	
+	
+	if (count>0 && sex==1) {reCod=0;}
+	if (count>0) {reCod2=0;}
+
+	}
+
+boolean mok;
+boolean pok;
+
+if (reCod==0) { mok=true; system.setProperty("mok","si"); system.out("<div>MOK:SI</div>");}
+else { mok=false; system.setProperty("mok","no"); system.out("<div>MOK:NO</div>");   }
+
+
+if (reCod2==0) { pok=true; system.setProperty("pok","si"); system.out("<div>pok:SI</div>");}
+else { pok=false; system.setProperty("pok","no"); system.out("<div>pok:NO</div>");  }
+
+if(mok==false) { return 4;}
+
+	qst = new question("choice", 40);
+	qst.setProperty("text", "Chi si occupa dell’acquisto di prodotti alimentari nella sua famiglia?");
+	qst.setProperty("code", "s5");
+	vector q40_opts = new vector {
+		"Io personalmente",
+		"Io e il mio coniuge/altre persone insieme",
+		"Il mio coniuge/altre persone"
+	};
+	qst.setProperty("options", q40_opts);
+	send qst;
+	
+	selint=system.getProperty("ans40");
+	if (selint==2){return 4;}
+
+
+
+	qst = new question("choice", 41);
+	qst.setProperty("text", "Quali delle seguenti attività ha fatto per festeggiare <b>"+label3+"</b>? ");
+	qst.setProperty("selection", "multiple");
+	qst.setProperty("code", "r1");
+	qst.setProperty("show_rand", true);
+	vector q41_opts = new vector {
+"Ho preparato alimenti dolci a tema",
+"Ho preparato un pranzo/cena speciale",
+"Ho acquistato alimenti non dolci / bevande ",
+"Ho acquistato dei prodotti dolci ",
+"Ho acquistato prodotti al cioccolato ",
+"Ho addobbato casa a tema San Valentino",
+"Ho acquistato/confezionato regali per me stesso/familiari/parenti/amici/conoscenti",
+"Ho acquistato/confezionato travestimenti / oggetti da indossare a tema ",
+"Ho visitato dei negozi per cercare regali /alimenti per festeggiare San Valentino",
+"Ho visitato siti web per cercare regali/ alimenti per festeggiare San Valentino",
+"Ho festeggiato in casa mia/di amici/ di parenti",
+"Ho festeggiato fuori casa (ristorante, locale, luogo pubblico ecc)",
+"Nessuna di queste cose#se#sf"
+	};
+
+
+	qst.setProperty("options", q41_opts);
+	send qst;
+
+
+
+	qst = new question("scale", 42);
+	qst.setProperty("text", "Adesso leggerà una lista di affermazioni relative<b> <u>"+label4+"</u></b> e, per ciascuna di esse, dovrà indicare quanto è d’accordo. <br><br><b>"+label3+" è…</b>");
+	qst.setProperty("code", "r2");
+	qst.setProperty("show_rand", true);
+	vector q42_rows = new vector {
+"…una festa importante per me da celebrare ",
+"…una festa che festeggio secondo la tradizione ",
+"…una festa che mi coinvolge in maniera particolare",
+"… una festa in cui dedico particolare cura e attenzione ai preparativi (decorazioni, addobbi, regali …)"
+	};
+	qst.setProperty("rows", q42_rows);
+	vector q42_cols = new vector {
+"Molto",
+"Abbastanza",
+"Così così",
+"Poco",
+"Per niente"
+	};
+	qst.setProperty("cols", q42_cols);
+	//qst.setProperty("extras","{header_repeat:5}");
+	send qst;
+
+	qst = new question("choice", 43);
+	qst.setProperty("text", "In quale dei seguenti comportamenti si riconosce di più?<br>Rispetto <b>"+label4+"</b> mi sento …");
+	//qst.setProperty("selection", "multiple");
+	qst.setProperty("code", "r3");
+	vector q43_opts = new vector {
+"Non vedo l’ora che arrivi per festeggiare. Inizio i preparativi con buon anticipo e mi danno molta soddisfazione",
+"Mi piace festeggiare ma dedico un tempo misurato alla preparazione: di solito cerco soluzioni già pronte per l’uso",
+"Non la vivo come un’occasione speciale, ma è bello ritrovarsi con i propri cari (per esempio famiglia, parenti, amici)",
+"Non sono interessato a festeggiare questa occasione"
+	};
+	qst.setProperty("options", q43_opts);
+	send qst;
+
+
+	
+
+
+	qst = new question("open", 70);
+	qst.setProperty("text", "Parliamo ora della ricorrenza "+label+".<br><br>Qual è la prima CATEGORIA DI PRODOTTI DOLCI CONFEZIONATI che associa spontaneamente <b>"+label2+"</b>?");
+	qst.setProperty("code", "q1");
+	send qst;
+
+	string onefor="<script type='text/javascript' src='https://www.primisoft.com/fields/script/oneforone.js'></script>";
+
+	qst = new question("choice", 80);
+	qst.setProperty("text", onefor+"Quali altre CATEGORIE DI PRODOTTI DOLCI CONFEZIONATI associa spontaneamente <b>"+label2+"</b>?");
+	qst.setProperty("selection", "multiple");
+	qst.setProperty("code", "q2");
+	vector q80_opts = new vector {
+		"1#so",
+		"2#so",
+		"3#so",
+		"4#so",
+		"5#so",
+		"6#so",
+		"7#so",
+		"8#so",
+		"9#so",
+		"10#so",
+		"nessun’altra#se"
+	};
+	qst.setProperty("options", q80_opts);
+	send qst;
+
+
+	qst = new question("open", 90);
+	qst.setProperty("text", "E sempre pensando ai prodotti dolci confezionati, qual è la prima MARCA che associa spontaneamente <b>"+label2+"</b>?");
+	qst.setProperty("code", "q3");
+	send qst;
+
+
+	qst = new question("choice", 100);
+	qst.setProperty("text", onefor+"E quali altre MARCHE di prodotti dolci confezionati associa spontaneamente <b>"+label2+"</b>?");
+	qst.setProperty("selection", "multiple");
+	qst.setProperty("code", "q4");
+	vector q100_opts = new vector {
+		"1#so",
+		"2#so",
+		"3#so",
+		"4#so",
+		"5#so",
+		"6#so",
+		"7#so",
+		"8#so",
+		"9#so",
+		"10#so",
+		"nessun’altra#se"
+	};
+	qst.setProperty("options", q100_opts);
+	send qst;
+
+
+	qst = new question("scale", 110);
+	qst.setProperty("text", "Adesso le mostrerò una lista di categorie di PRODOTTI DOLCI CONFEZIONATI. Quanto associa ognuna di queste categorie <b>"+label2+"</b>? Utilizzi la seguente scala per rispondere: molto, così così, per niente.");
+	//qst.setProperty("selection", "multiple");
+	qst.setProperty("show_rand", true);
+	qst.setProperty("code", "q5");
+	vector q110_opts_rows = new vector {
+"Snack e barrette al cioccolato ",
+"Tavolette di cioccolato",
+"Mini/Miniatures (formato miniporzionato)  di Snack e barrette al cioccolato",
+"Praline e cioccolatini ",
+"Biscotti ",
+"Torte confezionate",
+"Merendine ",
+"Gelati confezionati (no artigianale)",
+"Merendine da banco frigo",
+"Pasticceria assortita",
+"Creme spalmabili (alle Nocciole, Gianduia, cioccolato, etc)",
+"Caramelle",
+"Ovetti al cioccolato ",
+"Forme cave al cioccolato",
+"Uova al cioccolato con sorpresa",
+"Prodotti lievitati da forno come Pandoro, Panettone, Colomba",
+"Prodotti fritti da forno (struffoli, frittelle, castagnole)",
+"Torrone",
+"Nessuna di queste#se#sf#sh"
+	};
+	qst.setProperty("rows", q110_opts_rows);
+	vector q110_opts_cols = new vector {
+"Molto",
+"Così così",
+"Per niente"
+	};
+	qst.setProperty("cols", q110_opts_cols);
+	qst.setProperty("extras","{header_repeat:10}");
+	send qst;
+	int selintq5Tavolette=system.getProperty("ans110_1");
+	
+
+	contanascosti=0;
+	for(int i=0,17)
+	{
+	selint=system.getProperty("ans110_"+i);
+	if (selint==2)  {  nascondi_item ="#shopt"+i; q110_opts_rows.set(i,nascondi_item); contanascosti=contanascosti+1;}
+	}
+
+	boolean q6tavolette;
+	q110_opts_rows.set(18,"Nessuna di queste#se#sf");
+	if (contanascosti!=18)
+	{
+	qst = new question("choice", 120);
+	qst.setProperty("text", "E tra le diverse categorie che associa <b>"+label2+"</b>, quali <b>ha acquistato</b> per se, la sua famiglia o per regalarli durante questa ricorrenza?");
+	qst.setProperty("selection", "multiple");
+	qst.setProperty("code", "q6");
+	qst.setProperty("options", q110_opts_rows);
+	qst.setProperty("show_rand", true);
+	send qst;
+
+	q6tavolette=system.getProperty("ans120_1");
+	}
+
+
+
+
+	qst = new question("scale", 130);
+	qst.setProperty("text", "Adesso le mostrerò una lista di marche. Quanto associa ognuna di queste marche <b>"+label2+"</b>? Utilizzi la seguente scala per rispondere: molto, così così, per niente, non conosce");
+	//qst.setProperty("selection", "multiple");
+	qst.setProperty("show_rand", true);
+	qst.setProperty("code", "q7");
+vector q130_opts_rows = new vector {
+    "Bauli<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2408120NA/resources/2.jpg'></div>",
+	"Delacre<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2408120NA/resources/4.jpg'></div>",
+	"Mulino Bianco<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/mulino.jpg'></div>",
+	"Pandistelle<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/15.jpg'></div>",
+	"Nutella<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/14.jpg'></div>",
+	"Ferrero Rocher<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/7.jpg'></div>",
+	"Kinder<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/9.jpg'></div>",
+	"Mon Cherì<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2501053SV/resources/moncheri.jpg'></div>",
+    "Lindt<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/10.jpg'></div>",
+	"Milka<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/11.jpg'></div>",
+	"Novi<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2501053SV/resources/novi.jpg'></div>",
+    "Baci Perugina<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/baci.jpg'></div>",
+	"Sperlari<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/17.jpg'></div>",
+    "Haribo<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/8.jpg'></div>",
+    "Tic Tac<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/18.jpg'></div>",
+    "Ferrero Collection<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2408120EP/resources/ferrero_collection.jpg'></div>",
+    "Ferrero Prestige<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2408120EP/resources/prestige.jpg'></div>",
+    "Raffaello<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2408120NA/resources/raffaello.jpg'></div>",
+    "M&M's<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2301011/resources/12.jpg'></div>",
+    "Mikado<div style='border:1px solid;'><img width='150px'  src='https://www.primisoft.com/fields/FER/R2501053SV/resources/mikado.jpg'></div>",
+    "Altro (se nient'altro clicchi \"non conosce\")<div style='display:none;'>#sf</div>",
+    "Nessuna di queste#se#sf#sh"
+};
+	qst.setProperty("rows", q130_opts_rows);
+	vector q130_opts_cols = new vector {
+"Molto",
+"Così così",
+"Per niente",
+"Non conosce"
+	};
+	qst.setProperty("cols", q130_opts_cols);
+	qst.setProperty("extras","{header_repeat:5}");
+	send qst;
+
+	selint=system.getProperty("ans130_20");
+	if (selint<3){
+		qst = new question("open", 131);
+		qst.setProperty("text", "Specifichi altra marca");
+		qst.setProperty("code", "q7x");
+		send qst;
+		cmd=system.getProperty("ans131");
+		cmd=cmd+" (altro)<span style='display:none;'>#sf</span>";
+		q130_opts_rows.set(20,cmd);
+	}
+
+	
+	for(int i=0,20)
+	{
+	selint=system.getProperty("ans130_"+i);
+	if (selint>=2)  {  nascondi_item ="#shopt"+i; q130_opts_rows.set(i,nascondi_item); }
+	}
+
+	contanascosti=0;
+	for(int i=0,20)
+	{
+	labelcheck=q130_opts_rows.get(i);
+	selcheck=labelcheck.contains("#sh");
+	if (selcheck==true){contanascosti=contanascosti+1;}
+	}
+
+	if (contanascosti!=21)
+	{
+	//abilito il nessuno solo prima di q8 e poi lo rinascondo
+	q130_opts_rows.set(21,"Nessuna di queste#se#sf");
+	qst = new question("choice", 140);
+	qst.setProperty("text", allinea+"E tra le diverse marche che associa <b>"+label2+"</b>, quali <b>ha acquistato</b> per se, la sua famiglia o per regalarli durante questa ricorrenza?");
+	qst.setProperty("selection", "multiple");
+	qst.setProperty("code", "q8");
+	qst.setProperty("options", q130_opts_rows);
+	send qst;
+
+	//lo rinascondo
+	q130_opts_rows.set(21,"Nessuna di queste#se#sf#sh");
+	qst = new question("scale", 150);
+	qst.setProperty("text", "Pensando alla prossima volta che acquisterà PRODOTTI DOLCI CONFEZIONATI <b>"+label2+"</b>, quanto prenderà in considerazione le seguenti marche? ");
+	qst.setProperty("code", "q9");
+	qst.setProperty("rows", q130_opts_rows);
+	qst.setProperty("show_rand", true);
+	vector q150_cols = new vector {
+"10<br>Sarà la mia prima scelta",
+"9",		
+"8",		
+"7",		
+"6",		
+"5",		
+"4",		
+"3",		
+"2",		
+"1<br>Non la prenderò in considerazione"
+};
+	qst.setProperty("cols", q150_cols);
+	qst.setProperty("extras","{header_repeat:5}");
+	send qst;
+
+
+	qst = new question("scale", 151);
+	qst.setProperty("text", "Avendo  sempre come riferimento la ricorrenza "+label+" e l’offerta delle diverse marche in questa occasione, quanto si <b>sente vicina ed emotivamente coinvolta/o</b> nei confronti delle diverse marche?");
+	qst.setProperty("code", "q10");
+	qst.setProperty("rows", q130_opts_rows);
+	qst.setProperty("show_rand", true);
+	vector q151_cols = new vector {
+"10<br>Moltissimo",
+"9",
+"8",
+"7",
+"6",
+"5",
+"4",
+"3",
+"2",
+"1<br>Per niente"
+};
+	qst.setProperty("cols", q151_cols);
+	qst.setProperty("extras","{header_repeat:5}");
+	send qst;
+
+	if (contanascosti<20)
+		{
+		qst = new question("ordering", 152);
+		qst.setProperty("text", allinea_r+"Pensando a tutte le marche che aveva selezionato in precedenza, ne scelga 3 tra queste mettendole <u>in ordine di importanza</u> in base alla capacità di rispondere al meglio ai suoi bisogni <b>"+label2+"</b>.");
+		qst.setProperty("code", "q11");
+		qst.setProperty("show_rand", true);
+		qst.setProperty("options", q130_opts_rows);
+		qst.setProperty("sel_count", 3);
+		qst.setProperty("strict_selection", true);
+		send qst;
+		}
+
+	}
+
+
+	qst = new question("choice", 170);
+	qst.setProperty("text", "Siamo arrivati alla fine dell’intervista. Ora le faremo solo qualche domanda a scopo statistico. <br><br>Complessivamente, di quante persone è composto il suo nucleo familiare incluso Lei?");
+	qst.setProperty("code", "dm1");
+	vector q170_opts = new vector {
+		"1 persona",
+		"2 persone",
+		"3 persone",
+		"4 persone",
+		"5 persone",
+		"6 persone",
+		"7 o più persone"
+	};
+	qst.setProperty("options", q170_opts);
+	send qst;
+
+
+	qst = new question("choice", 180);
+	qst.setProperty("text", "Qual è il Suo livello di istruzione? Per favore selezioni una sola risposta.");
+	qst.setProperty("code", "dm4");
+	vector q180_opts = new vector {
+		"Specializzazione/master post Laurea",
+		"Università con laurea",
+		"Università senza laurea",
+		"Licenza Media superiore",
+		"Licenza Media inferiore",
+		"Licenza Elementare",
+		"Nessun titolo"
+	};
+	qst.setProperty("options", q180_opts);
+	send qst;
+
+
+	qst = new question("choice", 190);
+	qst.setProperty("text", "Qual è il Suo stato civile? Per favore selezioni una sola risposta.");
+	qst.setProperty("code", "dm5");
+	vector q190_opts = new vector {
+		"Sposato/a, convivente",
+		"Celibe/nubile",
+		"Separato/a, divorziato/a, vedovo/a"
+	};
+	qst.setProperty("options", q190_opts);
+	send qst;
+
+
+	qst = new question("choice", 200);
+	qst.setProperty("text", "Potrebbe indicare la sua attuale condizione lavorativa? <br>Per favore selezioni una sola risposta.");
+	qst.setProperty("code", "dm6");
+	vector q200_opts = new vector {
+		"Occupato/a a tempo pieno",
+		"Occupato/a a tempo parziale",
+		"In congedo di maternità/paternità",
+		"Altra condizione lavorativa",
+		"Disoccupato/a",
+		"Pensionato/a",
+		"Casalingo/a",
+		"Studente",
+		"Altra condizione NON lavorativa"
+	};
+	qst.setProperty("options", q200_opts);
+	send qst;
+	selint=system.getProperty("ans200");
+
+	if (selint<4)
+	{
+	qst = new question("choice", 210);
+	qst.setProperty("text", "Potrebbe indicare che lavoro svolge? <br>Per favore selezioni una sola risposta.");
+	qst.setProperty("code", "dm7");
+	vector q210_opts = new vector {
+		"Imprenditore",
+		"Libero professionista",
+		"Dirigente",
+		"Quadro /funzionario",
+		"Artigiano",
+		"Commerciante/esercente",
+		"Lavoratore autonomo",
+		"Impiegato/ Insegnante",
+		"Operaio",
+		"Altro"
+	};
+	qst.setProperty("options", q210_opts);
+	send qst;
+	}
+}

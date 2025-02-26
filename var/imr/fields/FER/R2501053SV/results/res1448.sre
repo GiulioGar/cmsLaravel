@@ -1,0 +1,12 @@
+2.0;FER;R2501053SV;1448;4RZIM22140;20/02/2025 01:31:34 CET;20/02/2025 01:32:07 CET;33;4;40;sysSID=R2501053SV;sysPRJ=FER;sysUID=4RZIM22140;pok=no;mok=no;lang=it;sysIID=1448
+choice;4;2;0
+choice;5;6;0
+choice;10;20;3
+choice;20;2;0
+open;30;46
+choice;31;6;3
+choice;40;3;2
+choice;121;4;3
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;4;-1;-1;-1;-1

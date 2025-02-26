@@ -1,0 +1,66 @@
+2.0;ESD;R2502057;853;IDEXDYIAEGTSWNUHF850;19/02/2025 12:04:14 CET;19/02/2025 12:13:52 CET;578;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYIAEGTSWNUHF850;psid=-SpSK_Db-AnrAsWwjPvP-g**;lang=en;sysIID=853;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;1
+open;60;60
+choice;65;6;3
+choice;80;7;1
+scale;100;6;8;7;5;-1;-1;-1;-1
+choice;105;4;0
+scale;106;7;5;1;1;1;0;1;1;2
+choice;110;9;000010000;4
+choice;120;9;4
+scale;140;9;14;000000000000000000000000000000000000000000000000000000000001000000010000000000000000000000000000000000000000000000000000000000
+choice;160;2;1
+choice;170;8;0
+choice;180;4;1
+choice;190;8;1
+ordering;200;15;1;4;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;1
+choice;320;5;2
+choice;330;5;3
+choice;340;5;2
+choice;341;5;2
+choice;342;5;1
+concept;343
+choice;344;5;2
+choice;345;5;2
+choice;346;5;3
+choice;347;5;2
+choice;360;5;1
+open;440;That it's multifunctional 
+open;450;Nothing really 
+choice;451;5;2
+open;452;To get a better reading signified to you
+choice;460;2;1
+choice;470;8;0
+choice;511;3;1
+scale;512;6;5;1;1;0;1;0;1
+scale;513;12;6;000100001000010000100000010000001000001000000100001000011000100000011000
+ordering;514;11;8;1;4;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;I don't know it seems to have everything needed 
+choice;520;12;7
+choice;521;5;3
+choice;530;4;1
+choice;550;6;2
+choice;560;13;7
+choice;570;14;7
+choice;575;9;5
+choice;2000;8;00000100;5
+choice;5000;21;17
+choice;5002;21;11
+choice;5004;21;20
+choice;5006;21;20
+choice;5008;5;1
+choice;5010;5;3
+concept;5012
+choice;5100;21;14
+choice;5102;21;11
+choice;5104;21;20
+choice;5106;21;19
+choice;5108;5;2
+choice;5110;5;3
+concept;5112
+choice;9004;14;3

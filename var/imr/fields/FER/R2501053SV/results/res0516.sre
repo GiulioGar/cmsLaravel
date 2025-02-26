@@ -1,0 +1,29 @@
+2.0;FER;R2501053SV;516;QUCVZ0XIA2;18/02/2025 11:05:32 CET;18/02/2025 11:15:43 CET;611;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=QUCVZ0XIA2;pok=no;mok=no;lang=it;sysIID=516
+choice;4;2;0
+choice;5;6;0
+choice;10;20;7
+choice;20;2;0
+open;30;45
+choice;31;6;3
+choice;40;3;1
+choice;41;13;0101001000100;1
+scale;42;4;5;2;1;3;4
+choice;43;4;2
+open;70;Baci perugina
+choice;80;11;11100000000;0;comp0:Kinder cioccolato con la forma del cuore;comp2:Baci di dama;comp1:Raffaello
+open;90;Perugina
+choice;100;11;11110000000;0;comp0:Ferrero;comp3:Sambuco;comp2:Novi;comp1:Lindt
+scale;110;19;3;1;1;1;0;1;0;1;2;1;0;2;2;0;0;2;2;2;2;-1
+choice;120;19;0000010001000100000;9
+choice;121;4;0
+scale;130;22;4;2;3;2;1;1;0;0;0;0;0;0;0;0;2;2;0;0;0;2;2;3;-1
+choice;140;22;0000011000100000000000;5
+scale;150;22;10;-1;-1;-1;2;0;5;0;2;1;3;2;2;3;-1;-1;5;4;4;-1;-1;-1;-1
+scale;151;22;10;-1;-1;-1;3;4;1;0;2;1;2;0;0;8;-1;-1;1;3;2;-1;-1;-1;-1
+ordering;152;22;11;6;7;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;1
+choice;180;7;3
+choice;190;3;0
+choice;200;9;1
+choice;210;10;8
+choice;310;2;1

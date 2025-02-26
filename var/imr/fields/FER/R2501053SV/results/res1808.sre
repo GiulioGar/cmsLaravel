@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1808;0SV1L618DS;21/02/2025 00:45:29 CET;21/02/2025 00:45:40 CET;11;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=0SV1L618DS;lang=it;sysIID=1808
+choice;4;2;0
+choice;5;6;0
+choice;10;20;11
+choice;20;2;1
+open;30;40
+choice;31;6;2
+choice;121;4;0
+choice;310;2;1

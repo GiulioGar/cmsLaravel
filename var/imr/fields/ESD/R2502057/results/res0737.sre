@@ -1,0 +1,67 @@
+2.0;ESD;R2502057;737;IDEXDYCLXFLKISWQM733;18/02/2025 10:23:37 CET;18/02/2025 10:41:06 CET;1049;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYCLXFLKISWQM733;psid=-SpSK_Db-AnpyknFNi1N4A**;lang=en;sysIID=737;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;0
+open;60;50
+choice;65;6;4
+choice;80;7;0
+scale;100;6;8;6;-1;-1;-1;-1;-1
+choice;105;4;0
+scale;106;7;5;1;1;3;2;2;2;4
+choice;110;9;001011000;5
+choice;120;9;5
+scale;140;9;14;000000000000000000000000000000000000000001000000000000000000000000010000000000000100000000000000000000000000000000000000000000
+choice;160;2;1
+choice;170;8;0
+choice;180;4;0
+choice;190;8;1
+ordering;200;15;5;8;4;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;2
+choice;320;5;2
+choice;330;5;3
+choice;340;5;2
+choice;341;5;2
+choice;342;5;2
+concept;343
+choice;344;5;2
+choice;345;5;2
+choice;346;5;3
+choice;347;5;2
+choice;360;5;2
+open;440;The style of it and how easy it would be to use. And the display all looks good
+open;450;Nothing it all looked good
+choice;451;5;2
+open;452;How big and bright it is and how it stands out
+choice;460;2;1
+choice;470;8;0
+choice;511;3;1
+scale;512;6;5;0;0;0;1;0;1
+scale;513;12;6;000100001000000100000100000100001000010000001000010000010000100000100000
+ordering;514;11;8;6;2;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;There is not any
+choice;520;12;5
+choice;521;5;0
+choice;530;4;1
+choice;550;6;2
+choice;560;13;9
+choice;570;14;7
+choice;575;9;8
+choice;2000;8;00000100;5
+choice;5000;21;3
+choice;5002;21;18
+choice;5004;21;12
+choice;5006;21;18
+choice;5008;5;2
+choice;5010;5;2
+concept;5012
+choice;5100;21;20
+choice;5102;21;5
+choice;5104;21;20
+choice;5106;21;5
+choice;5108;5;2
+choice;5110;5;2
+concept;5112
+choice;9004;14;11
+choice;9005;14;11

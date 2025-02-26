@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1732;8GN5CXELIZ;20/02/2025 18:56:13 CET;20/02/2025 18:56:35 CET;22;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=8GN5CXELIZ;lang=it;sysIID=1732
+choice;4;2;0
+choice;5;6;0
+choice;10;20;14
+choice;20;2;1
+open;30;51
+choice;31;6;3
+choice;121;4;3
+choice;310;2;1

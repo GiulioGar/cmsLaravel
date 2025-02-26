@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1757;SKE6E74078;20/02/2025 20:52:23 CET;20/02/2025 20:52:37 CET;14;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=SKE6E74078;lang=it;sysIID=1757
+choice;4;2;0
+choice;5;6;0
+choice;10;20;6
+choice;20;2;1
+open;30;56
+choice;31;6;4
+choice;121;4;2
+choice;310;2;1

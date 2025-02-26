@@ -1,0 +1,22 @@
+2.0;FER;R2501053SV;903;40GRLOSTYI;18/02/2025 21:47:11 CET;18/02/2025 21:50:12 CET;181;7;131;sysSID=R2501053SV;sysPRJ=FER;sysUID=40GRLOSTYI;pok=si;mok=si;lang=it;sysIID=903
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;48
+choice;31;6;3
+choice;40;3;0
+choice;41;13;1110010000010;11
+scale;42;4;5;1;1;1;0
+choice;43;4;0
+open;70;Nestlè 
+choice;80;11;10000000000;0;comp0:Perugina
+open;90;Bauli
+choice;100;11;10000000000;0;comp0:Lindt
+scale;110;19;3;0;1;1;1;0;0;1;1;0;1;1;0;1;1;0;0;0;1;-1
+choice;120;19;1000000000100010000;14
+choice;121;4;0
+scale;130;22;4;1;1;1;1;1;1;1;0;1;0;0;1;1;1;1;1;0;0;0;1;0;-1
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;4;3;-1;-1;-1

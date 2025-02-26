@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;367;02IMPBRQSA;18/02/2025 10:15:36 CET;18/02/2025 10:17:56 CET;140;7;42;sysSID=R2501053SV;sysPRJ=FER;sysUID=02IMPBRQSA;pok=no;mok=no;lang=it;sysIID=367
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;35
+choice;31;6;2
+choice;40;3;1
+choice;41;13;0100100000000;1
+choice;121;4;0
+choice;310;2;1

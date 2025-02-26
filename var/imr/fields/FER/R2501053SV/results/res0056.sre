@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;56;VHBIDOEPYZ;17/02/2025 11:31:32 CET;17/02/2025 11:38:15 CET;403;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=VHBIDOEPYZ;pok=si;mok=si;lang=it;sysIID=56
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;43
+choice;31;6;2
+choice;40;3;0
+choice;41;13;0010100010010;11
+scale;42;4;5;0;0;0;1
+choice;43;4;1
+open;70;Cioccolatini 
+choice;80;11;10000000000;0;comp0:Cioccolato 
+open;90;Ferrero
+choice;100;11;11100000000;0;comp0:Kinder;comp2:Perugina ;comp1:Lindt
+scale;110;19;3;0;1;0;0;1;1;1;2;1;0;0;1;0;0;1;2;1;2;-1
+choice;120;19;0101000000100100100;16
+choice;121;4;0
+scale;130;22;4;1;1;2;2;0;0;0;0;0;0;0;0;1;1;1;0;0;1;1;1;3;-1
+choice;140;22;0000111100010000000000;4
+scale;150;22;10;3;2;-1;-1;0;0;0;0;2;1;1;0;2;2;3;1;1;2;2;2;-1;-1
+scale;151;22;10;2;1;-1;-1;0;0;0;0;2;0;1;0;1;2;2;1;1;2;1;1;-1;-1
+ordering;152;22;7;11;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;3
+choice;180;7;0
+choice;190;3;0
+choice;200;9;0
+choice;210;10;2
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;3;2;-1;-1;-1

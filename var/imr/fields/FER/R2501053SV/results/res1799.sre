@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1799;SBATYFWAHM;20/02/2025 23:20:58 CET;20/02/2025 23:22:00 CET;62;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=SBATYFWAHM;lang=it;sysIID=1799
+choice;4;2;0
+choice;5;6;0
+choice;10;20;14
+choice;20;2;1
+open;30;60
+choice;31;6;4
+choice;121;4;3
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;7;-1;-1;-1;-1

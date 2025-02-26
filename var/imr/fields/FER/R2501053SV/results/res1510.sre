@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1510;ZG54S02671;20/02/2025 10:44:12 CET;20/02/2025 10:44:30 CET;18;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=ZG54S02671;lang=it;sysIID=1510
+choice;4;2;0
+choice;5;6;0
+choice;10;20;9
+choice;20;2;0
+open;30;65
+choice;31;6;4
+choice;121;4;2
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;7;-1;-1;-1;-1

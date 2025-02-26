@@ -1,0 +1,14 @@
+2.0;ESD;R2502057;823;IDEXDYLWEDPHRFQER820;19/02/2025 00:06:36 CET;19/02/2025 00:08:38 CET;122;4;120;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYLWEDPHRFQER820;psid=-SpSK_Db-AnmGydqtjQ8wA**;lang=en;sysIID=823;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;1
+open;60;40
+choice;65;6;3
+choice;80;7;1
+scale;100;6;8;5;5;-1;-1;-1;-1
+choice;105;4;0
+scale;106;7;5;1;0;0;0;0;0;1
+choice;110;9;011011000;5
+choice;120;9;1
+choice;2000;8;00000100;5

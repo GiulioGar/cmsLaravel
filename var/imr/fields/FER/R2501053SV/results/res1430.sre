@@ -1,0 +1,29 @@
+2.0;FER;R2501053SV;1430;NIMISFPBO0;19/02/2025 23:04:07 CET;19/02/2025 23:14:44 CET;637;3;200;sysSID=R2501053SV;sysPRJ=FER;sysUID=NIMISFPBO0;pok=no;mok=no;lang=it;sysIID=1430
+choice;4;2;0
+choice;5;6;0
+choice;10;20;0
+choice;20;2;0
+open;30;51
+choice;31;6;3
+choice;40;3;1
+choice;41;13;0000000000001;12
+scale;42;4;5;3;3;4;4
+choice;43;4;3
+open;70;Cioccolatini 
+choice;80;11;11111100000;0;comp0:Caramelle ;comp5:Gelato ;comp4:Torte ;comp3:Chiacchiere ;comp2:Frappe;comp1:Bignè 
+open;90;Perugina 
+choice;100;11;11111100000;0;comp0:Lindit;comp5:Ferrero ;comp4:Algida ;comp3:Caffarel;comp2:Sperlari;comp1:Lindor
+scale;110;19;3;0;0;1;0;0;0;1;0;1;0;1;0;1;1;2;2;0;2;-1
+choice;120;19;1101101101110000100;1
+choice;121;4;3
+scale;130;22;4;1;0;1;1;1;0;1;0;0;1;0;0;0;2;1;0;0;0;1;1;0;-1
+open;131;Boeri
+choice;140;22;0000000000000000000001;21
+scale;150;22;10;5;0;5;9;5;0;5;0;3;5;3;0;0;-1;5;0;0;0;5;5;0;-1
+scale;151;22;10;5;0;5;5;5;0;5;0;0;5;0;0;0;-1;5;0;0;0;5;5;0;-1
+ordering;152;22;7;20;11;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;2
+choice;180;7;3
+choice;190;3;1
+choice;200;9;4
+choice;310;2;1

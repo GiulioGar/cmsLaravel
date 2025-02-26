@@ -1,0 +1,30 @@
+2.0;FER;R2501053SV;1012;DBL53OSJSF;19/02/2025 10:24:05 CET;19/02/2025 10:34:04 CET;599;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=DBL53OSJSF;pok=no;mok=no;lang=it;sysIID=1012
+choice;4;2;0
+choice;5;6;0
+choice;10;20;6
+choice;20;2;1
+open;30;50
+choice;31;6;3
+choice;40;3;0
+choice;41;13;0000100000000;4
+scale;42;4;5;2;2;2;2
+choice;43;4;2
+open;70;baci perugina
+choice;80;11;10000000000;0;comp0:cioccolatini 
+open;90;perugina
+choice;100;11;10000000000;0;comp0:lindt
+scale;110;19;3;2;1;2;0;2;1;2;1;2;0;2;0;1;1;1;1;1;1;-1
+choice;120;19;0001000001001000000;3
+choice;121;4;2
+scale;130;22;4;1;1;2;2;2;0;1;1;0;1;1;0;1;2;2;1;1;0;2;2;0;-1
+open;131;Marche di cioccolato artigianale o di lusso
+choice;140;22;0000011111110000010000;5
+scale;150;22;10;4;5;-1;-1;-1;2;3;1;1;3;4;0;2;-1;-1;2;2;2;-1;-1;0;-1
+scale;151;22;10;3;4;-1;-1;-1;2;3;2;1;3;3;0;1;-1;-1;2;2;2;-1;-1;0;-1
+ordering;152;22;11;20;8;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;2
+choice;180;7;1
+choice;190;3;2
+choice;200;9;1
+choice;210;10;7
+choice;310;2;1

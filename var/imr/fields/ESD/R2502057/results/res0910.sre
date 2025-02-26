@@ -1,0 +1,64 @@
+2.0;ESD;R2502057;910;IDEXDYOPMJCWZSXDK907;19/02/2025 15:16:31 CET;19/02/2025 15:37:39 CET;1268;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYOPMJCWZSXDK907;psid=-SpSK_Db-AmWM0ohyypU0Q**;lang=en;sysIID=910;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;0
+open;60;58
+choice;65;6;1
+choice;80;7;0
+scale;100;6;8;7;-1;-1;-1;-1;-1
+choice;105;4;0
+scale;106;7;5;1;0;1;1;1;2;3
+choice;110;9;000010000;4
+choice;120;9;4
+scale;140;9;14;000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000
+choice;160;2;0
+choice;170;8;4
+choice;180;4;2
+choice;190;8;1
+ordering;200;15;5;9;4;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;1
+choice;320;5;2
+choice;330;5;3
+choice;340;5;2
+choice;341;5;1
+choice;342;5;1
+concept;343
+choice;344;5;3
+choice;345;5;2
+choice;346;5;3
+choice;347;5;2
+choice;360;5;1
+open;440;I like the fever bit and that it is re by doctors but I think it would be expensive 
+open;450;I don’t dislike anything 
+choice;451;5;1
+open;452;It’s easy to read the results and see the danger zone 
+choice;511;3;0
+scale;512;6;5;0;0;0;1;0;1
+scale;513;12;6;001110000010000010000010000010000010000010000010000010000010000010000010
+ordering;514;11;1;3;2;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;I can’t think of anything that would improve present thermometer 
+choice;520;12;8
+choice;521;5;1
+choice;530;4;0
+choice;550;6;2
+choice;560;13;8
+choice;570;14;8
+choice;575;9;1
+choice;2000;8;00000100;5
+choice;5000;21;20
+choice;5002;21;0
+choice;5004;21;20
+choice;5006;21;5
+choice;5008;5;2
+choice;5010;5;2
+concept;5012
+choice;5100;21;20
+choice;5102;21;5
+choice;5104;21;20
+choice;5106;21;6
+choice;5108;5;2
+choice;5110;5;3
+concept;5112
+choice;9004;14;11

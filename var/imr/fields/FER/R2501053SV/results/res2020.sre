@@ -1,0 +1,32 @@
+2.0;FER;R2501053SV;2020;IDEXDYRMNYQSSHBVF135;21/02/2025 15:06:01 CET;21/02/2025 15:11:06 CET;305;3;210;pok=si;lang=it;sysIID=2020;sysPRJ=FER;mok=si;sysSID=R2501053SV;pan=2;sysUID=IDEXDYRMNYQSSHBVF135;psid=N25Jkd8Ji1Fh_tj79LAyAg**
+choice;4;2;0
+choice;5;6;0
+choice;10;20;14
+choice;20;2;1
+open;30;38
+choice;31;6;2
+choice;40;3;1
+choice;41;13;0000101000010;4
+scale;42;4;5;1;1;1;1
+choice;43;4;1
+open;70;Cioccolatini 
+choice;80;11;10000000000;0;comp0:Fiori 
+open;90;Baci Perugina 
+choice;100;11;10000000000;0;comp0:Lindt
+scale;110;19;3;1;0;1;1;1;0;1;2;1;0;0;2;0;0;0;1;1;2;-1
+choice;120;19;1000010000000000000;0
+choice;121;4;3
+scale;130;22;4;1;1;1;1;0;0;0;1;0;0;0;0;1;1;1;0;0;1;1;1;0;-1
+open;131;Torte
+choice;140;22;0000010010010000000000;5
+scale;150;22;10;1;1;1;1;0;0;0;1;0;0;0;0;1;1;1;0;0;1;1;1;1;-1
+scale;151;22;10;1;1;1;1;0;0;0;1;0;1;0;0;1;1;1;0;0;1;1;1;1;-1
+ordering;152;22;11;15;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;2
+choice;180;7;3
+choice;190;3;0
+choice;200;9;0
+choice;210;10;7
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;3;-1;-1;-1;-1

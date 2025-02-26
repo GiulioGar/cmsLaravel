@@ -1,0 +1,64 @@
+2.0;ESD;R2502057;727;IDEXDYKVWWGOEVMPQ723;18/02/2025 10:22:53 CET;18/02/2025 10:30:37 CET;464;3;575;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYKVWWGOEVMPQ723;psid=-SpSK_Db-AkMZ2ukEhVYYA**;lang=ro;sysIID=727;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;1
+choice;50;2;0
+open;60;44
+choice;65;6;1
+choice;80;7;6
+choice;105;4;1
+scale;106;7;5;0;0;1;0;0;0;1
+choice;110;9;100010000;0
+choice;120;9;4
+scale;140;9;14;000000000100000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000
+choice;160;2;0
+choice;170;8;5
+choice;180;4;1
+choice;190;8;1
+ordering;200;15;3;12;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;0
+choice;320;5;0
+choice;330;5;0
+choice;340;5;0
+choice;341;5;0
+choice;342;5;0
+concept;343
+choice;344;5;3
+choice;345;5;2
+choice;346;5;2
+choice;347;5;1
+choice;360;5;1
+open;440;The intuitive colour code is a briliant ideea
+open;450;Nothing ,but the price is a little expensive for my budget
+choice;451;5;0
+open;452;Easy to read ,even for peoples with some disability
+choice;511;3;0
+scale;512;6;5;0;0;0;0;0;0
+scale;513;12;6;001000010000000100010000001000010000000100001000001000111111010000000100
+ordering;514;11;6;3;4;-1;-1;-1;-1;-1;-1;-1;-1
+open;515;To have a safe button if you a very high fever to contact the emergency service
+choice;520;12;4
+choice;521;5;3
+choice;530;4;1
+choice;550;6;3
+choice;560;13;7
+choice;570;14;13
+choice;575;9;3
+choice;1141;12;000000000001;11
+choice;5000;21;17
+choice;5002;21;15
+choice;5004;21;20
+choice;5006;21;15
+choice;5008;5;0
+choice;5010;5;4
+concept;5012
+choice;5100;21;20
+choice;5102;21;6
+choice;5104;21;20
+choice;5106;21;11
+choice;5108;5;1
+choice;5110;5;3
+concept;5112
+choice;9000;14;9
+choice;9004;14;9

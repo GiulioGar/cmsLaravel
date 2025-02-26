@@ -1,0 +1,21 @@
+2.0;FER;R2501053SV;663;E15UKY75LM;18/02/2025 13:22:23 CET;18/02/2025 13:27:29 CET;306;7;131;sysSID=R2501053SV;sysPRJ=FER;sysUID=E15UKY75LM;pok=no;mok=no;lang=it;sysIID=663
+choice;4;2;0
+choice;5;6;0
+choice;10;20;12
+choice;20;2;0
+open;30;55
+choice;31;6;4
+choice;40;3;1
+choice;41;13;0001000001000;9
+scale;42;4;5;3;1;4;4
+choice;43;4;2
+open;70;Cuoricini al cioccolato Lindt
+choice;80;11;10000000000;0;comp0:Raffaello
+open;90;Lindt
+choice;100;11;10000000000;0;comp0:Ferrero
+scale;110;19;3;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;2;-1
+choice;121;4;3
+scale;130;22;4;2;2;2;2;2;0;2;1;0;2;2;1;2;2;2;1;1;0;2;2;2;-1
+choice;310;2;0
+choice;320;6;2
+scale;330;5;8;7;7;0;-1;-1

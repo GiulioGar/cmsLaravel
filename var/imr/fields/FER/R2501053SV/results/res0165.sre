@@ -1,0 +1,12 @@
+2.0;FER;R2501053SV;165;XXFMA7Q0HQ;17/02/2025 14:56:55 CET;17/02/2025 14:57:39 CET;44;4;40;sysSID=R2501053SV;sysPRJ=FER;sysUID=XXFMA7Q0HQ;pok=no;mok=no;lang=it;sysIID=165
+choice;4;2;0
+choice;5;6;0
+choice;10;20;12
+choice;20;2;0
+open;30;53
+choice;31;6;3
+choice;40;3;2
+choice;121;4;3
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;5;-1;-1;-1;-1

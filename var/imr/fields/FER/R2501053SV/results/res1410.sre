@@ -1,0 +1,22 @@
+2.0;FER;R2501053SV;1410;9TOMO4FS1G;19/02/2025 21:54:42 CET;19/02/2025 22:01:10 CET;388;7;131;sysSID=R2501053SV;sysPRJ=FER;sysUID=9TOMO4FS1G;pok=si;mok=si;lang=it;sysIID=1410
+choice;4;2;0
+choice;5;6;0
+choice;10;20;9
+choice;20;2;1
+open;30;47
+choice;31;6;3
+choice;40;3;0
+choice;41;13;0000100000010;11
+scale;42;4;5;1;1;1;1
+choice;43;4;1
+open;70;Cioccolatini
+choice;80;11;00000000001;10
+open;90;Baci Perugina
+choice;100;11;10000000000;0;comp0:Mon chery
+scale;110;19;3;2;1;2;0;1;1;2;2;2;1;2;1;0;1;2;2;2;2;-1
+choice;120;19;0101000001011100000;13
+choice;121;4;2
+scale;130;22;4;2;2;2;2;2;0;1;0;1;1;1;0;1;2;2;1;1;1;2;2;2;-1
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;4;3;-1;-1;-1

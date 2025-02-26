@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1810;O8F43KIXVU;21/02/2025 00:55:56 CET;21/02/2025 00:57:07 CET;71;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=O8F43KIXVU;lang=it;sysIID=1810
+choice;4;2;0
+choice;5;6;0
+choice;10;20;14
+choice;20;2;0
+open;30;58
+choice;31;6;4
+choice;121;4;3
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;5;-1;-1;-1;-1

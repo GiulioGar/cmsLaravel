@@ -1,0 +1,56 @@
+2.0;ESD;R2502057;375;IDEXDYFPJEJMYDOVB379;17/02/2025 17:07:09 CET;<unknown>;0;0;120;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYFPJEJMYDOVB379;psid=-SpSK_Db-Am_aAHt9rd2zA**;lang=en;sysIID=375;pan=2
+choice;10;2;0
+choice;20;11;00101000000;4
+choice;30;2;1
+choice;50;2;0
+open;60;33
+choice;65;6;3
+choice;80;7;1
+scale;100;6;8;5;6;-1;-1;-1;-1
+choice;105;4;1
+scale;106;7;5;0;0;1;0;0;0;0
+choice;110;9;000010000;4
+choice;120;9;4
+scale;140;9;14;000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000
+choice;160;2;1
+choice;170;8;0
+choice;180;4;2
+choice;190;8;1
+ordering;200;15;5;4;6;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;300
+choice;310;5;1
+choice;320;5;1
+choice;330;5;1
+choice;340;5;1
+choice;341;5;1
+choice;342;5;0
+concept;343
+choice;344;5;1
+choice;345;5;1
+choice;346;5;1
+choice;347;5;0
+choice;360;5;0
+open;440;The accurate results 
+open;450;I do not dislike it 
+choice;451;5;1
+open;452;Yellow or red
+choice;460;2;1
+choice;470;8;0
+choice;511;3;1
+scale;512;6;5;0;0;0;0;0;1
+choice;2000;8;00000100;5
+choice;5000;21;4
+choice;5002;21;18
+choice;5004;21;14
+choice;5006;21;18
+choice;5008;5;1
+choice;5010;5;1
+concept;5012
+choice;5100;21;9
+choice;5102;21;19
+choice;5104;21;16
+choice;5106;21;20
+choice;5108;5;1
+choice;5110;5;2
+concept;5112
+choice;9004;14;0

@@ -1,0 +1,10 @@
+2.0;ESD;R2502057;84;IDEXDYGACIFLRQBRU89;17/02/2025 12:04:25 CET;17/02/2025 12:05:36 CET;71;4;106;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYGACIFLRQBRU89;psid=-SpSK_Db-Alvyc7fYdUxrw**;lang=en;sysIID=84;pan=2
+choice;10;2;0
+choice;20;11;00000000001;10
+choice;30;2;0
+choice;40;3;1
+choice;50;2;1
+open;60;58
+choice;65;6;0
+choice;105;4;0
+scale;106;7;5;3;3;2;2;1;2;4

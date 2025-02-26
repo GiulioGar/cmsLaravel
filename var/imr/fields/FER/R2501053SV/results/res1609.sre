@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1609;EAXEX8447G;20/02/2025 15:15:40 CET;20/02/2025 15:16:06 CET;26;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=EAXEX8447G;lang=it;sysIID=1609
+choice;4;2;0
+choice;5;6;0
+choice;10;20;4
+choice;20;2;1
+open;30;52
+choice;31;6;3
+choice;121;4;1
+choice;310;2;1

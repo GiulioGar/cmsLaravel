@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1838;PVTU821005;21/02/2025 08:52:52 CET;21/02/2025 08:53:09 CET;17;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=PVTU821005;lang=it;sysIID=1838
+choice;4;2;0
+choice;5;6;0
+choice;10;20;3
+choice;20;2;0
+open;30;55
+choice;31;6;4
+choice;121;4;3
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;4;-1;-1;-1;-1

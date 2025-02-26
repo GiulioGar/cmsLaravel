@@ -1,0 +1,32 @@
+2.0;FER;R2501053SV;722;9S7MSQOU74;18/02/2025 14:48:49 CET;18/02/2025 14:59:38 CET;649;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=9S7MSQOU74;pok=no;mok=no;lang=it;sysIID=722
+choice;4;2;0
+choice;5;6;0
+choice;10;20;1
+choice;20;2;1
+open;30;54
+choice;31;6;3
+choice;40;3;0
+choice;41;13;0011100011010;9
+scale;42;4;5;0;1;0;0
+choice;43;4;0
+open;70;Baci Perugina 
+choice;80;11;11100000000;0;comp0:Ferrero Rocher ;comp2:Pasticceria assortita ;comp1:Mon Chéri 
+open;90;Ferrero 
+choice;100;11;11110000000;0;comp0:Perugina ;comp3:Bauli;comp2:Nestlé ;comp1:Pavesi 
+scale;110;19;3;1;1;2;0;0;0;2;1;2;0;1;1;2;1;2;2;2;2;-1
+choice;120;19;0001100001000000000;3
+choice;121;4;3
+scale;130;22;4;1;1;2;2;2;0;1;0;1;2;1;0;1;2;2;0;0;1;2;2;2;-1
+open;131;Ore liete Perugia 
+choice;140;22;0000010100010000000000;5
+scale;150;22;10;1;2;-1;-1;-1;0;2;0;1;-1;1;0;2;-1;-1;0;0;1;-1;-1;-1;-1
+scale;151;22;10;1;2;-1;-1;-1;0;2;0;2;-1;1;0;1;-1;-1;0;0;1;-1;-1;-1;-1
+ordering;152;22;11;5;7;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;3
+choice;180;7;3
+choice;190;3;0
+choice;200;9;1
+choice;210;10;6
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;4;-1;-1;-1;-1

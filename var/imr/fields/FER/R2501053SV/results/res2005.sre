@@ -1,0 +1,31 @@
+2.0;FER;R2501053SV;2005;IDEXDYVXGXCSBVOQE121;21/02/2025 14:40:39 CET;21/02/2025 14:44:36 CET;237;3;210;pok=si;lang=it;sysIID=2005;sysPRJ=FER;mok=si;sysSID=R2501053SV;pan=2;sysUID=IDEXDYVXGXCSBVOQE121;psid=N25Jkd8Ji1HifXeHbH5z0g**
+choice;4;2;0
+choice;5;6;0
+choice;10;20;11
+choice;20;2;1
+open;30;38
+choice;31;6;2
+choice;40;3;1
+choice;41;13;0000100010000;4
+scale;42;4;5;1;1;1;2
+choice;43;4;1
+open;70;Baci Perugina 
+choice;80;11;10000000000;0;comp0:Baci Perugina 
+open;90;Perugina 
+choice;100;11;10000000000;0;comp0:Perugina
+scale;110;19;3;1;0;1;0;1;1;1;1;2;1;2;1;0;1;1;1;1;1;-1
+choice;120;19;0011001101000000000;9
+choice;121;4;0
+scale;130;22;4;1;1;0;0;0;0;0;1;0;0;1;0;1;0;1;0;0;1;1;0;3;-1
+choice;140;22;0111000001000000000000;1
+scale;150;22;10;3;2;3;4;2;4;2;5;2;2;2;2;3;2;6;2;2;6;2;2;-1;-1
+scale;151;22;10;5;3;3;2;3;3;2;3;4;4;4;3;4;4;5;3;4;2;4;4;-1;-1
+ordering;152;22;0;19;11;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;3
+choice;180;7;0
+choice;190;3;0
+choice;200;9;0
+choice;210;10;7
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;1;2;-1;-1;-1

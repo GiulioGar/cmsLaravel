@@ -1,22 +1,29 @@
 .field-control-container {
-    margin-top: 1%;
+    margin-top: 20px;
 }
 
+/* Layout flex per mantenere la stessa altezza */
 .stat-card {
     background: white;
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease-in-out;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    min-height: 180px; /* Imposta una altezza minima uguale per tutte */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.2);
 }
 
+/* Badge styling */
 .stat-badge {
     display: inline-block;
-    padding: 10px;
+    padding: 10px 15px;
     border-radius: 8px;
     font-weight: bold;
     font-size: 14px;
@@ -24,36 +31,106 @@
     color: white;
 }
 
+/* Badge Colors */
+.badge-dark { background-color: #343a40; }
+.badge-red { background-color: #e63946; }
+.badge-green { background-color: #2a9d8f; }
+.badge-blue { background-color: #457b9d; }
+
+/* Titoli e valori */
 .stat-value {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: bold;
+    color: #212529;
 }
 
 .stat-text {
     font-size: 14px;
+    font-weight: 500;
+    color: #6c757d;
 }
 
-.text-positive {
-    color: green;
+/* Stile del testo secondario */
+.text-muted {
+    font-size: 13px;
+    font-weight: 400;
+    color: #6c757d;
 }
 
-.text-negative {
-    color: red;
+h3 {font-size: 15px!important;}
+
+
+/* Contenitore principale */
+.custom-tab-container {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
 }
 
-/* Badge Colors */
-.badge-dark {
-    background-color: black;
+/* Menu laterale senza distacco */
+.custom-nav-container {
+    background: #f8f9fa;
+    padding: 10px;
+    border-right: 1px solid #ddd;
 }
 
-.badge-red {
-    background-color: #e63946;
+/* Stile dei pulsanti del menu laterale */
+.custom-nav-pills .nav-link {
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 0;
+    padding: 10px;
+    color: #404044;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease-in-out;
+    border-left: 3px solid transparent;
 }
 
-.badge-green {
-    background-color: #2a9d8f;
+.custom-nav-pills .nav-link i {
+    font-size: 18px;
+    color: #6c757d;
 }
 
-.badge-blue {
-    background-color: #457b9d;
+/* Hover e attivo */
+.custom-nav-pills .nav-link:hover,
+.custom-nav-pills .nav-link.active {
+    background: #e9ecef;
+    color: #404044;
+    border-left: 3px solid #9dce6b;
 }
+
+.custom-nav-pills .nav-link.active i {
+    color: #9dce6b;
+}
+
+/* Tab content senza distacco */
+.custom-tab-content {
+    flex-grow: 1;
+    padding: 20px;
+    background: white;
+    min-height: 150px;
+}
+
+/* Stile tabella di riepilogo */
+.custom-table {
+    width: 100%;
+    max-width: 600px;
+    margin-top: 15px;
+    border-collapse: collapse;
+}
+
+.custom-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.custom-table td:first-child {
+    font-weight: bold;
+    width: 50%;
+}
+
+

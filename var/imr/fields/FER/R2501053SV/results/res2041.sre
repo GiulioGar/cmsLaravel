@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;2041;FSQ0HDMKV2;21/02/2025 15:41:47 CET;21/02/2025 15:42:06 CET;19;4;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=FSQ0HDMKV2;lang=it;sysIID=2041
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;25
+choice;31;6;1
+choice;121;4;0
+choice;310;2;1

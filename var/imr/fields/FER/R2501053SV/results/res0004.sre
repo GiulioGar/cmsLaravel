@@ -1,0 +1,22 @@
+2.0;FER;R2501053SV;4;9U11YPVYHD;17/02/2025 11:05:33 CET;17/02/2025 11:08:42 CET;189;7;131;sysSID=R2501053SV;sysPRJ=FER;sysUID=9U11YPVYHD;pok=no;mok=no;lang=it;sysIID=4
+choice;4;2;0
+choice;5;6;0
+choice;10;20;11
+choice;20;2;0
+open;30;53
+choice;31;6;3
+choice;40;3;1
+choice;41;13;0000000000010;11
+scale;42;4;5;1;2;2;2
+choice;43;4;2
+open;70;Bugie
+choice;80;11;11100000000;0;comp0:Bugie;comp2:Torta;comp1:Paste secche
+open;90;Balocco 
+choice;100;11;10000000000;0;comp0:Balocco
+scale;110;19;3;1;0;1;1;0;1;1;1;1;0;1;1;0;1;1;1;1;1;-1
+choice;120;19;0000000001000000000;9
+choice;121;4;0
+scale;130;22;4;1;1;0;1;0;0;1;1;0;0;0;2;1;2;0;1;1;1;1;2;1;-1
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;4;-1;-1;-1;-1

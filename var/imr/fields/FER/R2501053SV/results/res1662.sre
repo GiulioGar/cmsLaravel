@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1662;79ZAPOZUS8;20/02/2025 16:09:17 CET;20/02/2025 16:09:38 CET;21;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=79ZAPOZUS8;lang=it;sysIID=1662
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;61
+choice;31;6;4
+choice;121;4;0
+choice;310;2;1

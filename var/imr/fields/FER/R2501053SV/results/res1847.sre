@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1847;GUJEWCTYDT;21/02/2025 09:28:50 CET;21/02/2025 09:29:20 CET;30;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=GUJEWCTYDT;lang=it;sysIID=1847
+choice;4;2;0
+choice;5;6;0
+choice;10;20;15
+choice;20;2;1
+open;30;60
+choice;31;6;4
+choice;121;4;2
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;7;-1;-1;-1;-1

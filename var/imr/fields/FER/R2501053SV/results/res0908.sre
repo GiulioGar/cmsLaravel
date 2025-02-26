@@ -1,0 +1,29 @@
+2.0;FER;R2501053SV;908;6A2327UE2C;18/02/2025 22:00:00 CET;18/02/2025 22:15:51 CET;951;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=6A2327UE2C;pok=no;mok=no;lang=it;sysIID=908
+choice;4;2;0
+choice;5;6;0
+choice;10;20;4
+choice;20;2;0
+open;30;41
+choice;31;6;2
+choice;40;3;1
+choice;41;13;0100000000000;1
+scale;42;4;5;0;0;0;0
+choice;43;4;0
+open;70;cioccolatini
+choice;80;11;11111100000;0;comp0:biscotti;comp5:budini;comp4:frappe;comp3:frittelle;comp2:torte;comp1:caramelle
+open;90;witor's
+choice;100;11;11100000000;0;comp0:baci perugina;comp2:ferrero rocher;comp1:lindt lindor
+scale;110;19;3;0;0;0;0;0;0;0;0;0;0;0;1;0;0;2;0;0;2;-1
+choice;120;19;1111111111110101100;0
+choice;121;4;1
+scale;130;22;4;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;3;-1
+choice;140;22;1000001000010001101000;0
+scale;150;22;10;0;1;1;0;0;3;0;1;1;1;3;1;3;3;3;2;2;2;3;2;-1;-1
+scale;151;22;10;2;2;2;1;0;0;0;1;2;1;3;0;1;3;4;2;2;1;3;2;-1;-1
+ordering;152;22;4;5;6;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;1
+choice;180;7;3
+choice;190;3;0
+choice;200;9;0
+choice;210;10;7
+choice;310;2;1

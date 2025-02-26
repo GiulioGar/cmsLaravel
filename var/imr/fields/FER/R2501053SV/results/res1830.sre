@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1830;2Z32Z9RRPG;21/02/2025 07:56:49 CET;21/02/2025 07:57:16 CET;27;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=2Z32Z9RRPG;lang=it;sysIID=1830
+choice;4;2;0
+choice;5;6;0
+choice;10;20;11
+choice;20;2;1
+open;30;46
+choice;31;6;3
+choice;121;4;0
+choice;310;2;0
+choice;320;6;0
+scale;330;5;8;5;-1;-1;-1;-1

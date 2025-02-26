@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1562;RV1M42TRHH;20/02/2025 14:30:50 CET;20/02/2025 14:32:12 CET;82;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=RV1M42TRHH;lang=it;sysIID=1562
+choice;4;2;0
+choice;5;6;0
+choice;10;20;19
+choice;20;2;1
+open;30;52
+choice;31;6;3
+choice;121;4;1
+choice;310;2;1

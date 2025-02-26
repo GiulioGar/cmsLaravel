@@ -1,0 +1,30 @@
+2.0;FER;R2501053SV;940;V4SOH3OUBB;18/02/2025 23:29:50 CET;18/02/2025 23:33:51 CET;241;3;210;sysSID=R2501053SV;sysPRJ=FER;sysUID=V4SOH3OUBB;pok=no;mok=no;lang=it;sysIID=940
+choice;4;2;0
+choice;5;6;0
+choice;10;20;19
+choice;20;2;0
+open;30;36
+choice;31;6;2
+choice;40;3;0
+choice;41;13;0101000101000;7
+scale;42;4;5;2;1;1;0
+choice;43;4;1
+open;70;Cioccolatini e dolci in generale 
+choice;80;11;10000000000;0;comp0:Fiori
+open;90;Perugina
+choice;100;11;10000000000;0;comp0:Interflora
+scale;110;19;3;2;1;1;0;0;1;1;1;0;2;1;0;1;1;0;1;1;1;-1
+choice;120;19;0101000000101000000;10
+choice;121;4;1
+scale;130;22;4;2;1;3;2;1;0;2;1;0;2;3;0;1;1;1;0;0;2;3;2;1;-1
+open;131;Non saprei 
+choice;140;22;0000010000010001000000;5
+scale;150;22;10;-1;5;-1;-1;3;4;-1;7;7;-1;-1;5;2;5;0;4;8;-1;-1;-1;5;-1
+scale;151;22;10;-1;4;-1;-1;5;5;-1;4;7;-1;-1;4;2;3;7;5;6;-1;-1;-1;4;-1
+ordering;152;22;15;8;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;170;7;0
+choice;180;7;3
+choice;190;3;0
+choice;200;9;1
+choice;210;10;8
+choice;310;2;1

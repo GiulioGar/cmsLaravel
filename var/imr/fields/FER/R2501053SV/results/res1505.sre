@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1505;HUPM5P3MXP;20/02/2025 10:25:25 CET;20/02/2025 10:25:47 CET;22;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=HUPM5P3MXP;lang=en;sysIID=1505
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;0
+open;30;63
+choice;31;6;4
+choice;121;4;0
+choice;310;2;1

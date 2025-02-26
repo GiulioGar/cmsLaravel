@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1728;9BF4TNHAZS;20/02/2025 18:40:21 CET;20/02/2025 18:40:54 CET;33;5;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=9BF4TNHAZS;lang=it;sysIID=1728
+choice;4;2;0
+choice;5;6;0
+choice;10;20;3
+choice;20;2;0
+open;30;62
+choice;31;6;4
+choice;121;4;3
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;7;6;-1;-1;-1

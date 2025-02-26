@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1626;1RDSCBM0FG;20/02/2025 15:27:11 CET;20/02/2025 15:27:23 CET;12;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=1RDSCBM0FG;lang=it;sysIID=1626
+choice;4;2;0
+choice;5;6;0
+choice;10;20;6
+choice;20;2;0
+open;30;28
+choice;31;6;1
+choice;121;4;2
+choice;310;2;1

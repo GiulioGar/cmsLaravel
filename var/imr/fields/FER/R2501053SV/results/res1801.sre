@@ -1,0 +1,9 @@
+2.0;FER;R2501053SV;1801;YXDLNX2DEI;20/02/2025 23:32:23 CET;20/02/2025 23:32:39 CET;16;5;310;sysSID=R2501053SV;sysPRJ=FER;sysUID=YXDLNX2DEI;lang=it;sysIID=1801
+choice;4;2;0
+choice;5;6;0
+choice;10;20;8
+choice;20;2;1
+open;30;51
+choice;31;6;3
+choice;121;4;0
+choice;310;2;1

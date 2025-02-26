@@ -1,0 +1,11 @@
+2.0;FER;R2501053SV;1996;IDEXDYZDYXPVTCJHS113;21/02/2025 14:35:50 CET;21/02/2025 14:36:38 CET;48;4;330;sysSID=R2501053SV;sysPRJ=FER;sysUID=IDEXDYZDYXPVTCJHS113;psid=N25Jkd8Ji1GHRS4yDw1qdQ**;lang=it;sysIID=1996;pan=2
+choice;4;2;0
+choice;5;6;0
+choice;10;20;14
+choice;20;2;0
+open;30;43
+choice;31;6;2
+choice;121;4;3
+choice;310;2;0
+choice;320;6;1
+scale;330;5;8;3;2;-1;-1;-1
