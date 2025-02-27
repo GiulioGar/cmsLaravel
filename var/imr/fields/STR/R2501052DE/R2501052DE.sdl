@@ -1,0 +1,1083 @@
+#export vars "rotazione"
+
+void main() {
+
+// variabili comuni
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+string labelCheck;
+int r1;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+boolean selCheck;
+string cpt;
+int preQid;
+int n;
+int reCod;
+int selintCheck;
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "scripts:mod.js");
+string autotest=system.getProperty("test");
+string uid = system.getProperty("sysUID");
+if (autotest=="1" || uid=="null") {
+system.setProperty("env", "debug:true");  system.setProperty("env", "browser:variables");}
+string err;
+
+int sex;
+boolean full=false;
+int contagiro=0;
+int numero_rotazioni;
+int rotazione;
+int quota;
+int salvaeta;
+string delay;
+
+int rotTar;
+
+boolean buyNut;
+int saveTarg;
+int saveBrand;
+int reTarget=99;
+int quoT1;
+int quoT2;
+boolean boost;
+boolean selQf9_8;
+boolean selQf9_10;
+string cpt1;
+string cpt2;
+string cpt3;
+string codici;
+
+if (autotest=="1") {system.setProperty("env", "scripts:modtest.js");}
+
+string codLeft="<script type='text/javascript'>$(window).load(function() { leftImg();});</script>"; 
+string scriptzoom="<script type='text/javascript' src='https:///www.primisoft.com/fields/script/jquery.fancybox.js?v=2.1.5'></script><script type='text/javascript''> $(document).ready(function() { $('.fancybox').fancybox();});</script>";
+
+//variabile mobile
+string deviceType = system.getProperty("user_agent:deviceType");
+string ss1 = deviceType.trim();
+system.setProperty("device",ss1);
+boolean live=true;
+
+string all="<script type='text/javascript' src='https://www.primisoft.com/fields/script/all24.js'></script>";
+string mozCode="<script type='text/javascript'>$(window).load(function() {allinea(3,4,2);}); </script>";
+string allinea=all+mozCode;  
+
+string countdown="<script src='https://www.primisoft.com/fields/script/jquery.countdown.min.js'></script>"+
+	"<script>$(window).load(function() {contorovescia(5000);});</script>";	
+
+if (ss1=="mobile")
+{
+allinea="";
+}
+
+///CONCEPT EVALUETOR QUESTIONS//
+labelCheck="<script type='text/javascript' src='https://www.primisoft.com/fields/script/dinNone3.js'></script>";
+
+if (ss1=="mobile")
+{
+cod="<script type='text/javascript'>$(document).ready(function() {$('#console button').prop('disabled',true); });</script>";
+qst = new question("concept", 99999);
+qst.setProperty("text", cod+"ACHTUNG: DIESE SUCHE WIRD VON MOBILEN GERÄTEN NICHT UNTERSTÜTZT!"+
+" <p>Bitte schließen Sie den Browser auf Ihrem Smartphone/Tablet und starten Sie die Suche erneut über den Link, den wir Ihnen per PC gesendet haben. </p>");
+send qst;
+
+}
+
+// Q10: CHOICE
+qst = new question("choice", 10);
+qst.setProperty("text", "<p>Bitte verwenden Sie zur Beantwortung dieser Befragung weder ein Smartphone noch ein Tablet-Gerät. Sie müssen ein Desktop-Gerät verwenden, um erfolgreich an dieser Umfrage teilzunehmen.</p> <p>Um die Darstellung der Fragen und Bilder zu optimieren, empfehlen wir Ihnen, im Vollbildmodus zu arbeiten. Drücken Sie dazu bitte die Taste „F11&quot;. </p><p>Bitte bestätigen Sie,</p></br><p>- dass Sie keine vertraulichen Informationen preisgeben, zu denen Sie durch diese Befragung Zugang haben werden</br>- und im Rahmen dieser Befragung keine Screenshots oder Fotos des Bildschirms machen</p>");
+qst.setProperty("code", "Qacc");
+qst.setProperty("show_rand", false);
+vector q10_opts = new vector {
+"Stimme zu",
+"Stimme nicht zu"
+};
+qst.setProperty("options", q10_opts);
+send qst;
+
+ansId=system.getProperty("ans10");
+if (ansId==1 && autotest !="1") { return 4;}
+
+
+string logo="<p><img class='img-responsive ' src='http://www.primisoft.com/fields/STR/R2001019/resources/logo.jpg'></p>";
+
+// Q20: CHOICE
+qst = new question("choice", 20);
+qst.setProperty("text", "Bitte schauen Sie sich dieses Bild an. Sehen Sie das komplette Bild?"+logo);
+qst.setProperty("code", "QFY");
+qst.setProperty("show_rand", false);
+vector q20_opts = new vector {
+"Ja",
+"Nein"
+};
+qst.setProperty("options", q20_opts);
+send qst;
+
+int ans20 = system.getProperty("ans20");
+if (ans20==1 && autotest !="1") 
+{ 
+
+// Q30: CHOICE
+qst = new question("choice", 30);
+qst.setProperty("text", "Bitte schauen Sie sich dieses Bild an. Sehen Sie das komplette Bild?"+logo);
+qst.setProperty("code", "QFZ");
+qst.setProperty("show_rand", false);
+vector q30_opts = new vector {
+"Ja",
+"Nein"
+};
+qst.setProperty("options", q30_opts);
+send qst;
+
+ansId=system.getProperty("ans30");
+if (ansId==1 && autotest !="1") { return 4;}
+
+}
+
+// Q50: CHOICE
+qst = new question("choice", 50);
+qst.setProperty("text", "<p>Bitte beantworten Sie zunächst einige Fragen. Vielen Dank.</p>Bitte geben Sie Ihr Geschlecht an.");
+qst.setProperty("code", "QGENDER");
+qst.setProperty("show_rand", false);
+vector q50_opts = new vector {
+"Mann",
+"Frau",
+"Divers"
+};
+qst.setProperty("options", q50_opts);
+send qst;
+
+sex=system.getProperty("ans50");
+//if(sex==2 && autotest !="1" ) { return 4;}
+
+// Q60: CHOICE
+qst = new question("choice", 60);
+qst.setProperty("text", "Arbeiten Sie oder ein Familienmitglied in einem der folgenden Bereiche?");
+qst.setProperty("code", "QF2");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q60_opts = new vector {
+"Automobilindustrie",
+"Verlag",
+"Herstellung oder Verkauf von Haushaltsartikeln",
+"Bankenwesen",
+"Marketing, Marktforschung",
+"Pressearbeit, Journalismus",
+"Werbung",
+"Andere Branche#se#sf"
+};
+qst.setProperty("options", q60_opts);
+send qst;
+
+	count=0;
+	for(int i=2,6)
+	{
+	sel=system.getProperty("ans60_"+i);
+	if (sel==true && (i==2 || i>4 ) ) { count=count+1; }
+	}
+
+	if(count>0 && autotest !="1") { return 4;}
+
+
+// Q70: CHOICE
+qst = new question("choice", 70);
+qst.setProperty("text", "Haben Sie in den letzten 3 Monaten an einer Marktforschungsstudie zu folgenden Themen teilgenommen?");
+qst.setProperty("code", "QF3");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q70_opts = new vector {
+"Getränke",
+"Automobil",
+"Haushaltsartikel",
+"Andere Themen / keine Teilnahme#sf"
+};
+qst.setProperty("options", q70_opts);
+send qst;
+
+sel=system.getProperty("ans70_2");
+if (sel==true) { return 4;}
+
+	qst = new question("open", 75);
+	qst.setProperty("text", "Wie alt sind Sie?");
+	qst.setProperty("view", "numeric");
+	qst.setProperty("code", "QAGE");
+	qst.setProperty("validation_rule", "^[0-9]|[1-9][0-9]$");
+	qst.setProperty("validation_error", "Geben Sie eine Zahl zwischen 1 und 99 an");
+	send qst;
+
+	int eta=(int)system.getProperty("ans75");
+	 
+	if(eta<18 && autotest !="1") { reCod=0; return 4;}
+	if(eta>=18 && eta<=34) { reCod=1; }
+	if(eta>=35 && eta<=49) { reCod=2; }
+	if(eta>=50 && eta<=65) { reCod=3;}
+	if(eta>65 && autotest !="1") { reCod=4;}
+
+// Q90: CHOICE
+qst = new question("choice", 80);
+qst.setProperty("text", "ENTER BELOW");
+qst.setProperty("code", "QAGER");
+qst.setProperty("show_rand", false);
+vector q90_opts = new vector {
+"Jünger als 18 Jahre",
+"18 - 34 Jahre",
+"35 - 49 Jahre",
+"50 – 65 Jahre",
+"Älter als 65 Jahre"
+};
+qst.setProperty("options", q90_opts);
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+salvaeta=reCod;
+
+// Q100: CHOICE
+qst = new question("choice", 100);
+qst.setProperty("text", "Welche der folgenden Aussagen beschreibt am besten Ihre Rolle beim Kauf von Produkten für Ihren Haushalt?");
+qst.setProperty("code", "QF4");
+qst.setProperty("show_rand", false);
+vector q100_opts = new vector {
+"Nicht verantwortlich",
+"Zum Teil verantwortlich",
+"Hauptsächlich verantwortlich"
+};
+qst.setProperty("options", q100_opts);
+send qst;
+
+ansId=system.getProperty("ans100");
+if (ansId==0 && autotest !="1") { return 4;}
+
+
+
+// Q120: CHOICE
+qst = new question("choice", 120);
+qst.setProperty("text", "<p>Lassen Sie uns nun über das Trocknen von Wäsche sprechen.</p>Welche dieser Geräte oder Hilfsmittel besitzen Sie und verwenden Sie zurzeit für das Trocknen der Wäsche?"+allinea);
+qst.setProperty("code", "QF5");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q120_opts = new vector {
+"Elektrischer Wäschetrockner<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p1.png'/>",
+"Waschtrockner, d.h. ein Kombinationsgerät aus Waschmaschine und elektrischem Wäschetrockner<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p2.png'/>",
+"Wäscheständer<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p3.png'/>",
+"Wand-Wäschetrockner<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p4.png'/>",
+"Badewannen-Wäschetrockner<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p5.png'/>",
+"Deckentrockner<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p6.jpg'/>",
+"Ausziehbare Wandwäscheleine<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p7.png'/>",
+"Wäschespinne<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p8.png'/>",
+"Wäscheleinen im Haus (Keller, Dachboden)<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p9.png'/>",
+"Wäscheleinen im Garten, auf der Terrasse, auf dem Balkon<img class='img-responsive ' src='https://www.primisoft.com/fields/STR/R2409128D/resources/p10.png'/>",
+"Keines dieser Geräte / dieser Hilfsmittel#se#sf"
+};
+qst.setProperty("options", q120_opts);
+send qst;
+
+sel=system.getProperty("ans120_2");
+if (sel==false) { return 4;}
+
+mozCode="<script type='text/javascript'>$(window).load(function() {allinea(4,3,2);});</script>";
+allinea=all+mozCode;    
+
+if (ss1=="mobile")
+{
+allinea="";
+}
+
+// Q130: CHOICE
+qst = new question("choice", 131);
+qst.setProperty("text", "Welche Form genau hat Ihr Wäscheständer?"+allinea);
+qst.setProperty("code", "QF6");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q130_opts = new vector {
+"X-Form ohne ausklappbare Flügel <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t1.png'/>",
+    "X-Form mit ausklappbaren Flügeln <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t2.png'/>",
+    "X-Form mit ausziehbaren Trockenstangen <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t3.png'/>",
+    "Tisch-Form ohne ausklappbare Flügel <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t4.png'/>",
+    "Tisch-Form mit ausklappbaren Flügeln <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t5.png'/>",
+    "Tisch-Form mit ausziehbaren Trockenstangen ohne ausklappbare Flügel <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t6.png'/>",
+    "Tisch-Form mit ausziehbaren Trockenstangen und ausklappbaren Flügeln <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t7.png'/>",
+    "W-Form, die vor dem Aufbau zusammengesteckt werden muss <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t8.png'/>",
+    "Turm X-Form <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t9.png'/>",
+    "Turm Lineare Form <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t10.png'/>",
+    "Turm V-Form <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t11.png'/>",
+    "Turm Stapel-Form <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/t12.png'/>",
+    "Andere Form"
+};
+qst.setProperty("options", q130_opts);
+send qst;
+
+count=0;
+for(int i=0,7)
+{
+sel=system.getProperty("ans131_"+i);
+if (sel==true) { count=count+1; }
+}
+
+if (count==0) { return 4; }
+
+// Q140: CHOICE
+qst = new question("choice", 140);
+qst.setProperty("text", "Wie oft hängen Sie <b>selbst</b> Wäsche zum Trocknen auf?");
+qst.setProperty("code", "QF7");
+qst.setProperty("show_rand", false);
+vector q140_opts = new vector {
+"Täglich/Fast täglich",
+"Mehrmals in der Woche",
+"1 Mal pro Woche",
+"1 Mal pro Monat",
+"Seltener",
+"Nie"
+};
+qst.setProperty("options", q140_opts);
+send qst;
+
+ansId=system.getProperty("ans140");
+if (ansId>2 && autotest !="1") { return 4;}
+
+// Q150: CHOICE
+qst = new question("choice", 150);
+qst.setProperty("text", "Welche der folgenden Stand-Wäscheständer-Marken besitzen Sie?");
+qst.setProperty("code", "QF9");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q150_opts = new vector {
+"Artweger",
+"Blome",
+"Brabantia",
+"Gimi",
+"Hailo",
+"IKEA",
+"Juwel",
+"Leifheit",
+"Metaltex",
+"Vileda",
+"Wenko",
+"Discounter-Marke (z.B. Aldi, Lidl, Penny, netto)#sf",
+"Sonstige Handelsmarke (z.B. Kaufland, Globus, Marktkauf, REWE, EDEKA)#sf",
+"Andere Marken/Hersteller#sf",
+"Kenne die Marke nicht#se#sf"
+};
+qst.setProperty("options", q150_opts);
+send qst;
+
+
+selQf9_8=system.getProperty("ans150_7");
+selQf9_10=system.getProperty("ans150_9");
+
+count=0;
+for(int i=0,10)
+{
+sel=system.getProperty("ans150_"+i);
+if (sel==true) { count=count+1; }
+}
+
+// for(int i=13,14)
+// {
+// sel=system.getProperty("ans150_"+i);
+// if (sel==true) { count=count+1; }
+// }
+
+if (count==0) { return 4; }
+
+// Q160: CHOICE
+qst = new question("choice", 160);
+qst.setProperty("text", "Wo haben Sie Ihren Wäscheständer gekauft?");
+qst.setProperty("code", "QF10");
+qst.setProperty("show_rand", false);
+vector q160_opts = new vector {
+"SB-Warenhaus (z.B. Kaufland, Globus, Marktkauf)",
+"Supermarkt (z.B. Edeka, Rewe;)",
+"Baumarkt (z.B. Obi, Bauhaus, Hornbach)",
+"Drogeriemarkt (z.B. dm, Rossmann, Müller)",
+"Kauf-/Warenhaus (z.B. Galeria)",
+"Möbelhaus (z.B. IKEA, XXXLutz, Höffner, Segmüller)",
+"Online (z.B. amazon)",
+"Discounter (z.B. Aldi, Lidl, netto, Penny)",
+"Anderer Einkaufsort"
+};
+qst.setProperty("options", q160_opts);
+send qst;
+
+ansId=system.getProperty("ans160");
+if (ansId>6 && autotest !="1") { return 4;}
+
+// Q170: SCALE
+qst = new question("scale", 170);
+qst.setProperty("text", "Bitte geben Sie für jede der folgenden Marken an, wie sehr Sie Ihnen gefällt.");
+qst.setProperty("code", "QF11");
+qst.setProperty("show_rand", false);
+vector q170_rows = new vector {
+"LEIFHEIT",
+"VILEDA",
+"GIMI"
+};
+qst.setProperty("rows", q170_rows);
+vector q170_cols = new vector {
+"Außerordentlich gut",
+"Sehr gut",
+"Gut",
+"Durchschnittlich gut",
+"Weniger gut",
+"Überhaupt nicht gut",
+"Weiß nicht"
+};
+qst.setProperty("cols", q170_cols);
+if(autotest !="1") { qst.setProperty("view", "carousel"); }
+send qst;
+
+ansId=system.getProperty("ans170_0");
+if (ansId==5) { return 4;}
+
+// NUOVO CONTROLLO PER QUOTA
+string qIndici;
+string qConta;
+int cq;
+
+
+//creo stringa da inviare a domanda app con indici e numero quote//
+	count=0;
+	for(int i=1,3)
+	{
+		n=i;
+
+		cq=system.getProperty("quota:total_interviews_"+n); 
+		//indici
+		qIndici=qIndici+i+",";
+		//quota
+		qConta=qConta+cq+",";
+		
+	}
+
+
+	qst = new question("app",1999);
+	qst.setProperty("text", "test");
+	qst.setProperty("path", "quotaControl");
+	qst.setProperty("input", "ix:"+qIndici);
+	qst.setProperty("input", "cq:"+qConta);
+	qst.setProperty("output", "indOrder:string");
+	send qst;
+
+	cmd=system.getProperty("ans1999_indOrder");
+	label=cmd.trim();
+	system.out("<div>Indici estratti: "+label+"</div>"); 
+
+	vector indiciControl = new vector { };
+	indiciControl = label.split(",");
+	rotazione=(int)indiciControl.get(0);
+
+	system.out("<div>Rotazione Pre Quota: "+rotazione+"</div>"); 
+
+
+numero_rotazioni=3;
+
+//---------------SETTAGGIO  QUOTE-------------------------//
+/*
+int quotaSex;
+int quotaAge=450;
+
+if(sex==0) { quotaSex=600;}
+if(sex==1) { quotaSex=902;}
+if(salvaeta==4) { quotaAge=200;}
+
+	while (full==true || contagiro==0)
+		{
+		full=false;
+		if (contagiro>numero_rotazioni){return 5;}
+		contagiro=contagiro+1;
+
+		quota=system.getProperty("quota:sesso_"+sex+"_"+rotazione);
+		if (quota>=quotaSex){full=true;}
+
+		quota=system.getProperty("quota:fascia_eta "+salvaeta+"_"+rotazione);
+		if (quota>=quotaAge){full=true;}
+
+		if(full==true)
+			{
+			if (rotazione!=3) { rotazione=rotazione+1; }
+			else { rotazione=1; }
+			}
+
+		}
+
+	int cella;
+	int leggiCella=(int)system.getProperty("rotazione");
+		if (leggiCella==0){
+		system.setProperty("rotazione",rotazione);
+		}
+		else{ 
+			if (rotazione!=leggiCella){ return 4; };
+			}
+*/
+
+system.setProperty("rotazione",rotazione);
+
+reCod=rotazione-1;
+		// Q: 160
+		qst = new question("choice", 166);
+		qst.setProperty("text", "Rotazione");
+		qst.setProperty("code", "rot");
+		vector q166_opts = new vector {
+"ROT 11 -> FT_New1_ZOOM",
+"ROT 12 -> FT_New2a_ZOOM",
+"ROT 13 -> FT_New2b_ZOOM"
+		};
+		qst.setProperty("options", q166_opts);
+		qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+		qst.setProperty("hidden", true);
+		send qst;
+
+// Q250: CONCEPT
+	qst = new question("concept", 250);
+	qst.setProperty("text", "Sie sehen jetzt für einen kurzen Moment das Bild von einem Produkt auf dem Bildschirm. Danach schreiben Sie bitte so genau und detailliert wie möglich auf, was Sie gesehen und gelesen haben. Bitte schauen Sie konzentriert auf den Bildschirm. </br><p>Klicken Sie bitte auf WEITER, wenn Sie bereit sind.</p>");
+	qst.setProperty("code", "q250");
+	send qst;
+
+	delay="<script type='text/javascript'>"+
+	"$(window).load(function() {"+
+	"setTimeout(function() { $('#bnNext').click(); }, 250);"+
+	"});"+
+    "</script>";
+
+	img="<img class='img-responsive' src='https:///www.primisoft.com/fields/STR/R2501052DE/resources/ft"+rotazione+".jpg'></img>";
+
+	// Q: 170
+	qst = new question("concept", 255);
+	qst.setProperty("text", delay+img);
+	send qst;
+
+	// Q300: CONCEPT
+	qst = new question("open", 260);
+	qst.setProperty("text", "Was genau haben Sie gesehen oder gelesen?");
+	qst.setProperty("code", "QT1a");
+
+	// Q310: CONCEPT
+	qst = new question("open", 270);
+	qst.setProperty("text", "Um welches Produkt handelt es sich? Wie ist der Produktname? Und um welche Marke handelt es sich?");
+	qst.setProperty("code", "QT1B");
+
+	qst = new question("composed", 275);
+    vector q275_comps = new vector { "260", "270" };
+    qst.setProperty("components", q275_comps);
+    send qst;		
+
+	// Q280: CONCEPT
+	qst = new question("concept", 280);
+	qst.setProperty("text", "<p>Sie sehen jetzt das gleiche Bild von einem Produkt noch einmal, diesmal etwas länger.</p> <p>Danach schreiben Sie bitte so genau und detailliert wie möglich auf, was Sie gesehen und gelesen haben. Bitte schauen Sie konzentriert auf den Bildschirm.</p> <p>Klicken Sie bitte auf WEITER, wenn Sie bereit sind.</p>");
+	send qst;
+
+	delay="<script type='text/javascript'>"+
+	"$(window).load(function() {"+
+	"setTimeout(function() { $('#bnNext').click(); }, 1000);"+
+	"});"+
+    "</script>";
+
+
+	// Q: 210
+	qst = new question("concept", 203);
+	qst.setProperty("text", delay+img);
+	send qst;
+
+	// Q300: CONCEPT
+	qst = new question("open", 300);
+	qst.setProperty("text", "Was genau haben Sie gesehen oder gelesen?");
+	qst.setProperty("code", "QT2a");
+
+	// Q310: CONCEPT
+	qst = new question("open", 310);
+	qst.setProperty("text", "Um welches Produkt handelt es sich? Wie ist der Produktname? Und um welche Marke handelt es sich?");
+	qst.setProperty("code", "QT2B");
+
+	qst = new question("composed", 315);
+    vector q315_comps = new vector { "300", "310" };
+    qst.setProperty("components", q315_comps);
+    send qst;	
+
+	link="https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot"+rotazione+"_CS.jpg";
+	img=scriptzoom+"<p><a class='fancybox' rel='group' href='"+link+"'><img class='img-responsive' src='"+link+"' width='450px'  alt='' /></a><div class='info'>Klicken Sie auf das Bild, um es zu vergrößern.</div></p>";	
+
+
+	qst = new question("concept", 330);
+	qst.setProperty("text", "<p>Sie sehen jetzt ein Bild mit zwei Produkten.</p> Bitte schauen Sie sich die Produkte aufmerksam an. Um die einzelnen Produkte genauer zu betrachten, klicken Sie darauf, um sie zu vergrößern. <br/>"+img+countdown);
+	send qst;
+
+
+	link="https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot"+rotazione+"_CSF.jpg";
+	img=scriptzoom+"<p><a class='fancybox' rel='group' href='"+link+"'><img class='img-responsive' src='"+link+"' width='450px'  alt='' /></a><div class='info'>Klicken Sie auf das Bild, um es zu vergrößern.</div></p>";
+
+
+qst = new question("scale", 340);
+qst.setProperty("text", img+"<p>Bitte beantworten Sie die folgenden Fragen für jedes Produkt.</p><p>Wie wahrscheinlich würden Sie jedes dieser Produkte kaufen, wenn es in dem Geschäft, in dem Sie normalerweise einkaufen, zu einem für Sie angemessenen Preis erhältlich wäre?</p>");
+qst.setProperty("code", "q5");
+qst.setProperty("show_rand", false);
+vector q340_rows = new vector { "LEIFHEIT", "<span style='color: #B325BD; font-weight: bold;'>VILEDA KING PLUS </span>" };
+if(rotazione==1){ 
+    q340_rows.set(0, "<span style='color: #05B100; font-weight: bold;'>LEIFHEIT EVERYDAY</span>");
+}
+if(rotazione==2 || rotazione==3){ 
+    q340_rows.set(0, "<span style='color: #05B100; font-weight: bold;'>LEIFHEIT DAILY DRY</span>");
+}
+
+qst.setProperty("rows", q340_rows);
+vector q340_cols = new vector {
+"Bestimmt	",
+"Wahrscheinlich	",
+"Weiß nicht	",
+"Wahrscheinlich nicht	",
+"Bestimmt nicht"
+};
+qst.setProperty("cols", q340_cols);
+if (ss1=="mobile")
+{
+qst.setProperty("view", "onebyone");
+}
+send qst;
+
+// ansId=system.getProperty("ans340_0");
+// if (ansId<2)
+// { 
+// qst = new question("open", 350);
+// qst.setProperty("text", "Was sind die Gründe, warum Sie dieses Leifheit Produkt kaufen würden?");
+// qst.setProperty("code", "q6a");
+// send qst;
+// }
+
+// if (ansId>2)
+// { 
+// qst = new question("open", 355);
+// qst.setProperty("text", "Was sind die Gründe, warum Sie sich nicht für ein Produkt von Leifheit entschieden haben?");
+// qst.setProperty("code", "q6b");
+// send qst;
+// }
+
+
+qst = new question("scale", 360);
+qst.setProperty("text", img+"<p>Wie sehr gefällt Ihnen das Verpackungsdesign insgesamt?</p>");
+qst.setProperty("code", "q7");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", q340_rows);
+vector q360_cols = new vector {
+"Außerordentlich gut	",
+"Sehr gut	",
+"Gut	",
+"Durchschnittlich gut	",
+"Weniger gut	",
+"Überhaupt nicht gut"
+};
+qst.setProperty("cols", q360_cols);
+if (ss1=="mobile")
+{
+qst.setProperty("view", "onebyone");
+}
+send qst;
+
+vector q370_cols = new vector { "LEIFHEIT", "<span style='color: #ffffff; font-weight: bold;'>VILEDA KING PLUS</span>", "Keines davon#se#sf" };
+if(rotazione==1){ 
+    q370_cols.set(0, "<span style='color: #fff; font-weight: bold;'>LEIFHEIT EVERYDAY</span>");
+}
+if(rotazione==2 || rotazione==3){ 
+    q370_cols.set(0, "<span style='color: #fff; font-weight: bold;'>LEIFHEIT DAILY DRY</span>");
+}
+
+
+
+qst = new question("scale", 370);
+qst.setProperty("text", img+"<p>Es geht immer noch um diese Produkte.</p>Welches oder welche…?"+scriptzoom);
+qst.setProperty("code", "q8");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q370_rows = new vector {
+"Ist besonders standsicher",
+"Ist langlebig",
+"Ist von hoher Qualität",
+"Man erkennt sofort, von welcher Marke es ist",
+"Bietet Platz für viel Wäsche",
+"Lässt sich einfach mit Socken behängen",
+"Man erkennt sofort mit wie viel Wäsche man den Trockner behängen kann",
+"Ist für die durchschnittliche Wäschemenge passend ",
+"Hat eine hohe Garantie",
+"Ist Made in Europe",
+"Ist sehr belastbar",
+"Ist besonders stabil"
+};
+qst.setProperty("rows", q370_rows);
+qst.setProperty("cols", q370_cols);
+if(autotest !="1") { qst.setProperty("view", "onebyone"); }
+send qst;
+
+link="https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot"+rotazione+"_OCS.jpg";
+img=scriptzoom+"<p><a class='fancybox' rel='group' href='"+link+"'><img src='"+link+"' width='750px'  alt='' /></a><div class='info'>Klicken Sie auf das Bild, um es zu vergrößern.</div></p>";
+
+qst = new question("concept", 400);
+qst.setProperty("text", "Bei den folgenden Fragen geht es um diese LEIFHEIT Produktreihe.<br/>"+img+countdown);
+send qst;		
+	
+img=scriptzoom+"<div class='conc'><a class='fancybox' rel='group' href='"+link+"'><img class='img-responsive' src='"+link+"' width='600px'  alt='' /></a><div class='info'>Klicken Sie auf das Bild, um es zu vergrößern.</div></div>";	
+
+qst = new question("choice", 410);
+qst.setProperty("text", codLeft+img+"Wie wahrscheinlich würden Sie mindestens eines dieser Produkte zu einem für Sie angemessenen Preis kaufen?");
+qst.setProperty("code", "q10");
+vector q410_opts = new vector {
+"Bestimmt",
+"Wahrscheinlich",
+"Weiß nicht",
+"Wahrscheinlich nicht",
+"Bestimmt nicht"
+};
+qst.setProperty("options", q410_opts);
+send qst;
+
+qst = new question("choice", 420);
+qst.setProperty("text", codLeft+img+"Wie sehr gefallen Ihnen diese Verpackungen?");
+qst.setProperty("code", "q11");
+vector q420_opts = new vector {
+"Außerordentlich gut",
+"Sehr gut",
+"Gut",
+"Durchschnittlich gut",
+"Weniger gut",
+"Überhaupt nicht gut"
+};
+qst.setProperty("options", q420_opts);
+send qst;
+
+
+
+//cpt evaluation
+
+if (rotazione==1) { codici="['s12', 's17', 's19'],['s21', 's24', 's33'],['s10', 's16'],['s25', 's28','s34'],['s14', 's15'],['s29', 's32','s35']"; }
+if (rotazione==2) { codici="['s10', 's15', 's19','s36','s25'],['s12', 's16', 's21','s27','s37'],['s14', 's17', 's29','s38','s35']"; }
+if (rotazione==3) { codici="['s15', 's19', 's22','s28','s33'],['s11', 's20', 's24','s30','s34'],['s12', 's18', 's26','s32','s35']"; }
+
+
+
+cpt1=labelCheck+"<table id='Tabella_01'  border='0' cellpadding='0' cellspacing='0'> <tr> <td colspan='22'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_01.jpg' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_7.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='7' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_02.jpg' class='img-responsive' alt=''>#ae</td> <td rowspan='16'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_03.jpg' class='img-responsive' alt=''></td> <td colspan='6' rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_04.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='8'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_05.jpg' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_19.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='15'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_06.jpg' class='img-responsive' alt=''></td> <td colspan='6' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_07.jpg' class='img-responsive' alt=''>#ae</td> <td rowspan='15'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_08.jpg' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_29.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='5' rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_09.jpg' class='img-responsive' alt=''>#ae</td> <td rowspan='3'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_10.jpg' class='img-responsive' alt=''></td> <td rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_11.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_39.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='5'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_12.jpg' class='img-responsive' alt=''>#ae</td> <td> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_13.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='3' rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_14.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='3'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_15.jpg' class='img-responsive' alt=''></td> <td rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_16.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_53.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='3' rowspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_17.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='3' rowspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_18.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_61.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4' rowspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_19.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='3' rowspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_20.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_69.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_21.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_22.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_77.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='6' rowspan='5'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_23.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_83.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='6' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_24.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_89.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='7'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_25.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_95.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_26.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='5'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_27.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_28.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='2'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_29.jpg' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_107.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_30.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_31.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_32.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_33.jpg' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_34.jpg' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_35.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_36.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_37.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_127.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_38.jpg' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_39.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_40.jpg' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_41.jpg' class='img-responsive' alt=''></td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_42.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_141.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='7' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_43.jpg' class='img-responsive' alt=''>#ae</td> <td colspan='6' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_44.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_149.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='6'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_45.jpg' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_155.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='7'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_46.jpg' class='img-responsive' alt=''></td> <td colspan='6'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_47.jpg' class='img-responsive' alt=''></td> <td colspan='6'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-11+14_OCS_CLICK_New1_48.jpg' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_165.gif' class='img-responsive' alt=''></td> </tr> <tr> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_169.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_171.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_173.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_175.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_177.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_179.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_181.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_183.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_185.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_187.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_189.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_191.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_193.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_195.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_197.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_199.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_201.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_203.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_205.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_207.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_209.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739359356_211.gif' class='img-responsive' alt=''></td> <td></td> </tr> </table>";
+cpt2=labelCheck+"<table id='Tabella_01'  border='0' cellpadding='0' cellspacing='0'> <tr> <td colspan='5'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_01.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_02.png' class='img-responsive' alt=''></td> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_03.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_04.png' class='img-responsive' alt=''></td> <td colspan='6'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_05.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_15.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_06.png' class='img-responsive' alt=''>#ae</td> <td> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_07.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_08.png' class='img-responsive' alt=''></td> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_09.png' class='img-responsive' alt=''>#ae</td> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_10.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_11.png' class='img-responsive' alt=''></td> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_12.png' class='img-responsive' alt=''>#ae</td> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_13.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_35.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_14.png' class='img-responsive' alt=''>#ae</td> <td> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_15.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_16.png' class='img-responsive' alt=''></td> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_17.png' class='img-responsive' alt=''>#ae</td> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_18.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_19.png' class='img-responsive' alt=''></td> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_20.png' class='img-responsive' alt=''>#ae</td> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_21.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_55.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='5'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_22.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_23.png' class='img-responsive' alt=''></td> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_24.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_25.png' class='img-responsive' alt=''></td> <td colspan='6' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_26.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_69.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_27.png' class='img-responsive' alt=''>#ae</td> <td> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_28.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_29.png' class='img-responsive' alt=''></td> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_30.png' class='img-responsive' alt=''>#ae</td> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_31.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_32.png' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_85.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_33.png' class='img-responsive' alt=''>#ae</td> <td rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_34.png' class='img-responsive' alt=''>#ae</td> <td rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_35.png' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='5'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_36.png' class='img-responsive' alt=''>#ae</td> <td rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_37.png' class='img-responsive' alt=''>#ae</td> <td rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_38.png' class='img-responsive' alt=''>#ae</td> <td colspan='5' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_39.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_40.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_105.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='4'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_41.png' class='img-responsive' alt=''></td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_42.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_43.png' class='img-responsive' alt=''>#ae</td> <td rowspan='6'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_44.png' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_117.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_45.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_46.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_47.png' class='img-responsive' alt=''>#ae</td> <td colspan='3' rowspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_48.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_129.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='3' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_49.png' class='img-responsive' alt=''>#ae</td> <td colspan='4' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_50.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_137.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='3' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_51.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_143.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='5' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_52.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_53.png' class='img-responsive' alt=''></td> <td colspan='4' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_54.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_153.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='6'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/cpt2_55.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_159.gif' class='img-responsive' alt=''></td> </tr> <tr> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_163.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_165.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_167.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_169.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_171.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_173.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_175.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_177.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_179.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_181.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_183.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_185.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_187.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_189.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_191.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_193.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739465525_195.gif' class='img-responsive' alt=''></td> <td></td> </tr> </table>";
+cpt3=labelCheck+"<table id='Tabella_01'  border='0' cellpadding='0' cellspacing='0'> <tr> <td colspan='16'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_01.png' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_8.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_02.png' class='img-responsive' alt=''>#ae</td> <td rowspan='16'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_03.png' class='img-responsive' alt=''></td> <td colspan='5' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_04.png' class='img-responsive' alt=''>#ae</td> <td colspan='6'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_05.png' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_20.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='15'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_06.png' class='img-responsive' alt=''></td> <td colspan='4' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_07.png' class='img-responsive' alt=''>#ae</td> <td rowspan='15'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_08.png' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_30.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='3' rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_09.png' class='img-responsive' alt=''>#ae</td> <td rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_10.png' class='img-responsive' alt=''>#ae</td> <td colspan='4' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_11.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_12.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_42.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_13.png' class='img-responsive' alt=''>#ae</td> <td colspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_14.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_50.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_15.png' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_16.png' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_17.png' class='img-responsive' alt=''>#ae</td> <td colspan='2'> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_18.png' class='img-responsive' alt=''></td> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_19.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_64.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_20.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_21.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_22.png' class='img-responsive' alt=''>#ae</td> <td> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_23.png' class='img-responsive' alt=''>#ae</td> <td> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_24.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_78.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4' rowspan='3'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_25.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_84.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_26.png' class='img-responsive' alt=''>#ae</td> <td colspan='5'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_27.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_92.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='3' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_28.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_29.png' class='img-responsive' alt=''>#ae</td> <td colspan='4' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_30.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_31.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_104.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='3' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_32.png' class='img-responsive' alt=''>#ae</td> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_33.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_112.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_34.png' class='img-responsive' alt=''>#ae</td> <td colspan='3' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_35.png' class='img-responsive' alt=''>#ae</td> <td colspan='2' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_36.png' class='img-responsive' alt=''>#ae</td> <td colspan='3' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_37.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_124.gif' class='img-responsive' alt=''></td> </tr> <tr> <td rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_38.png' class='img-responsive' alt=''>#ae</td> <td colspan='3' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_39.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_132.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_40.png' class='img-responsive' alt=''>#ae</td> <td colspan='5' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_41.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_140.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_42.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_146.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_43.png' class='img-responsive' alt=''>#ae</td> <td colspan='5' rowspan='2'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_44.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_154.gif' class='img-responsive' alt=''></td> </tr> <tr> <td colspan='4'> #as<img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot-13+16_OCS_CLICK_New2b_45.png' class='img-responsive' alt=''>#ae</td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_160.gif' class='img-responsive' alt=''></td> </tr> <tr> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_164.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_166.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_168.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_170.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_172.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_174.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_176.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_178.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_180.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_182.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_184.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_186.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_188.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_190.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_192.gif' class='img-responsive' alt=''></td> <td> <img src='https://www.primisoft.com/fields/STR/R2501052DE/resources/1739457595_194.gif' class='img-responsive' alt=''></td> <td></td> </tr> </table>";
+
+if (rotazione==1)
+{
+
+cmd="<script>$(window).load(function() {unisciCodici("+codici+");});</script>";
+
+question qc1 = new question("concept_eval", 9001);
+qc1.setProperty("text", "Geben Sie durch Klicken auf das Bild an, was Ihnen an dieser Verpackung gefällt."+cmd);
+qc1.setProperty("code", "Q112r1");
+qc1.setProperty("concept", cpt1);
+qc1.setProperty("allow_nosel", true);
+send qc1;
+
+
+    count=0;
+    for(int i=0,35)
+    {
+    ansId=system.getProperty("ans9001_"+i);
+    if (ansId>=0) { count=count+1; }
+    }
+
+cmd="<script>$(window).load(function() {unisciCodici2("+codici+");});</script>";
+
+question qc1b = new question("concept_eval", 9011);
+qc1b.setProperty("text", "Geben Sie durch Klicken auf das Bild an, was Ihnen an dieser Verpackung <b>NICHT</b> gefällt."+cmd);
+qc1b.setProperty("code", "Q113r1");
+qc1b.setProperty("concept", cpt1);
+qc1b.setProperty("allow_nosel", true);
+qc1b.setProperty("controller", 9001);
+qc1b.setProperty("reverse_control", true);
+if (count != 36 ) { send qc1b;}
+
+}
+
+
+if (rotazione==2)
+{
+
+cmd="<script>$(window).load(function() {unisciCodici("+codici+");});</script>";
+
+question qc2 = new question("concept_eval", 9002);
+qc2.setProperty("text", "Geben Sie durch Klicken auf das Bild an, was Ihnen an dieser Verpackung gefällt."+cmd);
+qc2.setProperty("code", "Q112r2");
+qc2.setProperty("concept", cpt2);
+qc2.setProperty("allow_nosel", true);
+send qc2;
+
+
+    count=0;
+    for(int i=0,41)
+    {
+    ansId=system.getProperty("ans9002_"+i);
+    if (ansId>=0) { count=count+1; }
+    }
+
+cmd="<script>$(window).load(function() {unisciCodici2("+codici+");});</script>";
+
+question qc2b = new question("concept_eval", 9012);
+qc2b.setProperty("text", "Geben Sie durch Klicken auf das Bild an, was Ihnen an dieser Verpackung <b>NICHT</b> gefällt."+cmd);
+qc2b.setProperty("code", "Q113r2");
+qc2b.setProperty("concept", cpt2);
+qc2b.setProperty("allow_nosel", true);
+qc2b.setProperty("controller", 9002);
+qc2b.setProperty("reverse_control", true);
+if (count != 42 ) { send qc2b;}
+
+}
+
+
+if (rotazione==3)
+{
+
+cmd="<script>$(window).load(function() {unisciCodici("+codici+");});</script>";
+
+question qc3 = new question("concept_eval", 9003);
+qc3.setProperty("text", "Geben Sie durch Klicken auf das Bild an, was Ihnen an dieser Verpackung gefällt."+cmd);
+qc3.setProperty("code", "Q112r3");
+qc3.setProperty("concept", cpt3);
+qc3.setProperty("allow_nosel", true);
+send qc3;
+
+
+    count=0;
+    for(int i=0,38)
+    {
+    ansId=system.getProperty("ans9003_"+i);
+    if (ansId>=0) { count=count+1; }
+    }
+
+cmd="<script>$(window).load(function() {unisciCodici2("+codici+");});</script>";
+
+question qc3b = new question("concept_eval", 9013);
+qc3b.setProperty("text", "Geben Sie durch Klicken auf das Bild an, was Ihnen an dieser Verpackung <b>NICHT</b> gefällt."+cmd);
+qc3b.setProperty("code", "Q113r3");
+qc3b.setProperty("concept", cpt2);
+qc3b.setProperty("allow_nosel", true);
+qc3b.setProperty("controller", 9003);
+qc3b.setProperty("reverse_control", true);
+if (count != 39 ) { send qc3b;}
+
+}
+
+
+
+link="https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot"+rotazione+"_OCSF.jpg";
+img=scriptzoom+"<p><a class='fancybox' rel='group' href='"+link+"'><img src='"+link+"' width='750px'  alt='' /></a><div class='info'>Klicken Sie auf das Bild, um es zu vergrößern.</div></p>";
+
+qst = new question("scale", 440);
+qst.setProperty("text", codLeft+img+"<p>Es geht immer noch um die einzelnen Produkte dieser Produktreihe</p><p>Welches oder welche…?</p>"+scriptzoom);
+qst.setProperty("code", "q14");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q440_rows = new vector {
+"Ist besonders standsicher",
+"Ist langlebig",
+"Ist von hoher Qualität",
+"Ist platzsparend, benötigt wenig Stellfläche",
+"Ist besonders stabil",
+"Bietet Platz für viel Wäsche",
+"Lässt sich einfach mit Socken behängen",
+"Man erkennt sofort mit wie viel Wäsche man den Trockner behängen kann",
+"Ist einfach & leicht aufzubauen",
+"Ist sehr belastbar",
+"Hat eine hohe Garantie",
+"Ist Made in Europe",
+"Ich erkenne die Zusatz-Accessoires gut",
+"#shDer Name Pegasus ist gut zu erkennen",
+"Die Produktnamen sagen aus, wofür das Produkt geeignet ist",
+"Ist besonders preisgünstig"
+};
+qst.setProperty("rows", q440_rows);
+vector q440_cols = new vector {
+"<span style='font-weight: bold;'>LEIFHEIT EVERYDAY </span> ",
+"<span style='font-weight: bold;'>LEIFHEIT FAMILY DELUXE</span>",
+"<span style='font-weight: bold;'>LEIFHEIT BATH</span>",
+"<span style='font-weight: bold;'>LEIFHEIT CLASSIC 200 EASY</span>",
+"Keines davon#se#sf"
+};
+
+if(rotazione>1){ 
+    q440_cols.set(0,"<span style='font-weight: bold;'>LEIFHEIT DAILY DRY </span>");
+	q440_cols.set(1,"<span style='font-weight: bold;'>LEIFHEIT FAMILY DRY </span>");
+	q440_cols.set(2,"<span style='font-weight: bold;'>LEIFHEIT BATH DRY </span>");
+}
+qst.setProperty("cols", q440_cols);
+if(autotest !="1") { qst.setProperty("view", "onebyone"); }
+send qst;
+
+cod="<script type='text/javascript'> $(document).ready(function() { $('th:first-child').html( $('.introd') ); });</script>";
+link="https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot"+rotazione+"_OCS.jpg";
+img=scriptzoom+"<p><a class='fancybox' rel='group' href='"+link+"'><img src='"+link+"' width='750px'  alt='' /></a><div class='info'>Klicken Sie auf das Bild, um es zu vergrößern.</div></p>";
+
+qst = new question("scale", 450);
+qst.setProperty("text", codLeft+img+"Sagen Sie mir bitte für jede der folgenden Aussagen, inwieweit Sie ihr zustimmen oder nicht zustimmen. <div class='introd'><b>Mit diesen Verpackungen erscheint die Marke LEIFHEIT wie eine Marke,…</b></div>"+cod);
+qst.setProperty("code", "q15");
+qst.setProperty("show_rand", true);
+vector q450_rows = new vector {
+"die für Tradition steht",
+"der ich vertraue",
+"die innovativ ist",
+"die Wäscheständer bietet, die zu meinen Bedürfnissen passen ",
+"die hochwertig ist"
+};
+qst.setProperty("rows", q450_rows);
+vector q450_cols = new vector {
+"Stimme vollkommen zu	",
+"Stimme eher zu	",
+"Weder noch	",
+"Stimme eher nicht zu	",
+"Stimme überhaupt nicht zu"
+};
+qst.setProperty("cols", q450_cols);
+if(autotest !="1") { qst.setProperty("view", "onebyone"); }
+send qst;
+
+link="https://www.primisoft.com/fields/STR/R2501052DE/resources/Rot"+rotazione+"_OCS.jpg";
+img=scriptzoom+"<p><a class='fancybox' rel='group' href='"+link+"'><img src='"+link+"' width='750px'  alt='' /></a><div class='info'>Klicken Sie auf das Bild, um es zu vergrößern.</div></p>";
+
+qst = new question("concept", 459);
+qst.setProperty("text", "Jetzt geht es um die Verpackungen dieser Produkte.<br/>"+img+countdown);
+send qst;	
+
+qst = new question("scale", 460);
+qst.setProperty("text", codLeft+img+"Sagen Sie mir bitte für jede der folgenden Aussagen, inwieweit Sie ihr zustimmen oder nicht zustimmen.<div class='introd'><b>Diese Verpackungen…</b></div>");
+qst.setProperty("code", "q16");
+qst.setProperty("show_rand", true);
+vector q460_rows = new vector {
+"Sind klar, lesbar ",
+"Sind modern",
+"Machen Lust, die Produkte zu kaufen",
+"Passen zur Marke Leifheit",
+"Helfen mir, die Sorten gut voneinander zu unterscheiden",
+"Man erkennt sofort, von welcher Marke sie sind",
+"Die Farbcodierung hilft mir zur Orientierung",
+"Die Größenskala hilft mir zur Orientierung"
+};
+qst.setProperty("rows", q460_rows);
+vector q460_cols = new vector {
+"Stimme vollkommen zu	",
+"Stimme eher zu	",
+"Weder noch	",
+"Stimme eher nicht zu	",
+"Stimme überhaupt nicht zu"
+};
+qst.setProperty("cols", q460_cols);
+if(autotest !="1") { qst.setProperty("view", "onebyone"); }
+send qst;
+
+if(rotazione==1) { label="Leifheit Wäscheständer Everyday";}
+else { label="Leifheit Wäscheständer Daily Dry";}
+
+qst = new question("choice", 465);
+qst.setProperty("text", "<p>Hier sehen Sie einen anderen Namen für den "+label+".</p>Welchen Namen halten Sie für passender für die beschriebenen Eigenschaften? ");
+qst.setProperty("code", "q19a");
+qst.setProperty("show_rand", true);
+vector q465_opts = new vector {
+"Leifheit Everyday",
+"Leifheit Daily Dry",
+"Leifheit Allround",
+"Leifheit Alldry",
+"Keine Präferenz#se#sf"
+};
+qst.setProperty("options", q465_opts);
+send qst;
+
+if(rotazione==1) { label="Leifheit Wäscheständer Family Deluxe";}
+else { label="Leifheit Wäscheständer Family Dry";}
+
+qst = new question("choice", 468);
+qst.setProperty("text", "<p>Hier sehen Sie einen anderen Namen für den "+label+".</p>Welchen Namen halten Sie für passender für die beschriebenen Eigenschaften?");
+qst.setProperty("code", "q19b");
+qst.setProperty("show_rand", true);
+vector q468_opts = new vector {
+"Leifheit Family Deluxe",
+"Leifheit Family Dry",
+"Keine Präferenz#se#sf"
+};
+qst.setProperty("options", q468_opts);
+send qst;
+
+if(rotazione==1) { label="Leifheit Wäscheständer Bath";}
+else { label="Leifheit Wäscheständer  Bath Dry";}
+
+qst = new question("choice", 469);
+qst.setProperty("text", "Hier sehen Sie einen anderen Namen für den "+label+"<p>Welchen Namen halten Sie für passender für die beschriebenen Eigenschaften?</p>");
+qst.setProperty("code", "q19c");
+vector q469_opts = new vector {
+"Leifheit Bath ",
+"Leifheit Bath Dry",
+"Keine Präferenz#se#sf"
+};
+qst.setProperty("options", q469_opts);
+send qst;
+
+if(selQf9_8==true)
+{
+qst = new question("open", 472);
+qst.setProperty("text", "Sie haben angegeben, einen LEIFHEIT Stand-Wäscheständer zu besitzen. Welches Modell verwenden Sie zurzeit? ");
+qst.setProperty("code", "q100a");
+send qst;
+}
+
+mozCode="<script type='text/javascript'>$(window).load(function() {allinea(4,3,2);});</script>";
+allinea=all+mozCode;    
+
+if (ss1=="mobile")
+{
+allinea="";
+}
+
+if(selQf9_8==true)
+{
+
+	qst = new question("choice", 500);
+	qst.setProperty("text", "Sie haben angegeben, einen LEIFHEIT Stand-Wäscheständer zu besitzen. Welches der folgenden Modelle verwenden Sie zurzeit?"+allinea);
+	qst.setProperty("code", "q100");
+	qst.setProperty("show_rand", true);
+	vector q500_opts = new vector {
+"Pegasus Solid <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q100_1.png'/>",
+"Classic Solid <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q100_2.png'/>",
+"Classic Solid Extendable (mit ausziehbaren Stangen) <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q100_3.png'/>",
+"Comfort Tower 420 <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q100_4.png'/>",
+"Pegasus Tower 190 <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q100_5.png'/>",
+"Classic Tower 450 <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q100_6.png'/>",
+"Classic Tower 340 <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q100_7.png'/>",
+"Classic Tower 270 <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q100_8.png'/>",
+	"Anderes Modell#sf",
+	"Weiß nicht#se#sf "
+	};
+	qst.setProperty("options", q500_opts);
+	send qst;
+}
+
+if(selQf9_10==true)
+{
+
+qst = new question("choice", 520);
+qst.setProperty("text", "Sie haben angegeben, einen VILEDA Stand-Wäscheständer zu besitzen. Welches der folgenden Modelle verwenden Sie zurzeit?"+allinea);
+qst.setProperty("code", "q101");
+vector q520_opts = new vector {
+"King Plus <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q110_1.png'/>",
+"Magnum <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q110_2.png'/>",
+"Extensive (mit ausziehbaren Stangen) <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q110_3.png'/>",
+"Infinity Flex (mit ausziehbaren Stangen) <img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q110_4.png'/>",
+"Mixer<img class='img-responsive' src='https://www.primisoft.com/fields/STR/R2409128D/resources/q110_5.png'/> ",
+"Anderes Modell#sf",
+"Weiß nicht#se#sf"
+};
+qst.setProperty("options", q520_opts);
+send qst;
+
+}
+
+
+}

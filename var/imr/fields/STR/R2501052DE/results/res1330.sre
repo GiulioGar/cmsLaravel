@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;1330;IDEXA8LXWRBOZFHWIV5329;23/02/2025 13:35:31 CET;23/02/2025 13:42:45 CET;434;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LXWRBOZFHWIV5329;rotazione=3;device=desktop;lang=de;sysIID=1330;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0100;1
+open;75;25
+choice;80;5;1
+choice;100;3;1
+choice;120;11;00101011010;7
+choice;131;13;0010000000000;2
+choice;140;6;1
+choice;150;15;000000010000000;7
+choice;160;9;0
+choice;166;3;2
+scale;170;3;7;1;1;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Wäscheständer von Leifheit
+open;270;Wäscheständer
+concept;280
+composed;315
+open;300;Ständer blau weiß
+open;310;Leifheit Wäscheständer
+concept;330
+scale;340;2;5;0;0
+scale;360;2;6;1;1
+scale;370;12;3;110010110110010110110100110110110010
+concept;400
+choice;410;5;0
+choice;420;6;1
+scale;440;16;5;11000110001100011110110000100011110110001100011000110001111011000000001100000010
+scale;450;5;5;0;0;0;0;0
+concept;459
+scale;460;8;5;0;0;0;0;0;0;1;0
+choice;465;5;4
+choice;468;3;1
+choice;469;3;2
+open;472;ich denke es ist der classic
+choice;500;10;1
+app;1999;indOrder|string|3,2,1
+concept_eval;9003;39;23;11;20;24;30;34;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9013;39;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

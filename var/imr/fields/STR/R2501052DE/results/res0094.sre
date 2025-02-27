@@ -1,0 +1,44 @@
+2.0;STR;R2501052DE;94;IDEXA8LNEILGBMFWQT95;18/02/2025 16:42:54 CET;18/02/2025 16:48:31 CET;337;3;520;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LNEILGBMFWQT95;device=desktop;lang=de;sysIID=94;pan=8;rotazione=2
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;50
+choice;80;5;3
+choice;100;3;2
+choice;120;11;10100010010;6
+choice;131;13;0110000000000;1
+choice;140;6;1
+choice;150;15;000010000100000;4
+choice;160;9;2
+choice;166;3;1
+scale;170;3;7;0;1;0
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;eine leifheit wäschespinne
+open;270;leifheit wäschespinne
+concept;280
+composed;315
+open;300;Leifheit
+open;310;Wäschespinne
+concept;330
+scale;340;2;5;0;0
+scale;360;2;6;0;0
+scale;370;12;3;100110110010010100010010100100100100
+concept;400
+choice;410;5;0
+choice;420;6;0
+scale;440;16;5;01010010100011011000010100110001010010000101010000100100011001100000001001011000
+scale;450;5;5;1;0;0;1;0
+concept;459
+scale;460;8;5;1;0;0;0;1;1;0;0
+choice;465;5;2
+choice;468;3;0
+choice;469;3;1
+choice;520;7;2
+app;1999;indOrder|string|2,3,1
+concept_eval;9002;42;37;12;16;21;27;10;15;19;36;25;7;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;42;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

@@ -1,0 +1,44 @@
+2.0;STR;R2501052DE;1244;IDEXA8LWTZVLSOUGLS5259;22/02/2025 19:36:52 CET;22/02/2025 19:41:29 CET;277;3;520;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LWTZVLSOUGLS5259;rotazione=2;device=desktop;lang=de;sysIID=1244;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;0
+choice;60;8;00000001;7
+choice;70;4;1000;0
+open;75;27
+choice;80;5;1
+choice;100;3;2
+choice;120;11;10100100000;0
+choice;131;13;1100000000000;0
+choice;140;6;2
+choice;150;15;000000100100000;9
+choice;160;9;2
+choice;166;3;1
+scale;170;3;7;1;2;1
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;einen wäschestände
+open;270;Wäscheständer von unbekannter marke 
+concept;280
+composed;315
+open;300;wäscheständer
+open;310;ich konnte den Namen des Produktes nicht sehen  
+concept;330
+scale;340;2;5;1;1
+scale;360;2;6;0;1
+scale;370;12;3;100100100010100100010100100110100110
+concept;400
+choice;410;5;1
+choice;420;6;2
+scale;440;16;5;11000010101001010000110000100010010100101100010010110000100001100000001001010010
+scale;450;5;5;0;0;0;1;1
+concept;459
+scale;460;8;5;0;1;3;0;3;1;1;0
+choice;465;5;1
+choice;468;3;1
+choice;469;3;1
+choice;520;7;1
+app;1999;indOrder|string|2,3,1
+concept_eval;9002;42;15;10;19;36;25;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;42;16;12;21;27;37;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

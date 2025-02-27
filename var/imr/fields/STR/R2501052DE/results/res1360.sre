@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;1360;IDEXA8LJEPUGHQCXSS1103;23/02/2025 16:44:15 CET;23/02/2025 16:53:38 CET;563;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LJEPUGHQCXSS1103;rotazione=1;device=desktop;lang=de;sysIID=1360;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;0
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;48
+choice;80;5;2
+choice;100;3;2
+choice;120;11;10100000010;0
+choice;131;13;0100100000000;4
+choice;140;6;2
+choice;150;15;000000010000010;7
+choice;160;9;1
+choice;166;3;0
+scale;170;3;7;1;1;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Ich habe einen Wäscheständer mit ausklappbaren Flügeln gesehen. 
+open;270;Leifheit everyday
+concept;280
+composed;315
+open;300;ich habe zusätzlich noch "18*2m" gesehen
+open;310;Leifheit everyday
+concept;330
+scale;340;2;5;1;2
+scale;360;2;6;1;1
+scale;370;12;3;100110110110110110100110110100110110
+concept;400
+choice;410;5;1
+choice;420;6;1
+scale;440;16;5;11010110101101000100110101100011000111101111011010110101111000001000001110000001
+scale;450;5;5;2;0;1;0;1
+concept;459
+scale;460;8;5;1;0;1;0;2;0;2;2
+choice;465;5;4
+choice;468;3;2
+choice;469;3;0
+open;472;Ich erinnere mich nicht an den konkreten Namen. Er besitzt jedoch zwei ausklappbare Flügel.
+choice;500;10;1
+app;1999;indOrder|string|1,2,3
+concept_eval;9001;36;6;9;15;14;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9011;36;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

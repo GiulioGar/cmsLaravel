@@ -1,0 +1,46 @@
+2.0;STR;R2501052DE;856;IDEXA8LEYLFRXGDCCT856;20/02/2025 10:26:47 CET;20/02/2025 10:35:22 CET;515;3;520;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LEYLFRXGDCCT856;rotazione=3;device=desktop;lang=de;sysIID=856;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;62
+choice;80;5;3
+choice;100;3;2
+choice;120;11;10100000000;0
+choice;131;13;0000101000000;4
+choice;140;6;1
+choice;150;15;000000010100000;7
+choice;160;9;6
+choice;166;3;2
+scale;170;3;7;1;1;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Wäscheständer
+open;270;Daily light
+concept;280
+composed;315
+open;300;wäscheständer
+open;310;daily dry
+concept;330
+scale;340;2;5;0;0
+scale;360;2;6;1;1
+scale;370;12;3;110110110110110110110100110110110010
+concept;400
+choice;410;5;0
+choice;420;6;1
+scale;440;16;5;11100111001111011110111001100011100111101111011100111001111011100000001111000001
+scale;450;5;5;0;0;1;0;0
+concept;459
+scale;460;8;5;0;0;0;0;0;0;0;0
+choice;465;5;0
+choice;468;3;1
+choice;469;3;0
+open;472;Family Dry und Classic und noch einen 
+choice;500;10;0
+choice;520;7;0
+app;1999;indOrder|string|3,1,2
+concept_eval;9003;39;23;6;34;11;20;24;30;21;14;10;17;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9013;39;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

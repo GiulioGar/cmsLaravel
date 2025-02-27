@@ -1,0 +1,43 @@
+2.0;STR;R2501052DE;1420;IDEXA8LQZEWUOJHBAP3550;24/02/2025 09:07:41 CET;24/02/2025 09:27:39 CET;1198;3;469;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LQZEWUOJHBAP3550;rotazione=1;device=desktop;lang=de;sysIID=1420;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;34
+choice;80;5;1
+choice;100;3;2
+choice;120;11;11100101100;2
+choice;131;13;1101100000000;1
+choice;140;6;0
+choice;150;15;010000001010000;8
+choice;160;9;3
+choice;166;3;0
+scale;170;3;7;2;2;2
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;einen schirm
+open;270;alles super
+concept;280
+composed;315
+open;300;tolle idee
+open;310;tolle idee
+concept;330
+scale;340;2;5;1;1
+scale;360;2;6;1;1
+scale;370;12;3;100010100100100100100110010010010100
+concept;400
+choice;410;5;0
+choice;420;6;1
+scale;440;16;5;00100001000010000100100001000001000001001000010000001000100000100000000100000001
+scale;450;5;5;1;1;1;1;1
+concept;459
+scale;460;8;5;1;1;1;1;1;1;1;1
+choice;465;5;3
+choice;468;3;0
+choice;469;3;2
+app;1999;indOrder|string|1,2,3
+concept_eval;9001;36;20;16;10;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9011;0

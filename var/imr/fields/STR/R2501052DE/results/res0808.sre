@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;808;IDEXA8LMQWZWIOENVX810;20/02/2025 09:15:52 CET;20/02/2025 09:39:30 CET;1418;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LMQWZWIOENVX810;rotazione=2;device=desktop;lang=de;sysIID=808;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;1100;0
+open;75;49
+choice;80;5;2
+choice;100;3;2
+choice;120;11;00100000100;2
+choice;131;13;0000100000000;4
+choice;140;6;0
+choice;150;15;000000010000000;7
+choice;160;9;6
+choice;166;3;1
+scale;170;3;7;1;6;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;zu wenig
+open;270;leifeit
+concept;280
+composed;315
+open;300;ein wäscheständer
+open;310;daily dryer von leifeit
+concept;330
+scale;340;2;5;1;1
+scale;360;2;6;2;2
+scale;370;12;3;001100001110110100001110001001001100
+concept;400
+choice;410;5;1
+choice;420;6;2
+scale;440;16;5;01000110000000100100110000100011000111001100000001000010000111000000000100000001
+scale;450;5;5;1;1;2;1;2
+concept;459
+scale;460;8;5;0;1;1;0;1;0;1;1
+choice;465;5;1
+choice;468;3;1
+choice;469;3;2
+open;472;keine Ahnung
+choice;500;10;0
+app;1999;indOrder|string|2,3,1
+concept_eval;9002;42;4;6;8;37;12;16;21;27;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;42;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

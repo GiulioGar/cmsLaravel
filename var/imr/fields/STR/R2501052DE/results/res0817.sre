@@ -1,0 +1,46 @@
+2.0;STR;R2501052DE;817;IDEXA8LWLZRIVSOIZX819;20/02/2025 09:27:36 CET;20/02/2025 09:43:55 CET;979;3;520;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LWLZRIVSOIZX819;rotazione=2;device=desktop;lang=de;sysIID=817;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;46
+choice;80;5;2
+choice;100;3;1
+choice;120;11;10100000110;2
+choice;131;13;1100000000000;0
+choice;140;6;1
+choice;150;15;000000010100000;9
+choice;160;9;2
+choice;166;3;1
+scale;170;3;7;1;2;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Wäscheständer mit Flügel der Marke
+open;270;Leifheit
+concept;280
+composed;315
+open;300;Wäscheständer mit Flügel
+open;310;Leifheit Daily Dry
+concept;330
+scale;340;2;5;1;2
+scale;360;2;6;1;2
+scale;370;12;3;100110110110010110100110110110110100
+concept;400
+choice;410;5;0
+choice;420;6;1
+scale;440;16;5;01000111101111000010110000100011000110001111011000111100111011000000001111000001
+scale;450;5;5;1;1;2;1;1
+concept;459
+scale;460;8;5;1;2;2;1;1;1;1;1
+choice;465;5;0
+choice;468;3;0
+choice;469;3;1
+open;472;classic
+choice;500;10;1
+choice;520;7;0
+app;1999;indOrder|string|2,1,3
+concept_eval;9002;42;15;10;19;36;25;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;42;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

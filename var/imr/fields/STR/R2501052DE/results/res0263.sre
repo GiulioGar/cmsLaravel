@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;263;IDEXA8LZAQPGJOYWZH264;18/02/2025 21:04:08 CET;18/02/2025 21:25:08 CET;1260;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LZAQPGJOYWZH264;rotazione=2;device=desktop;lang=de;sysIID=263;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;51
+choice;80;5;3
+choice;100;3;2
+choice;120;11;00100000000;2
+choice;131;13;0110010000000;5
+choice;140;6;2
+choice;150;15;000100010000110;3
+choice;160;9;0
+choice;166;3;1
+scale;170;3;7;1;1;0
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Leifheit Wäscheständer
+open;270;ein Wäscheständer der Marke Leifheit
+concept;280
+composed;315
+open;300;Wäscheständer von Leifheit
+open;310;Daily Dry Wäscheständer von Leifheit
+concept;330
+scale;340;2;5;0;0
+scale;360;2;6;1;1
+scale;370;12;3;110110110110110110110110110110110110
+concept;400
+choice;410;5;1
+choice;420;6;1
+scale;440;16;5;11100111101111000100110001111011000111001111011000111001111011000000000000100001
+scale;450;5;5;1;0;1;1;0
+concept;459
+scale;460;8;5;0;0;1;0;0;0;0;0
+choice;465;5;1
+choice;468;3;1
+choice;469;3;1
+open;472;ich weiß die Bezeichnung nicht, ist schon sehr alt
+choice;500;10;8
+app;1999;indOrder|string|2,3,1
+concept_eval;9002;42;11;6;4;8;20;30;23;22;18;31;28;32;33;0;1;2;9;13;15;10;19;36;25;16;12;21;27;37;17;14;29;38;35;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;42;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

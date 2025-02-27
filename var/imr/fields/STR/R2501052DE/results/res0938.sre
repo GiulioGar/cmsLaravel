@@ -1,0 +1,46 @@
+2.0;STR;R2501052DE;938;IDEXA8LEFYCHOJWXDL930;20/02/2025 17:02:29 CET;20/02/2025 17:08:22 CET;353;3;520;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LEFYCHOJWXDL930;rotazione=3;device=desktop;lang=de;sysIID=938;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;39
+choice;80;5;2
+choice;100;3;2
+choice;120;11;00101000000;4
+choice;131;13;0100000000000;1
+choice;140;6;1
+choice;150;15;000000010100000;9
+choice;160;9;1
+choice;166;3;2
+scale;170;3;7;2;2;3
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;leifheit
+open;270;daily dry Wäscheständer
+concept;280
+composed;315
+open;300;leifheit
+open;310;daily dry wäscheständer
+concept;330
+scale;340;2;5;1;1
+scale;360;2;6;2;2
+scale;370;12;3;110110110110110110110110110110110110
+concept;400
+choice;410;5;1
+choice;420;6;2
+scale;440;16;5;11110111101111011110111101111011110111101111011110111101111011110000001111011110
+scale;450;5;5;0;1;1;1;1
+concept;459
+scale;460;8;5;1;1;1;1;1;1;1;1
+choice;465;5;4
+choice;468;3;2
+choice;469;3;2
+open;472;weiß nicht
+choice;500;10;1
+choice;520;7;1
+app;1999;indOrder|string|3,2,1
+concept_eval;9003;39;19;15;22;28;33;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9013;39;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

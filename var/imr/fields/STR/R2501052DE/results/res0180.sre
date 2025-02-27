@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;180;IDEXA8LXAFTEGSMSJJ180;18/02/2025 19:33:20 CET;18/02/2025 19:44:57 CET;697;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LXAFTEGSMSJJ180;rotazione=2;device=desktop;lang=de;sysIID=180;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;40
+choice;80;5;2
+choice;100;3;1
+choice;120;11;10100000100;0
+choice;131;13;0000010000000;5
+choice;140;6;2
+choice;150;15;000000010000000;7
+choice;160;9;5
+choice;166;3;1
+scale;170;3;7;1;1;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Leifheit Wäscheständer
+open;270;Leifheit Wäscheständer
+concept;280
+composed;315
+open;300;Leifheit Daily Dry
+open;310;Der Leifheit Daily Dry Wäscheständer in OVP. 
+concept;330
+scale;340;2;5;0;1
+scale;360;2;6;0;2
+scale;370;12;3;100100100100100100001100001100100100
+concept;400
+choice;410;5;0
+choice;420;6;2
+scale;440;16;5;11000110101000010000110001100011010110101000010000111101111010010000001101010010
+scale;450;5;5;1;1;1;1;1
+concept;459
+scale;460;8;5;1;0;2;0;1;0;3;3
+choice;465;5;1
+choice;468;3;0
+choice;469;3;1
+open;472;Leifheit Daily-Dry
+choice;500;10;8
+app;1999;indOrder|string|2,3,1
+concept_eval;9002;42;25;10;15;19;36;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;42;17;14;29;38;35;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

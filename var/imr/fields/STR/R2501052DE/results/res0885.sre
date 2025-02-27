@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;885;IDEXA8LOCAGIWEYTXT884;20/02/2025 11:04:35 CET;20/02/2025 11:13:04 CET;509;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LOCAGIWEYTXT884;rotazione=3;device=desktop;lang=de;sysIID=885;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;51
+choice;80;5;3
+choice;100;3;1
+choice;120;11;10100000000;2
+choice;131;13;0010000000000;2
+choice;140;6;1
+choice;150;15;000000010000000;7
+choice;160;9;0
+choice;166;3;2
+scale;170;3;7;0;6;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Einen Wäschetrockner
+open;270;Leifheit
+concept;280
+composed;315
+open;300;Wäschetrockner
+open;310;Leifheit Daily dry
+concept;330
+scale;340;2;5;0;0
+scale;360;2;6;1;1
+scale;370;12;3;100110110110110110100100110110110110
+concept;400
+choice;410;5;1
+choice;420;6;1
+scale;440;16;5;11110111101111000100110001110011110111101111011100111101111000001000001110000010
+scale;450;5;5;0;0;0;0;0
+concept;459
+scale;460;8;5;0;0;0;0;0;0;0;0
+choice;465;5;0
+choice;468;3;1
+choice;469;3;1
+open;472;Kann ich nicht sagen, ist ein sehr altes Modell und hält immer noch
+choice;500;10;8
+app;1999;indOrder|string|3,1,2
+concept_eval;9003;39;19;15;22;28;33;14;20;11;24;30;34;10;3;5;18;12;26;32;35;7;17;0;1;2;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9013;39;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

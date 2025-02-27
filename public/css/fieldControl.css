@@ -133,4 +133,150 @@ h3 {font-size: 15px!important;}
     width: 50%;
 }
 
+/* Stile del contenitore tab */
+.custom-tab-container-modern {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Effetto scheda per la navigazione */
+.custom-nav-tabs-modern {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 5px;
+    white-space: nowrap;
+}
+
+/* Stile per le singole schede */
+.custom-nav-tabs-modern .modern-tab-link {
+    background: #f8f9fa;
+    color: #404044;
+    font-weight: bold;
+    padding: 12px 20px;
+    margin-right: 5px;
+    border-radius: 12px 12px 0 0;
+    transition: all 0.3s ease-in-out;
+    border: 1px solid #ddd;
+    border-bottom: none;
+}
+
+/* Effetto attivo e hover */
+.custom-nav-tabs-modern .modern-tab-link:hover,
+.custom-nav-tabs-modern .modern-tab-link.active {
+    background: #9dce6b;
+    color: white;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    transform: scale(1.02);
+}
+
+/* Per evitare spaziature strane */
+.custom-nav-tabs-modern .nav-item {
+    margin-bottom: -1px;
+}
+
+/* Contenuto tab migliorato */
+.tab-content-modern .tab-pane {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.tab-content-modern .tab-pane.show {
+    opacity: 1;
+}
+
+/* Effetto scorrimento fluido */
+.custom-nav-tabs-modern::-webkit-scrollbar {
+    height: 4px;
+}
+
+.custom-nav-tabs-modern::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.custom-nav-tabs-modern::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
+}
+
+.quote-section {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #404044;
+}
+
+.custom-table th {
+    background: #9dce6b;
+    color: white;
+    text-align: center;
+}
+
+.custom-table td {
+    text-align: center;
+}
+
+.text-danger {
+    color: #d9534f;
+    font-weight: bold;
+}
+
+.text-success {
+    color: #5cb85c;
+    font-weight: bold;
+}
+
+.quota-table-container {
+    max-height: 400px; /* Altezza per circa 12 righe */
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: inset 0 -10px 10px -10px rgba(0, 0, 0, 0.2);
+    padding-right: 5px;
+}
+
+.quota-table-container {
+    max-height: 400px; /* Altezza per circa 12 righe */
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: inset 0 -10px 10px -10px rgba(0, 0, 0, 0.2);
+    padding-right: 5px;
+    position: relative;
+}
+
+/* Fissare l'intestazione della tabella */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background: #404044; /* Sfondo grigio scuro */
+    color: white;
+    z-index: 100;
+}
+
+/* Stile per la scrollbar */
+.quota-table-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.quota-table-container::-webkit-scrollbar-thumb {
+    background: #9dce6b; /* Verde chiaro */
+    border-radius: 6px;
+}
+
+.quota-table-container::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+
+
 

@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;18;IDEXA8LREFSIOPVBAP20;18/02/2025 16:06:25 CET;18/02/2025 16:17:53 CET;688;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LREFSIOPVBAP20;rotazione=3;device=desktop;lang=de;sysIID=18;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;0
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;61
+choice;80;5;3
+choice;100;3;2
+choice;120;11;11110101100;7
+choice;131;13;0010000000000;2
+choice;140;6;1
+choice;150;15;000000010000000;7
+choice;160;9;4
+choice;166;3;2
+scale;170;3;7;2;1;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Leifheit
+open;270;Wäscheständer
+concept;280
+composed;315
+open;300;Leifheit
+open;310;Day try
+concept;330
+scale;340;2;5;1;1
+scale;360;2;6;2;2
+scale;370;12;3;001001110010110110110110110110001001
+concept;400
+choice;410;5;1
+choice;420;6;1
+scale;440;16;5;00001000011110000100000011100011110111001111000001111101111000001000001110000001
+scale;450;5;5;1;1;0;0;1
+concept;459
+scale;460;8;5;3;0;1;0;2;0;1;1
+choice;465;5;0
+choice;468;3;0
+choice;469;3;0
+open;472;Leifheit, Modell nicht mehr ersichtlich!
+choice;500;10;1
+app;1999;indOrder|string|3,1,2
+concept_eval;9003;39;13;33;15;19;22;28;34;11;20;24;30;18;12;26;32;35;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9013;39;36;37;38;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

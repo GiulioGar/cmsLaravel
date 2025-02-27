@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;459;IDEXA8LOHSCYVEUGKL461;19/02/2025 08:08:47 CET;19/02/2025 08:18:50 CET;603;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LOHSCYVEUGKL461;rotazione=1;device=desktop;lang=de;sysIID=459;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;38
+choice;80;5;2
+choice;100;3;2
+choice;120;11;01100000000;2
+choice;131;13;0100100000000;4
+choice;140;6;1
+choice;150;15;000000010000110;7
+choice;160;9;5
+choice;166;3;0
+scale;170;3;7;1;1;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Einen Wäscheständer von Leifheit
+open;270;Leifheit, mehr konnte ich so schnell nicht erkennen
+concept;280
+composed;315
+open;300;Wäscheständer
+open;310;Leifheit everyday
+concept;330
+scale;340;2;5;1;1
+scale;360;2;6;3;3
+scale;370;12;3;110110110110110100001010100001110100
+concept;400
+choice;410;5;0
+choice;420;6;3
+scale;440;16;5;11010111101110000110111001100011000000011111011010000010000111000000001111000001
+scale;450;5;5;1;1;1;1;0
+concept;459
+scale;460;8;5;0;0;1;0;0;0;1;0
+choice;465;5;0
+choice;468;3;0
+choice;469;3;0
+open;472;Everyday
+choice;500;10;0
+app;1999;indOrder|string|1,3,2
+concept_eval;9001;36;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9011;36;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

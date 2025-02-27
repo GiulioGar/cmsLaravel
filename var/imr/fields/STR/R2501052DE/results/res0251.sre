@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;251;IDEXA8LYPDEXUKAZRR251;18/02/2025 20:46:06 CET;18/02/2025 21:05:03 CET;1137;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LYPDEXUKAZRR251;rotazione=2;device=desktop;lang=de;sysIID=251;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;0
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;49
+choice;80;5;2
+choice;100;3;1
+choice;120;11;01100001000;2
+choice;131;13;0000100000000;4
+choice;140;6;2
+choice;150;15;000000010000000;7
+choice;160;9;2
+choice;166;3;1
+scale;170;3;7;1;1;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Ein Wäscheständer
+open;270;Ein Wäscgeständer von der Marke Leifheit 
+concept;280
+composed;315
+open;300;Das war 1 Sekunde, da konnte ich nichts lesen außer die Marke. Es sah aus wie ein Pegasus Wäscheständer von Leifheit.
+open;310;Um ein Wäscheständer von Leifheit.
+concept;330
+scale;340;2;5;2;3
+scale;360;2;6;1;3
+scale;370;12;3;100110100110110110100110110110100100
+concept;400
+choice;410;5;0
+choice;420;6;1
+scale;440;16;5;11100111001111000100111001101011110111001111011100111101111001100000001111011110
+scale;450;5;5;0;0;0;0;0
+concept;459
+scale;460;8;5;1;0;0;0;0;0;0;0
+choice;465;5;2
+choice;468;3;0
+choice;469;3;2
+open;472;Wir verwenden ein Pegasus Wäscheständer mit Standbeinen die sich parallel gegenüberstehen. Ausgeklappt kommt er auf 2 Meter. 
+choice;500;10;0
+app;1999;indOrder|string|2,3,1
+concept_eval;9002;42;6;20;9;11;4;35;14;17;29;38;37;12;16;21;27;19;10;15;36;25;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;42;8;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

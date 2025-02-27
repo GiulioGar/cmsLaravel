@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\PanelControl;
 use Illuminate\Support\Facades\DB;
 
+
 class FieldControlController extends Controller
 {
     public function index(Request $request)
@@ -15,6 +16,7 @@ class FieldControlController extends Controller
 
         // Recupera i dati del progetto
         $panelData = PanelControl::where('sur_id', $sid)->first();
+        $quotaData = $this->getQuotaData($sid);
 
         // Percorso della directory dei file .sre
         $directory = base_path("var/imr/fields/$prj/$sid/results/");
@@ -110,6 +112,7 @@ class FieldControlController extends Controller
                             // Incrementa il numero di contatti per il panel
                             $panelCounts[$panelUsed]['contatti']++;
 
+
                             if (isset($data[$statusIndex])) {
                                 $status = (int) $data[$statusIndex];
 
@@ -174,7 +177,11 @@ class FieldControlController extends Controller
         // Aggiorna il database con i nuovi dati
         $this->updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes);
 
-        return view('fieldControl', compact('prj', 'sid', 'panelData', 'counts', 'abilitati', 'redemption', 'panelCounts'));
+        //Conta filtrate per panel
+        $filtrateCountsByPanel = $this->contaFiltrate($directory, $panelNames, $prj, $sid);
+
+
+        return view('fieldControl', compact('prj', 'sid', 'panelData', 'counts', 'abilitati', 'redemption', 'panelCounts', 'filtrateCountsByPanel', 'quotaData'));
     }
 
     private function updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes)
@@ -199,4 +206,190 @@ class FieldControlController extends Controller
             'costo' => $costo
         ]);
     }
+
+
+//  FUNZIONE PER CONTEGGIO FILTRATE
+
+private function contaFiltrate($directory, $panelNames, $prj, $sid)
+{
+
+
+    $panelFiltrateCounts = [];
+
+    if (is_dir($directory)) {
+        $files = glob($directory . "/*.sre");
+
+        foreach ($files as $file) {
+            $handle = fopen($file, "r");
+            if ($handle) {
+                $line = fgets($handle);
+                fclose($handle);
+
+                if ($line) {
+                    $data = explode(";", trim($line));
+
+                    // Determina la posizione della colonna "status" e della domanda filtrata
+                    $statusIndex = (isset($data[0]) && $data[0] == "2.0") ? 8 : 7;
+                    $lastCodeIndex = $statusIndex + 1;
+
+                    // Verifica se lo status è "4" (Non in target)
+                    if (!isset($data[$statusIndex]) || (int)$data[$statusIndex] !== 4) {
+                        continue;
+                    }
+
+                    // Determina il panel
+                    $panelUsed = 'Interactive';
+                    foreach ($data as $element) {
+                        if (strpos($element, "pan=") !== false) {
+                            $panelValue = (int) str_replace("pan=", "", $element);
+                            $panelUsed = $panelNames[$panelValue] ?? 'Altro Panel';
+                            break;
+                        }
+                    }
+
+                    if (!isset($panelFiltrateCounts[$panelUsed])) {
+                        $panelFiltrateCounts[$panelUsed] = [];
+                    }
+
+                    if (isset($data[$lastCodeIndex])) {
+                        $questionCode = $data[$lastCodeIndex];
+
+
+                        // Otteniamo i dettagli della domanda
+                        $questionDetails = $this->getQuestionDetails($prj, $sid, $questionCode);
+                        $questionLabel = $questionDetails['code'] . " - " . $questionDetails['text'];
+
+
+                        // Aggiunge il codice alla lista delle occorrenze per il panel specifico
+                        if (!isset($panelFiltrateCounts[$panelUsed][$questionLabel])) {
+                            $panelFiltrateCounts[$panelUsed][$questionLabel] = 1;
+                        } else {
+                            $panelFiltrateCounts[$panelUsed][$questionLabel]++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    foreach ($panelFiltrateCounts as &$filtrateCounts) {
+        arsort($filtrateCounts);
+    }
+
+
+    return $panelFiltrateCounts;
+}
+
+
+// LETTURA FILE SDL
+
+private function getQuestionDetails($prj, $sid, $questionCode)
+{
+    // Percorso del file .sdl
+    $sdlFile = base_path("var/imr/fields/$prj/$sid/$sid.sdl");
+
+    // Controlliamo se il file esiste
+    if (!file_exists($sdlFile)) {
+
+        return ['text' => 'N/A', 'code' => 'N/A'];
+    }
+
+
+    // Variabili per memorizzare i dettagli della domanda
+    $questionFound = false;
+    $questionText = 'N/A';
+    $questionCodeText = 'N/A';
+
+    // Legge il file riga per riga
+    $handle = fopen($sdlFile, "r");
+    if ($handle) {
+        while (($line = fgets($handle)) !== false) {
+            $line = trim($line);
+
+
+            // Cerca la riga con "new question(...)" e verifica il codice della domanda
+            if (preg_match('/new question\(".*?",\s*(\d+)\);/', $line, $matches)) {
+
+
+                if ((int)$matches[1] === (int)$questionCode) {
+
+                    $questionFound = true;
+                    continue; // Procedi alla lettura delle righe successive
+                }
+            }
+
+            // Se la domanda è stata trovata, cerchiamo il testo e il codice
+            if ($questionFound) {
+                if (strpos($line, 'qst.setProperty("text",') !== false) {
+                    preg_match('/qst.setProperty\("text",\s*"(.*?)"\);/', $line, $matches);
+                    if (isset($matches[1])) {
+                        $questionText = $matches[1];
+
+                    }
+                }
+                if (strpos($line, 'qst.setProperty("code",') !== false) {
+                    preg_match('/qst.setProperty\("code",\s*"(.*?)"\);/', $line, $matches);
+                    if (isset($matches[1])) {
+                        $questionCodeText = $matches[1];
+
+                    }
+                    break; // Abbiamo trovato sia il testo che il codice, possiamo interrompere
+                }
+            }
+        }
+        fclose($handle);
+    } else {
+
+    }
+
+
+
+    return ['text' => $questionText, 'code' => $questionCodeText];
+}
+
+
+
+
+// FUNZIONE PER CONTROLLARE LA TABELLA QUOTE
+
+private function getQuotaData($sid)
+{
+    return DB::table('t_quota_status')
+        ->where('survey_id', $sid)
+        ->orderBy('id', 'asc') // Ordina per ID crescente
+        ->select('target_name as quota', 'target_value as totale', 'current_value as entrate')
+        ->get()
+        ->map(function ($item) {
+            $item->missing = max(0, $item->totale - $item->entrate);
+            $item->quota = $this->formatQuotaName($item->quota);
+            return $item;
+        });
+}
+
+private function formatQuotaName($quotaName)
+{
+    if ($quotaName === 'source_panel') {
+        return 'Totale Panel Esterno';
+    }
+
+    if (strpos($quotaName, 'total_interviews') === 0) {
+        return ($quotaName === 'total_interviews') ? 'Interviste Totali' : 'Totale Cella ' . str_replace('total_interviews_', '', $quotaName);
+    }
+
+    $parts = explode('_', $quotaName);
+
+    if (count($parts) == 2) {
+        return ucfirst($parts[0]) . ' - Risposta ' . ((int)$parts[1] + 1);
+    } elseif (count($parts) == 3) {
+        return ucfirst($parts[0]) . ' - Risposta ' . ((int)$parts[1] + 1) . ' - Cella ' . $parts[2];
+    }
+
+    return ucfirst($quotaName);
+}
+
+
+
+
+
+
 }

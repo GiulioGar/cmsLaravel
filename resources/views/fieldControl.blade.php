@@ -16,7 +16,7 @@
                     <span class="ms-3 stat-text">{{ $panelData->sur_id ?? 'N/A' }}</span>
                 </div>
                 <h3 class="mt-2 stat-value">{{ $panelData->description ?? 'No description available' }}</h3>
-                <p class="text-muted">{{ $panelData->cliente ?? 'No description available' }}</p>
+                <p class="text-muted">Cliente: {{ $panelData->cliente ?? 'No description available' }}</p>
             </div>
         </div>
 
@@ -85,26 +85,23 @@
                     </span>
                 </div>
                 <h3 class="mt-2 stat-value">
-                    Durata: {{ $panelData->durata ?? 'N/A' }} <br/>
+                    Durata: {{ $panelData->durata ?? 'N/A' }} minuti <br/>
                     Panel:
-                    @if($panelData->panel == 0)
-                        Esterno
-                    @elseif($panelData->panel == 1)
-                        Interactive
-                    @elseif($panelData->panel == 2)
-                        Lista
+                    @if(!empty($panelCounts))
+                        {{ implode(', ', array_keys($panelCounts)) }}
                     @else
                         N/A
                     @endif
+
                 </h3>
             </div>
         </div>
     </div>
 
-        <!-- Sezione centrale sinistra con tab laterale -->
-
+        <!-- prima riga dopo le card con status + filtrate -->
 
         <div class="row mt-5">
+
             <div class="col-md-6">
                 <div class="d-flex custom-tab-container">
                     <!-- Menu laterale -->
@@ -118,6 +115,7 @@
                             </li>
 
                             <!-- Generazione dinamica dei tab per i panel -->
+                            @if(count($panelCounts) > 1)
                             @foreach ($panelCounts as $panelName => $panelData)
                                 <li class="nav-item">
                                     <a class="nav-link" id="tab{{ $loop->index + 2 }}-tab" data-bs-toggle="pill" href="#tab{{ $loop->index + 2 }}">
@@ -125,6 +123,8 @@
                                     </a>
                                 </li>
                             @endforeach
+                        @endif
+
                         </ul>
                     </div>
 
@@ -167,14 +167,180 @@
                     </div>
                 </div>
             </div>
+
+            {{-- FINE MENU SINISTRA CON RISULTATO
+
+            INIZIO MENU DESTRA CON GRAFICI FILTRATE --}}
+            <div class="col-md-6">
+                <div class="custom-tab-container-modern">
+                    <!-- Menu di navigazione effetto scheda -->
+                    <ul class="nav custom-nav-tabs-modern" id="panel-nav">
+                        @foreach ($panelCounts as $panelName => $panelData)
+                            <li class="nav-item">
+                                <a class="nav-link modern-tab-link {{ $loop->first ? 'active' : '' }}" id="tab-panel-{{ $loop->index }}-nav" data-bs-toggle="pill" href="#tab-panel-{{ $loop->index }}">
+                                    <i class="fas fa-chart-pie me-2"></i> {{ $panelName }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <!-- Contenuto delle tab -->
+                    <div class="tab-content custom-tab-content-modern">
+                        @foreach ($panelCounts as $panelName => $panelData)
+                            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-panel-{{ $loop->index }}">
+                                <br/>
+                                <h5 class="mt-3">Analisi Filtrate</h5>
+                                <canvas id="chart-panel-{{ $loop->index }}"></canvas> <!-- Canvas univoco per ogni panel -->
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+
+            {{-- FINE PARTE SINISTRA GRAFICI FILTRATE --}}
+
+
+
         </div>
 
+    <!-- fine prima riga dopo le card con status + filtrate -->
+
+    <!-- seconda riga  -->
+
+    <div class="row mt-4">
+        <!-- Sezione Quote -->
+        <div class="col-md-6">
+            <div class="quote-section">
+                <h4 class="section-title">Controllo Quote</h4>
+                <div class="quota-table-container">
+                    <table class="table custom-table">
+                        <thead class="sticky-header">
+                            <tr>
+                                <th>Quota</th>
+                                <th>Totale</th>
+                                <th>Entrate</th>
+                                <th>Missing</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($quotaData as $quota)
+                                <tr>
+                                    <td>{{ $quota->quota }}</td>
+                                    <td>{{ $quota->totale }}</td>
+                                    <td>{{ $quota->entrate }}</td>
+                                    <td>{{ $quota->missing }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
 
 
 
+    <!-- fine seconda riga  -->
 
 
+    <!-- fine container -->
 </div>
+
+
+@endsection
+
+@section('scripts')
+
+<script>
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const chartsData = @json($filtrateCountsByPanel); // Passiamo i dati da Laravel a JS
+
+
+        Object.keys(chartsData).forEach((panelName, index) => {
+            let labels = [];
+            let values = [];
+            let tooltips = [];
+
+            if (chartsData[panelName]) {
+                Object.entries(chartsData[panelName]).forEach(([question, count]) => {
+                    let parts = question.split(" - ");
+                    // console.log("📊 Dati ricevuti per i panel:", parts);
+                    let questionCode = parts[0]; // Codice della domanda
+                    let questionText = parts[1] ?? "Testo non disponibile"; // Tooltip con testo domanda
+
+                    labels.push(questionCode);
+                    values.push(count);
+                    tooltips.push(questionText);
+                });
+
+                // Tutti i canvas seguono il pattern "chart-panel-X"
+                let canvasID = `chart-panel-${index}`;
+                let canvas = document.getElementById(canvasID);
+
+                if (canvas) {
+                    new Chart(canvas, {
+                        type: 'bar', // Grafico a barre
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Filtrate',
+                                data: values,
+                                backgroundColor: '#7bd87d', // Colore verde
+                                borderColor: '#2E7D32',
+                                borderWidth: 1
+                            }]
+                        },
+
+                        options: {
+                                    responsive: true,
+                                    plugins: {
+                                        tooltip: {
+                                            callbacks: {
+                                                title: () => null, // Rimuove il titolo predefinito del tooltip
+                                                label: function (context) {
+                                                    let dataIndex = context.dataIndex;
+                                                    let questionData = tooltips[dataIndex];
+
+                                                    console.log("🔍 Tooltip Data:", questionData); // DEBUG
+
+                                                    if (questionData) {
+                                                        let truncatedText = questionData.text.length > 50
+                                                            ? questionData.text.substring(0, 50) + "..."
+                                                            : questionData.text;
+
+                                                        return `${questionData.code}: ${truncatedText}`;
+                                                    } else {
+                                                        return "Dati non disponibili";
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            beginAtZero: true
+                                        }
+                                    }
+                                }
+
+
+                    });
+                } else {
+                    console.warn(`⚠️ Nessun canvas trovato per ${panelName} (ID: ${canvasID})`);
+                }
+            }
+        });
+    });
+</script>
+
+
+
+
 
 
 @endsection

@@ -1,0 +1,43 @@
+2.0;STR;R2501052DE;881;IDEXA8LDXZUALARWZF881;20/02/2025 11:00:36 CET;20/02/2025 11:06:19 CET;343;3;469;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LDXZUALARWZF881;rotazione=1;device=desktop;lang=de;sysIID=881;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;47
+choice;80;5;2
+choice;100;3;2
+choice;120;11;10100001100;7
+choice;131;13;0100000000000;1
+choice;140;6;1
+choice;150;15;000001000000000;5
+choice;160;9;5
+choice;166;3;0
+scale;170;3;7;0;1;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;wäscheständer
+open;270;leifheit
+concept;280
+composed;315
+open;300;wäscheständer zum aufklappen
+open;310;leifheit every day
+concept;330
+scale;340;2;5;1;1
+scale;360;2;6;1;1
+scale;370;12;3;100100100110100100100110100100110100
+concept;400
+choice;410;5;0
+choice;420;6;1
+scale;440;16;5;10000100001111000100010001100011110110001111010000100001111000001000001111010000
+scale;450;5;5;0;0;0;0;0
+concept;459
+scale;460;8;5;0;0;0;0;0;0;0;0
+choice;465;5;0
+choice;468;3;0
+choice;469;3;0
+app;1999;indOrder|string|1,3,2
+concept_eval;9001;36;19;12;17;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9011;36;34;25;28;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

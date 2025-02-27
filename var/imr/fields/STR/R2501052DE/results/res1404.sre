@@ -1,0 +1,43 @@
+2.0;STR;R2501052DE;1404;IDEXA8LJOYRSGQDCPH3547;23/02/2025 22:58:21 CET;23/02/2025 23:08:01 CET;580;3;469;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LJOYRSGQDCPH3547;rotazione=1;device=desktop;lang=de;sysIID=1404;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;0
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;22
+choice;80;5;1
+choice;100;3;2
+choice;120;11;11100000000;2
+choice;131;13;0100000010000;8
+choice;140;6;0
+choice;150;15;000001000000000;5
+choice;160;9;5
+choice;166;3;0
+scale;170;3;7;0;1;1
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Ein produkt
+open;270;Gimi
+concept;280
+composed;315
+open;300;ein produkt von lifehit
+open;310;Lifehit
+concept;330
+scale;340;2;5;0;0
+scale;360;2;6;0;0
+scale;370;12;3;110110110110110110110110110110110110
+concept;400
+choice;410;5;0
+choice;420;6;0
+scale;440;16;5;00110111100101010010110000101001010011001010011110100101111010010000001100011110
+scale;450;5;5;0;0;0;0;0
+concept;459
+scale;460;8;5;0;0;0;0;0;0;0;0
+choice;465;5;4
+choice;468;3;0
+choice;469;3;2
+app;1999;indOrder|string|1,3,2
+concept_eval;9001;36;17;12;19;1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9011;36;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

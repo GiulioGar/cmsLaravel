@@ -1,0 +1,44 @@
+2.0;STR;R2501052DE;1425;IDEXA8LYERIOTTCZLE1125;24/02/2025 09:26:18 CET;24/02/2025 09:41:14 CET;896;3;520;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LYERIOTTCZLE1125;rotazione=2;device=desktop;lang=de;sysIID=1425;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;0
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;61
+choice;80;5;3
+choice;100;3;2
+choice;120;11;00100000000;2
+choice;131;13;0100000000000;1
+choice;140;6;2
+choice;150;15;000000000100000;9
+choice;160;9;2
+choice;166;3;1
+scale;170;3;7;1;1;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Leifheit
+open;270;Wäscheständer klappbar
+concept;280
+composed;315
+open;300;Leifheit Wäscheständer, klappbar mit Seitenteilen, 18 Meter 
+open;310;Nicht erkannt
+concept;330
+scale;340;2;5;0;0
+scale;360;2;6;3;3
+scale;370;12;3;110110110110110110110110110100100110
+concept;400
+choice;410;5;0
+choice;420;6;2
+scale;440;16;5;00100111001110011110110001101011000111101111011100111101110011000000001110000010
+scale;450;5;5;0;0;0;0;0
+concept;459
+scale;460;8;5;0;0;1;0;0;0;0;0
+choice;465;5;1
+choice;468;3;1
+choice;469;3;1
+choice;520;7;6
+app;1999;indOrder|string|2,3,1
+concept_eval;9002;42;17;14;29;38;35;28;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;0

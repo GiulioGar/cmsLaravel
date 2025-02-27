@@ -1,0 +1,12 @@
+2.0;STR;R2501052DE;990;IDEXA8LVFQBPLBJDND968;21/02/2025 10:10:25 CET;<unknown>;0;0;80;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LVFQBPLBJDND968;device=desktop;lang=de;sysIID=990;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;0
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;45
+choice;80;5;2
+choice;100;3;2
+choice;120;11;00110000000;3
+choice;131;13;0000001000000;6
+choice;140;6;2

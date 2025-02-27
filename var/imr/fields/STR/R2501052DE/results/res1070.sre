@@ -1,0 +1,45 @@
+2.0;STR;R2501052DE;1070;IDEXA8LBTAKBVVYJSX5076;21/02/2025 19:27:45 CET;21/02/2025 19:41:47 CET;842;3;500;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LBTAKBVVYJSX5076;rotazione=2;device=desktop;lang=de;sysIID=1070;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;0
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;43
+choice;80;5;2
+choice;100;3;2
+choice;120;11;10100000000;2
+choice;131;13;0000100000000;4
+choice;140;6;2
+choice;150;15;000000010000000;7
+choice;160;9;0
+choice;166;3;1
+scale;170;3;7;0;0;1
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Das ist der Leifheit Wäscheständer, den ich auch habe.
+open;270;Den genauen Produktnamen habe ich nicht lesen können.
+concept;280
+composed;315
+open;300;Wäschetrockner von Leifheit Daily Dry
+open;310;Daily Dry
+concept;330
+scale;340;2;5;0;1
+scale;360;2;6;0;1
+scale;370;12;3;100100100100100100100100100100100100
+concept;400
+choice;410;5;0
+choice;420;6;0
+scale;440;16;5;01000100000001010000000101000010000100001000000100100001000010000000000100000010
+scale;450;5;5;0;0;0;0;0
+concept;459
+scale;460;8;5;0;0;0;0;0;0;0;0
+choice;465;5;1
+choice;468;3;1
+choice;469;3;1
+open;472;Den Daily Dry - oder den Vorgänger.
+choice;500;10;0
+app;1999;indOrder|string|2,3,1
+concept_eval;9002;42;15;10;19;36;25;9;3;5;16;12;21;27;37;17;14;29;38;35;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;42;39;40;41;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1

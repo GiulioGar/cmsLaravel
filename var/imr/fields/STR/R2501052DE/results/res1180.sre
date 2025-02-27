@@ -1,0 +1,24 @@
+2.0;STR;R2501052DE;1180;IDEXA8LSOXHYLFCPZA5193;22/02/2025 13:21:45 CET;<unknown>;0;0;166;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LSOXHYLFCPZA5193;rotazione=3;device=desktop;lang=de;sysIID=1180;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;0
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;37
+choice;80;5;2
+choice;100;3;2
+choice;120;11;10100001000;0
+choice;131;13;0100001010000;6
+choice;140;6;1
+choice;150;15;000000010100000;7
+choice;160;9;2
+choice;166;3;2
+scale;170;3;7;0;0;6
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;Ich habe einen Wäscheständer von Leifheit gesehen.
+open;270;Es handelt sich um einen Wäscheständer der Marke Leifheit.
+concept;280
+app;1999;indOrder|string|3,2,1

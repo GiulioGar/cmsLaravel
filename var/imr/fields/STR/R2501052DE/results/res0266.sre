@@ -1,0 +1,44 @@
+2.0;STR;R2501052DE;266;IDEXA8LIPUMFRUVFJQ267;18/02/2025 21:07:53 CET;18/02/2025 21:16:26 CET;513;3;520;sysSID=R2501052DE;sysPRJ=STR;sysUID=IDEXA8LIPUMFRUVFJQ267;rotazione=2;device=desktop;lang=de;sysIID=266;pan=8
+choice;10;2;0
+choice;20;2;0
+choice;50;3;1
+choice;60;8;00000001;7
+choice;70;4;0001;3
+open;75;53
+choice;80;5;3
+choice;100;3;2
+choice;120;11;10100000000;0
+choice;131;13;1000000000000;0
+choice;140;6;0
+choice;150;15;000000000100000;9
+choice;160;9;2
+choice;166;3;1
+scale;170;3;7;0;0;3
+concept;203
+concept;250
+concept;255
+composed;275
+open;260;leifeit wäscheständer,- für tägliche wäsche
+open;270;leifheit wäscheständer
+concept;280
+composed;315
+open;300;leifheit wäscheständer für das tägliche trocknen der wäsche
+open;310;leifheit wäscheständer
+concept;330
+scale;340;2;5;0;3
+scale;360;2;6;0;3
+scale;370;12;3;100100010100010100010100100100100100
+concept;400
+choice;410;5;0
+choice;420;6;0
+scale;440;16;5;10000100001000010000100001000010000100001000010000100001000010000000001000000001
+scale;450;5;5;0;0;0;0;0
+concept;459
+scale;460;8;5;0;1;0;0;0;0;1;1
+choice;465;5;1
+choice;468;3;0
+choice;469;3;1
+choice;520;7;5
+app;1999;indOrder|string|2,1,3
+concept_eval;9002;42;15;10;19;36;25;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+concept_eval;9012;42;37;12;16;21;27;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
