@@ -130,7 +130,7 @@
 
                     <!-- Contenuto della tab -->
                     <div class="tab-content custom-tab-content">
-                        <!-- Tab Home -->
+                        <!-- Tab Home - Totale -->
                         <div class="tab-pane fade show active" id="tab1">
                             <h4>Totale</h4>
                             <table class="table custom-table">
@@ -141,8 +141,25 @@
                                     <tr><td><strong>Sospese:</strong></td><td>{{ $counts['sospese'] }}</td></tr>
                                     <tr><td><strong>Bloccate:</strong></td><td>{{ $counts['bloccate'] }}</td></tr>
                                     <tr><td><strong>Contatti:</strong></td><td>{{ $counts['contatti'] }}</td></tr>
-                                    <tr><td><strong>Abilitati Panel:</strong></td><td>{{ $abilitati }}</td></tr>
                                     <tr><td><strong>Redemption (IR):</strong></td><td>{{ $redemption }}%</td></tr>
+
+                                    <!-- Mostra "Abilitati Panel" e "Utenti Disponibili" SOLO se c'è un solo panel -->
+                                    @if(count($panelCounts) == 1 && array_key_exists('Interactive', $panelCounts))
+                                        <tr><td><strong>Abilitati Panel:</strong></td><td>{{ $abilitati }}</td></tr>
+                                        <tr><td><strong>Utenti Disponibili:</strong></td><td>{{ $utentiDisponibili }}</td></tr>
+                                        <tr>
+                                            <td>
+                                                <strong>Stima Interviste:</strong>
+                                                <i class="fas fa-info-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                    title="La stima interviste si intende per interviste totali, non tiene conto di quote o target.">
+                                                </i>
+                                            </td>
+                                            <td>{{ $stimaInterviste }} *</td>
+                                        </tr>
+
+                                    @endif
+
+
                                 </tbody>
                             </table>
                         </div>
@@ -160,11 +177,31 @@
                                         <tr><td><strong>Bloccate:</strong></td><td>{{ $panelData['bloccate'] }}</td></tr>
                                         <tr><td><strong>Contatti:</strong></td><td>{{ $panelData['contatti'] }}</td></tr>
                                         <tr><td><strong>Redemption (IR):</strong></td><td>{{ $panelData['redemption'] ?? 'N/A' }}%</td></tr>
+
+                                        <!-- Mostra "Abilitati Panel" e "Utenti Disponibili" SOLO nel tab Interactive -->
+                                        @if($panelName == "Interactive" && count($panelCounts) > 1)
+                                            <tr><td><strong>Abilitati Panel:</strong></td><td>{{ $abilitati }}</td></tr>
+                                            <tr><td><strong>Utenti Disponibili:</strong></td><td>{{ $utentiDisponibili }}</td></tr>
+                                            <tr>
+                                                <td>
+                                                    <strong>Stima Interviste:</strong>
+                                                    <i class="fas fa-info-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                        title="La stima interviste si intende per interviste totali, non tiene conto di quote o target.">
+                                                    </i>
+                                                </td>
+                                                <td>{{ $stimaInterviste }}</td>
+                                            </tr>
+
+                                        @endif
+
+
                                     </tbody>
                                 </table>
                             </div>
                         @endforeach
                     </div>
+
+
                 </div>
             </div>
 
@@ -209,6 +246,8 @@
     <!-- seconda riga  -->
 
     <div class="row mt-4">
+
+
         <!-- Sezione Quote -->
         <div class="col-md-6">
             <div class="quote-section">
@@ -239,6 +278,46 @@
 
             </div>
         </div>
+        <!-- Fine Sezione Quote -->
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">Log</h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="table-responsive log-table-container">
+                        <table class="table table-sm table-striped table-hover">
+                            <thead class="sticky-header-log">
+                                <tr>
+                                    <th>IID</th>
+                                    <th>UID</th>
+                                    <th>Ultimo Update</th>
+                                    <th>Ultima Azione</th>
+                                    <th>Stato</th>
+                                    <th>Durata</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($logData as $log)
+                                    <tr>
+                                        <td>{{ $log['iid'] }}</td>
+                                        <td>{{ $log['uid'] }}</td>
+                                        <td>{{ $log['ultimo_update'] }}</td>
+                                        <td>{{ $log['ultima_azione'] }}</td>
+                                        <td>{{ $log['stato'] }}</td>
+                                        <td>{{ $log['durata'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
     </div>
 
 
@@ -339,6 +418,14 @@
 </script>
 
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
 
 
 

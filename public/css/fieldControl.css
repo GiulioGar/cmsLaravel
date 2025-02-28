@@ -220,11 +220,7 @@ h3 {font-size: 15px!important;}
 .custom-table th {
     background: #9dce6b;
     color: white;
-    text-align: center;
-}
 
-.custom-table td {
-    text-align: center;
 }
 
 .text-danger {
@@ -239,6 +235,7 @@ h3 {font-size: 15px!important;}
 
 .quota-table-container {
     max-height: 400px; /* Altezza per circa 12 righe */
+    min-height: 300px;
     overflow-y: auto;
     border-radius: 8px;
     box-shadow: inset 0 -10px 10px -10px rgba(0, 0, 0, 0.2);
@@ -278,5 +275,18 @@ h3 {font-size: 15px!important;}
 }
 
 
+.log-table-container {
+    max-height: 300px; /* Imposta l'altezza massima per lo scroll */
+    overflow-y: auto; /* Abilita lo scroll verticale */
+    font-size: 12px; /* Riduce la dimensione del testo */
+}
+
+.sticky-header-log th {
+    position: sticky;
+    top: 0;
+    background: #ffffff; /* Assicura che l'intestazione resti visibile */
+    z-index: 10;
+    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+}
 
 

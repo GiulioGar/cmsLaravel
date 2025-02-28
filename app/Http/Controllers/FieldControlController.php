@@ -171,6 +171,18 @@ class FieldControlController extends Controller
         }
         unset($panel);
 
+        // Calcoliamo gli utenti disponibili SOLO per il panel Interactive
+        $utentiDisponibili = $this->getUtentiDisponibili($sid);
+
+        // Calcoliamo la mediaRedPanel
+        $mediaRedPanel = $this->calcolaMediaRedPanel();
+
+        // Calcoliamo la stima interviste solo se il panel è Interactive
+        $stimaInterviste = ($panelValueFromDB == 1)
+            ? $this->calcolaStimaInterviste($utentiDisponibili, $redemption, $mediaRedPanel)
+            : null;
+
+
         // Recupera il valore di bytes da t_panel_control
         $bytes = DB::table('t_panel_control')->where('sur_id', $sid)->value('bytes') ?? 0;
 
@@ -180,8 +192,11 @@ class FieldControlController extends Controller
         //Conta filtrate per panel
         $filtrateCountsByPanel = $this->contaFiltrate($directory, $panelNames, $prj, $sid);
 
+        //FUNZIONE LOG DATA
+        $logData = $this->getLogData($directory);
 
-        return view('fieldControl', compact('prj', 'sid', 'panelData', 'counts', 'abilitati', 'redemption', 'panelCounts', 'filtrateCountsByPanel', 'quotaData'));
+        return view('fieldControl', compact('prj', 'sid', 'panelData', 'counts', 'abilitati', 'redemption', 'panelCounts', 'utentiDisponibili',
+        'stimaInterviste', 'filtrateCountsByPanel', 'quotaData', 'logData'));
     }
 
     private function updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes)
@@ -206,6 +221,97 @@ class FieldControlController extends Controller
             'costo' => $costo
         ]);
     }
+
+
+//UTENTI DISPONIBILI
+    private function getUtentiDisponibili($sid)
+    {
+        // Recupera il target del panel
+        $panelTarget = DB::table('t_panel_control')->where('sur_id', $sid)->first();
+
+        if (!$panelTarget) {
+            return 0; // Nessun dato trovato
+        }
+
+        // Determina il filtro per il sesso
+        $genderFilter = [1, 2]; // Default: entrambi i sessi
+        switch ($panelTarget->sex_target) {
+            case 1:
+                $genderFilter = [1]; // Solo uomini
+                break;
+            case 2:
+                $genderFilter = [2]; // Solo donne
+                break;
+            case 3:
+                $genderFilter = [1, 2]; // Entrambi
+                break;
+        }
+
+        // Determina il range di età
+        $etaMin = $panelTarget->age1_target;
+        $etaMax = $panelTarget->age2_target;
+        $annoCorrente = date('Y');
+
+        // Query per contare gli utenti disponibili
+        $utentiDisponibili = DB::table('t_user_info')
+            ->whereIn('gender', $genderFilter)
+            ->whereRaw("YEAR(birth_date) BETWEEN ? AND ?", [$annoCorrente - $etaMax, $annoCorrente - $etaMin])
+            ->where('active', 1)
+            ->where('confirm', 1)
+            ->whereNotExists(function ($query) use ($sid) {
+                $query->select(DB::raw(1))
+                      ->from('t_respint')
+                      ->whereRaw('t_respint.uid = t_user_info.user_id')
+                      ->where('t_respint.sid', $sid);
+            })
+            ->count();
+
+        return $utentiDisponibili;
+    }
+
+
+// CALCOLO MEDIA REDEMPTION PANEL
+private function calcolaMediaRedPanel()
+{
+    $dueAnniFa = now()->subYears(2);
+
+    // Query base per ottenere il dataset
+    $query = DB::table('t_panel_control')
+        ->where('panel', 1)
+        ->whereBetween('red_panel', [7, 29])
+        ->where('sur_date', '>=', $dueAnniFa);
+
+    // Conta il numero di record che rispettano i criteri
+    $countRecords = $query->count();
+
+    // Media di red_panel rispettando i filtri
+    $mediaRedPanel = $query->avg('red_panel');
+
+
+    return $mediaRedPanel ?? 0; // Se non ci sono dati restituisce 0
+}
+
+
+//CALCOLO STIMA INTERVISTE POSSIBILI
+private function calcolaStimaInterviste($utentiDisponibili, $redSurv, $mediaRedPanel)
+{
+    $percentualeRedSurv = $redSurv / 100;
+    $percentualeMediaRedPanel = $mediaRedPanel / 100;
+
+    // Prima riduzione: Applichiamo RedSurv sugli utenti disponibili
+    $step1 = $utentiDisponibili * $percentualeRedSurv;
+
+    // Seconda riduzione: Applichiamo MediaRedPanel sul valore ottenuto
+    $stimaInterviste = $step1 * $percentualeMediaRedPanel;
+
+    // Log per debugging
+
+    return max(0, round($stimaInterviste)); // Assicuriamoci che non sia negativo
+}
+
+
+
+
 
 
 //  FUNZIONE PER CONTEGGIO FILTRATE
@@ -385,6 +491,86 @@ private function formatQuotaName($quotaName)
     }
 
     return ucfirst($quotaName);
+}
+
+
+//LOG DATA
+
+private function getLogData($directory)
+{
+    $logData = [];
+
+    if (is_dir($directory)) {
+        $files = glob($directory . "/*.sre");
+
+        // Ordiniamo i file in ordine decrescente (dal più recente al più vecchio)
+        rsort($files);
+
+        foreach ($files as $file) {
+            $handle = fopen($file, "r");
+            if ($handle) {
+                $line = fgets($handle);
+                fclose($handle);
+
+                if ($line) {
+                    $data = explode(";", trim($line));
+
+                    // Determina l'offset se la prima colonna (versione 2.0) è presente
+                    $offset = (isset($data[0]) && $data[0] == "2.0") ? 0 : -1;
+
+                    // Estrapoliamo i dati richiesti
+                    $iid = $this->extractValue($data, 3 + $offset);  // sysIID
+                    $uid = $this->extractValue($data, 4 + $offset);  // sysUID
+                    $ultimoUpdate = $this->extractValue($data, 6 + $offset);  // Data ultimo update
+                    $ultimaAzione = "Domanda codice: " . $this->extractValue($data, 9 + $offset); // Codice ultima domanda
+                    $statusCode = (int) $this->extractValue($data, 8 + $offset);  // Status
+
+                    // Mappatura stato intervista
+                    $statusMap = [
+                        0 => "In Corso",
+                        3 => "Completa",
+                        4 => "Non in target",
+                        5 => "Quotafull",
+                        7 => "Bloccata"
+                    ];
+                    $stato = $statusMap[$statusCode] ?? "Sconosciuto";
+
+                    // Durata convertita in secondi/minuti
+                    $durataMs = (int) $this->extractValue($data, 7 + $offset);
+                    $durata = $this->formatDuration($durataMs);
+
+                    // Aggiungiamo i dati estratti all'array finale
+                    $logData[] = [
+                        'iid' => $iid,
+                        'uid' => $uid,
+                        'ultimo_update' => $ultimoUpdate,
+                        'ultima_azione' => $ultimaAzione,
+                        'stato' => $stato,
+                        'durata' => $durata
+                    ];
+                }
+            }
+        }
+    }
+
+    return $logData;
+}
+
+// Funzione di supporto per evitare errori se il dato non esiste
+private function extractValue($data, $index)
+{
+    return $data[$index] ?? 'N/A';
+}
+
+// Funzione per formattare la durata da ms a minuti e secondi
+private function formatDuration($seconds)
+{
+    if ($seconds < 60) {
+        return "{$seconds}s";
+    } else {
+        $minutes = round($seconds / 60, 1); // Converti in minuti con 1 decimale
+        return "{$minutes}m";
+    }
 }
 
 
