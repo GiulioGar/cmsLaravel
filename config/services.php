@@ -30,4 +30,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+
+    'primis' => [
+        'token'    => env('PRIMIS_API_TOKEN', ''),
+        'base_url' => env('PRIMIS_API_BASEURL', 'https://www.primisoft.com/primis/api/v1/'),
+    ],
+
 ];

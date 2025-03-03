@@ -250,63 +250,90 @@
 
         <!-- Sezione Quote -->
         <div class="col-md-6">
-            <div class="quote-section">
-                <h4 class="section-title">Controllo Quote</h4>
-                <div class="quota-table-container">
-                    <table class="table custom-table">
-                        <thead class="sticky-header">
-                            <tr>
-                                <th>Quota</th>
-                                <th>Totale</th>
-                                <th>Entrate</th>
-                                <th>Missing</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($quotaData as $quota)
-                                <tr>
-                                    <td>{{ $quota->quota }}</td>
-                                    <td>{{ $quota->totale }}</td>
-                                    <td>{{ $quota->entrate }}</td>
-                                    <td>{{ $quota->missing }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+            <div class="card shadow-sm">
+                <div style="background-color: #9ECE6C" class="card-header text-white d-flex align-items-center">
+                    <i class="fas fa-chart-line me-2"></i> <h6 style="color:#212529" class="mb-0"><b>Controllo Quote</b></h6>
                 </div>
-
-
+                <div class="card-body p-2">
+                    <div class="table-responsive quota-table-container" style="max-height: 350px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered table-hover text-center">
+                            <thead style="color:aliceblue!important" class="sticky-header">
+                                <tr>
+                                    <th class="small">Quota</th>
+                                    <th class="small">Totale</th>
+                                    <th class="small">Entrate</th>
+                                    <th class="small">Missing</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($quotaData as $quota)
+                                    <tr class="align-middle">
+                                        <td class="small">{{ $quota->quota }}</td>
+                                        <td class="small fw-bold">{{ $quota->totale }}</td>
+                                        <td class="small">
+                                            <span style="font-size: 12px" class="badge bg-success"><i class="fas fa-check-circle"></i> {{ $quota->entrate }}</span>
+                                        </td>
+                                        <td class="small">
+                                            @if ($quota->missing > 0)
+                                                <span style="font-size: 12px" class="badge bg-danger"><i class="fas fa-exclamation-circle"></i> {{ $quota->missing }}</span>
+                                            @else
+                                                <span style="font-size: 12px" class="badge bg-success"><i class="fas fa-check"></i> 0</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
+
         <!-- Fine Sezione Quote -->
 
         <div class="col-md-6">
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h6 class="mb-0">Log</h6>
+                <div class="card-header bg-dark text-white d-flex align-items-center">
+                    <i class="fas fa-list-alt me-2"></i> <h6 style="color:aliceblue" class="mb-0">Log Attività</h6>
                 </div>
                 <div class="card-body p-2">
-                    <div class="table-responsive log-table-container">
-                        <table class="table table-sm table-striped table-hover">
-                            <thead class="sticky-header-log">
+                    <div class="table-responsive log-table-container" style="max-height: 350px; overflow-y: auto;">
+                        <table class="table table-sm table-bordered table-hover text-center">
+                            <thead class="sticky-header-log bg-secondary text-white">
                                 <tr>
-                                    <th>IID</th>
-                                    <th>UID</th>
-                                    <th>Ultimo Update</th>
-                                    <th>Ultima Azione</th>
-                                    <th>Stato</th>
-                                    <th>Durata</th>
+                                    <th class="small">IID</th>
+                                    <th class="small">UID</th>
+                                    <th class="small">Ultimo Update</th>
+                                    <th class="small">Ultima Azione</th>
+                                    <th class="small">Stato</th>
+                                    <th class="small">Durata</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($logData as $log)
-                                    <tr>
-                                        <td>{{ $log['iid'] }}</td>
-                                        <td>{{ $log['uid'] }}</td>
-                                        <td>{{ $log['ultimo_update'] }}</td>
-                                        <td>{{ $log['ultima_azione'] }}</td>
-                                        <td>{{ $log['stato'] }}</td>
-                                        <td>{{ $log['durata'] }}</td>
+                                    <tr class="align-middle">
+                                        <td class="small">{{ $log['iid'] }}</td>
+                                        <td class="small">{{ $log['uid'] }}</td>
+                                        <td class="small">{{ $log['ultimo_update'] }}</td>
+                                        <td class="small">
+                                            {!! $log['ultima_azione'] !!}
+                                        </td>
+                                        <td class="small">
+                                            @if ($log['stato'] === 'Completa')
+                                                <span style="font-size: 10px" class="badge bg-success"><i class="fas fa-check-circle"></i> {{ $log['stato'] }}</span>
+                                            @elseif ($log['stato'] === 'Non in target')
+                                                <span style="font-size: 10px" class="badge bg-danger"><i class="fas fa-times-circle"></i> {{ $log['stato'] }}</span>
+                                            @elseif ($log['stato'] === 'Quotafull')
+                                                <span style="font-size: 10px" class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> {{ $log['stato'] }}</span>
+                                            @elseif ($log['stato'] === 'In Corso')
+                                                <span style="font-size: 10px" class="badge bg-primary"><i class="fas fa-hourglass-half"></i> {{ $log['stato'] }}</span>
+                                            @elseif ($log['stato'] === 'Bloccata')
+                                                <span style="font-size: 10px" class="badge bg-dark"><i class="fas fa-ban"></i> {{ $log['stato'] }}</span>
+                                            @else
+                                                <span style="font-size: 10px" class="badge bg-secondary">{{ $log['stato'] }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="small">{{ $log['durata'] }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -318,11 +345,91 @@
 
 
 
+
     </div>
 
 
 
     <!-- fine seconda riga  -->
+
+    <!-- Terza riga: Dati giornalieri per panel -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="custom-tab-container-modern">
+                <!-- Nav Tabs -->
+                <ul class="nav custom-nav-tabs-modern" id="date-nav">
+                    @if(count($panelCounts) == 1)
+                        <li class="nav-item">
+                            <a class="nav-link active modern-tab-link" id="tot-date-tab" data-bs-toggle="pill" href="#tot-date">
+                                <i class="fas fa-calendar-alt me-2"></i> TOT
+                            </a>
+                        </li>
+                    @else
+                        @foreach ($dataSummaryByPanel as $panelName => $summaryData)
+                            <li class="nav-item">
+                                <a class="nav-link modern-tab-link {{ $loop->first ? 'active' : '' }}" id="tab-date-{{ $loop->index }}-nav" data-bs-toggle="pill" href="#tab-date-{{ $loop->index }}">
+                                    <i class="fas fa-calendar-day me-2"></i> {{ $panelName }}
+                                </a>
+                            </li>
+                        @endforeach
+                    @endif
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content custom-tab-content-modern">
+                    @foreach ($dataSummaryByPanel as $panelName => $summaryData)
+                        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-date-{{ $loop->index }}">
+                            <h4 class="tab-title text-center">{{ $panelName }}</h4>
+
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-hover table-striped custom-table-modern text-center">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th>Giorno</th>
+                                            <th>Contatti</th>
+                                            <th>Complete</th>
+                                            <th>Non in target</th>
+                                            <th>Quotafull</th>
+                                            <th>IR (%)</th>
+                                            <th>LOI</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($summaryData as $date => $stats)
+                                            @php
+                                                $denominator = $stats['contatti'] - $stats['non_target'] - $stats['quotafull'];
+                                                $ir = ($denominator > 0) ? round(($stats['complete'] / $denominator) * 100, 2) : 0;
+                                                $loi = isset($stats['total_duration']) && $stats['complete'] > 0
+                                                    ? round(($stats['total_duration'] / $stats['complete']) / 60, 1) . " min."
+                                                    : 'N/A';
+                                                    $formattedDate = is_numeric(strtotime($date)) ? \Carbon\Carbon::parse($date)->locale('it')->isoFormat('dddd D MMMM YY') : "Data non disponibile";
+                                            @endphp
+                                            <tr>
+                                                <td><strong>{{ ucfirst($formattedDate) }}</strong></td>
+                                                <td>{{ $stats['contatti'] }}</td>
+                                                <td class="text-success fw-bold">{{ $stats['complete'] }}</td>
+                                                <td class="text-warning fw-bold">{{ $stats['non_target'] }}</td>
+                                                <td class="text-danger fw-bold">{{ $stats['quotafull'] }}</td>
+                                                <td class="text-primary fw-bold">{{ $ir }}%</td>
+                                                <td>{{ $loi }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+ <!-- fine  terza riga  -->
+
 
 
     <!-- fine container -->
@@ -418,6 +525,10 @@
 </script>
 
 
+
+
+
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -426,7 +537,6 @@
         });
     });
 </script>
-
 
 
 

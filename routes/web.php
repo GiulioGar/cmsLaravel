@@ -40,6 +40,15 @@ Route::get('/surveys/get-client-by-prj', [SurveyController::class, 'getClientByP
 Route::get('/fieldControl', [FieldControlController::class, 'index']);
 
 
+use App\Http\Controllers\PrimisController;
+
+// Rotta per leggere API
+Route::get('/primis/info',     [PrimisController::class, 'getInfo']);
+Route::get('/primis/projects', [PrimisController::class, 'getProjects']);
+Route::get( '/primis/projects/{projectName}/surveys/{surveyId}', [PrimisController::class, 'getSurvey'] );
+Route::get('/primis/projects/{projectName}/surveys/{surveyId}/questions', [PrimisController::class, 'getQuestions'] );
+
+
 
 
 

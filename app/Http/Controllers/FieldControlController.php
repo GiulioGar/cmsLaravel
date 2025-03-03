@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\PanelControl;
 use Illuminate\Support\Facades\DB;
+use App\Services\PrimisApiService; // ✅ Importa PrimisApiService
 
 
 class FieldControlController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, PrimisApiService $primis)
     {
         $prj = $request->query('prj');
         $sid = $request->query('sid');
@@ -190,13 +191,18 @@ class FieldControlController extends Controller
         $this->updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes);
 
         //Conta filtrate per panel
-        $filtrateCountsByPanel = $this->contaFiltrate($directory, $panelNames, $prj, $sid);
+        $filtrateCountsByPanel = $this->contaFiltrate($directory, $panelNames, $prj, $sid, $primis);
+
 
         //FUNZIONE LOG DATA
-        $logData = $this->getLogData($directory);
+        $logData = $this->getLogData($directory, $primis, $prj, $sid);
+
+        //dati per data
+        $dataSummaryByPanel = $this->getDataSummaryByDate($directory, $panelNames);
+
 
         return view('fieldControl', compact('prj', 'sid', 'panelData', 'counts', 'abilitati', 'redemption', 'panelCounts', 'utentiDisponibili',
-        'stimaInterviste', 'filtrateCountsByPanel', 'quotaData', 'logData'));
+        'stimaInterviste', 'filtrateCountsByPanel', 'quotaData', 'logData', 'dataSummaryByPanel' ));
     }
 
     private function updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes)
@@ -310,20 +316,36 @@ private function calcolaStimaInterviste($utentiDisponibili, $redSurv, $mediaRedP
 }
 
 
-
-
-
-
 //  FUNZIONE PER CONTEGGIO FILTRATE
-
-private function contaFiltrate($directory, $panelNames, $prj, $sid)
+private function contaFiltrate($directory, $panelNames, $prj, $sid, PrimisApiService $primis)
 {
-
-
     $panelFiltrateCounts = [];
 
     if (is_dir($directory)) {
         $files = glob($directory . "/*.sre");
+
+        // ✅ Otteniamo tutte le domande in un'unica chiamata API
+        $response = $primis->listQuestions($prj, $sid);
+
+
+        // ✅ Verifica se la risposta contiene la chiave "questions"
+        if (!isset($response['questions']) || !is_array($response['questions'])) {
+            return [];
+        }
+
+        // ✅ Recuperiamo solo la lista di domande
+        $allQuestions = $response['questions'];
+
+        // ✅ Creiamo una mappa delle domande per accesso rapido
+        $questionMap = [];
+        foreach ($allQuestions as $question) {
+            if (isset($question['id'])) {
+                $questionMap[$question['id']] = [
+                    'code' => $question['code'] ?? "Codice Sconosciuto",
+                    'text' => $question['text'] ?? "Testo non disponibile"
+                ];
+            }
+        }
 
         foreach ($files as $file) {
             $handle = fopen($file, "r");
@@ -338,12 +360,12 @@ private function contaFiltrate($directory, $panelNames, $prj, $sid)
                     $statusIndex = (isset($data[0]) && $data[0] == "2.0") ? 8 : 7;
                     $lastCodeIndex = $statusIndex + 1;
 
-                    // Verifica se lo status è "4" (Non in target)
+                    // ✅ Verifica se lo status è "4" (Non in target)
                     if (!isset($data[$statusIndex]) || (int)$data[$statusIndex] !== 4) {
                         continue;
                     }
 
-                    // Determina il panel
+                    // ✅ Determina il panel
                     $panelUsed = 'Interactive';
                     foreach ($data as $element) {
                         if (strpos($element, "pan=") !== false) {
@@ -358,15 +380,15 @@ private function contaFiltrate($directory, $panelNames, $prj, $sid)
                     }
 
                     if (isset($data[$lastCodeIndex])) {
-                        $questionCode = $data[$lastCodeIndex];
+                        $questionId = (int) $data[$lastCodeIndex];
 
+                        // ✅ Verifica se la domanda è presente nella mappa
+                        $questionDetails = $questionMap[$questionId] ?? ['code' => "N/A", 'text' => "Domanda non trovata"];
 
-                        // Otteniamo i dettagli della domanda
-                        $questionDetails = $this->getQuestionDetails($prj, $sid, $questionCode);
-                        $questionLabel = $questionDetails['code'] . " - " . $questionDetails['text'];
+                        // ✅ Creiamo l'etichetta della domanda
+                        $questionLabel = "{$questionDetails['code']} - {$questionDetails['text']}";
 
-
-                        // Aggiunge il codice alla lista delle occorrenze per il panel specifico
+                        // ✅ Aggiungiamo l'occorrenza
                         if (!isset($panelFiltrateCounts[$panelUsed][$questionLabel])) {
                             $panelFiltrateCounts[$panelUsed][$questionLabel] = 1;
                         } else {
@@ -378,79 +400,45 @@ private function contaFiltrate($directory, $panelNames, $prj, $sid)
         }
     }
 
+    // ✅ Ordinamento decrescente delle occorrenze
     foreach ($panelFiltrateCounts as &$filtrateCounts) {
         arsort($filtrateCounts);
     }
-
 
     return $panelFiltrateCounts;
 }
 
 
-// LETTURA FILE SDL
 
-private function getQuestionDetails($prj, $sid, $questionCode)
+
+
+private function getQuestionDetails(PrimisApiService $primis, $prj, $sid, $questionId)
 {
-    // Percorso del file .sdl
-    $sdlFile = base_path("var/imr/fields/$prj/$sid/$sid.sdl");
+    try {
+        // Otteniamo la lista di domande da Primis
+        $questions = $primis->listQuestions($prj, $sid);
 
-    // Controlliamo se il file esiste
-    if (!file_exists($sdlFile)) {
-
-        return ['text' => 'N/A', 'code' => 'N/A'];
-    }
-
-
-    // Variabili per memorizzare i dettagli della domanda
-    $questionFound = false;
-    $questionText = 'N/A';
-    $questionCodeText = 'N/A';
-
-    // Legge il file riga per riga
-    $handle = fopen($sdlFile, "r");
-    if ($handle) {
-        while (($line = fgets($handle)) !== false) {
-            $line = trim($line);
-
-
-            // Cerca la riga con "new question(...)" e verifica il codice della domanda
-            if (preg_match('/new question\(".*?",\s*(\d+)\);/', $line, $matches)) {
-
-
-                if ((int)$matches[1] === (int)$questionCode) {
-
-                    $questionFound = true;
-                    continue; // Procedi alla lettura delle righe successive
-                }
-            }
-
-            // Se la domanda è stata trovata, cerchiamo il testo e il codice
-            if ($questionFound) {
-                if (strpos($line, 'qst.setProperty("text",') !== false) {
-                    preg_match('/qst.setProperty\("text",\s*"(.*?)"\);/', $line, $matches);
-                    if (isset($matches[1])) {
-                        $questionText = $matches[1];
-
-                    }
-                }
-                if (strpos($line, 'qst.setProperty("code",') !== false) {
-                    preg_match('/qst.setProperty\("code",\s*"(.*?)"\);/', $line, $matches);
-                    if (isset($matches[1])) {
-                        $questionCodeText = $matches[1];
-
-                    }
-                    break; // Abbiamo trovato sia il testo che il codice, possiamo interrompere
-                }
+        // Cerchiamo la domanda corrispondente
+        foreach ($questions as $question) {
+            if ($question['id'] == $questionId) {
+                return [
+                    'code' => $question['code'] ?? "Codice Sconosciuto",
+                    'text' => $question['text'] ?? "Testo non disponibile"
+                ];
             }
         }
-        fclose($handle);
-    } else {
-
+    } catch (\Exception $e) {
+        return [
+            'code' => "Errore",
+            'text' => "Errore nel recupero della domanda"
+        ];
     }
 
-
-
-    return ['text' => $questionText, 'code' => $questionCodeText];
+    // Se non troviamo nulla, restituiamo valori di default
+    return [
+        'code' => "N/A",
+        'text' => "Domanda non trovata"
+    ];
 }
 
 
@@ -496,7 +484,7 @@ private function formatQuotaName($quotaName)
 
 //LOG DATA
 
-private function getLogData($directory)
+private function getLogData($directory, PrimisApiService $primis, $projectName, $surveyId)
 {
     $logData = [];
 
@@ -505,6 +493,32 @@ private function getLogData($directory)
 
         // Ordiniamo i file in ordine decrescente (dal più recente al più vecchio)
         rsort($files);
+
+        // ✅ Otteniamo tutte le domande in un'unica chiamata API
+        $response = $primis->listQuestions($projectName, $surveyId);
+
+        // ✅ Log della risposta API per debugging
+
+
+        // ✅ Verifica se la risposta contiene la chiave "questions"
+        if (!isset($response['questions']) || !is_array($response['questions'])) {
+
+            return [];
+        }
+
+        // ✅ Recuperiamo solo la lista di domande
+        $allQuestions = $response['questions'];
+
+        // ✅ Creiamo una mappa delle domande per accesso rapido
+        $questionMap = [];
+        foreach ($allQuestions as $question) {
+            if (isset($question['id'])) {
+                $questionMap[$question['id']] = [
+                    'code' => $question['code'] ?? "Codice Sconosciuto",
+                    'text' => $question['text'] ?? "Testo non disponibile"
+                ];
+            }
+        }
 
         foreach ($files as $file) {
             $handle = fopen($file, "r");
@@ -519,11 +533,14 @@ private function getLogData($directory)
                     $offset = (isset($data[0]) && $data[0] == "2.0") ? 0 : -1;
 
                     // Estrapoliamo i dati richiesti
-                    $iid = $this->extractValue($data, 3 + $offset);  // sysIID
-                    $uid = $this->extractValue($data, 4 + $offset);  // sysUID
-                    $ultimoUpdate = $this->extractValue($data, 6 + $offset);  // Data ultimo update
-                    $ultimaAzione = "Domanda codice: " . $this->extractValue($data, 9 + $offset); // Codice ultima domanda
-                    $statusCode = (int) $this->extractValue($data, 8 + $offset);  // Status
+                    $iid = $this->extractValue($data, 3 + $offset);
+                    $uid = $this->extractValue($data, 4 + $offset);
+                    $ultimoUpdate = $this->extractValue($data, 6 + $offset);
+                    $questionId = (int) $this->extractValue($data, 9 + $offset); // Codice ultima domanda
+                    $statusCode = (int) $this->extractValue($data, 8 + $offset);
+
+                    // ✅ Verifica se la domanda è presente nella mappa
+                    $questionDetails = $questionMap[$questionId] ?? ['code' => "N/A", 'text' => "Domanda non trovata"];
 
                     // Mappatura stato intervista
                     $statusMap = [
@@ -536,15 +553,15 @@ private function getLogData($directory)
                     $stato = $statusMap[$statusCode] ?? "Sconosciuto";
 
                     // Durata convertita in secondi/minuti
-                    $durataMs = (int) $this->extractValue($data, 7 + $offset);
-                    $durata = $this->formatDuration($durataMs);
+                    $durataSec = (int) $this->extractValue($data, 7 + $offset);
+                    $durata = $this->formatDuration($durataSec);
 
                     // Aggiungiamo i dati estratti all'array finale
                     $logData[] = [
                         'iid' => $iid,
                         'uid' => $uid,
                         'ultimo_update' => $ultimoUpdate,
-                        'ultima_azione' => $ultimaAzione,
+                        'ultima_azione' => "<span data-bs-toggle='tooltip' title='{$questionDetails['text']}'>{$questionDetails['code']}</span>",
                         'stato' => $stato,
                         'durata' => $durata
                     ];
@@ -556,6 +573,10 @@ private function getLogData($directory)
     return $logData;
 }
 
+
+
+
+
 // Funzione di supporto per evitare errori se il dato non esiste
 private function extractValue($data, $index)
 {
@@ -566,12 +587,120 @@ private function extractValue($data, $index)
 private function formatDuration($seconds)
 {
     if ($seconds < 60) {
-        return "{$seconds}s";
+        return "{$seconds} sec.";
     } else {
         $minutes = round($seconds / 60, 1); // Converti in minuti con 1 decimale
-        return "{$minutes}m";
+        return "{$minutes} min.";
     }
 }
+
+
+
+
+private function getDataSummaryByDate($directory, $panelNames)
+{
+    $dataSummaryByPanel = [];
+
+    if (is_dir($directory)) {
+        $files = glob($directory . "/*.sre");
+
+        foreach ($files as $file) {
+            $handle = fopen($file, "r");
+            if ($handle) {
+                $line = fgets($handle);
+                fclose($handle);
+
+                if ($line) {
+                    $data = explode(";", trim($line));
+
+                    // Determina l'offset per la versione 2.0
+                    $offset = (isset($data[0]) && $data[0] == "2.0") ? 0 : -1;
+
+                    // Data intervista
+                    $interviewDate = $this->extractValue($data, 5 + $offset);
+                    if ($interviewDate === "N/A" || empty($interviewDate)) {
+                        continue;
+                    }
+
+                    // Convertiamo la data al formato YYYY-MM-DD per l'ordinamento
+                    $formattedDate = $this->formatDate($interviewDate);
+
+                    // Determina il panel
+                    $panelUsed = 'Interactive';
+                    foreach ($data as $element) {
+                        if (strpos($element, "pan=") !== false) {
+                            $panelValue = (int) str_replace("pan=", "", $element);
+                            $panelUsed = $panelNames[$panelValue] ?? 'Altro Panel';
+                            break;
+                        }
+                    }
+
+                    // Se il panel non esiste ancora nell'array, inizializziamolo
+                    if (!isset($dataSummaryByPanel[$panelUsed])) {
+                        $dataSummaryByPanel[$panelUsed] = [];
+                    }
+
+                    // Se la data non è ancora presente nell'array del panel, inizializziamola
+                    if (!isset($dataSummaryByPanel[$panelUsed][$formattedDate])) {
+                        $dataSummaryByPanel[$panelUsed][$formattedDate] = [
+                            'contatti' => 0,
+                            'complete' => 0,
+                            'non_target' => 0,
+                            'quotafull' => 0,
+                            'total_duration' => 0 // Per calcolare la media LOI
+                        ];
+                    }
+
+                    // Aumentiamo il conteggio dei contatti per la data
+                    $dataSummaryByPanel[$panelUsed][$formattedDate]['contatti']++;
+
+                    // Determiniamo lo status dell'intervista
+                    $statusIndex = (isset($data[0]) && $data[0] == "2.0") ? 8 : 7;
+                    $status = (int) $this->extractValue($data, $statusIndex);
+
+                    // Calcoliamo la durata (se l'intervista è completata)
+                    $durationIndex = $statusIndex - 1; // La durata è nella colonna precedente allo status
+                    $duration = (int) $this->extractValue($data, $durationIndex);
+
+                    // Aggiorniamo i conteggi in base allo status
+                    switch ($status) {
+                        case 3:
+                            $dataSummaryByPanel[$panelUsed][$formattedDate]['complete']++;
+                            $dataSummaryByPanel[$panelUsed][$formattedDate]['total_duration'] += $duration;
+                            break;
+                        case 4:
+                            $dataSummaryByPanel[$panelUsed][$formattedDate]['non_target']++;
+                            break;
+                        case 5:
+                            $dataSummaryByPanel[$panelUsed][$formattedDate]['quotafull']++;
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Ordiniamo le date in ordine decrescente per ogni panel
+    foreach ($dataSummaryByPanel as &$summary) {
+        krsort($summary);
+    }
+
+    return $dataSummaryByPanel;
+}
+
+
+private function formatDate($dateString)
+{
+    // Ensure it's a valid date before parsing
+    if (!strtotime($dateString)) {
+        return "Data non disponibile";
+    }
+
+    return \Carbon\Carbon::parse($dateString)
+        ->locale('it')
+        ->isoFormat('dddd D MMMM YY');
+}
+
 
 
 
