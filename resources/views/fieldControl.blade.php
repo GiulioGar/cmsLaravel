@@ -4,7 +4,94 @@
 <!-- Importazione dello stile personalizzato -->
 <link rel="stylesheet" href="{{ asset('css/fieldControl.css') }}">
 
+
+
+
+
 <div class="container field-control-container">
+
+<!-- NAVBAR MODERNA CON MENU A TENDINA -->
+<nav class="navbar custom-navbar mb-4">
+    <div class="container-fluid d-flex align-items-center justify-content-between px-0">
+        <!-- Brand a sinistra -->
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <i class="fas fa-chart-bar me-2"></i>
+            <span>Status Field</span>
+        </a>
+
+        <!-- Menu orizzontale con dropdown -->
+        <ul class="nav custom-nav-links">
+            <!-- Ricerche in corso -->
+            <li class="nav-item dropdown position-relative">
+                <a class="nav-link dropdown-toggle" href="#" id="ongoingResearchDropdown" role="button"
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-tasks me-1"></i> Ricerche in corso
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="ongoingResearchDropdown">
+                    @forelse($ricercheInCorso as $ricerca)
+                        <li>
+                            <a class="dropdown-item"
+                               href="{{ url('fieldControl?prj=' . $ricerca->prj . '&sid=' . $ricerca->sur_id) }}">
+                                {{ $ricerca->description }}
+                            </a>
+                        </li>
+                    @empty
+                        <li><span class="dropdown-item text-muted">Nessuna ricerca attiva</span></li>
+                    @endforelse
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item " href="{{url('surveys')}}"><b>Vedi tutte</b></a></li>
+                </ul>
+            </li>
+
+            <!-- Imposta Target -->
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-bullseye me-1"></i> Imposta Target
+                </a>
+            </li>
+
+            <!-- Controllo Qualità -->
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-check-circle me-1"></i> Controllo Qualità
+                </a>
+            </li>
+
+            <!-- Download -->
+            <li class="nav-item">
+<!-- Bottone Download -->
+<a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#downloadModal">
+    <i class="fas fa-download me-1"></i> Download
+</a>
+
+
+            </li>
+
+            <!-- Impostazioni con dropdown -->
+            <li class="nav-item dropdown position-relative">
+                <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button"
+                   data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-cog me-1"></i> Impostazioni
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
+                    <li>
+                        <a class="dropdown-item {{ $panelData->stato == 1 ? 'disabled text-muted' : '' }}"
+                           href="#"
+                           onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')"
+                           {{ $panelData->stato == 1 ? 'style=pointer-events:none;opacity:0.5;' : '' }}>
+                            Chiudi Ricerca
+                        </a>
+                    </li>
+                    <li><a class="dropdown-item" href="#">Reset Bloccate</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</nav>
+<!-- FINE NAVBAR -->
+
+
+
 
 
     <div class="row">
@@ -76,9 +163,9 @@
                     <div class="stat-badge badge-blue">INFO</div>
                     <span class="ms-3 stat-text">
                         @if($panelData->stato == 0)
-                            Chiusa
-                        @elseif($panelData->stato == 1)
                             Aperta
+                        @elseif($panelData->stato == 1)
+                            Chiusa
                         @else
                             N/A
                         @endif
@@ -367,7 +454,10 @@
                     @else
                         @foreach ($dataSummaryByPanel as $panelName => $summaryData)
                             <li class="nav-item">
-                                <a class="nav-link modern-tab-link {{ $loop->first ? 'active' : '' }}" id="tab-date-{{ $loop->index }}-nav" data-bs-toggle="pill" href="#tab-date-{{ $loop->index }}">
+                                <a class="nav-link modern-tab-link {{ $loop->first ? 'active' : '' }}"
+                                   id="tab-date-{{ $loop->index }}-nav"
+                                   data-bs-toggle="pill"
+                                   href="#tab-date-{{ $loop->index }}">
                                     <i class="fas fa-calendar-day me-2"></i> {{ $panelName }}
                                 </a>
                             </li>
@@ -377,9 +467,11 @@
 
                 <!-- Tab Content -->
                 <div class="tab-content custom-tab-content-modern">
+                    <br/>
                     @foreach ($dataSummaryByPanel as $panelName => $summaryData)
-                        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-date-{{ $loop->index }}">
-                            <h4 class="tab-title text-center">{{ $panelName }}</h4>
+                        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                             id="tab-date-{{ $loop->index }}">
+                            <h4 class="tab-title text-center">Report giornaliero - {{ $panelName }}</h4>
 
                             <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                                 <table class="table table-hover table-striped custom-table-modern text-center">
@@ -390,26 +482,34 @@
                                             <th>Complete</th>
                                             <th>Non in target</th>
                                             <th>Quotafull</th>
+                                            <th>Bloccate</th>
                                             <th>IR (%)</th>
-                                            <th>LOI</th>
+                                            <th>LOI (Media)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($summaryData as $date => $stats)
                                             @php
-                                                $denominator = $stats['contatti'] - $stats['non_target'] - $stats['quotafull'];
-                                                $ir = ($denominator > 0) ? round(($stats['complete'] / $denominator) * 100, 2) : 0;
-                                                $loi = isset($stats['total_duration']) && $stats['complete'] > 0
+                                                // Calcolo IR
+                                                $sospese=$stats['contatti']-($stats['non_target']+$stats['quotafull']+$stats['complete']+ $stats['bloccate']);
+                                                $denominator = $stats['contatti'] -$sospese - $stats['quotafull']-$stats['bloccate'];
+                                                $ir = ($denominator > 0)
+                                                    ? round(($stats['complete'] / $denominator) * 100, 2)
+                                                    : 0;
+
+                                                // Calcolo LOI (minuti)
+                                                $loi = (isset($stats['total_duration']) && $stats['complete'] > 0)
                                                     ? round(($stats['total_duration'] / $stats['complete']) / 60, 1) . " min."
                                                     : 'N/A';
-                                                    $formattedDate = is_numeric(strtotime($date)) ? \Carbon\Carbon::parse($date)->locale('it')->isoFormat('dddd D MMMM YY') : "Data non disponibile";
                                             @endphp
                                             <tr>
-                                                <td><strong>{{ ucfirst($formattedDate) }}</strong></td>
+                                                <!-- Stampiamo la data già preparata nel Controller con chiave 'display_date' -->
+                                                <td><strong>{{ $stats['display_date'] }}</strong></td>
                                                 <td>{{ $stats['contatti'] }}</td>
                                                 <td class="text-success fw-bold">{{ $stats['complete'] }}</td>
                                                 <td class="text-warning fw-bold">{{ $stats['non_target'] }}</td>
                                                 <td class="text-danger fw-bold">{{ $stats['quotafull'] }}</td>
+                                                <td class="text-danger fw-bold">{{ $stats['bloccate'] }}</td>
                                                 <td class="text-primary fw-bold">{{ $ir }}%</td>
                                                 <td>{{ $loi }}</td>
                                             </tr>
@@ -427,13 +527,48 @@
 
 
 
-
  <!-- fine  terza riga  -->
 
 
 
     <!-- fine container -->
 </div>
+
+
+<!-- MODALE DI DOWNLOAD -->
+<div class="modal fade" id="downloadModal" tabindex="-1" aria-labelledby="downloadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="downloadModalLabel">Scarica il file</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p>Seleziona il panel per il quale vuoi scaricare il file:</p>
+
+                <!-- Opzioni Panel -->
+                <form id="downloadForm" action="{{ route('download.csv') }}" method="GET">
+                    <input type="hidden" name="prj" value="{{ $prj }}">
+                    <input type="hidden" name="sid" value="{{ $sid }}">
+
+                    @foreach($panelCounts as $panelName => $panelData)
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="panel" id="panel_{{ $loop->index }}" value="{{ $panelName }}" required>
+                            <label class="form-check-label" for="panel_{{ $loop->index }}">
+                                {{ $panelName }}
+                            </label>
+                        </div>
+                    @endforeach
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                <button type="submit" class="btn btn-primary" form="downloadForm">Scarica CSV</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 @endsection
@@ -538,6 +673,54 @@
     });
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+        var dropdownElements = document.querySelectorAll('.dropdown-toggle');
 
+        // Inizializza tutti i dropdown
+        dropdownElements.forEach(function (dropdown) {
+            new bootstrap.Dropdown(dropdown);
+        });
+
+        console.log("✅ Bootstrap Dropdown inizializzato correttamente.");
+
+        // Aggiungiamo un event listener globale ai dropdown-toggle
+        document.body.addEventListener("click", function (event) {
+            if (event.target.classList.contains("dropdown-toggle")) {
+                var dropdown = bootstrap.Dropdown.getOrCreateInstance(event.target);
+                dropdown.show();
+            }
+        });
+    });
+</script>
+
+<!-- Script JavaScript per chiudere la ricerca -->
+<script>
+    function closeSurvey(prj, sid) {
+        if (!confirm("Sei sicuro di voler chiudere questa ricerca?")) return;
+
+        fetch("{{ route('close.survey') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({ prj: prj, sid: sid })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Ricerca chiusa con successo!");
+                location.reload();
+            } else {
+                alert("Errore: " + data.message);
+            }
+        })
+        .catch(error => {
+            alert("Si è verificato un errore.");
+            console.error(error);
+        });
+    }
+</script>
 
 @endsection

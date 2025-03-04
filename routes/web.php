@@ -5,6 +5,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\FieldControlController;
+use App\Http\Controllers\PrimisController;
 
 // Rotte per il login e logout
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -38,9 +39,13 @@ Route::get('/surveys/get-client-by-prj', [SurveyController::class, 'getClientByP
 
 
 Route::get('/fieldControl', [FieldControlController::class, 'index']);
+//csv download
+Route::get('/download-csv', [FieldControlController::class, 'downloadCSV'])->name('download.csv');
+//chiudi ricerca
+Route::post('/close-survey', [FieldControlController::class, 'closeSurvey'])->name('close.survey');
 
 
-use App\Http\Controllers\PrimisController;
+
 
 // Rotta per leggere API
 Route::get('/primis/info',     [PrimisController::class, 'getInfo']);

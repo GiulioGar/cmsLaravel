@@ -287,4 +287,99 @@ h3 {font-size: 15px!important;}
     box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* NAVBAR con gradiente chiaro, bordo e ombra leggerissima */
+
+/* .custom-navbar {
+    background: linear-gradient(90deg, #f9f9f9 0%, #97ce61 100%);
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 0.5rem 1rem;
+  }
+  */
+
+  /* NAVBAR con stile moderno */
+.custom-navbar {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 0.5rem 1rem;
+    background: linear-gradient(90deg, #f9f9f9 0%, #97ce61 100%);
+  }
+
+  /* Brand */
+  .custom-navbar .navbar-brand {
+    font-weight: 600;
+    color: #3a3a3a;
+    text-decoration: none;
+    font-size: 1.2rem;
+  }
+
+  .custom-navbar .navbar-brand:hover {
+    color: #000;
+  }
+
+  /* Link orizzontali */
+  .custom-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Stile link */
+  .custom-nav-links .nav-link {
+    color: #555;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+  }
+
+  .custom-nav-links .nav-link i {
+    font-size: 1rem;
+    margin-right: 0.3rem;
+  }
+
+ /* Hover & Active */
+.custom-nav-links .nav-link {
+    transition: color 0.3s ease-in-out, transform 0.2s ease-in-out;
+  }
+
+  .custom-nav-links .nav-link:hover,
+  .custom-nav-links .nav-link.active {
+    color: #000;
+    text-decoration: none;
+    transform: translateY(-4px); /* Leggero sollevamento */
+  }
+
+  /* Dropdown */
+  .custom-nav-links .dropdown-menu {
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 5px rgba(75, 75, 75, 0.027);
+    background: rgba(255, 255, 255, 0.651); /* Semi trasparente */
+    backdrop-filter: blur(5px); /* Effetto sfocatura per un tocco moderno */
+  }
+
+  .custom-nav-links .dropdown-item {
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    transition: background 0.3s ease-in-out, color 0.3s ease-in-out;
+  }
+
+  .custom-nav-links .dropdown-item:hover {
+    background: #f0f0f0;
+    color: #000;
+  }
+
+
+  .dropdown-item.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
 
