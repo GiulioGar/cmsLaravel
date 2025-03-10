@@ -45,10 +45,12 @@
 
             <!-- Imposta Target -->
             <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="fas fa-bullseye me-1"></i> Imposta Target
+                <a class="nav-link"
+                   href="{{ route('targetField.index', ['prj' => $prj, 'sid' => $sid]) }}">
+                   <i class="fas fa-bullseye me-1"></i> Imposta Target
                 </a>
             </li>
+
 
             <!-- Controllo Qualità -->
             <li class="nav-item">
@@ -82,7 +84,11 @@
                             Chiudi Ricerca
                         </a>
                     </li>
-                    <li><a class="dropdown-item" href="#">Reset Bloccate</a></li>
+                    <li>
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#resetBloccateModal">
+                        Reset Bloccate
+                    </a>
+                </li>
                 </ul>
             </li>
         </ul>
@@ -569,6 +575,26 @@
     </div>
 </div>
 
+<!-- MODALE PER RESET BLOCCATE -->
+<div class="modal fade" id="resetBloccateModal" tabindex="-1" aria-labelledby="resetBloccateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetBloccateModalLabel">Reset Interviste Bloccate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p>Numero di interviste bloccate per questa ricerca: <strong>{{ $counts['bloccate'] }}</strong></p>
+                <p>Vuoi resettare tutte le interviste bloccate?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-warning" id="resetBloccateBtn">Reset</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 @endsection
@@ -722,5 +748,40 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 </script>
+
+<script>
+    document.getElementById("resetBloccateBtn").addEventListener("click", function() {
+        if (!confirm("⚠️ ATTENZIONE: Questa operazione NON è reversibile! Sei sicuro di voler resettare le interviste bloccate?")) {
+            return;
+        }
+
+        fetch("{{ route('reset.bloccate') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                prj: "{{ $prj }}",
+                sid: "{{ $sid }}"
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`${data.resetCount} interviste sono state resettate e riabilitate.`);
+                location.reload();
+            } else {
+                alert("Errore: " + data.message);
+            }
+        })
+        .catch(error => {
+            alert("Si è verificato un errore durante il reset.");
+            console.error(error);
+        });
+    });
+</script>
+
+
 
 @endsection

@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\FieldControlController;
 use App\Http\Controllers\PrimisController;
+use App\Http\Controllers\TargetFieldController;
 
 // Rotte per il login e logout
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -37,12 +38,36 @@ Route::get('/surveys/prj-info', [SurveyController::class, 'getPrjInfo'])
 Route::get('/surveys/get-client-by-prj', [SurveyController::class, 'getClientByPrj'])
     ->name('surveys.getClientByPrj');
 
-
 Route::get('/fieldControl', [FieldControlController::class, 'index']);
 //csv download
 Route::get('/download-csv', [FieldControlController::class, 'downloadCSV'])->name('download.csv');
 //chiudi ricerca
 Route::post('/close-survey', [FieldControlController::class, 'closeSurvey'])->name('close.survey');
+//reset bloccate
+Route::post('/reset-bloccate', [FieldControlController::class, 'resetBloccate'])->name('reset.bloccate');
+
+
+// Pagina 'Imposta Target': mostra la lista domande
+Route::get('/fieldControl/targetField', [TargetFieldController::class, 'index'])
+     ->name('targetField.index');
+
+// Rotta AJAX per ottenere il dettaglio di una singola domanda
+Route::get('/fieldControl/targetField/getQuestionDetail', [TargetFieldController::class, 'getQuestionDetail'])
+     ->name('targetField.getQuestionDetail');
+
+     Route::get('/fieldControl/targetField/getTargetUIDs', [TargetFieldController::class, 'getTargetUIDs'])
+     ->name('targetField.getTargetUIDs');
+
+Route::get('/fieldControl/targetField/fetchTargets', [TargetFieldController::class, 'fetchTargets'])
+     ->name('targetField.fetchTargets');
+
+Route::post('/fieldControl/targetField/addTarget', [TargetFieldController::class, 'addTarget'])
+     ->name('targetField.addTarget');
+
+     Route::post('/fieldControl/targetField/assignTarget', [TargetFieldController::class, 'assignTarget'])
+     ->name('targetField.assignTarget');
+
+
 
 
 

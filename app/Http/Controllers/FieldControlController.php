@@ -965,6 +965,63 @@ public function closeSurvey(Request $request)
     return response()->json(['success' => true]);
 }
 
+public function resetBloccate(Request $request)
+{
+    $prj = $request->input('prj');
+    $sid = $request->input('sid');
+
+    // Percorso della directory dei file .sre
+    $directory = base_path("var/imr/fields/$prj/$sid/results/");
+
+    if (!is_dir($directory)) {
+        return response()->json(['success' => false, 'message' => 'Directory non trovata.'], 404);
+    }
+
+    $files = glob($directory . "/*.sre");
+    if (empty($files)) {
+        return response()->json(['success' => false, 'message' => 'Nessun file .sre trovato.'], 404);
+    }
+
+    $resetCount = 0;
+
+    foreach ($files as $file) {
+        $handle = fopen($file, "r");
+        if ($handle) {
+            $line = fgets($handle);
+            fclose($handle);
+
+            if ($line) {
+                $data = explode(";", trim($line));
+
+                // Determina la posizione della colonna status
+                $statusIndex = (isset($data[0]) && $data[0] == "2.0") ? 8 : 7;
+                $statusCode = isset($data[$statusIndex]) ? (int) $data[$statusIndex] : null;
+
+                // Se lo status è 7 (bloccato), eliminiamo il file e aggiorniamo il DB
+                if ($statusCode === 7) {
+                    // Recuperiamo l'uid per aggiornare il database
+                    $uid = $this->extractFieldValue($data, 'sysUID');
+
+                    // Eliminazione del file
+                    unlink($file);
+                    $resetCount++;
+
+                    // Aggiorniamo la tabella t_respint
+                    DB::table('t_respint')
+                        ->where('sid', $sid)
+                        ->where('uid', $uid)
+                        ->update(['status' => 0, 'iid' => -1]);
+                }
+            }
+        }
+    }
+
+    return response()->json([
+        'success' => true,
+        'resetCount' => $resetCount
+    ]);
+}
+
 
 
 }

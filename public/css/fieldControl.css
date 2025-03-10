@@ -383,3 +383,144 @@ h3 {font-size: 15px!important;}
 }
 
 
+/* sezione target */
+
+.field-control-container {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 5px;
+  }
+
+ /* Contenitore della lista di domande */
+.list-group {
+    border: none;
+    background: #f8f9fa; /* sfondo chiaro */
+    padding: 0.5rem;
+    border-radius: 6px;  /* angoli arrotondati */
+  }
+
+  /* Singola "card" di domanda (a sinistra) */
+  .list-group-item.question-item {
+    background-color: #fff;       /* sfondo bianco */
+    border: 1px solid #ddd;       /* bordo grigio chiaro */
+    border-radius: 6px;           /* angoli arrotondati */
+    margin-bottom: 8px;           /* spazio verticale tra le card */
+    padding: 0.75rem 1rem;        /* spazio interno */
+    display: block;
+    color: #222E3C;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+
+  /* Effetto hover per dare risalto */
+  .list-group-item.question-item:hover {
+    background-color: #f2f4f5;    /* leggero grigio di hover */
+    border-color: #7ab33e;       /* bordo in tinta con il brand */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* Codice domanda in evidenza */
+  .list-group-item.question-item .question-code {
+    color: #7ab33e;
+    font-weight: 600;
+    margin-right: 0.5rem;
+  }
+
+
+  .card {
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  .card-header {
+    background-color: #404044;
+    border-radius: 6px 6px 0 0;
+  }
+  .card-header h5 {
+    margin: 0;
+    font-weight: 600;
+    color: #fff;
+  }
+  .card-body {
+    background-color: #fff;
+    padding: 1.5rem;
+  }
+
+  .option-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding: 0.3rem 0;
+    background-color: #fdfdfd;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  .option-row:hover {
+    background-color: #f1f3f5;
+  }
+
+  .option-text {
+    width: 180px;
+    margin-right: 0.75rem;
+    color: #222E3C;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .option-progress {
+    flex: 1;
+    background-color: #e6e6e6;
+    height: 8px;
+    border-radius: 4px;
+    margin-right: 0.75rem;
+    position: relative;
+  }
+  .option-progress-fill {
+    background-color: #9ece6c;
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+
+  .option-badge {
+    background-color: #222E3C;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-right: 0.5rem;
+  }
+
+  .option-target-icon {
+    color: #9ece6c;
+    font-size: 1rem;
+  }
+
+  .table-bordered thead tr th {
+    background-color: #404044;
+    color: #fff;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .table-bordered tbody tr td {
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .tooltip-inner {
+    background-color: #222E3C !important;
+    color: #fff !important;
+    font-weight: 500;
+  }
+  .bs-tooltip-auto[x-placement^=top] .tooltip-arrow::before,
+  .bs-tooltip-auto[x-placement^=bottom] .tooltip-arrow::before,
+  .bs-tooltip-auto[x-placement^=left] .tooltip-arrow::before,
+  .bs-tooltip-auto[x-placement^=right] .tooltip-arrow::before {
+    background-color: #222E3C !important;
+  }

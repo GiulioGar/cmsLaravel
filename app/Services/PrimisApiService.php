@@ -97,5 +97,30 @@ public function listQuestions(string $projectName, string $surveyId, ?string $ty
 }
 
 
+/**
+ * Ritorna i dettagli di una singola domanda
+ * (compresi campi come "options", se la domanda è di tipo choice/scale ecc.)
+ *
+ * GET /api/v1/projects/<project_name>/surveys/<survey_id>/questions/<question_id>
+ */
+
+public function getQuestion(string $projectName, string $surveyId, int $questionId)
+{
+    $url = $this->baseUrl."projects/{$projectName}/surveys/{$surveyId}/questions/{$questionId}";
+
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . $this->token,
+        'Accept'        => 'application/json'
+    ])->get($url);
+
+    if ($response->failed()) {
+        throw new \Exception("Errore di comunicazione con Primis [getQuestion]");
+    }
+
+    return $response->json();
+}
+
+
+
 
 }
