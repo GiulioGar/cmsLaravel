@@ -1,0 +1,9 @@
+2.0;IPS;R2501010;1760;9UGP2XTONG;26/11/2024 16:32:46 CET;29/11/2024 14:00:44 CET;250078;7;40;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=9UGP2XTONG;device=mobile;lang=it;sysIID=1760
+choice;7;107;20
+choice;8;7903;1629
+choice;9;7;3
+choice;10;2;1
+open;20;44
+choice;30;5;2
+choice;92;20;3
+choice;93;4;3

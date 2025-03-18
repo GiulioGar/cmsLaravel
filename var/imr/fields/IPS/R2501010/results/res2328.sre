@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;2328;F279YF8ITI;27/11/2024 18:01:28 CET;27/11/2024 18:02:09 CET;41;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=F279YF8ITI;device=desktop;lang=it;sysIID=2328
+choice;7;107;60
+choice;8;7903;4446
+choice;9;7;3
+choice;10;2;1
+open;20;53
+choice;30;5;3
+open;40;09170
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;92;20;13
+choice;93;4;3

@@ -1,0 +1,17 @@
+2.0;PRO;PROFUMATOR;2130;S84ES5PZXG;23/01/2023 21:52:34 CET;23/01/2023 21:53:33 CET;59;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=S84ES5PZXG;lang=it
+open;20;39
+choice;30;7;3
+choice;40;2;0
+choice;45;20;4
+choice;50;4;1
+choice;100;2;0
+choice;120;6;100000;0
+choice;125;6;011110;1
+open;130;25
+choice;420;4;1
+choice;430;9;2
+choice;440;13;3
+choice;450;5;3
+choice;460;5;3
+choice;470;2;0
+choice;22200;7;5

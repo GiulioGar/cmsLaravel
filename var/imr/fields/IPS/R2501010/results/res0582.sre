@@ -1,0 +1,31 @@
+2.0;IPS;R2501010;582;L64Z8FGPX1;25/11/2024 15:29:38 CET;25/11/2024 15:31:32 CET;114;3;880;device=mobile;lang=it;r1=1;sysIID=582;sysPRJ=IPS;sysSID=R2501010;version=v01;leg=99;sysUID=L64Z8FGPX1
+choice;7;107;99
+choice;8;7903;7268
+choice;9;7;3
+choice;10;2;1
+open;20;54
+choice;30;5;3
+open;40;21052
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110100;1
+choice;92;20;8
+choice;93;4;0
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;170;5;10000;0
+choice;175;2;1
+scale;200;3;3;2;2;2
+choice;210;15;5
+choice;212;15;5
+choice;215;17;00000100000010000;5
+choice;220;17;00000100000000000;5
+choice;230;17;00000100000000000;5
+scale;240;17;3;-1;-1;-1;-1;-1;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;400;11;00000000001;10
+concept;850
+open;855;Colori e scritte 
+choice;860;5;2
+choice;880;5;2

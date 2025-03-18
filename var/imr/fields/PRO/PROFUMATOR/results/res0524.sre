@@ -1,0 +1,16 @@
+2.0;PRO;PROFUMATOR;524;SFUTCG88W3;21/01/2023 09:30:22 CET;21/01/2023 09:33:22 CET;180;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=SFUTCG88W3;lang=it
+open;20;69
+choice;30;7;6
+choice;40;2;0
+choice;45;20;9
+choice;50;4;2
+choice;100;2;0
+choice;120;6;000001;5;comp5:sigari, toscani e cubani
+choice;125;6;000001;5
+open;130;0
+choice;420;4;2
+choice;430;9;2
+choice;440;13;3
+choice;450;5;3
+choice;460;5;0
+choice;22200;7;5

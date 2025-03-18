@@ -1,0 +1,16 @@
+2.0;PRO;PROFUMATOR;90;KVGNH71757;20/01/2023 15:42:39 CET;20/01/2023 15:43:42 CET;63;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=KVGNH71757;lang=it
+open;20;48
+choice;30;7;4
+choice;40;2;1
+choice;45;20;14
+choice;50;4;3
+choice;100;2;0
+choice;120;6;111110;0
+open;130;20
+choice;420;4;2
+choice;430;9;1
+choice;440;13;6
+choice;450;5;2
+choice;460;5;2
+choice;470;2;0
+choice;22200;7;0

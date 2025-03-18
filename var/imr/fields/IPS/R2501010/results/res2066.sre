@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;2066;RP23X03540;27/11/2024 09:16:24 CET;27/11/2024 09:17:42 CET;78;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=RP23X03540;device=mobile;lang=it;sysIID=2066
+choice;7;107;47
+choice;8;7903;3581
+choice;9;7;3
+choice;10;2;1
+open;20;55
+choice;30;5;3
+open;40;26900
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;4
+choice;92;20;8
+choice;93;4;0

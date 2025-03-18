@@ -1,0 +1,15 @@
+2.0;IPS;R2501010;1248;L55Y5DLEO0;26/11/2024 10:38:11 CET;26/11/2024 10:39:32 CET;81;4;100;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=L55Y5DLEO0;device=desktop;lang=it;sysIID=1248
+choice;7;107;21
+choice;8;7903;1726
+choice;9;7;5
+choice;10;2;0
+open;20;60
+choice;30;5;3
+open;40;95125
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111100;0
+choice;92;20;14
+choice;93;4;3
+choice;100;6;000100;3

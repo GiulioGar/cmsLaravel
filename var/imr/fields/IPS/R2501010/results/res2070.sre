@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;2070;EZVO6RDNUL;27/11/2024 09:25:36 CET;27/11/2024 09:26:24 CET;48;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=EZVO6RDNUL;device=desktop;lang=it;sysIID=2070
+choice;7;107;41
+choice;8;7903;3196
+choice;9;7;2
+choice;10;2;1
+open;20;59
+choice;30;5;3
+open;40;19032
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;92;20;7
+choice;93;4;0

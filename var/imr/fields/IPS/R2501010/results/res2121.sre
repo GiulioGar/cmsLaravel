@@ -1,0 +1,15 @@
+2.0;IPS;R2501010;2121;IDEXCIPHXMRNSVVHJ25;27/11/2024 11:29:27 CET;27/11/2024 11:31:12 CET;105;4;100;device=mobile;lang=it;sysIID=2121;sysPRJ=IPS;sysSID=R2501010;version=v01;pan=1;sysUID=IDEXCIPHXMRNSVVHJ25;rid=6746f47e-5b86-c449-df40-e228015db2e6
+choice;7;107;57
+choice;8;7903;4174
+choice;9;7;1
+choice;10;2;0
+open;20;25
+choice;30;5;1
+open;40;80074
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1100100;0
+choice;92;20;3
+choice;93;4;3
+choice;100;6;010000;1

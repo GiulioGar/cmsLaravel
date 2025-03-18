@@ -1,0 +1,5 @@
+2.0;IPS;R2501010;1102;BZO25F8N2Y;25/11/2024 22:08:05 CET;25/11/2024 22:09:33 CET;88;7;8;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=BZO25F8N2Y;device=mobile;lang=it;sysIID=1102
+choice;7;107;21
+choice;10;2;0
+open;20;25
+choice;30;5;1

@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;2276;YOSTM8W741;27/11/2024 15:52:43 CET;27/11/2024 15:53:51 CET;68;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=YOSTM8W741;device=desktop;lang=it;sysIID=2276
+choice;7;107;36
+choice;8;7903;2967
+choice;9;7;6
+choice;10;2;0
+open;20;62
+choice;30;5;3
+open;40;16154
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;1
+choice;92;20;7
+choice;93;4;0

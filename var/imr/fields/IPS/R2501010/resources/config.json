@@ -1,0 +1,84 @@
+{
+    "interview": {
+        "development": { "allow_go_back": true },
+        "production": {
+            "allow_go_back": true,
+            "redirections": [
+                {
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 3,
+                    "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+				{
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 4,
+                   "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+                
+                {
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 5,
+                     "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+                {
+                    "parameter_name": "pan",
+                    "parameter_value": "1",
+                    "exit_code": 3,
+                    "redirect_to": "https://notch.insights.supply/cb?token=4f6f59e3-0618-4b01-8fb7-a1c847a0351c&RID=$(rid)"
+                }, {
+                    "parameter_name": "pan",
+                    "parameter_value": "1",
+                    "exit_code": 4,
+                    "redirect_to": "https://samplicio.us/s/ClientCallBack.aspx?RIS=20&RID=$(rid)"
+                },
+
+                {
+                    "parameter_name": "pan",
+                    "parameter_value": "1",
+                    "exit_code": 5,
+                    "redirect_to": "https://samplicio.us/s/ClientCallBack.aspx?RIS=40&RID=$(rid)"
+                }
+            ],
+            "ssi": {
+                "secure_key_1": 23137,
+                "secure_key_2": 21593
+            }
+        }
+    },
+
+    "quota": {
+        "total_interviews": 1300,
+        "targets": [
+            {
+                "name": "source_panel",
+                "description": "Cint",
+                "parameter_name": "pan",
+                "parameter_value": "1",
+                "value":200
+            },
+
+            {
+                "name": "type",
+                "description": "type",
+                "question_id": 175,
+                "option_id": [0],
+                "value": 200
+
+            },
+
+            {
+                "name": "type",
+                "description": "type",
+                "question_id": 175,
+                "option_id": [1],
+                "value": 900
+
+            }
+        ]
+
+    }
+
+}

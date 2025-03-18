@@ -1,0 +1,15 @@
+2.0;PRO;PROFUMATOR;3189;BGI17BGBXM;07/02/2023 14:37:58 CET;07/02/2023 14:38:47 CET;49;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=BGI17BGBXM;lang=it
+open;20;49
+choice;30;7;4
+choice;40;2;0
+choice;45;20;8
+choice;50;4;0
+choice;100;2;0
+choice;120;6;100000;0
+choice;125;6;011110;1
+open;130;7
+choice;420;4;0
+choice;430;9;3
+choice;450;5;3
+choice;460;5;0
+choice;22200;7;0

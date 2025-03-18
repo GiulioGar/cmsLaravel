@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1247;ZLVB7OSTI1;26/11/2024 10:38:03 CET;26/11/2024 11:03:33 CET;1530;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=ZLVB7OSTI1;device=desktop;lang=it;sysIID=1247
+choice;7;107;45
+choice;8;7903;3453
+choice;9;7;0
+choice;10;2;0
+open;20;53
+choice;30;5;3
+open;40;23811
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111000;1
+choice;92;20;8
+choice;93;4;0

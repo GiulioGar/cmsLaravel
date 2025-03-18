@@ -1,0 +1,15 @@
+2.0;IPS;R2501010;2835;OIL5Q90ING;29/11/2024 10:59:57 CET;29/11/2024 11:00:59 CET;62;4;100;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=OIL5Q90ING;device=mobile;lang=it;sysIID=2835
+choice;7;107;80
+choice;8;7903;5684
+choice;9;7;6
+choice;10;2;0
+open;20;39
+choice;30;5;2
+open;40;00172
+choice;60;2;0
+choice;70;8;01001010;4
+choice;80;8;00000001;7
+choice;90;7;1110000;1
+choice;92;20;6
+choice;93;4;2
+choice;100;6;011000;2

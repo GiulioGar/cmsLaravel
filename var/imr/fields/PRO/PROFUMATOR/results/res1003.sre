@@ -1,0 +1,16 @@
+2.0;PRO;PROFUMATOR;1003;IQQP8LPTLM;21/01/2023 22:21:59 CET;21/01/2023 22:23:23 CET;84;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=IQQP8LPTLM;lang=it
+open;20;57
+choice;30;7;5
+choice;40;2;1
+choice;45;20;8
+choice;50;4;0
+choice;100;2;0
+choice;120;6;100101;0;comp5:sigaretti
+choice;125;6;000001;5
+open;130;10
+choice;420;4;2
+choice;430;9;3
+choice;450;5;2
+choice;460;5;1
+choice;470;2;1
+choice;22200;7;0

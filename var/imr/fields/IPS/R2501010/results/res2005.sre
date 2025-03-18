@@ -1,0 +1,15 @@
+2.0;IPS;R2501010;2005;NLSG1YA0IS;26/11/2024 23:12:36 CET;26/11/2024 23:13:30 CET;54;4;100;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=NLSG1YA0IS;device=mobile;lang=it;sysIID=2005
+choice;7;107;13
+choice;8;7903;1093
+choice;9;7;5
+choice;10;2;1
+open;20;56
+choice;30;5;3
+open;40;40121
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1100100;0
+choice;92;20;4
+choice;93;4;1
+choice;100;6;001000;2

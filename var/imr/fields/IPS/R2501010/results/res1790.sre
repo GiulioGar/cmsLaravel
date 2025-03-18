@@ -1,0 +1,34 @@
+2.0;IPS;R2501010;1790;PVTU821005;26/11/2024 17:05:29 CET;26/11/2024 17:12:30 CET;421;3;880;device=desktop;lang=it;r1=2;sysIID=1790;sysPRJ=IPS;sysSID=R2501010;version=v01;leg=99;sysUID=PVTU821005
+choice;7;107;57
+choice;8;7903;4204
+choice;9;7;6
+choice;10;2;0
+open;20;55
+choice;30;5;3
+open;40;80126
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;5
+choice;92;20;3
+choice;93;4;3
+choice;100;6;111100;0
+choice;110;3;110;1
+choice;120;4;3
+choice;130;3;0
+choice;140;3;0
+choice;150;3;0
+choice;170;5;11101;0
+choice;175;2;1
+scale;200;3;3;-1;-1;2
+choice;210;15;2
+choice;212;15;2
+choice;215;17;00100000000000000;2
+choice;220;17;00100000000000000;2
+choice;230;17;00100000000000000;2
+scale;240;17;3;-1;-1;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;400;11;00000000001;10
+concept;850
+open;855;non saprei
+choice;860;5;2
+choice;880;5;2

@@ -1,0 +1,17 @@
+2.0;PRO;PROFUMATOR;1765;T4EZIHMVXH;23/01/2023 15:50:14 CET;23/01/2023 15:51:22 CET;68;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=T4EZIHMVXH;lang=it
+open;20;52
+choice;30;7;4
+choice;40;2;1
+choice;45;20;15
+choice;50;4;2
+choice;100;2;0
+choice;120;6;000001;5;comp5:sigaro
+choice;125;6;010110;1
+open;130;1
+choice;420;4;1
+choice;430;9;2
+choice;440;13;3
+choice;450;5;2
+choice;460;5;2
+choice;470;2;1
+choice;22200;7;2

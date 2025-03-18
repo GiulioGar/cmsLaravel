@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;2601;ENV3RO322M;28/11/2024 14:09:40 CET;28/11/2024 14:10:21 CET;41;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=ENV3RO322M;device=desktop;lang=it;sysIID=2601
+choice;7;107;87
+choice;8;7903;6179
+choice;9;7;0
+choice;10;2;1
+open;20;26
+choice;30;5;1
+open;40;23030
+choice;60;2;0
+choice;70;8;10000000;0
+choice;80;8;00000001;7
+choice;90;7;0110100;4
+choice;92;20;8
+choice;93;4;0

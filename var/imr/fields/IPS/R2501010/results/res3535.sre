@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;3535;KTE4VPU4J1;29/11/2024 21:00:40 CET;29/11/2024 21:01:23 CET;43;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=KTE4VPU4J1;device=desktop;lang=it;sysIID=3535
+choice;7;107;44
+choice;8;7903;3374
+choice;9;7;2
+choice;10;2;1
+open;20;48
+choice;30;5;3
+open;40;73043
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;92;20;12
+choice;93;4;3

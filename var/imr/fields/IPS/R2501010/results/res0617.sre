@@ -1,0 +1,34 @@
+2.0;IPS;R2501010;617;AU09T39GBP;25/11/2024 15:38:32 CET;25/11/2024 15:43:32 CET;300;3;880;device=mobile;lang=it;r1=1;sysIID=617;sysPRJ=IPS;sysSID=R2501010;version=v01;leg=99;sysUID=AU09T39GBP
+choice;7;107;57
+choice;8;7903;4178
+choice;9;7;3
+choice;10;2;1
+open;20;56
+choice;30;5;3
+open;40;80026
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;20;3
+choice;93;4;3
+choice;100;6;111110;0
+choice;110;3;111;2
+choice;120;4;1
+choice;130;3;0
+choice;140;3;0
+choice;150;3;0
+choice;160;3;0
+choice;170;5;11101;0
+choice;175;2;1
+choice;210;15;1
+choice;212;15;1
+choice;215;17;01000000000000000;1
+choice;220;17;01000000000000000;1
+choice;230;17;01000000000000000;1
+scale;240;17;3;-1;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;400;11;00000011000;7
+concept;850
+open;855;Mi piace
+choice;860;5;0
+choice;880;5;0

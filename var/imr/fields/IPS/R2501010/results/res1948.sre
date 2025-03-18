@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1948;AS81CMN191;26/11/2024 21:11:42 CET;26/11/2024 21:12:26 CET;44;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=AS81CMN191;device=desktop;lang=it;sysIID=1948
+choice;7;107;48
+choice;8;7903;3627
+choice;9;7;3
+choice;10;2;0
+open;20;55
+choice;30;5;3
+open;40;55100
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;2
+choice;92;20;15
+choice;93;4;2

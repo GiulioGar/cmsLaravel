@@ -1,0 +1,17 @@
+2.0;PRO;PROFUMATOR;529;YGWO67EMW1;21/01/2023 09:44:25 CET;21/01/2023 09:46:23 CET;118;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=YGWO67EMW1;lang=it
+open;20;60
+choice;30;7;5
+choice;40;2;0
+choice;45;20;7
+choice;50;4;0
+choice;100;2;0
+choice;120;6;000010;4
+choice;125;6;001100;2
+open;130;20
+choice;420;4;1
+choice;430;9;2
+choice;440;13;9
+choice;450;5;1
+choice;460;5;1
+choice;470;2;1
+choice;22200;7;1

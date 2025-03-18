@@ -1,0 +1,15 @@
+2.0;IPS;R2501010;975;ZPLRMC4MXR;25/11/2024 19:12:10 CET;25/11/2024 19:14:18 CET;128;4;100;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=ZPLRMC4MXR;device=mobile;lang=it;sysIID=975
+choice;7;107;13
+choice;8;7903;1093
+choice;9;7;5
+choice;10;2;1
+open;20;59
+choice;30;5;3
+open;40;40121
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;20;4
+choice;93;4;1
+choice;100;6;001100;2

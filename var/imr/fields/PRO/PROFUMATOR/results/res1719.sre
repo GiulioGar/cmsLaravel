@@ -1,0 +1,16 @@
+2.0;PRO;PROFUMATOR;1719;GL643T3E7D;23/01/2023 15:35:42 CET;23/01/2023 15:37:44 CET;122;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=GL643T3E7D;lang=ro
+open;20;22
+choice;30;7;1
+choice;40;2;1
+choice;45;20;15
+choice;50;4;2
+choice;100;2;0
+choice;120;6;100000;0
+choice;125;6;000100;3
+open;130;99
+choice;420;4;1
+choice;430;9;5
+choice;450;5;2
+choice;460;5;1
+choice;470;2;0
+choice;22200;7;0

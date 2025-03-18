@@ -1,0 +1,24 @@
+2.0;IPS;R2501010;2946;40SMXVHRUC;29/11/2024 12:26:27 CET;29/11/2024 12:27:26 CET;59;5;;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=40SMXVHRUC;device=desktop;lang=it;sysIID=2946
+choice;7;107;51
+choice;8;7903;3767
+choice;9;7;3
+choice;10;2;1
+open;20;43
+choice;30;5;2
+open;40;54033
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1000100;0
+choice;92;20;15
+choice;93;4;2
+choice;100;6;100100;0
+choice;110;3;110;0
+choice;120;4;1
+choice;130;3;0
+choice;150;3;0
+choice;170;5;10110;0
+choice;175;2;1
+choice;210;15;9
+choice;212;15;9
+choice;321;11;5

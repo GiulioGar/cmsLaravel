@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;973;EMRNDLUTMC;25/11/2024 19:08:36 CET;29/11/2024 15:26:46 CET;332290;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=EMRNDLUTMC;device=mobile;lang=it;sysIID=973
+choice;7;107;57
+choice;8;7903;4204
+choice;9;7;6
+choice;10;2;1
+open;20;60
+choice;30;5;3
+open;40;80131
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0110000;2
+choice;92;20;3
+choice;93;4;3

@@ -1,0 +1,22 @@
+2.0;IPS;R2501010;3031;7PMLED5LN5;29/11/2024 15:27:14 CET;29/11/2024 15:28:50 CET;96;5;;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=7PMLED5LN5;device=desktop;lang=it;sysIID=3031
+choice;7;107;11
+choice;8;7903;985
+choice;9;7;1
+choice;10;2;0
+open;20;44
+choice;30;5;2
+open;40;24059
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111000;0
+choice;92;20;8
+choice;93;4;0
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;170;5;10000;0
+choice;175;2;1
+choice;210;15;9
+choice;212;15;9
+choice;321;11;8

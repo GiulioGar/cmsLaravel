@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1898;FAF480HFN4;26/11/2024 19:28:58 CET;26/11/2024 19:29:38 CET;40;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=FAF480HFN4;device=desktop;lang=it;sysIID=1898
+choice;7;107;19
+choice;8;7903;1566
+choice;9;7;0
+choice;10;2;0
+open;20;44
+choice;30;5;2
+open;40;86033
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0100110;1
+choice;92;20;10
+choice;93;4;3

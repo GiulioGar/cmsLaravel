@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;992;NYWFTU9NZO;25/11/2024 19:24:44 CET;25/11/2024 19:26:26 CET;102;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=NYWFTU9NZO;device=mobile;lang=it;sysIID=992
+choice;7;107;20
+choice;8;7903;1708
+choice;9;7;0
+choice;10;2;0
+open;20;41
+choice;30;5;2
+open;40;81030
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0100000;1
+choice;92;20;3
+choice;93;4;3

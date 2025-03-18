@@ -1,0 +1,15 @@
+2.0;PRO;PROFUMATOR;1095;XSK5XIRS0Z;22/01/2023 10:13:18 CET;22/01/2023 10:14:57 CET;99;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=XSK5XIRS0Z;lang=it
+open;20;71
+choice;30;7;6
+choice;40;2;0
+choice;45;20;4
+choice;50;4;1
+choice;100;2;0
+choice;120;6;000001;5;comp5:sigari
+choice;125;6;000001;5
+open;130;2
+choice;420;4;2
+choice;430;9;6
+choice;450;5;2
+choice;460;5;0
+choice;22200;7;0

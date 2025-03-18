@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1914;ZINY286326;26/11/2024 19:52:14 CET;26/11/2024 19:52:53 CET;39;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=ZINY286326;device=desktop;lang=it;sysIID=1914
+choice;7;107;69
+choice;8;7903;5134
+choice;9;7;3
+choice;10;2;0
+open;20;51
+choice;30;5;3
+open;40;56124
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0110100;4
+choice;92;20;15
+choice;93;4;2

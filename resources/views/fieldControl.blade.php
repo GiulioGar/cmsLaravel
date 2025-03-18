@@ -14,7 +14,7 @@
 <nav class="navbar custom-navbar mb-4">
     <div class="container-fluid d-flex align-items-center justify-content-between px-0">
         <!-- Brand a sinistra -->
-        <a class="navbar-brand d-flex align-items-center" href="#">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url('fieldControl?prj='.$prj.'&sid='.$sid) }}">
             <i class="fas fa-chart-bar me-2"></i>
             <span>Status Field</span>
         </a>
@@ -54,7 +54,7 @@
 
             <!-- Controllo Qualità -->
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{{ route('fieldQuality.index') }}">
                     <i class="fas fa-check-circle me-1"></i> Controllo Qualità
                 </a>
             </li>
@@ -356,6 +356,7 @@
                                     <th class="small">Totale</th>
                                     <th class="small">Entrate</th>
                                     <th class="small">Missing</th>
+
                                 </tr>
                             </thead>
                             <tbody>
@@ -373,6 +374,7 @@
                                                 <span style="font-size: 12px" class="badge bg-success"><i class="fas fa-check"></i> 0</span>
                                             @endif
                                         </td>
+
                                     </tr>
                                 @endforeach
                             </tbody>

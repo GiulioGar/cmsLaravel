@@ -1,0 +1,15 @@
+2.0;PRO;PROFUMATOR;3283;X2EPUV5DNQ;13/02/2023 12:44:02 CET;13/02/2023 12:45:11 CET;69;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=X2EPUV5DNQ;lang=it
+open;20;22
+choice;30;7;1
+choice;40;2;1
+choice;45;20;12
+choice;50;4;3
+choice;100;2;0
+choice;120;6;111110;1
+open;130;2
+choice;420;4;1
+choice;430;9;7
+choice;450;5;3
+choice;460;5;4
+choice;470;2;0
+choice;22200;7;1

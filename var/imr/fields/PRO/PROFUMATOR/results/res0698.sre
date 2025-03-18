@@ -1,0 +1,13 @@
+2.0;PRO;PROFUMATOR;698;DKJVPH3YWN;21/01/2023 17:20:42 CET;21/01/2023 17:21:10 CET;28;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=DKJVPH3YWN;lang=it
+open;20;64
+choice;30;7;5
+choice;40;2;0
+choice;45;20;11
+choice;50;4;0
+choice;100;2;1
+choice;110;2;1
+choice;420;4;0
+choice;430;9;6
+choice;450;5;3
+choice;460;5;0
+choice;22200;7;5

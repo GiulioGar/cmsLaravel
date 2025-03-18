@@ -1,0 +1,11 @@
+2.0;IPS;R2501010;1733;NEUC056NO4;26/11/2024 16:07:45 CET;26/11/2024 16:08:27 CET;42;4;60;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=NEUC056NO4;device=desktop;lang=it;sysIID=1733
+choice;7;107;41
+choice;8;7903;3195
+choice;9;7;3
+choice;10;2;0
+open;20;54
+choice;30;5;3
+open;40;10121
+choice;60;2;1
+choice;92;20;7
+choice;93;4;0

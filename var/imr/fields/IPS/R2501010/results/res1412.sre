@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1412;QZMC745222;26/11/2024 12:37:12 CET;26/11/2024 12:44:24 CET;432;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=QZMC745222;device=desktop;lang=it;sysIID=1412
+choice;7;107;13
+choice;8;7903;1093
+choice;9;7;5
+choice;10;2;1
+open;20;37
+choice;30;5;2
+open;40;40124
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0101100;1
+choice;92;20;4
+choice;93;4;1

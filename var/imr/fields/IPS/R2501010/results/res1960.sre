@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1960;YW859M2T0H;26/11/2024 21:42:23 CET;26/11/2024 21:44:19 CET;116;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=YW859M2T0H;device=desktop;lang=it;sysIID=1960
+choice;7;107;35
+choice;8;7903;2857
+choice;9;7;2
+choice;10;2;1
+open;20;48
+choice;30;5;3
+open;40;03012
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;92;20;6
+choice;93;4;2

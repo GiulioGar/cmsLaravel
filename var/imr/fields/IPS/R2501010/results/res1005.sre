@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1005;TATOVO33KZ;25/11/2024 19:46:15 CET;25/11/2024 19:47:16 CET;61;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=TATOVO33KZ;device=mobile;lang=it;sysIID=1005
+choice;7;107;101
+choice;8;7903;7496
+choice;9;7;0
+choice;10;2;1
+open;20;60
+choice;30;5;3
+open;40;28805
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0110000;1
+choice;92;20;11
+choice;93;4;0

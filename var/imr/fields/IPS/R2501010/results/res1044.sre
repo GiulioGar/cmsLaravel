@@ -1,0 +1,34 @@
+2.0;IPS;R2501010;1044;EW7DYJSTMR;25/11/2024 20:45:33 CET;25/11/2024 20:47:32 CET;119;3;880;device=mobile;lang=en;r1=3;sysIID=1044;sysPRJ=IPS;sysSID=R2501010;version=v01;leg=99;sysUID=EW7DYJSTMR
+choice;7;107;102
+choice;8;7903;7568
+choice;9;7;0
+choice;10;2;0
+open;20;43
+choice;30;5;2
+open;40;13037
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;20;11
+choice;93;4;0
+choice;100;6;101100;0
+choice;110;3;101;2
+choice;120;4;1
+choice;130;3;0
+choice;140;3;0
+choice;150;3;0
+choice;170;5;11101;0
+choice;175;2;1
+scale;200;3;3;-1;-1;0
+choice;210;15;11
+choice;212;15;11
+choice;215;17;00000000000110000;11
+choice;220;17;00000000000100000;11
+choice;230;17;00000000000100000;11
+scale;240;17;3;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0;-1;-1;-1;-1;-1
+choice;400;11;00111100000;5
+concept;850
+open;855;Un pacchetto più originale che mantiene la tradizione di MS
+choice;860;5;0
+choice;880;5;0

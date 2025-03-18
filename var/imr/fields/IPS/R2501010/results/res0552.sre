@@ -1,0 +1,18 @@
+2.0;IPS;R2501010;552;H6365EZCNT;25/11/2024 15:21:39 CET;25/11/2024 15:23:29 CET;110;4;130;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=H6365EZCNT;device=mobile;lang=it;sysIID=552
+choice;7;107;38
+choice;8;7903;3045
+choice;9;7;3
+choice;10;2;0
+open;20;53
+choice;30;5;3
+open;40;58100
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;20;15
+choice;93;4;2
+choice;100;6;100100;0
+choice;110;3;100;0
+choice;120;4;1
+choice;130;3;1

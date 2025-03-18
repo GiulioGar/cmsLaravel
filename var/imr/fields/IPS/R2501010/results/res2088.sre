@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;2088;O0COSU12PD;27/11/2024 10:37:07 CET;27/11/2024 10:37:57 CET;50;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=O0COSU12PD;device=desktop;lang=it;sysIID=2088
+choice;7;107;54
+choice;8;7903;3981
+choice;9;7;3
+choice;10;2;1
+open;20;63
+choice;30;5;3
+open;40;20025
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0110100;4
+choice;92;20;8
+choice;93;4;0

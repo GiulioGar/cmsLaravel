@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;2747;IDEMZ0HPJB;29/11/2024 09:40:19 CET;29/11/2024 09:41:18 CET;59;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=IDEMZ0HPJB;device=desktop;lang=it;sysIID=2747
+choice;7;107;34
+choice;8;7903;2826
+choice;9;7;3
+choice;10;2;1
+open;20;52
+choice;30;5;3
+open;40;47521
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;4
+choice;92;20;4
+choice;93;4;1

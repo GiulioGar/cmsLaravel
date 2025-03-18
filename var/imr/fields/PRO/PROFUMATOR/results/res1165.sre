@@ -1,0 +1,14 @@
+2.0;PRO;PROFUMATOR;1165;5SPSQ90395;22/01/2023 15:22:41 CET;22/01/2023 15:24:02 CET;81;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=5SPSQ90395;lang=it
+open;20;47
+choice;30;7;4
+choice;40;2;1
+choice;45;20;19
+choice;50;4;1
+choice;100;2;1
+choice;110;2;1
+choice;420;4;0
+choice;430;9;0
+choice;440;13;0
+choice;450;5;3
+choice;460;5;0
+choice;22200;7;5

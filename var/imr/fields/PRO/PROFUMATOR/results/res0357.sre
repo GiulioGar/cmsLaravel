@@ -1,0 +1,14 @@
+2.0;PRO;PROFUMATOR;357;1GVQF2IMA8;20/01/2023 19:47:12 CET;20/01/2023 19:48:06 CET;54;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=1GVQF2IMA8;lang=it
+open;20;52
+choice;30;7;4
+choice;40;2;0
+choice;45;20;3
+choice;50;4;3
+choice;100;2;1
+choice;110;2;1
+choice;420;4;1
+choice;430;9;3
+choice;450;5;2
+choice;460;5;3
+choice;470;2;0
+choice;22200;7;0

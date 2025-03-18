@@ -1,0 +1,33 @@
+2.0;IPS;R2501010;3323;IDEXCIHPBVUTOXKCQ12267;29/11/2024 17:46:38 CET;29/11/2024 17:51:52 CET;314;3;880;device=mobile;lang=it;r1=3;sysIID=3323;sysPRJ=IPS;sysSID=R2501010;version=v01;pan=1;leg=99;sysUID=IDEXCIHPBVUTOXKCQ12267;rid=6749efe7-3049-e825-0b6d-5b8aa40a01b8
+choice;7;107;78
+choice;8;7903;5554
+choice;9;7;3
+choice;10;2;0
+open;20;23
+choice;30;5;1
+open;40;02100
+choice;60;2;0
+choice;70;8;01000100;5
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;20;6
+choice;93;4;2
+choice;100;6;110100;3
+choice;110;3;011;1
+choice;120;4;3
+choice;130;3;0
+choice;150;3;1
+choice;170;5;10110;0
+choice;175;2;1
+scale;200;3;3;1;-1;1
+choice;210;15;14;comp14:Marlboro
+choice;212;15;14
+choice;215;17;01100011000110100;14
+choice;220;17;01100001000100100;1
+choice;230;17;00000001000000100;14
+scale;240;17;3;-1;-1;-1;-1;-1;-1;-1;0;-1;-1;-1;-1;-1;-1;0;-1;-1
+choice;400;11;01000110000;1
+concept;850
+open;855;mi sembrano dei pacchetti carini esteticamente, abbastanza simili comunque a tutte le altre confezioni di sigarette. Accattivanti alcuni colori
+choice;860;5;0
+choice;880;5;2

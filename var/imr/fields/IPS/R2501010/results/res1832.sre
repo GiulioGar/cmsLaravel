@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1832;1DZ069AMEP;26/11/2024 17:52:03 CET;26/11/2024 17:54:04 CET;121;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=1DZ069AMEP;device=mobile;lang=it;sysIID=1832
+choice;7;107;100
+choice;8;7903;7404
+choice;9;7;2
+choice;10;2;0
+open;20;62
+choice;30;5;3
+open;40;30035
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111000;1
+choice;92;20;19
+choice;93;4;1

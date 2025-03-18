@@ -1,0 +1,17 @@
+2.0;PRO;PROFUMATOR;2537;S408QDDVQ5;25/01/2023 06:59:26 CET;25/01/2023 07:00:23 CET;57;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=S408QDDVQ5;lang=it
+open;20;42
+choice;30;7;3
+choice;40;2;0
+choice;45;20;5
+choice;50;4;1
+choice;100;2;0
+choice;120;6;110100;0
+choice;125;6;001010;4
+open;130;15
+choice;420;4;0
+choice;430;9;0
+choice;440;13;3
+choice;450;5;3
+choice;460;5;2
+choice;470;2;1
+choice;22200;7;3

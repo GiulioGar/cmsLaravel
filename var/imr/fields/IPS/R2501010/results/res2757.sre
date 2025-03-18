@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;2757;LG7LBAXD1I;30/11/2024 08:38:57 CET;30/11/2024 08:39:58 CET;61;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=LG7LBAXD1I;device=desktop;lang=it;sysIID=2757
+choice;7;107;6
+choice;8;7903;471
+choice;9;7;3
+choice;10;2;0
+open;20;54
+choice;30;5;3
+open;40;83100
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0100000;1
+choice;92;20;3
+choice;93;4;3

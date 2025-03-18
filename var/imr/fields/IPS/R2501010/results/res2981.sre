@@ -1,0 +1,21 @@
+2.0;IPS;R2501010;2981;IDEXCIOUSAQFXRGOZ503;29/11/2024 13:15:59 CET;29/11/2024 13:17:42 CET;103;5;;device=mobile;lang=it;sysIID=2981;sysPRJ=IPS;sysSID=R2501010;version=v01;pan=1;sysUID=IDEXCIOUSAQFXRGOZ503;rid=6749b077-f18a-b519-d1a0-cecb63b6e24e
+choice;7;107;15
+choice;8;7903;1444
+choice;9;7;1
+choice;10;2;0
+open;20;28
+choice;30;5;1
+open;40;25030
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1000100;0
+choice;92;20;8
+choice;93;4;0
+choice;100;6;100000;0
+choice;120;4;2
+choice;130;3;0
+choice;170;5;10000;0
+choice;175;2;1
+choice;210;15;14;comp14:Marlboro light
+choice;212;15;14

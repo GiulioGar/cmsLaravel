@@ -1,0 +1,11 @@
+2.0;IPS;R2501010;3082;IDEXCISWUMCYSGHDI12038;29/11/2024 16:30:24 CET;<unknown>;0;0;93;device=mobile;lang=it;sysIID=3082;sysPRJ=IPS;sysSID=R2501010;version=v01;pan=1;sysUID=IDEXCISWUMCYSGHDI12038;rid=6749de07-09d2-d9d5-e424-e46b5841377b
+choice;7;107;19
+choice;8;7903;1601
+choice;9;7;3
+choice;10;2;0
+open;20;27
+choice;30;5;1
+open;40;86039
+choice;60;2;0
+choice;92;20;10
+choice;93;4;3

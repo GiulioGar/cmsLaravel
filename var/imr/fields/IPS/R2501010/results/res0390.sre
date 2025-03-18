@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;390;WZEH2FBXZV;24/11/2024 22:37:46 CET;24/11/2024 22:38:37 CET;51;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=WZEH2FBXZV;device=desktop;lang=it;sysIID=390
+choice;7;107;62
+choice;8;7903;4650
+choice;9;7;6
+choice;10;2;1
+open;20;49
+choice;30;5;3
+open;40;90129
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0011100;2
+choice;92;20;14
+choice;93;4;3

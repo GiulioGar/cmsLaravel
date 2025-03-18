@@ -1,0 +1,69 @@
+@import url("jquery.fancybox.css?v=2.1.5");
+
+/* CSS per centrare le immagini e ridimensionare i loghi nelle tabelle con classe 'table' */
+.table th img {
+    display: block;
+    margin: auto;
+    width: 15%;  /* Ridimensiona tutti gli img dentro th al 15% della loro larghezza originale */
+}
+
+.table th {
+    text-align: center;  /* Centra il contenuto del th */
+}
+
+
+#duplicateWarning {
+	color: red;
+	font-weight: bold;
+}
+
+#chWarningMessage {
+	color: red;
+	font-weight: bold;
+}
+
+.info {font-style:italic; font-size:12px; color:#0073e6} 
+div#container {overflow: visible;}
+div#logo {
+    background:url(http://www.primisoft.com/fields/IPS/R2106082/resources/ipslogo.png);
+height:92;
+width:100px;
+	background-size:100px 92px;
+}
+
+.logos { 
+
+	border:1px solid lightgrey;
+	display: block;
+    filter: drop-shadow(0 0 10px rgba(128, 128, 128, 0.5));
+    margin: 20px; /* Ensure there's enough space around the image for the shadow */
+	width: 40%;
+}
+
+#sdlMess { display:none;}
+
+
+#debug-output-container{
+	width: 1170px;
+	border: 1px solid;
+	padding-right: 15px;
+	padding-left: 15px;
+	margin-right: auto;
+	margin-left: auto;
+	margin-top: 10px;
+}
+
+#title { font-size: 18px;}
+.container-component { border:1px dotted; padding:30px;}
+
+.carousel-inner > .item > a > img, .carousel-inner > .item > img, .img-responsive, .thumbnail a > img, .thumbnail > img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+     }
+    .carintesta{
+    height: auto !important;
+    }
+
+
+

@@ -1,0 +1,14 @@
+2.0;PRO;PROFUMATOR;93;TWUQC8N311;21/01/2023 17:47:57 CET;21/01/2023 17:49:45 CET;108;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=TWUQC8N311;lang=en
+open;20;42
+choice;30;7;3
+choice;40;2;1
+choice;45;20;8
+choice;50;4;0
+choice;100;2;1
+choice;110;2;1
+choice;420;4;0
+choice;430;9;0
+choice;440;13;1
+choice;450;5;3
+choice;460;5;0
+choice;22200;7;4

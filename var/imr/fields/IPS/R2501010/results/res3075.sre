@@ -1,0 +1,21 @@
+2.0;IPS;R2501010;3075;IDEXCIGPPQWACEWKH12031;29/11/2024 16:29:48 CET;29/11/2024 16:30:33 CET;45;5;;device=mobile;lang=it;sysIID=3075;sysPRJ=IPS;sysSID=R2501010;version=v01;pan=1;sysUID=IDEXCIGPPQWACEWKH12031;rid=6749dde6-0043-04d9-6b4e-c7132c6b2e10
+choice;7;107;68
+choice;8;7903;5076
+choice;9;7;1
+choice;10;2;0
+open;20;29
+choice;30;5;1
+open;40;29013
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1100000;0
+choice;92;20;4
+choice;93;4;1
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;170;5;10000;0
+choice;175;2;1
+choice;210;15;14;comp14:Lucky Strike
+choice;212;15;14

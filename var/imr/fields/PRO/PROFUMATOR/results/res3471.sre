@@ -1,0 +1,17 @@
+2.0;PRO;PROFUMATOR;3471;7SEHT32O3Y;04/03/2023 09:55:09 CET;04/03/2023 09:56:08 CET;59;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=7SEHT32O3Y;lang=it
+open;20;36
+choice;30;7;3
+choice;40;2;0
+choice;45;20;12
+choice;50;4;3
+choice;100;2;0
+choice;120;6;110000;0
+choice;125;6;001000;2
+open;130;40
+choice;420;4;1
+choice;430;9;0
+choice;440;13;3
+choice;450;5;2
+choice;460;5;4
+choice;470;2;0
+choice;22200;7;3

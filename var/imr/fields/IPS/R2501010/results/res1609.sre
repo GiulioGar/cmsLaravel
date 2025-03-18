@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1609;7Z9JAVA3E1;26/11/2024 14:24:16 CET;26/11/2024 14:25:13 CET;57;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=7Z9JAVA3E1;device=mobile;lang=en;sysIID=1609
+choice;7;107;97
+choice;8;7903;7059
+choice;9;7;2
+choice;10;2;0
+open;20;62
+choice;30;5;3
+open;40;33043
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000100;4
+choice;92;20;5
+choice;93;4;1

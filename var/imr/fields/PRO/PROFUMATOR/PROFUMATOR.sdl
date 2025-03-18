@@ -1,0 +1,330 @@
+#export vars "target"
+#export vars "src"
+#export vars "pid"
+void main() {
+
+// variabili comuni
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+int r1;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+string cpt;
+int preQid;
+int n;
+int reCod;
+boolean v5;
+int v8;
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "debug:true");
+
+
+// Q20: CONCEPT
+qst = new question("open", 20);
+qst.setProperty("text", "Puoi indicare la tua età esatta:");
+qst.setProperty("code", "age");
+qst.setProperty("view", "numeric");
+send qst;
+
+int eta=(int)system.getProperty("ans20");
+ 
+if(eta<18) { reCod=0;}
+if(eta>=18 && eta<=24) { reCod=1;}
+if(eta>=25 && eta<=34) { reCod=2;}
+if(eta>=35 && eta<=44) { reCod=3;}
+if(eta>=45 && eta<=54) { reCod=4;}
+if(eta>=55 && eta<=64) { reCod=5;}
+if(eta>=65 && eta<=74) { reCod=6;}
+if(eta>74) { reCod=7;}
+
+// Q30: CHOICE
+qst = new question("choice", 30);
+qst.setProperty("text", "Ricodifica");
+qst.setProperty("code", "ageRec");
+qst.setProperty("show_rand", false);
+vector q30_opts = new vector {
+"18-24 anni",
+"25-34 anni",
+"35-44 anni",
+"45-54 anni",
+"55-64 anni",
+"65-74 anni",
+"75 anni o più"
+};
+qst.setProperty("options", q30_opts);
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+// Q40: CHOICE
+qst = new question("choice", 40);
+qst.setProperty("text", "Sei...");
+qst.setProperty("code", "sex");
+qst.setProperty("show_rand", false);
+vector q40_opts = new vector {
+"Uomo",
+"Donna"
+};
+qst.setProperty("options", q40_opts);
+send qst;
+
+qst = new question("choice", 45);
+qst.setProperty("text", "In quale regione vivi?");
+qst.setProperty("code", "q40");
+vector q45_opts = new vector {
+"ABRUZZO",
+"BASILICATA",
+"CALABRIA",
+"CAMPANIA",
+"EMILIA-ROMAGNA",
+"FRIULI-VENEZIA GIULIA",
+"LAZIO",
+"LIGURIA",
+"LOMBARDIA",
+"MARCHE",
+"MOLISE",
+"PIEMONTE",
+"PUGLIA",
+"SARDEGNA",
+"SICILIA",
+"TOSCANA",
+"TRENTINO-ALTO ADIGE",
+"UMBRIA",
+"VALLE D'AOSTA",
+"VENETO"
+};
+    qst.setProperty("options", q45_opts);
+    send qst;
+
+int regione=system.getProperty("ans45");
+////// RICODIFICA REGIONE IN AREA ///////
+
+reCod=3;
+switch(regione)
+        {
+        case 7,8,11,18:{reCod=0;}
+        case 4,5,16,19:{reCod=1;}
+        case 6,9,15,17,13:{reCod=2;}
+        }	
+
+
+    qst = new question("choice", 50);
+    qst.setProperty("text", "In quale regione vive?");
+    qst.setProperty("code", "q40rec");
+    vector q50_opts = new vector {
+        "Nord-Ovest (Piemonte, Val d&#39;Aosta, Liguria, Lombardia;)",
+        "Nord-est (Trentino-Alto Adige, Veneto, Friuli-Venezia Giulia, Emilia-Romagna)",
+        "Centro (Toscana, Umbria, Marche, Lazio, Sardegna)",
+        "Sud + Isole (Abruzzo, Molise, Puglia, Campania, Basilicata, Calabria, Sicilia)"
+    };
+    qst.setProperty("options", q50_opts);
+    qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+    qst.setProperty("hidden", true);
+    send qst;	
+
+
+
+qst = new question("choice", 100);
+qst.setProperty("text", "Sei un fumatore?");
+qst.setProperty("code", "fumatore");
+vector q100_opts = new vector {
+"Si",
+"No"
+};
+qst.setProperty("options", q100_opts);
+send qst;
+
+ansId=system.getProperty("ans100");
+if (ansId==1) 
+{ 
+qst = new question("choice", 110);
+qst.setProperty("text", "Hai fumato in passato?");
+qst.setProperty("code", "exfuma");
+vector q110_opts = new vector {
+"Si",
+"No"
+};
+qst.setProperty("options", q110_opts);
+send qst;
+}
+
+else 
+{
+
+    qst = new question("choice", 120);
+    qst.setProperty("text", "Quali di questi prodotti per il fumo utilizzi?");
+    qst.setProperty("selection", "multiple");
+    qst.setProperty("code", "prodotti");
+    vector q120_opts = new vector {
+    "Sigaretta <b>Classica</b> (tabacco)",
+    "Sigaretta Elettornica da svapo <b>generica</b> (Aspire,Vaporesso,Veev,Voopo,ecc..)",
+    "Sigaretta Elettornica da svapo <b>usa e getta Puff</b> (Dinner Lady,Flerbar,SaltSwitch,Yuz,ecc..) ",
+    "Sigaretta Elettornica - <b>Iquos</b>",
+    "Sigaretta Elettornica- <b>Glo</b>",
+    "Altre tipologie (specificare) #so"
+    };
+    qst.setProperty("options", q120_opts);
+    send qst;
+
+    vector q125_opts = new vector {
+        "Sigaretta <b>Classica</b> (tabacco)",
+        "Sigaretta Elettornica da svapo <b>generica</b> (Aspire,Vaporesso,Veev,Voopo,ecc..)",
+        "Sigaretta Elettornica da svapo <b>usa e getta Puff</b> (Dinner Lady,Flerbar,SaltSwitch,Yuz,ecc..) ",
+        "Sigaretta Elettornica - <b>Iquos</b>",
+        "Sigaretta Elettornica- <b>Glo</b>",
+        "Nessuna di queste#se#sf"
+        };    
+    
+count=0;        
+for(int i=0,4)
+{
+sel=system.getProperty("ans120_"+i);
+if (sel==true)  {  opt ="#shopt"+i; q125_opts.set(i,opt); count=count+1; }
+}
+
+if (count<5)
+{
+    qst = new question("choice", 125);
+    qst.setProperty("text", "In futuro prenderesti in considerazione l'idea di fumare una delle seguenti tipologie di sigarette?");
+    qst.setProperty("code", "futuro");
+    qst.setProperty("selection", "multiple");
+    qst.setProperty("options", q125_opts);
+    send qst;
+}
+
+qst = new question("open", 130);
+qst.setProperty("text", "Considerando complessivamente un'intera giornata, quante volte in media in una giornata accendi/utilizzi una sigaretta ?");
+qst.setProperty("view", "numeric");
+qst.setProperty("code", "numeroVolte");
+qst.setProperty("alt", "99:Non so");
+send qst;
+
+}
+
+
+
+qst = new question("choice", 420);
+qst.setProperty("text", "<p>Ancora qualche domanda su di te!</p>  Qual &egrave; il suo stato civile? ");
+qst.setProperty("code", "d1");
+vector q420_opts = new vector {
+"Single",
+"Sposato/a",
+"Divorziato/vedovo",
+"Non sa/ non risponde"
+};
+qst.setProperty("options", q420_opts);
+send qst;
+
+qst = new question("choice", 430);
+qst.setProperty("text", "Qual &egrave; la tua attuale situazione lavorativa? ");
+qst.setProperty("code", "d2");
+vector q430_opts = new vector {
+"Lavoro a tempo pieno",
+"Lavoro part-time",
+"Lavoro in proprio",
+"Disoccupato ma in cerca di lavoro",
+"Disoccupato e non in cerca di lavoro / Inabile al lavoro",
+"Genitore a tempo pieno, casalingo/a",
+"In pensione",
+"Studente",
+"Non sa/ non risponde"
+};
+qst.setProperty("options", q430_opts);
+send qst;
+
+ansId=system.getProperty("ans430");
+if (ansId<3)
+{
+
+qst = new question("choice", 440);
+qst.setProperty("text", "Qual é la tua professione/attivit&agrave;?");
+qst.setProperty("code", "d3");
+vector q440_opts = new vector {
+"imprenditore/possidente",
+"impiegato",
+"dirigente/alto funzionario/docente universitario",
+"libero professionista",
+"artista/giornalista",
+"insegnante militare/paramilitare (es. polizia)",
+"religioso/ quadro intermedio /impiegato",
+"commerciante/negoziante/esercente",
+"agente di commercio/rappresentante (autonomo)",
+"artigiano con azienda/ altro lavoratore autonomo/in proprio senza azienda",
+"agricoltore /conduttore agricoltore dipendente/bracciante",
+"altro",
+"Preferisco non rispondere"
+};
+qst.setProperty("options", q440_opts);
+send qst;
+}
+
+
+qst = new question("choice", 450);
+qst.setProperty("text", "Qual é il suo titolo di studio?");
+qst.setProperty("code", "d4");
+vector q450_opts = new vector {
+"Elementare/privo di titolo",
+"Media inferiore",
+"Diploma di scuola media superiore",
+"Laurea",
+"Preferisco non rispondere"
+};
+qst.setProperty("options", q450_opts);
+send qst;
+
+qst = new question("choice", 460);
+qst.setProperty("text", "Compreso/a te, quante persone vivono nella sua famiglia?");
+qst.setProperty("code", "d5");
+vector q460_opts = new vector {
+"Una (solo io)",
+"Due",
+"Tre",
+"Quattro",
+"Cinque o pi&ugrave;"
+};
+qst.setProperty("options", q460_opts);
+send qst;
+
+ansId=system.getProperty("ans460");
+if (ansId!=0)
+{
+
+qst = new question("choice", 470);
+qst.setProperty("text", "Lei ha figli di et&agrave; compresa fino ai 18 anni che vivono in casa con Lei?");
+qst.setProperty("code", "d6");
+vector q470_opts = new vector {
+"S&igrave;",
+"No"
+};
+qst.setProperty("options", q470_opts);
+send qst;
+}
+
+qst = new question("choice", 22200);
+qst.setProperty("text", "Puoi indicare il tuo redditto annuale?");
+qst.setProperty("code", "reddit");
+vector q22200_opts = new vector {
+"Meno di 15.000",
+"Tra 15.000 e 20.000",
+"Tra 20.000 e 25.000",
+"Tra 25.000 e 30.000",
+"Tra 30.000 e 35.000",
+"Oltre i 35.000",
+"Preferisco non rispondere"
+};
+qst.setProperty("options", q22200_opts);
+send qst;
+
+
+}

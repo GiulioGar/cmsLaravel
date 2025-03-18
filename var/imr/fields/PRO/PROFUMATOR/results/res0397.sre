@@ -1,0 +1,16 @@
+2.0;PRO;PROFUMATOR;397;6DK4PBVAHD;20/01/2023 20:38:31 CET;20/01/2023 20:47:08 CET;517;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=6DK4PBVAHD;lang=it
+open;20;32
+choice;30;7;2
+choice;40;2;1
+choice;45;20;14
+choice;50;4;3
+choice;100;2;0
+choice;120;6;111000;1
+choice;125;6;000110;3
+open;130;25
+choice;420;4;0
+choice;430;9;0
+choice;440;13;5
+choice;450;5;3
+choice;460;5;0
+choice;22200;7;1

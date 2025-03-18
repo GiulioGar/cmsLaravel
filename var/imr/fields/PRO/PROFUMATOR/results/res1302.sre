@@ -1,0 +1,13 @@
+2.0;PRO;PROFUMATOR;1302;81RCFB5B4W;23/01/2023 11:50:31 CET;23/01/2023 11:51:13 CET;42;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=81RCFB5B4W;lang=it
+open;20;66
+choice;30;7;6
+choice;40;2;0
+choice;45;20;11
+choice;50;4;0
+choice;100;2;1
+choice;110;2;0
+choice;420;4;2
+choice;430;9;6
+choice;450;5;1
+choice;460;5;0
+choice;22200;7;2

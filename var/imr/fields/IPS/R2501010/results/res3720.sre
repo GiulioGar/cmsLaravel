@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;3720;8BV96DHH67;01/12/2024 22:18:20 CET;01/12/2024 22:20:24 CET;124;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=8BV96DHH67;device=desktop;lang=it;sysIID=3720
+choice;7;107;98
+choice;8;7903;7186
+choice;9;7;0
+choice;10;2;1
+open;20;59
+choice;30;5;3
+open;40;11020
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;92;20;18
+choice;93;4;0

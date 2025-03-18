@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1809;E8217MZLSF;26/11/2024 17:25:16 CET;26/11/2024 17:27:22 CET;126;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=E8217MZLSF;device=mobile;lang=it;sysIID=1809
+choice;7;107;8
+choice;8;7903;632
+choice;9;7;2
+choice;10;2;0
+open;20;49
+choice;30;5;3
+open;40;76015
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;1
+choice;92;20;12
+choice;93;4;3

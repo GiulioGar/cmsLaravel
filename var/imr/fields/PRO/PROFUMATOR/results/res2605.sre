@@ -1,0 +1,16 @@
+2.0;PRO;PROFUMATOR;2605;SRCVK973YT;25/01/2023 17:49:34 CET;25/01/2023 17:51:33 CET;119;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=SRCVK973YT;lang=it
+open;20;61
+choice;30;7;5
+choice;40;2;1
+choice;45;20;17
+choice;50;4;2
+choice;100;2;0
+choice;120;6;100000;0
+choice;125;6;010000;1
+open;130;8
+choice;420;4;2
+choice;430;9;1
+choice;440;13;1
+choice;450;5;3
+choice;460;5;0
+choice;22200;7;2

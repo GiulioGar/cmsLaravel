@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;3469;ZYOBG55HG5;29/11/2024 19:28:54 CET;29/11/2024 19:30:20 CET;86;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=ZYOBG55HG5;device=mobile;lang=it;sysIID=3469
+choice;7;107;99
+choice;8;7903;7311
+choice;9;7;3
+choice;10;2;1
+open;20;53
+choice;30;5;3
+open;40;21013
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111000;1
+choice;92;20;8
+choice;93;4;0

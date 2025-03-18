@@ -1,0 +1,33 @@
+2.0;IPS;R2501010;2201;IDEXCIGSZXRYVXHOR90;27/11/2024 13:21:31 CET;27/11/2024 13:25:34 CET;243;3;880;device=mobile;lang=it;r1=0;sysIID=2201;sysPRJ=IPS;sysSID=R2501010;version=v01;pan=1;leg=99;sysUID=IDEXCIGSZXRYVXHOR90;rid=67470ec3-9977-2a88-bc15-24871d8587ae
+choice;7;107;52
+choice;8;7903;3809
+choice;9;7;1
+choice;10;2;0
+open;20;40
+choice;30;5;2
+open;40;75100
+choice;60;2;0
+choice;70;8;10010000;3
+choice;80;8;00000001;7
+choice;90;7;1010100;2
+choice;92;20;1
+choice;93;4;3
+choice;100;6;110100;0
+choice;110;3;010;1
+choice;120;4;1
+choice;130;3;0
+choice;150;3;1
+choice;170;5;10110;0
+choice;175;2;1
+scale;200;3;3;0;-1;0
+choice;210;15;2
+choice;212;15;2
+choice;215;17;00100001000010000;2
+choice;220;17;00100001000010000;2
+choice;230;17;00100000000000000;2
+scale;240;17;3;-1;-1;1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;400;11;00000110000;5
+concept;850
+open;855;È molto bello il modo in cui hanno collegato il fumo con il male che fa agli occhi e mi piace anche molto il gioco di colori
+choice;860;5;0
+choice;880;5;1

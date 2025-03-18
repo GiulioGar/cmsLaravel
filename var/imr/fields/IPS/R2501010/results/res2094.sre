@@ -1,0 +1,10 @@
+2.0;IPS;R2501010;2094;Z90IIQ38RY;27/11/2024 10:54:03 CET;27/11/2024 10:56:01 CET;118;7;40;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=Z90IIQ38RY;device=mobile;lang=it;sysIID=2094
+choice;7;107;45
+choice;8;7903;3490
+choice;9;7;3
+choice;10;2;1
+open;20;63
+choice;30;5;3
+open;40;23090
+choice;92;20;8
+choice;93;4;0

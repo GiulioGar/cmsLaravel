@@ -1,0 +1,17 @@
+2.0;IPS;R2501010;2899;LRMXGEZLMC;29/11/2024 11:51:09 CET;29/11/2024 11:53:13 CET;124;4;130;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=LRMXGEZLMC;device=mobile;lang=it;sysIID=2899
+choice;7;107;7
+choice;8;7903;618
+choice;9;7;2
+choice;10;2;1
+open;20;25
+choice;30;5;1
+open;40;70038
+choice;60;2;0
+choice;70;8;00000100;5
+choice;80;8;00000001;7
+choice;90;7;1000100;4
+choice;92;20;12
+choice;93;4;3
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;2

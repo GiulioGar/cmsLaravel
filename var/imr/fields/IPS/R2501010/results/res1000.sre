@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1000;DDPXE5HNAP;25/11/2024 19:38:46 CET;25/11/2024 19:39:33 CET;47;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=DDPXE5HNAP;device=mobile;lang=it;sysIID=1000
+choice;7;107;102
+choice;8;7903;7575
+choice;9;7;3
+choice;10;2;1
+open;20;37
+choice;30;5;2
+open;40;13100
+choice;60;2;0
+choice;70;8;10000000;0
+choice;80;8;00000001;7
+choice;90;7;0100010;5
+choice;92;20;11
+choice;93;4;0

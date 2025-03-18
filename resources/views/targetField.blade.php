@@ -42,7 +42,7 @@ use Illuminate\Support\Str;
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
+                    <a class="nav-link" href="{{ route('fieldQuality.index') }}">
                         <i class="fas fa-check-circle me-1"></i> Controllo Qualità
                     </a>
                 </li>
@@ -530,6 +530,28 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+            var dropdownElements = document.querySelectorAll('.dropdown-toggle');
+
+            // Inizializza tutti i dropdown
+            dropdownElements.forEach(function (dropdown) {
+                new bootstrap.Dropdown(dropdown);
+            });
+
+            console.log("✅ Bootstrap Dropdown inizializzato correttamente.");
+
+            // Aggiungiamo un event listener globale ai dropdown-toggle
+            document.body.addEventListener("click", function (event) {
+                if (event.target.classList.contains("dropdown-toggle")) {
+                    var dropdown = bootstrap.Dropdown.getOrCreateInstance(event.target);
+                    dropdown.show();
+                }
+            });
+        });
+    </script>
 @endsection
 
 

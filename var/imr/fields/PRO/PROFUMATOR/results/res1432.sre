@@ -1,0 +1,17 @@
+2.0;PRO;PROFUMATOR;1432;JSHXLZXT51;23/01/2023 13:11:24 CET;23/01/2023 13:12:32 CET;68;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=JSHXLZXT51;lang=it
+open;20;64
+choice;30;7;5
+choice;40;2;0
+choice;45;20;4
+choice;50;4;1
+choice;100;2;0
+choice;120;6;110000;0
+choice;125;6;000110;4
+open;130;6
+choice;420;4;0
+choice;430;9;0
+choice;440;13;6
+choice;450;5;3
+choice;460;5;1
+choice;470;2;1
+choice;22200;7;3

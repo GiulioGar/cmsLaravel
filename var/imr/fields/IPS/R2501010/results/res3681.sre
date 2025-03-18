@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;3681;0CCOQIA1SL;01/12/2024 07:39:07 CET;01/12/2024 07:40:17 CET;70;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=0CCOQIA1SL;device=desktop;lang=it;sysIID=3681
+choice;7;107;7
+choice;8;7903;617
+choice;9;7;2
+choice;10;2;1
+open;20;40
+choice;30;5;2
+open;40;70029
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;4
+choice;92;20;12
+choice;93;4;3

@@ -1,0 +1,21 @@
+2.0;IPS;R2501010;2963;ADK5K2DB6W;29/11/2024 12:45:34 CET;29/11/2024 12:47:10 CET;96;5;;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=ADK5K2DB6W;device=mobile;lang=it;sysIID=2963
+choice;7;107;44
+choice;8;7903;3430
+choice;9;7;2
+choice;10;2;1
+open;20;56
+choice;30;5;3
+open;40;73018
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111100;0
+choice;92;20;12
+choice;93;4;3
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;170;5;10000;0
+choice;175;2;1
+choice;210;15;14;comp14:Chesterfield 
+choice;212;15;14

@@ -1,0 +1,15 @@
+2.0;IPS;R2501010;3356;IDEXCIFHYNETVRMOG12300;29/11/2024 17:59:21 CET;29/11/2024 18:00:02 CET;41;4;100;device=mobile;lang=en;sysIID=3356;sysPRJ=IPS;sysSID=R2501010;version=v01;pan=1;sysUID=IDEXCIFHYNETVRMOG12300;rid=6749f2e1-c200-5f54-eee7-6c721050fe76
+choice;7;107;2
+choice;8;7903;261
+choice;9;7;3
+choice;10;2;0
+open;20;29
+choice;30;5;1
+open;40;60027
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110110;0
+choice;92;20;9
+choice;93;4;2
+choice;100;6;000100;3

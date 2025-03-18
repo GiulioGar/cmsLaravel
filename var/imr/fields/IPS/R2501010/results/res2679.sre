@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;2679;DH25QP52OA;28/11/2024 19:48:08 CET;28/11/2024 19:48:40 CET;32;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=DH25QP52OA;device=desktop;lang=it;sysIID=2679
+choice;7;107;7
+choice;8;7903;586
+choice;9;7;5
+choice;10;2;0
+open;20;38
+choice;30;5;2
+open;40;70128
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;92;20;12
+choice;93;4;3

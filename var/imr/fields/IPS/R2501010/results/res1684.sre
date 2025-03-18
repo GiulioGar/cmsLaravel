@@ -1,0 +1,4 @@
+2.0;IPS;R2501010;1684;1PTVX2FZZN;26/11/2024 15:18:00 CET;<unknown>;0;0;30;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=1PTVX2FZZN;device=desktop;lang=it;sysIID=1684
+choice;10;2;0
+open;20;49
+choice;30;5;3

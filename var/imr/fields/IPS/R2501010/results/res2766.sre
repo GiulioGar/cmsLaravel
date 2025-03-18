@@ -1,0 +1,21 @@
+2.0;IPS;R2501010;2766;5BDO3P4TPF;29/11/2024 10:15:24 CET;29/11/2024 10:17:59 CET;155;5;;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=5BDO3P4TPF;device=mobile;lang=it;sysIID=2766
+choice;7;107;61
+choice;8;7903;4525
+choice;9;7;2
+choice;10;2;1
+open;20;50
+choice;30;5;3
+open;40;35013
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111100;0
+choice;92;20;19
+choice;93;4;1
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;170;5;10000;0
+choice;175;2;1
+choice;210;15;14;comp14:Marlboro gold
+choice;212;15;14

@@ -1,0 +1,21 @@
+2.0;IPS;R2501010;2853;D6LCQRI6RF;29/11/2024 11:23:25 CET;29/11/2024 11:25:01 CET;96;5;;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=D6LCQRI6RF;device=desktop;lang=it;sysIID=2853
+choice;7;107;92
+choice;8;7903;6700
+choice;9;7;6
+choice;10;2;1
+open;20;43
+choice;30;5;2
+open;40;10125
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111100;0
+choice;92;20;11
+choice;93;4;0
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;170;5;10000;0
+choice;175;2;1
+choice;210;15;14;comp14:Elixyr
+choice;212;15;14

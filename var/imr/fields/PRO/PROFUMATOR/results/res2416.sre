@@ -1,0 +1,16 @@
+2.0;PRO;PROFUMATOR;2416;NRZBOV0EN0;24/01/2023 14:29:13 CET;24/01/2023 14:29:56 CET;43;3;22200;sysSID=PROFUMATOR;debug=true;sysPRJ=PRO;sysUID=NRZBOV0EN0;lang=it
+open;20;21
+choice;30;7;1
+choice;40;2;0
+choice;45;20;14
+choice;50;4;3
+choice;100;2;0
+choice;120;6;100100;0
+choice;125;6;000001;5
+open;130;5
+choice;420;4;0
+choice;430;9;7
+choice;450;5;2
+choice;460;5;4
+choice;470;2;1
+choice;22200;7;0

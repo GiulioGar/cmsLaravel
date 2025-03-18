@@ -1,0 +1,33 @@
+2.0;IPS;R2501010;507;Y4FS6T74NS;25/11/2024 15:14:16 CET;25/11/2024 15:44:42 CET;1826;3;880;device=desktop;lang=it;r1=1;sysIID=507;sysPRJ=IPS;sysSID=R2501010;version=v01;leg=99;sysUID=Y4FS6T74NS
+choice;7;107;1
+choice;8;7903;210
+choice;9;7;2
+choice;10;2;0
+open;20;54
+choice;30;5;3
+open;40;15057
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;1
+choice;92;20;11
+choice;93;4;0
+choice;100;6;101010;0
+choice;120;4;3
+choice;130;3;0
+choice;140;3;2
+choice;160;3;2
+choice;170;5;10001;0
+choice;175;2;1
+scale;200;3;3;-1;0;-1
+choice;210;15;5
+choice;212;15;5
+choice;215;17;00100101000000000;5
+choice;220;17;00000100000000000;5
+choice;230;17;00000100000000000;5
+scale;240;17;3;-1;-1;-1;-1;-1;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;400;11;00000010100;6
+concept;850
+open;855;Informazioni su malattie
+choice;860;5;2
+choice;880;5;1

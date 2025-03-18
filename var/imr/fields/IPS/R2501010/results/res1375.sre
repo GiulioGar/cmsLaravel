@@ -1,0 +1,15 @@
+2.0;IPS;R2501010;1375;33YLOA16AI;26/11/2024 12:27:37 CET;29/11/2024 11:14:15 CET;254798;4;100;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=33YLOA16AI;device=desktop;lang=it;sysIID=1375
+choice;7;107;32
+choice;8;7903;2730
+choice;9;7;3
+choice;10;2;0
+open;20;56
+choice;30;5;3
+open;40;50053
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1100100;0
+choice;92;20;15
+choice;93;4;2
+choice;100;6;000100;3

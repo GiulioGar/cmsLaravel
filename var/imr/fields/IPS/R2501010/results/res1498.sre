@@ -1,0 +1,5 @@
+2.0;IPS;R2501010;1498;3ELVAB4P8H;26/11/2024 13:17:55 CET;26/11/2024 13:22:09 CET;254;7;8;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=3ELVAB4P8H;device=mobile;lang=it;sysIID=1498
+choice;7;107;83
+choice;10;2;1
+open;20;33
+choice;30;5;2

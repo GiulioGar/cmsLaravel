@@ -7,6 +7,8 @@ use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\FieldControlController;
 use App\Http\Controllers\PrimisController;
 use App\Http\Controllers\TargetFieldController;
+use App\Http\Controllers\FieldQualityController;
+
 
 // Rotte per il login e logout
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -45,6 +47,9 @@ Route::get('/download-csv', [FieldControlController::class, 'downloadCSV'])->nam
 Route::post('/close-survey', [FieldControlController::class, 'closeSurvey'])->name('close.survey');
 //reset bloccate
 Route::post('/reset-bloccate', [FieldControlController::class, 'resetBloccate'])->name('reset.bloccate');
+
+Route::get('/fieldQuality', [FieldQualityController::class, 'index'])
+    ->name('fieldQuality.index');
 
 
 // Pagina 'Imposta Target': mostra la lista domande

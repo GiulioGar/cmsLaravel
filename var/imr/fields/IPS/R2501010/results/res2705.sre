@@ -1,0 +1,23 @@
+2.0;IPS;R2501010;2705;IDEXCIPRDHZAVSDMP446;28/11/2024 21:39:18 CET;28/11/2024 21:41:46 CET;148;5;;device=mobile;lang=it;sysIID=2705;sysPRJ=IPS;sysSID=R2501010;version=v01;pan=1;sysUID=IDEXCIPRDHZAVSDMP446;rid=6748d4ef-e1c8-9334-ddfb-7546b2f1f156
+choice;7;107;9
+choice;8;7903;633
+choice;9;7;0
+choice;10;2;0
+open;20;33
+choice;30;5;2
+open;40;32021
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1100100;1
+choice;92;20;19
+choice;93;4;1
+choice;100;6;100100;0
+choice;110;3;111;0
+choice;120;4;3
+choice;130;3;0
+choice;150;3;1
+choice;170;5;10110;0
+choice;175;2;1
+choice;210;15;14;comp14:Marlboro light crafted
+choice;212;15;14

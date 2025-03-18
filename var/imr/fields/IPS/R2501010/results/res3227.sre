@@ -1,0 +1,23 @@
+2.0;IPS;R2501010;3227;IDEXCIENYSBMARHLN12175;29/11/2024 17:14:42 CET;29/11/2024 17:16:18 CET;96;5;;device=mobile;lang=it;sysIID=3227;sysPRJ=IPS;sysSID=R2501010;version=v01;pan=1;sysUID=IDEXCIENYSBMARHLN12175;rid=6749e868-39d8-3873-01e2-23893db50b9f
+choice;7;107;7
+choice;8;7903;585
+choice;9;7;3
+choice;10;2;0
+open;20;37
+choice;30;5;2
+open;40;70022
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110100;0
+choice;92;20;12
+choice;93;4;3
+choice;100;6;110100;0
+choice;110;3;010;1
+choice;120;4;3
+choice;130;3;0
+choice;150;3;0
+choice;170;5;10110;0
+choice;175;2;1
+choice;210;15;14;comp14:Rothmans
+choice;212;15;14

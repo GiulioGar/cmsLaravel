@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;3206;PH936D3VOW;29/11/2024 17:07:05 CET;29/11/2024 17:07:57 CET;52;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=PH936D3VOW;device=mobile;lang=it;sysIID=3206
+choice;7;107;14
+choice;8;7903;1151
+choice;9;7;4
+choice;10;2;1
+open;20;52
+choice;30;5;3
+open;40;39100
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0010100;2
+choice;92;20;16
+choice;93;4;1

@@ -1,0 +1,14 @@
+2.0;IPS;R2501010;1169;ILVEVEFM0U;26/11/2024 00:49:39 CET;26/11/2024 00:59:26 CET;587;4;90;version=v01;sysSID=R2501010;sysPRJ=IPS;sysUID=ILVEVEFM0U;device=desktop;lang=it;sysIID=1169
+choice;7;107;80
+choice;8;7903;5622
+choice;9;7;3
+choice;10;2;1
+open;20;63
+choice;30;5;3
+open;40;00052
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;92;20;6
+choice;93;4;2
