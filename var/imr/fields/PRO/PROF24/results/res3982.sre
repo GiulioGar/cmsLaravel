@@ -1,0 +1,31 @@
+2.0;PRO;PROF24;3982;3VUWF5IEJ1;11/11/2024 18:56:39 CET;11/11/2024 19:01:22 CET;283;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=3VUWF5IEJ1;device=mobile;lang=it;sysIID=3982
+concept;1
+choice;10;6;5;comp5:Grafologo giudiziario 
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000010;6
+choice;130;4;0
+choice;140;4;1
+choice;150;6;3
+choice;160;6;0
+choice;170;7;0001001;3;comp6:Sport acquatici 
+choice;180;4;2
+choice;190;4;1
+choice;200;2;0
+choice;250;2;1
+choice;260;6;4
+choice;270;4;1
+choice;280;8;10100000;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;001110100;4
+choice;410;4;2
+choice;420;6;110000;0
+choice;430;4;1
+choice;440;4;3;comp3:Io ed altre persone 
+choice;450;8;01111010;1
+choice;460;6;101010;0
+choice;470;11;10;comp10:Polti 
+choice;490;2;1
+choice;500;5;01010;1

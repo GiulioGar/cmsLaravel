@@ -1,0 +1,35 @@
+2.0;PRO;PROF24;566;BZRX45R3LC;11/10/2024 12:56:13 CEST;11/10/2024 13:01:48 CEST;335;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=BZRX45R3LC;device=mobile;lang=it;sysIID=566
+concept;1
+choice;10;6;5;comp5:Casalinga
+choice;70;2;1
+choice;80;4;2
+choice;90;7;0100001;1
+choice;100;2;1
+choice;110;8;00000110;5
+choice;130;4;2
+choice;140;4;1
+choice;150;6;3
+choice;160;6;0
+choice;170;7;0001000;3
+choice;180;4;1
+choice;190;4;2
+choice;200;2;0
+choice;250;2;1
+choice;260;6;4
+choice;270;4;2
+choice;280;8;10000100;5
+choice;290;2;1
+choice;300;10;0000100011;4;comp9:Divertimento
+choice;310;2;1
+choice;320;31;0000000000000000000000000000001;30;comp30:Famiglia GBR, Dieffe
+choice;330;2;0
+choice;360;2;0
+choice;400;9;110110010;1;comp7:Hobbistica
+choice;410;4;1
+choice;420;6;101000;2
+choice;430;4;2
+choice;440;4;0
+choice;450;8;11011010;1
+choice;460;6;100011;0;comp5:Straccetti imbevuti
+choice;470;11;10;comp10:Folletto
+choice;490;2;0

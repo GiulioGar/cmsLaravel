@@ -1,0 +1,29 @@
+2.0;PRO;PROF24;207;ADQH6HS3QO;10/10/2024 15:26:46 CEST;10/10/2024 15:29:53 CEST;187;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=ADQH6HS3QO;device=desktop;lang=it;sysIID=207
+concept;1
+choice;10;6;3
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000001;7;comp7:Normale
+choice;130;4;1
+choice;140;4;2
+choice;150;6;1
+choice;160;6;1
+choice;170;7;0001010;3
+choice;180;4;3
+choice;190;4;2
+choice;200;2;0
+choice;250;2;0
+choice;270;4;1
+choice;280;8;11100110;0;comp6:Spotify
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;000110110;3;comp7:Famiglia e amici
+choice;410;4;3
+choice;420;6;110110;0
+choice;430;4;2
+choice;440;4;1
+choice;450;8;01111000;1
+choice;460;6;111010;0
+choice;470;11;6
+choice;490;2;0

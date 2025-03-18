@@ -1,0 +1,40 @@
+2.0;PRO;PROF24;3223;0Q19XZ9AFQ;26/10/2024 01:28:24 CEST;26/10/2024 01:34:35 CEST;371;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=0Q19XZ9AFQ;device=desktop;lang=it;sysIID=3223
+concept;1
+choice;10;6;3
+choice;70;2;1
+choice;80;4;1
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;10000000;0
+choice;130;4;0
+choice;140;4;0
+choice;150;6;5;comp5:spese
+choice;160;6;1
+choice;170;7;0000001;6;comp6:non faccio vacanze
+choice;180;4;0
+choice;190;4;0
+choice;200;2;1
+choice;210;6;001000;2
+choice;220;7;3
+choice;230;4;0
+choice;240;4;1
+choice;250;2;0
+choice;270;4;1
+choice;280;8;10000100;0
+choice;290;2;0
+choice;330;2;1
+choice;340;6;100000;0
+choice;350;4;1
+choice;360;2;1
+choice;370;6;000100;3
+choice;380;4;0
+choice;390;3;2
+choice;400;9;000000010;7;comp7:bricolage
+choice;410;4;1
+choice;420;6;000010;4
+choice;430;4;1
+choice;440;4;0
+choice;450;8;11100010;1
+choice;460;6;110000;0
+choice;470;11;10;comp10:folletto vorwerk
+choice;490;2;0

@@ -1,0 +1,12 @@
+2.0;PRO;PROF24;5568;DY5IZFJKJ1;24/02/2025 12:06:13 CET;<unknown>;0;0;110;sysSID=PROF24;sysPRJ=PRO;sysUID=DY5IZFJKJ1;device=mobile;lang=it;sysIID=5568
+concept;1
+choice;10;6;2
+choice;20;23;22;comp22:Operaio
+choice;30;8;5
+choice;40;5;1
+choice;50;2;1
+choice;70;2;1
+choice;80;4;1
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;00000010;6

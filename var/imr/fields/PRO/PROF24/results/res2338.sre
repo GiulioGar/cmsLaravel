@@ -1,0 +1,34 @@
+2.0;PRO;PROF24;2338;429THTP6NO;19/10/2024 22:33:59 CEST;19/10/2024 22:37:55 CEST;236;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=429THTP6NO;device=desktop;lang=it;sysIID=2338
+concept;1
+choice;10;6;5;comp5:operatore socio sanitario
+choice;70;2;1
+choice;80;4;0
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;00000001;7;comp7:crossover
+choice;130;4;1
+choice;140;4;1
+choice;150;6;3
+choice;160;6;1
+choice;170;7;0001010;3
+choice;180;4;1
+choice;190;4;1
+choice;200;2;0
+choice;250;2;1
+choice;260;6;1
+choice;270;4;1
+choice;280;8;11000100;0
+choice;290;2;0
+choice;330;2;1
+choice;340;6;100000;0
+choice;350;4;1
+choice;360;2;0
+choice;400;9;001100010;3;comp7:cricolage
+choice;410;4;0
+choice;420;6;000010;4
+choice;430;4;0
+choice;440;4;3;comp3:io e mia moglie
+choice;450;8;11011001;0;comp7:ammoniaca
+choice;460;6;111010;0
+choice;470;11;10;comp10:folletto
+choice;490;2;0

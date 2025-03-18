@@ -1,0 +1,43 @@
+2.0;PRO;PROF24;5287;TDYKBGSJ01;03/01/2025 12:11:34 CET;03/01/2025 12:17:57 CET;383;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=TDYKBGSJ01;device=desktop;lang=it;sysIID=5287
+concept;1
+choice;10;6;1
+choice;20;23;18
+choice;30;8;4
+choice;40;5;3
+choice;50;2;1
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000010;6
+choice;130;4;3
+choice;140;4;3
+choice;150;6;2
+choice;160;6;0
+choice;170;7;0010111;4;comp6:on the road
+choice;180;4;2
+choice;190;4;1
+choice;200;2;1
+choice;210;6;010000;1
+choice;220;7;6;comp6:non mi piacciono le crociere
+choice;230;4;0
+choice;240;4;1
+choice;250;2;0
+choice;270;4;1
+choice;280;8;11000100;0
+choice;290;2;1
+choice;300;10;0000000010;8
+choice;310;2;1
+choice;320;31;0000000000000000000000000000001;30;comp30:micro e nanoinfluencer di viaggio
+choice;330;2;1
+choice;340;6;110000;1
+choice;350;4;2
+choice;360;2;0
+choice;400;9;101000100;0
+choice;410;4;0
+choice;420;6;000100;3
+choice;430;4;3
+choice;440;4;0
+choice;450;8;01100100;1
+choice;460;6;110100;0
+choice;470;11;10;comp10:folletto
+choice;480;10;3
+choice;490;2;0

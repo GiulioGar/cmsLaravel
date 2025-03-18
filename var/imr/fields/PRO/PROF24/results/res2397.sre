@@ -1,0 +1,34 @@
+2.0;PRO;PROF24;2397;06V1BSZ57R;21/10/2024 12:56:22 CEST;21/10/2024 13:00:26 CEST;244;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=06V1BSZ57R;device=mobile;lang=it;sysIID=2397
+concept;1
+choice;10;6;2
+choice;20;23;22;comp22:Metalmeccanico 
+choice;30;8;2
+choice;40;5;4
+choice;50;2;1
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000010;6
+choice;130;4;1
+choice;140;4;0
+choice;150;6;1
+choice;160;6;5;comp5:Dipende da dove vado
+choice;170;7;0000100;4
+choice;180;4;0
+choice;190;4;2
+choice;200;2;0
+choice;250;2;1
+choice;260;6;1
+choice;270;4;1
+choice;280;8;10000000;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;1
+choice;370;6;000100;3
+choice;380;4;0
+choice;390;3;0
+choice;400;9;000000001;8
+choice;430;4;3
+choice;440;4;0
+choice;450;8;01010011;1;comp7:Acido citrico
+choice;460;6;000001;5;comp5:Scopa elettrica 
+choice;490;2;0

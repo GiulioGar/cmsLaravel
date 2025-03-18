@@ -1,0 +1,29 @@
+2.0;PRO;PROF24;392;L1QUXNCXD1;11/10/2024 10:30:51 CEST;11/10/2024 10:38:12 CEST;441;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=L1QUXNCXD1;device=mobile;lang=it;sysIID=392
+concept;1
+choice;10;6;3
+choice;70;2;0
+choice;100;2;1
+choice;110;8;10000000;0
+choice;130;4;2
+choice;140;4;2
+choice;150;6;5;comp5:Zone Vinicole ITA/SLO
+choice;160;6;1
+choice;170;7;0000001;6;comp6:Abito al mare
+choice;180;4;0
+choice;190;4;0
+choice;200;2;0
+choice;250;2;0
+choice;270;4;1
+choice;280;8;10000100;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;100110000;0
+choice;410;4;0
+choice;420;6;100000;0
+choice;430;4;2
+choice;440;4;3;comp3:Aiuto
+choice;450;8;00010100;5
+choice;460;6;100000;0
+choice;470;11;3
+choice;490;2;0

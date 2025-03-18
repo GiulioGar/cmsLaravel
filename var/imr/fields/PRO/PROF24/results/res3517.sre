@@ -1,0 +1,35 @@
+2.0;PRO;PROF24;3517;QG2W7BLTF2;29/10/2024 00:05:41 CET;29/10/2024 00:11:27 CET;346;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=QG2W7BLTF2;device=mobile;lang=it;sysIID=3517
+concept;1
+choice;10;6;1
+choice;20;23;22;comp22:Polizia locale 
+choice;30;8;7;comp7:Agente 
+choice;40;5;2
+choice;50;2;1
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000100;5
+choice;130;4;1
+choice;140;4;1
+choice;150;6;2
+choice;160;6;4
+choice;170;7;0001010;5
+choice;180;4;2
+choice;190;4;1
+choice;200;2;0
+choice;250;2;1
+choice;260;6;0
+choice;270;4;1
+choice;280;8;11010100;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;000100100;3
+choice;410;4;0
+choice;420;6;100010;0
+choice;430;4;2
+choice;440;4;0
+choice;450;8;01010010;1
+choice;460;6;100000;0
+choice;470;11;1
+choice;490;2;1
+choice;500;5;01100;1

@@ -1,0 +1,38 @@
+2.0;PRO;PROF24;5428;ZPUF6RSM93;23/01/2025 18:00:23 CET;23/01/2025 18:07:39 CET;436;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=ZPUF6RSM93;device=desktop;lang=it;sysIID=5428
+concept;1
+choice;10;6;1
+choice;20;23;12
+choice;30;8;2
+choice;40;5;4
+choice;50;2;0
+choice;60;5;2
+choice;70;2;0
+choice;100;2;0
+choice;140;4;1
+choice;150;6;1
+choice;160;6;1
+choice;170;7;0001000;3
+choice;180;4;2
+choice;190;4;1
+choice;200;2;0
+choice;250;2;0
+choice;270;4;2
+choice;280;8;01010000;1
+choice;290;2;1
+choice;300;10;1100011010;8
+choice;310;2;1
+choice;320;31;0011001000000000001000000010001;2;comp30:luca gervasi
+choice;330;2;1
+choice;340;6;010000;1
+choice;350;4;3
+choice;360;2;0
+choice;400;9;000000010;7;comp7:photoshooting
+choice;410;4;1
+choice;420;6;000010;4
+choice;430;4;2
+choice;440;4;3;comp3:io e mio marito 
+choice;450;8;10111010;0
+choice;460;6;110000;0
+choice;470;11;10;comp10:whorwerk
+choice;490;2;1
+choice;500;5;01000;1

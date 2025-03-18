@@ -1,0 +1,17 @@
+2.0;PRO;PROF24;5832;OR79G1R3BY;08/03/2025 09:30:01 CET;<unknown>;0;0;160;sysSID=PROF24;sysPRJ=PRO;sysUID=OR79G1R3BY;device=mobile;lang=it;sysIID=5832
+concept;1
+choice;10;6;1
+choice;20;23;7
+choice;30;8;2
+choice;40;5;4
+choice;50;2;1
+choice;70;2;1
+choice;80;4;0
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;00100010;2
+choice;120;6;011000;2
+choice;130;4;1
+choice;140;4;1
+choice;150;6;3
+choice;160;6;1

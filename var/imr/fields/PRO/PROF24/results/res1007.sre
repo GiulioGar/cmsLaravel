@@ -1,0 +1,42 @@
+2.0;PRO;PROF24;1007;56NZ4R36B2;16/10/2024 09:49:36 CEST;16/10/2024 09:56:53 CEST;437;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=56NZ4R36B2;device=desktop;lang=it;sysIID=1007
+concept;1
+choice;10;6;2
+choice;20;23;22;comp22:Servizi scolastici
+choice;30;8;5
+choice;40;5;0
+choice;50;2;1
+choice;70;2;1
+choice;80;4;1
+choice;90;7;0000110;4
+choice;100;2;1
+choice;110;8;01000000;1
+choice;120;6;011100;3
+choice;130;4;1
+choice;140;4;1
+choice;150;6;0
+choice;160;6;1
+choice;170;7;0001000;3
+choice;180;4;2
+choice;190;4;1
+choice;200;2;1
+choice;210;6;100010;0
+choice;220;7;2
+choice;230;4;0
+choice;240;4;2
+choice;250;2;1
+choice;260;6;0
+choice;270;4;1
+choice;280;8;10000100;0
+choice;290;2;1
+choice;300;10;0000000001;9;comp9:Case abbandonate
+choice;310;2;0
+choice;320;31;0000000000000000000000000000001;30;comp30:Giamarco
+choice;330;2;0
+choice;360;2;0
+choice;400;9;000000001;8
+choice;430;4;1
+choice;440;4;3;comp3:Un po’ tutta la famiglia
+choice;450;8;01111010;1
+choice;460;6;101000;0
+choice;470;11;1
+choice;490;2;0

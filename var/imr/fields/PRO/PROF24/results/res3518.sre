@@ -1,0 +1,16 @@
+2.0;PRO;PROF24;3518;IJTHM2A776;29/10/2024 00:32:04 CET;<unknown>;0;0;170;sysSID=PROF24;sysPRJ=PRO;sysUID=IJTHM2A776;device=desktop;lang=it;sysIID=3518
+concept;1
+choice;10;6;2
+choice;20;23;4
+choice;30;8;2
+choice;40;5;3
+choice;50;2;1
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00100000;2
+choice;120;6;110110;4
+choice;130;4;0
+choice;140;4;1
+choice;150;6;1
+choice;160;6;0
+choice;170;7;0000010;5

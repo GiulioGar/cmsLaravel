@@ -1,0 +1,33 @@
+2.0;PRO;PROF24;260;TTBA8UD2LZ;10/10/2024 16:44:37 CEST;10/10/2024 16:49:28 CEST;291;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=TTBA8UD2LZ;device=mobile;lang=it;sysIID=260
+concept;1
+choice;10;6;3
+choice;70;2;1
+choice;80;4;1
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;00100000;2
+choice;120;6;100101;3;comp5:Logica green
+choice;130;4;2
+choice;140;4;2
+choice;150;6;3
+choice;160;6;0
+choice;170;7;0011000;3
+choice;180;4;3
+choice;190;4;3
+choice;200;2;0
+choice;250;2;1
+choice;260;6;4
+choice;270;4;1
+choice;280;8;11111100;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;000101100;3
+choice;410;4;0
+choice;420;6;000010;4
+choice;430;4;2
+choice;440;4;1
+choice;450;8;00101010;2
+choice;460;6;101010;0
+choice;470;11;2
+choice;490;2;0

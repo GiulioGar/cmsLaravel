@@ -1,0 +1,42 @@
+2.0;PRO;PROF24;5786;NZ3B4E64BO;07/03/2025 06:47:40 CET;08/03/2025 06:39:48 CET;85928;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=NZ3B4E64BO;device=desktop;lang=it;sysIID=5786
+concept;1
+choice;10;6;1
+choice;20;23;22;comp22:gestisco impianto depurazione 
+choice;30;8;5
+choice;40;5;4
+choice;50;2;1
+choice;70;2;1
+choice;80;4;2
+choice;90;7;0000011;5
+choice;100;2;1
+choice;110;8;00010001;7;comp7:giulietta 175 cavalli
+choice;130;4;2
+choice;140;4;3
+choice;150;6;1
+choice;160;6;0
+choice;170;7;1101010;3
+choice;180;4;1
+choice;190;4;1
+choice;200;2;1
+choice;210;6;001000;2
+choice;220;7;3
+choice;230;4;0
+choice;240;4;1
+choice;250;2;1
+choice;260;6;2
+choice;270;4;2
+choice;280;8;11001110;1;comp6:twitch
+choice;290;2;0
+choice;330;2;1
+choice;340;6;100000;0
+choice;350;4;0
+choice;360;2;0
+choice;400;9;001010010;4;comp7:ascolto musica 
+choice;410;4;1
+choice;420;6;000010;4
+choice;430;4;1
+choice;440;4;2
+choice;450;8;11111110;6
+choice;460;6;011010;1
+choice;490;2;1
+choice;500;5;01100;2

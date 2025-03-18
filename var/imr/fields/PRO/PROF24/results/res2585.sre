@@ -1,0 +1,37 @@
+2.0;PRO;PROF24;2585;UE4AHEHGTN;21/10/2024 21:50:33 CEST;21/10/2024 21:56:49 CEST;376;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=UE4AHEHGTN;device=desktop;lang=it;sysIID=2585
+concept;1
+choice;10;6;2
+choice;20;23;22;comp22:trasporto scolastico
+choice;30;8;5
+choice;40;5;4
+choice;50;2;1
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000001;7;comp7:gpl
+choice;130;4;2
+choice;140;4;1
+choice;150;6;1
+choice;160;6;1
+choice;170;7;0000110;4
+choice;180;4;0
+choice;190;4;0
+choice;200;2;0
+choice;250;2;1
+choice;260;6;1
+choice;270;4;2
+choice;280;8;11000100;0
+choice;290;2;1
+choice;300;10;0100000011;1;comp9:mindfulness
+choice;310;2;1
+choice;320;31;0010000000000000000000000000001;2;comp30:terapeuti
+choice;330;2;0
+choice;360;2;0
+choice;400;9;101100000;0
+choice;410;4;0
+choice;420;6;100010;0
+choice;430;4;1
+choice;440;4;2
+choice;450;8;11110000;0
+choice;460;6;111010;0
+choice;470;11;10;comp10:folletto
+choice;490;2;0

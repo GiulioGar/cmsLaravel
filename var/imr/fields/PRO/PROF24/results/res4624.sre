@@ -1,0 +1,37 @@
+2.0;PRO;PROF24;4624;5PTAALEXTN;11/12/2024 17:47:14 CET;11/12/2024 17:53:54 CET;400;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=5PTAALEXTN;device=mobile;lang=it;sysIID=4624
+concept;1
+choice;10;6;4
+choice;70;2;0
+choice;100;2;1
+choice;110;8;10000000;0
+choice;130;4;2
+choice;140;4;2
+choice;150;6;0
+choice;160;6;1
+choice;170;7;0010000;2
+choice;180;4;1
+choice;190;4;0
+choice;200;2;0
+choice;250;2;1
+choice;260;6;5;comp5:A tema
+choice;270;4;2
+choice;280;8;11111100;0
+choice;290;2;0
+choice;330;2;1
+choice;340;6;110000;0
+choice;350;4;1
+choice;360;2;1
+choice;370;6;000001;5;comp5:Tabacco
+choice;380;4;0
+choice;390;3;0
+choice;400;9;110100000;0
+choice;410;4;1
+choice;420;6;000001;5;comp5:Dipende dai periodi
+choice;430;4;0
+choice;440;4;0
+choice;450;8;11111110;0
+choice;460;6;111110;0
+choice;470;11;8
+choice;480;10;9;comp9:Daewoo
+choice;490;2;1
+choice;500;5;11100;0

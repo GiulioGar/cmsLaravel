@@ -1,0 +1,37 @@
+2.0;PRO;PROF24;83;666U9OHY4N;10/10/2024 13:59:31 CEST;10/10/2024 14:05:13 CEST;342;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=666U9OHY4N;device=mobile;lang=it;sysIID=83
+concept;1
+choice;10;6;1
+choice;20;23;10
+choice;30;8;3
+choice;40;5;3
+choice;50;2;1
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000001;7;comp7:Furgone Ford
+choice;130;4;3
+choice;140;4;1
+choice;150;6;1
+choice;160;6;1
+choice;170;7;1000000;0
+choice;180;4;1
+choice;190;4;0
+choice;200;2;0
+choice;250;2;1
+choice;260;6;4
+choice;270;4;1
+choice;280;8;11010100;0
+choice;290;2;0
+choice;330;2;1
+choice;340;6;010000;1
+choice;350;4;1
+choice;360;2;0
+choice;400;9;010100000;1
+choice;410;4;1
+choice;420;6;110000;1
+choice;430;4;2
+choice;440;4;2
+choice;450;8;11110000;0
+choice;460;6;111000;0
+choice;470;11;1
+choice;490;2;1
+choice;500;5;01000;1

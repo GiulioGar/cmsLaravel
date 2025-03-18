@@ -1,0 +1,43 @@
+2.0;PRO;PROF24;495;VX3LZ7DT6E;11/10/2024 11:54:07 CEST;11/10/2024 12:00:50 CEST;403;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=VX3LZ7DT6E;device=desktop;lang=it;sysIID=495
+concept;1
+choice;10;6;1
+choice;20;23;22;comp22:Social Media
+choice;30;8;2
+choice;40;5;2
+choice;50;2;0
+choice;60;5;0
+choice;70;2;1
+choice;80;4;2
+choice;90;7;0000100;4
+choice;100;2;1
+choice;110;8;10000010;0
+choice;130;4;1
+choice;140;4;3
+choice;150;6;4
+choice;160;6;1
+choice;170;7;0010000;2
+choice;180;4;2
+choice;190;4;1
+choice;200;2;0
+choice;250;2;1
+choice;260;6;0
+choice;270;4;2
+choice;280;8;11010100;0
+choice;290;2;1
+choice;300;10;0001000011;8;comp9:Spiritualità
+choice;310;2;0
+choice;320;31;0000000000000000000000000000001;30;comp30:Valeria Angione
+choice;330;2;1
+choice;340;6;010000;1
+choice;350;4;0
+choice;360;2;0
+choice;400;9;000110100;3
+choice;410;4;0
+choice;420;6;110010;0
+choice;430;4;0
+choice;440;4;0
+choice;450;8;00110010;2
+choice;460;6;001100;3
+choice;480;10;9;comp9:Narwal
+choice;490;2;1
+choice;500;5;10000;0

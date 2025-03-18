@@ -1,0 +1,14 @@
+2.0;PRO;PROF24;380;50NSP7M814;11/10/2024 08:30:46 CEST;11/10/2024 08:32:07 CEST;81;7;190;sysSID=PROF24;sysPRJ=PRO;sysUID=50NSP7M814;device=mobile;lang=it;sysIID=380
+concept;1
+choice;10;6;0
+choice;70;2;1
+choice;80;4;2
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;10000000;0
+choice;130;4;0
+choice;140;4;0
+choice;150;6;3
+choice;160;6;2
+choice;170;7;0000001;6;comp6:Nessuno 
+choice;180;4;0

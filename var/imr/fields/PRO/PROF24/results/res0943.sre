@@ -1,0 +1,31 @@
+2.0;PRO;PROF24;943;7N86SF1QRX;14/10/2024 23:23:12 CEST;14/10/2024 23:26:54 CEST;222;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=7N86SF1QRX;device=mobile;lang=it;sysIID=943
+concept;1
+choice;10;6;5;comp5:Casalinga 
+choice;70;2;1
+choice;80;4;1
+choice;90;7;0000001;6
+choice;100;2;0
+choice;140;4;0
+choice;150;6;5;comp5:Per il momento nessuna
+choice;160;6;5;comp5:Nessuno
+choice;170;7;0000001;6;comp6:Nessuno
+choice;180;4;0
+choice;190;4;3
+choice;200;2;0
+choice;250;2;1
+choice;260;6;3
+choice;270;4;0
+choice;280;8;11000100;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;101100000;0
+choice;410;4;0
+choice;420;6;000010;4
+choice;430;4;1
+choice;440;4;3;comp3:Io e marito
+choice;450;8;11111010;0
+choice;460;6;101000;0
+choice;470;11;10;comp10:Folletto ma fa schifo
+choice;490;2;1
+choice;500;5;11010;0

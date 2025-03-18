@@ -1,0 +1,36 @@
+2.0;PRO;PROF24;1878;5H6U143302;17/10/2024 09:48:35 CEST;17/10/2024 09:51:08 CEST;153;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=5H6U143302;device=desktop;lang=it;sysIID=1878
+concept;1
+choice;10;6;1
+choice;20;23;12
+choice;30;8;2
+choice;40;5;3
+choice;50;2;0
+choice;60;5;2
+choice;70;2;0
+choice;100;2;0
+choice;140;4;2
+choice;150;6;2
+choice;160;6;3
+choice;170;7;0001100;3
+choice;180;4;2
+choice;190;4;3
+choice;200;2;0
+choice;250;2;1
+choice;260;6;1
+choice;270;4;1
+choice;280;8;11001100;0
+choice;290;2;1
+choice;300;10;1000011000;5
+choice;310;2;1
+choice;320;31;0001001000010000000000000100001;3;comp30:Paolo Stella
+choice;330;2;0
+choice;360;2;0
+choice;400;9;111100100;0
+choice;410;4;0
+choice;420;6;110100;0
+choice;430;4;2
+choice;440;4;0
+choice;450;8;01010010;1
+choice;460;6;110000;0
+choice;470;11;6
+choice;490;2;0

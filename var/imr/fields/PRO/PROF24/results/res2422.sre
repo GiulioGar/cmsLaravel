@@ -1,0 +1,39 @@
+2.0;PRO;PROF24;2422;N2XXGCI0QF;21/10/2024 13:10:08 CEST;21/10/2024 13:15:37 CEST;329;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=N2XXGCI0QF;device=desktop;lang=it;sysIID=2422
+concept;1
+choice;10;6;1
+choice;20;23;5
+choice;30;8;2
+choice;40;5;4
+choice;50;2;1
+choice;70;2;0
+choice;100;2;1
+choice;110;8;10000000;0
+choice;130;4;2
+choice;140;4;3
+choice;150;6;1
+choice;160;6;1
+choice;170;7;1010100;4
+choice;180;4;1
+choice;190;4;2
+choice;200;2;0
+choice;250;2;1
+choice;260;6;1
+choice;270;4;1
+choice;280;8;11000000;0
+choice;290;2;1
+choice;300;10;1011011010;3
+choice;310;2;0
+choice;320;31;0011001110110000100001010100000;2
+choice;330;2;1
+choice;340;6;010000;1
+choice;350;4;0
+choice;360;2;0
+choice;400;9;001010110;2;comp7:MEDITAZIONE MINDFULNESS
+choice;410;4;3
+choice;420;6;101100;0
+choice;430;4;1
+choice;440;4;0
+choice;450;8;01111000;1
+choice;460;6;101000;0
+choice;470;11;10;comp10:DE LONGHI
+choice;490;2;0

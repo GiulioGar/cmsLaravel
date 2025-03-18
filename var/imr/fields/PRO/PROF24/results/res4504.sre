@@ -1,0 +1,33 @@
+2.0;PRO;PROF24;4504;38313HAVF6;03/12/2024 13:25:08 CET;16/12/2024 20:14:24 CET;1147756;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=38313HAVF6;device=mobile;lang=it;sysIID=4504
+concept;1
+choice;10;6;1
+choice;20;23;22;comp22:In fabbrica 
+choice;30;8;5
+choice;40;5;4
+choice;50;2;1
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000100;5
+choice;130;4;3
+choice;140;4;0
+choice;150;6;3
+choice;160;6;1
+choice;170;7;0100000;1
+choice;180;4;0
+choice;190;4;0
+choice;200;2;0
+choice;250;2;1
+choice;260;6;4
+choice;270;4;1
+choice;280;8;11000000;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;000000010;7;comp7:TACCHI 
+choice;410;4;0
+choice;420;6;000010;4
+choice;430;4;0
+choice;440;4;2
+choice;450;8;01010000;1
+choice;460;6;000010;4
+choice;490;2;0

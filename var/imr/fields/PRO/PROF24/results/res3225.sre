@@ -1,0 +1,41 @@
+2.0;PRO;PROF24;3225;RAMMQPHTTV;26/10/2024 04:39:43 CEST;26/10/2024 04:43:55 CEST;252;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=RAMMQPHTTV;device=mobile;lang=it;sysIID=3225
+concept;1
+choice;10;6;1
+choice;20;23;22;comp22:Servizi pubblica utilità 
+choice;30;8;2
+choice;40;5;4
+choice;50;2;0
+choice;60;5;2
+choice;70;2;1
+choice;80;4;0
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;00000010;6
+choice;130;4;3
+choice;140;4;1
+choice;150;6;1
+choice;160;6;4
+choice;170;7;0000100;4
+choice;180;4;1
+choice;190;4;0
+choice;200;2;0
+choice;250;2;1
+choice;260;6;1
+choice;270;4;1
+choice;280;8;00000100;5
+choice;290;2;1
+choice;300;10;0000000001;9;comp9:Vita quotidiana 
+choice;310;2;0
+choice;320;31;0000000000000000000000000000001;30;comp30:La Bubina 
+choice;330;2;1
+choice;340;6;010000;1
+choice;350;4;2
+choice;360;2;0
+choice;400;9;000000001;8
+choice;430;4;2
+choice;440;4;0
+choice;450;8;01000000;1
+choice;460;6;100011;0;comp5:Lavapavimenti 
+choice;470;11;1
+choice;490;2;1
+choice;500;5;01000;1

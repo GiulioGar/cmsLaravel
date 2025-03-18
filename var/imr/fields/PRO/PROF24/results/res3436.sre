@@ -1,0 +1,36 @@
+2.0;PRO;PROF24;3436;E3ZPVHZ9OQ;28/10/2024 17:24:19 CET;16/12/2024 19:28:21 CET;4241042;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=E3ZPVHZ9OQ;device=desktop;lang=it;sysIID=3436
+concept;1
+choice;10;6;5;comp5:casalinga
+choice;70;2;1
+choice;80;4;2
+choice;90;7;0000110;4
+choice;100;2;1
+choice;110;8;00000100;5
+choice;130;4;0
+choice;140;4;1
+choice;150;6;1
+choice;160;6;1
+choice;170;7;0001000;3
+choice;180;4;1
+choice;190;4;1
+choice;200;2;0
+choice;250;2;1
+choice;260;6;2
+choice;270;4;2
+choice;280;8;11000110;0;comp6:thread
+choice;290;2;0
+choice;330;2;1
+choice;340;6;100000;0
+choice;350;4;0
+choice;360;2;0
+choice;400;9;100001010;0;comp7:serie tv
+choice;410;4;3
+choice;420;6;010000;1
+choice;430;4;1
+choice;440;4;0
+choice;450;8;01101010;1
+choice;460;6;111100;0
+choice;470;11;8
+choice;480;10;3
+choice;490;2;1
+choice;500;5;11100;1

@@ -1,0 +1,31 @@
+2.0;PRO;PROF24;1588;VCGI8A8DIL;16/10/2024 18:10:28 CEST;16/10/2024 18:13:00 CEST;152;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=VCGI8A8DIL;device=mobile;lang=it;sysIID=1588
+concept;1
+choice;10;6;0
+choice;70;2;1
+choice;80;4;0
+choice;90;7;0000001;6
+choice;100;2;0
+choice;140;4;1
+choice;150;6;3
+choice;160;6;1
+choice;170;7;0001000;3
+choice;180;4;2
+choice;190;4;2
+choice;200;2;0
+choice;250;2;1
+choice;260;6;2
+choice;270;4;0
+choice;280;8;10000100;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;001100010;2;comp7:Ballo e lavori all' uncinetto 
+choice;410;4;3
+choice;420;6;100100;3
+choice;430;4;0
+choice;440;4;0
+choice;450;8;11111010;2
+choice;460;6;111010;0
+choice;470;11;10;comp10:Aeg
+choice;490;2;1
+choice;500;5;11000;1

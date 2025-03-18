@@ -1,0 +1,39 @@
+2.0;PRO;PROF24;1014;E82I1N45IX;16/10/2024 09:55:44 CEST;16/10/2024 10:02:25 CEST;401;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=E82I1N45IX;device=mobile;lang=it;sysIID=1014
+concept;1
+choice;10;6;1
+choice;20;23;22;comp22:Operaio e coordinazione lavori di meccanica con disabili 
+choice;30;8;7;comp7:Aiuto coordinatore
+choice;40;5;4
+choice;50;2;1
+choice;70;2;1
+choice;80;4;1
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;00000001;7;comp7:A benzina e a disel 
+choice;130;4;2
+choice;140;4;2
+choice;150;6;4
+choice;160;6;1
+choice;170;7;1010001;0;comp6:Di tutto
+choice;180;4;0
+choice;190;4;1
+choice;200;2;0
+choice;250;2;1
+choice;260;6;5;comp5:Di tutto 
+choice;270;4;1
+choice;280;8;11000000;1
+choice;290;2;1
+choice;300;10;0100000001;1;comp9:Famiglia, bambini 
+choice;310;2;0
+choice;320;31;0100000000000000000000000000000;1
+choice;330;2;0
+choice;360;2;0
+choice;400;9;000000001;8
+choice;430;4;1
+choice;440;4;3;comp3:Tutta la famiglia 
+choice;450;8;00000001;7;comp7:Di tutto
+choice;460;6;100110;0
+choice;470;11;10;comp10:Foletto 
+choice;480;10;9;comp9:Silvercrest
+choice;490;2;1
+choice;500;5;11110;0

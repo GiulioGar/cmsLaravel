@@ -1,0 +1,14 @@
+2.0;PRO;PROF24;3152;8PIB27I8DN;25/10/2024 18:24:37 CEST;25/10/2024 18:28:13 CEST;216;7;190;sysSID=PROF24;sysPRJ=PRO;sysUID=8PIB27I8DN;device=mobile;lang=it;sysIID=3152
+concept;1
+choice;10;6;0
+choice;70;2;1
+choice;80;4;1
+choice;90;7;0000100;4
+choice;100;2;1
+choice;110;8;10000000;0
+choice;130;4;0
+choice;140;4;1
+choice;150;6;3
+choice;160;6;1
+choice;170;7;0001000;3
+choice;180;4;3

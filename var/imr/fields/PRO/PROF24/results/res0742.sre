@@ -1,0 +1,26 @@
+2.0;PRO;PROF24;742;U1OFO67ZOA;12/10/2024 07:52:45 CEST;12/10/2024 07:56:00 CEST;195;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=U1OFO67ZOA;device=desktop;lang=it;sysIID=742
+concept;1
+choice;10;6;0
+choice;70;2;0
+choice;100;2;0
+choice;140;4;0
+choice;150;6;3
+choice;160;6;2
+choice;170;7;0001000;3
+choice;180;4;0
+choice;190;4;0
+choice;200;2;0
+choice;250;2;0
+choice;270;4;2
+choice;280;8;11110100;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;001101000;3
+choice;410;4;0
+choice;420;6;000010;4
+choice;430;4;1
+choice;440;4;2
+choice;450;8;11111010;0
+choice;460;6;000010;4
+choice;490;2;0

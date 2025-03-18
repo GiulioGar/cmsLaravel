@@ -1,0 +1,39 @@
+2.0;PRO;PROF24;1342;P94X2C1B76;16/10/2024 14:52:11 CEST;16/10/2024 14:56:11 CEST;240;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=P94X2C1B76;device=desktop;lang=it;sysIID=1342
+concept;1
+choice;10;6;3
+choice;70;2;1
+choice;80;4;0
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;00001000;4
+choice;130;4;1
+choice;140;4;2
+choice;150;6;1
+choice;160;6;1
+choice;170;7;0010101;2;comp6:Montagna
+choice;180;4;2
+choice;190;4;1
+choice;200;2;1
+choice;210;6;010000;1
+choice;220;7;4
+choice;230;4;0
+choice;240;4;0
+choice;250;2;1
+choice;260;6;5;comp5:Un misto di tutto
+choice;270;4;0
+choice;280;8;10000100;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;1
+choice;370;6;010000;1
+choice;380;4;1
+choice;390;3;0
+choice;400;9;101000010;0;comp7:Hobby femminili
+choice;410;4;3
+choice;420;6;000010;4
+choice;430;4;1
+choice;440;4;0
+choice;450;8;11111010;0
+choice;460;6;111010;0
+choice;470;11;4
+choice;490;2;0

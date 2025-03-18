@@ -1,0 +1,31 @@
+2.0;PRO;PROF24;3617;UMF5R76727;31/10/2024 15:12:58 CET;31/10/2024 15:16:19 CET;201;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=UMF5R76727;device=desktop;lang=it;sysIID=3617
+concept;1
+choice;10;6;3
+choice;70;2;1
+choice;80;4;0
+choice;90;7;0000001;6
+choice;100;2;1
+choice;110;8;00000001;7;comp7:Non so
+choice;130;4;1
+choice;140;4;0
+choice;150;6;5;comp5:Città
+choice;160;6;1
+choice;170;7;0000010;5
+choice;180;4;0
+choice;190;4;0
+choice;200;2;0
+choice;250;2;0
+choice;270;4;1
+choice;280;8;11010100;0
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;001000000;2
+choice;410;4;3
+choice;420;6;000010;4
+choice;430;4;1
+choice;440;4;0
+choice;450;8;11110010;6
+choice;460;6;101010;0
+choice;470;11;1
+choice;490;2;0

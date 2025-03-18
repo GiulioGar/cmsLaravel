@@ -1,0 +1,23 @@
+2.0;PRO;PROF24;600;H8QB88V8AZ;11/10/2024 13:52:25 CEST;11/10/2024 13:54:06 CEST;101;7;320;sysSID=PROF24;sysPRJ=PRO;sysUID=H8QB88V8AZ;device=mobile;lang=it;sysIID=600
+concept;1
+choice;10;6;5;comp5:Mamma
+choice;70;2;1
+choice;80;4;1
+choice;90;7;1001000;0
+choice;100;2;1
+choice;110;8;10000000;0
+choice;130;4;3
+choice;140;4;1
+choice;150;6;3
+choice;160;6;1
+choice;170;7;0001000;3
+choice;180;4;1
+choice;190;4;1
+choice;200;2;0
+choice;250;2;1
+choice;260;6;2
+choice;270;4;2
+choice;280;8;11010000;0
+choice;290;2;1
+choice;300;10;1100001010;6
+choice;310;2;0

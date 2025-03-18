@@ -1,0 +1,34 @@
+2.0;PRO;PROF24;3589;4ZHYGNG9R8;30/10/2024 11:22:53 CET;30/10/2024 11:27:30 CET;277;3;500;sysSID=PROF24;sysPRJ=PRO;sysUID=4ZHYGNG9R8;device=mobile;lang=it;sysIID=3589
+concept;1
+choice;10;6;0
+choice;70;2;0
+choice;100;2;1
+choice;110;8;10000000;0
+choice;130;4;1
+choice;140;4;0
+choice;150;6;1
+choice;160;6;1
+choice;170;7;0000010;5
+choice;180;4;0
+choice;190;4;0
+choice;200;2;0
+choice;250;2;0
+choice;270;4;2
+choice;280;8;00000110;5;comp6:Twitch, whatsapp
+choice;290;2;1
+choice;300;10;0000100101;7;comp9:Arte, cinema
+choice;310;2;0
+choice;320;31;0000000000000000000000000000001;30;comp30:Yotobi, fraffrog
+choice;330;2;1
+choice;340;6;001000;2
+choice;350;4;0
+choice;360;2;0
+choice;400;9;000101010;3;comp7:Cinema
+choice;410;4;3
+choice;420;6;110000;0
+choice;430;4;0
+choice;440;4;2
+choice;450;8;11001000;0
+choice;460;6;011010;1
+choice;490;2;1
+choice;500;5;01000;1

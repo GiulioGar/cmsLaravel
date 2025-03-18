@@ -1,0 +1,26 @@
+2.0;PRO;PROF24;1009;PZYFRMU5FF;16/10/2024 09:52:32 CEST;16/10/2024 10:00:06 CEST;454;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=PZYFRMU5FF;device=mobile;lang=it;sysIID=1009
+concept;1
+choice;10;6;3
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000010;6
+choice;130;4;3
+choice;140;4;0
+choice;150;6;5;comp5:Lavoro 
+choice;160;6;5;comp5:Lavoro 
+choice;170;7;0000001;6;comp6:Lavoro 
+choice;180;4;0
+choice;190;4;0
+choice;200;2;0
+choice;250;2;0
+choice;270;4;1
+choice;280;8;00000100;5
+choice;290;2;0
+choice;330;2;0
+choice;360;2;0
+choice;400;9;000000001;8
+choice;430;4;2
+choice;440;4;0
+choice;450;8;11110010;0
+choice;460;6;011010;1
+choice;490;2;0

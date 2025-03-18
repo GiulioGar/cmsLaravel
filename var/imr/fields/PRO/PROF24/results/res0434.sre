@@ -1,0 +1,22 @@
+2.0;PRO;PROF24;434;TIT685FXTC;11/10/2024 11:31:30 CEST;11/10/2024 11:38:07 CEST;397;7;290;sysSID=PROF24;sysPRJ=PRO;sysUID=TIT685FXTC;device=mobile;lang=de;sysIID=434
+concept;1
+choice;10;6;3
+choice;70;2;1
+choice;80;4;1
+choice;90;7;0000001;6
+choice;100;2;0
+choice;140;4;1
+choice;150;6;4
+choice;160;6;2
+choice;170;7;0101000;3
+choice;180;4;0
+choice;190;4;0
+choice;200;2;1
+choice;210;6;010000;1
+choice;220;7;3
+choice;230;4;0
+choice;240;4;1
+choice;250;2;1
+choice;260;6;0
+choice;270;4;1
+choice;280;8;00000001;7

@@ -1,0 +1,945 @@
+void main() {
+
+// variabili comuni
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+string labelCheck;
+int r1;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+boolean selCheck;
+string cpt;
+int preQid;
+int n;
+int reCod;
+int selintCheck;
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "scripts:mod.js");
+string autotest=system.getProperty("test");
+string uid = system.getProperty("sysUID");
+if (autotest=="1" || uid=="GUEST" || uid=="null") {
+system.setProperty("env", "debug:true");  system.setProperty("env", "browser:variables");}
+string err;
+
+if (autotest=="1") {system.setProperty("env", "scripts:modtest.js");}
+
+
+//variabile mobile
+string deviceType = system.getProperty("user_agent:deviceType");
+string ss1 = deviceType.trim();
+system.setProperty("device",ss1);
+boolean live=true;
+
+qst = new question("concept", 1);
+qst.setProperty("text", "   <h1>Benvenuto!</h1> <p>Grazie per dedicare il tuo tempo a questa breve profilazione. Le tue risposte sono essenziali per permetterci di inviarti ricerche e contenuti sempre più in linea con i tuoi interessi e il tuo profilo.</p> <p>Il tuo contributo ci aiuterà a personalizzare al meglio l’esperienza e a fornirti proposte più pertinenti e mirate.</p> <p>Grazie per la tua collaborazione!</p>");
+send qst;
+
+// Q10: CHOICE
+qst = new question("choice", 10);
+qst.setProperty("text", "Qual è la tua attuale situazione lavorativa?");
+qst.setProperty("code", "Q01");
+qst.setProperty("show_rand", false);
+vector q10_opts = new vector {
+"Disoccupato",
+"Lavoro a tempo pieno",
+"Lavoro part-time",
+"Pensionato",
+"Studente",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q10_opts);
+send qst;
+
+ansId=system.getProperty("ans10");
+if (ansId==1 || ansId==2)
+{ 
+
+// Q20: CHOICE
+qst = new question("choice", 20);
+qst.setProperty("text", "In quale settore lavori?");
+qst.setProperty("code", "Q02");
+qst.setProperty("show_rand", false);
+vector q20_opts = new vector {
+"Agricoltura",
+"Amministrazione pubblica",
+"Arte/Intrattenimento",
+"Assistenza sociale",
+"Commercio",
+"Consulenza",
+"Costruzioni",
+"Educazione",
+"Energia",
+"Finanza/Assicurazioni",
+"IT/Telecomunicazioni",
+"Ingegneria",
+"Legale",
+"Manifatturiero",
+"Marketing/Comunicazione",
+"Moda",
+"Ricerca e Sviluppo",
+"Ristorazione",
+"Sanità",
+"Sport",
+"Turismo/Ospitalità",
+"Trasporti e Logistica",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q20_opts);
+send qst;
+
+// Q30: CHOICE
+qst = new question("choice", 30);
+qst.setProperty("text", "Qual è la tua posizione lavorativa?");
+qst.setProperty("code", "Q03");
+qst.setProperty("show_rand", false);
+vector q30_opts = new vector {
+"Dirigente",
+"Freelance",
+"Impiegato",
+"Libero professionista",
+"Manager",
+"Operaio",
+"Tecnico",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q30_opts);
+send qst;
+
+// Q40: CHOICE
+qst = new question("choice", 40);
+qst.setProperty("text", "Quanti anni di esperienza hai nel tuo campo attuale?");
+qst.setProperty("code", "Q04");
+qst.setProperty("show_rand", false);
+vector q40_opts = new vector {
+"Meno di 1 anno",
+"1-3 anni",
+"3-5 anni",
+"5-10 anni",
+"Più di 10 anni"
+};
+qst.setProperty("options", q40_opts);
+send qst;
+
+// Q50: CHOICE
+qst = new question("choice", 50);
+qst.setProperty("text", "Lavori in smartworking?");
+qst.setProperty("code", "Q50");
+qst.setProperty("show_rand", false);
+vector q50_opts = new vector {
+"Sì",
+"No"
+};
+qst.setProperty("options", q50_opts);
+send qst;
+
+ansId=system.getProperty("ans50");
+if (ansId==0)
+		{ 
+
+		// Q60: CHOICE
+		qst = new question("choice", 60);
+		qst.setProperty("text", "Con quale frequenza lavori in smartworking?");
+		qst.setProperty("code", "Q51");
+		qst.setProperty("show_rand", false);
+		vector q60_opts = new vector {
+		"Tutti i giorni",
+		"3-4 volte a settimana",
+		"1-2 volte a settimana",
+		"Meno di una volta a settimana",
+		"Solo in caso di necessità"
+		};
+		qst.setProperty("options", q60_opts);
+		send qst;
+		}
+
+}
+
+// Q70: CHOICE
+qst = new question("choice", 70);
+qst.setProperty("text", "Hai figli?");
+qst.setProperty("code", "Q05");
+qst.setProperty("show_rand", false);
+vector q70_opts = new vector {
+"No",
+"Sì"
+};
+qst.setProperty("options", q70_opts);
+send qst;
+
+ansId=system.getProperty("ans70");
+if (ansId==1)
+{ 
+
+// Q80: CHOICE
+qst = new question("choice", 80);
+qst.setProperty("text", "Quanti figli hai?");
+qst.setProperty("code", "Q06");
+qst.setProperty("show_rand", false);
+vector q80_opts = new vector {
+"1",
+"2",
+"3",
+"4 o più"
+};
+qst.setProperty("options", q80_opts);
+send qst;
+
+ansId=system.getProperty("ans80");
+
+// Q90: CHOICE
+qst = new question("choice", 90);
+qst.setProperty("text", "In quale fascia d'età rientrano i tuoi figli?");
+qst.setProperty("code", "Q07");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+if (ansId==0) { qst.setProperty("extras", "{max:1}"); }
+if (ansId==1) { qst.setProperty("extras", "{max:2}"); }
+if (ansId==2) { qst.setProperty("extras", "{max:3}"); }
+vector q90_opts = new vector {
+"0-6 mesi",
+"7-12 mesi",
+"1-3 anni",
+"4-7 anni",
+"5-12 anni",
+"13-17 anni",
+"18+ anni"
+};
+qst.setProperty("options", q90_opts);
+send qst;
+}
+
+
+// Q100: CHOICE
+qst = new question("choice", 100);
+qst.setProperty("text", "Possiedi un'automobile?");
+qst.setProperty("code", "Q08");
+qst.setProperty("show_rand", false);
+vector q100_opts = new vector {
+"No",
+"Sì"
+};
+qst.setProperty("options", q100_opts);
+send qst;
+
+ansId=system.getProperty("ans100");
+if (ansId==1)
+{ 
+
+// Q110: CHOICE
+qst = new question("choice", 110);
+qst.setProperty("text", "Quale tipo di automobile possiedi?");
+qst.setProperty("code", "Q09");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q110_opts = new vector {
+"Berlina",
+"Elettrica",
+"Ibrida",
+"Sportiva",
+"Station Wagon",
+"SUV",
+"Utilitaria",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q110_opts);
+send qst;
+
+boolean sel1=system.getProperty("ans110_1");
+boolean sel2=system.getProperty("ans110_2");
+if (sel1==true || sel2==true) 
+{ 
+	// Q120: CHOICE
+	qst = new question("choice", 120);
+	qst.setProperty("text", "Quali sono i motivi principali per cui hai scelto un'auto elettrica o ibrida?");
+	qst.setProperty("code", "Q11");
+	qst.setProperty("show_rand", true);
+	qst.setProperty("selection", "multiple");
+	vector q120_opts = new vector {
+	"Innovazione tecnologica",
+	"Incentivi statali",
+	"Risparmio sui costi del carburante",
+	"Riduzione delle emissioni",
+	"Silenziosità",
+	"Altro (specificare)#sf#so"
+	};
+	qst.setProperty("options", q120_opts);
+send qst;
+
+}
+
+
+// Q130: CHOICE
+qst = new question("choice", 130);
+qst.setProperty("text", "Quanti chilometri percorri mediamente all'anno con la tua auto?");
+qst.setProperty("code", "Q12");
+qst.setProperty("show_rand", false);
+vector q130_opts = new vector {
+"Meno di 5.000 km",
+"5.000-10.000 km",
+"10.000-20.000 km",
+"Più di 20.000 km"
+};
+qst.setProperty("options", q130_opts);
+send qst;
+}
+
+
+// Q140: CHOICE
+qst = new question("choice", 140);
+qst.setProperty("text", "Quante volte viaggi all'anno per piacere?");
+qst.setProperty("code", "Q13");
+qst.setProperty("show_rand", false);
+vector q140_opts = new vector {
+"Mai",
+"1-2 volte",
+"3-5 volte",
+"Più di 5 volte"
+};
+qst.setProperty("options", q140_opts);
+send qst;
+
+// Q150: CHOICE
+qst = new question("choice", 150);
+qst.setProperty("text", "Qual è la tua destinazione di viaggio preferita?");
+qst.setProperty("code", "Q14");
+qst.setProperty("show_rand", false);
+vector q150_opts = new vector {
+"Campagna",
+"Città d'arte",
+"Estero",
+"Mare",
+"Montagna",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q150_opts);
+send qst;
+
+// Q160: CHOICE
+qst = new question("choice", 160);
+qst.setProperty("text", "Quale mezzo di trasporto utilizzi più frequentemente per i tuoi viaggi?");
+qst.setProperty("code", "Q15");
+qst.setProperty("show_rand", false);
+vector q160_opts = new vector {
+"Aereo",
+"Automobile",
+"Autobus",
+"Bicicletta",
+"Treno",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q160_opts);
+send qst;
+
+// Q170: CHOICE
+qst = new question("choice", 170);
+qst.setProperty("text", "Quali sono le tue preferenze per le vacanze estive?");
+qst.setProperty("code", "Q23");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+qst.setProperty("show_rand", true);
+vector q170_opts = new vector {
+"Agriturismo",
+"Crociera",
+"Montagna",
+"Spiaggia",
+"Tour culturali",
+"Vacanze in città",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q170_opts);
+send qst;
+
+// Q180: CHOICE
+qst = new question("choice", 180);
+qst.setProperty("text", "Qual è la durata media delle tue vacanze estive?");
+qst.setProperty("code", "Q24");
+qst.setProperty("show_rand", false);
+vector q180_opts = new vector {
+"Meno di una settimana",
+"1 settimana",
+"2 settimane",
+"Più di 2 settimane"
+};
+qst.setProperty("options", q180_opts);
+send qst;
+
+// Q190: CHOICE
+qst = new question("choice", 190);
+qst.setProperty("text", "Quanto tempo in anticipo pianifichi le tue vacanze estive?");
+qst.setProperty("code", "Q25");
+qst.setProperty("show_rand", false);
+vector q190_opts = new vector {
+"Meno di un mese",
+"1-3 mesi",
+"3-6 mesi",
+"Più di 6 mesi"
+};
+qst.setProperty("options", q190_opts);
+send qst;
+
+// Q200: CHOICE
+qst = new question("choice", 200);
+qst.setProperty("text", "Hai mai partecipato a una crociera?");
+qst.setProperty("code", "Q16");
+qst.setProperty("show_rand", false);
+vector q200_opts = new vector {
+"No",
+"Sì"
+};
+qst.setProperty("options", q200_opts);
+send qst;
+
+ansId=system.getProperty("ans200");
+
+if(ansId==1)
+{
+// Q210: CHOICE
+qst = new question("choice", 210);
+qst.setProperty("text", "Quale compagnia di crociera hai utilizzato?");
+qst.setProperty("code", "Q17");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q210_opts = new vector {
+"Carnival Cruise Line",
+"Costa Crociere",
+"MSC Crociere",
+"Norwegian Cruise Line",
+"Royal Caribbean",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q210_opts);
+send qst;
+
+// Q220: CHOICE
+qst = new question("choice", 220);
+qst.setProperty("text", "Quali sono le destinazioni preferite per le crociere?");
+qst.setProperty("code", "Q18");
+qst.setProperty("show_rand", false);
+vector q220_opts = new vector {
+"Alaska",
+"Asia",
+"Caraibi",
+"Mediterraneo",
+"Nord Europa",
+"Sud America",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q220_opts);
+send qst;
+
+// Q230: CHOICE
+qst = new question("choice", 230);
+qst.setProperty("text", "Quante crociere hai fatto fino ad ora?");
+qst.setProperty("code", "Q20");
+qst.setProperty("show_rand", false);
+vector q230_opts = new vector {
+"1",
+"2-3",
+"4-5",
+"Più di 5"
+};
+qst.setProperty("options", q230_opts);
+send qst;
+
+// Q240: CHOICE
+qst = new question("choice", 240);
+qst.setProperty("text", "Qual è la durata media delle crociere a cui hai partecipato?");
+qst.setProperty("code", "Q21");
+qst.setProperty("show_rand", false);
+vector q240_opts = new vector {
+"Meno di 1 settimana",
+"1 settimana",
+"2 settimane",
+"Più di 2 settimane"
+};
+qst.setProperty("options", q240_opts);
+send qst;
+}
+
+// Q250: CHOICE
+qst = new question("choice", 250);
+qst.setProperty("text", "Saresti interessato ad andare/tornare in Crociera in futuro?");
+qst.setProperty("code", "Q19");
+qst.setProperty("show_rand", false);
+vector q250_opts = new vector {
+"No",
+"Sì"
+};
+qst.setProperty("options", q250_opts);
+send qst;
+
+ansId=system.getProperty("ans250");
+
+if(ansId==1)
+{
+// Q260: CHOICE
+qst = new question("choice", 260);
+qst.setProperty("text", "Quale tipologia di crociera preferisci/preferiresti?");
+qst.setProperty("code", "Q22");
+qst.setProperty("show_rand", false);
+vector q260_opts = new vector {
+"Avventura",
+"Cultura",
+"Famiglia",
+"Lusso",
+"Relax",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q260_opts);
+send qst;
+}
+
+
+// Q270: CHOICE
+qst = new question("choice", 270);
+qst.setProperty("text", "Quanto tempo trascorri mediamente online al giorno?");
+qst.setProperty("code", "Q26");
+qst.setProperty("show_rand", false);
+vector q270_opts = new vector {
+"Meno di 1 ora",
+"1-3 ore",
+"4-6 ore",
+"Più di 65 ore"
+};
+qst.setProperty("options", q270_opts);
+send qst;
+
+// Q280: CHOICE
+qst = new question("choice", 280);
+qst.setProperty("text", "Quali social media utilizzi regolarmente?");
+qst.setProperty("code", "Q27");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q280_opts = new vector {
+"Facebook",
+"Instagram",
+"LinkedIn",
+"TikTok",
+"Twitter",
+"YouTube",
+"Altro (specificare)#sf#so",
+"Nessuno#se#sf"
+};
+qst.setProperty("options", q280_opts);
+send qst;
+
+// Q290: CHOICE
+qst = new question("choice", 290);
+qst.setProperty("text", "Segui degli influencer sui social media?");
+qst.setProperty("code", "Q28");
+qst.setProperty("show_rand", false);
+vector q290_opts = new vector {
+"No",
+"Sì"
+};
+qst.setProperty("options", q290_opts);
+send qst;
+
+ansId=system.getProperty("ans290");
+if (ansId==1)
+{ 
+
+// Q300: CHOICE
+qst = new question("choice", 300);
+qst.setProperty("text", "In quali ambiti segui influencer?");
+qst.setProperty("code", "Q29");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q300_opts = new vector {
+"Bellezza",
+"Cucina",
+"Finanza",
+"Fitness",
+"Gaming",
+"Lifestyle",
+"Moda",
+"Tecnologia",
+"Viaggi",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q300_opts);
+send qst;
+
+// Q310: CHOICE
+qst = new question("choice", 310);
+qst.setProperty("text", "Hai mai acquistato prodotti consigliati da influencer?");
+qst.setProperty("code", "Q30");
+qst.setProperty("show_rand", false);
+vector q310_opts = new vector {
+"No",
+"Sì"
+};
+qst.setProperty("options", q310_opts);
+send qst;
+
+// Q320: CHOICE
+qst = new question("choice", 320);
+qst.setProperty("text", "Quali influencer Italiani segui regolarmente?");
+qst.setProperty("code", "Q31");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q320_opts = new vector {
+"Alice Pagani",
+"Beatrice Valli",
+"Benedetta Rossi",
+"Camihawke (Camilla Boniardi)",
+"Carlotta Ferlito",
+"Chiara Biasi",
+"Chiara Ferragni",
+"ClioMakeUp (Clio Zammatteo)",
+"Diletta Leotta",
+"Elisa Maino",
+"Elettra Lamborghini",
+"Fedez",
+"Frank Matano",
+"Gianluca Vacchi",
+"Giulia De Lellis",
+"Ilary Blasi",
+"Leonardo Decarli",
+"Ludovica Valli",
+"Marco Montemagno",
+"Mariano Di Vaio",
+"Martina Stella",
+"Melissa Satta",
+"Riccardo Pozzoli",
+"Selvaggia Lucarelli",
+"Sofia Viscardi",
+"Tommaso Zorzi",
+"Valentina Ferragni",
+"Valentina Vignali",
+"Valerio Scanu",
+"Veronica Ferraro",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q320_opts);
+send qst;
+}
+
+// Q330: CHOICE
+qst = new question("choice", 330);
+qst.setProperty("text", "Possiedi animali domestici?");
+qst.setProperty("code", "Q32");
+qst.setProperty("show_rand", false);
+vector q330_opts = new vector {
+"No",
+"Sì"
+};
+qst.setProperty("options", q330_opts);
+send qst;
+
+ansId=system.getProperty("ans330");
+if (ansId==1)
+{ 
+
+// Q340: CHOICE
+qst = new question("choice", 340);
+qst.setProperty("text", "Quali animali domestici possiedi?");
+qst.setProperty("code", "Q33");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q340_opts = new vector {
+"Cane",
+"Gatto",
+"Pesci",
+"Rettili",
+"Uccelli",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q340_opts);
+send qst;
+
+// Q350: CHOICE
+qst = new question("choice", 350);
+qst.setProperty("text", "Quanto spendi mediamente al mese per i tuoi animali domestici?");
+qst.setProperty("code", "Q34");
+qst.setProperty("show_rand", false);
+vector q350_opts = new vector {
+"Meno di 50€",
+"50-100€",
+"101-250",
+"Più di 250€"
+};
+qst.setProperty("options", q350_opts);
+send qst;
+
+}
+
+
+// Q360: CHOICE
+qst = new question("choice", 360);
+qst.setProperty("text", "Fumi?");
+qst.setProperty("code", "Q35");
+qst.setProperty("show_rand", false);
+vector q360_opts = new vector {
+"No",
+"Sì"
+};
+qst.setProperty("options", q360_opts);
+send qst;
+
+ansId=system.getProperty("ans360");
+
+if(ansId==1)
+{
+
+// Q370: CHOICE
+qst = new question("choice", 370);
+qst.setProperty("text", "Che tipo di sigarette fumi?");
+qst.setProperty("code", "Q36");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q370_opts = new vector {
+"Pipe",
+"Sigarette al tabacco riscaldato",
+"Sigarette elettroniche",
+"Sigarette tradizionali",
+"Sigari",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q370_opts);
+send qst;
+
+// Q380: CHOICE
+qst = new question("choice", 380);
+qst.setProperty("text", "Quanto fumi al giorno?");
+qst.setProperty("code", "Q37");
+qst.setProperty("show_rand", false);
+vector q380_opts = new vector {
+"10-20 sigarette",
+"5-10 sigarette",
+"Meno di 5 sigarette",
+"Più di 20 sigarette"
+};
+qst.setProperty("options", q380_opts);
+send qst;
+
+// Q390: CHOICE
+qst = new question("choice", 390);
+qst.setProperty("text", "Hai mai provato a smettere di fumare?");
+qst.setProperty("code", "Q38");
+qst.setProperty("show_rand", false);
+vector q390_opts = new vector {
+"No",
+"Sì con successo",
+"Sì senza successo"
+};
+qst.setProperty("options", q390_opts);
+send qst;
+}
+
+// Q400: CHOICE
+qst = new question("choice", 400);
+qst.setProperty("text", "Quali sono i tuoi principali hobby?");
+qst.setProperty("code", "Q39");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q400_opts = new vector {
+"Cucina",
+"Giardinaggio",
+"Lettura",
+"Musica",
+"Sport",
+"Videogiochi",
+"Viaggi",
+"Altro (specificare)#sf#so",
+"Nessuno di questi/Non ho tempo per degli hobby#se#sf"
+};
+qst.setProperty("options", q400_opts);
+send qst;
+
+sel=system.getProperty("ans400_8");
+if (sel==false) 
+{
+
+// Q410: CHOICE
+qst = new question("choice", 410);
+qst.setProperty("text", "Quanto tempo dedichi ai tuoi hobby settimanalmente?");
+qst.setProperty("code", "Q40");
+qst.setProperty("show_rand", false);
+vector q410_opts = new vector {
+"1-3 ore",
+"3-5 ore",
+"Meno di 1 ora",
+"Più di 5 ore"
+};
+qst.setProperty("options", q410_opts);
+send qst;
+
+// Q420: CHOICE
+qst = new question("choice", 420);
+qst.setProperty("text", "Con chi condividi i tuoi hobby?");
+qst.setProperty("code", "Q41");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q420_opts = new vector {
+"Amici",
+"Famiglia",
+"Gruppi/Club",
+"Partner",
+"Solo",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q420_opts);
+send qst;
+}
+
+// Q440: CHOICE
+qst = new question("choice", 440);
+qst.setProperty("text", "Chi si occupa delle pulizie in casa tua?");
+qst.setProperty("code", "Q43");
+qst.setProperty("show_rand", false);
+vector q440_opts = new vector {
+"Io personalmente",
+"Personale di servizio",
+"Un membro della famiglia",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q440_opts);
+send qst;
+
+// Q430: CHOICE
+qst = new question("choice", 430);
+qst.setProperty("text", "Quante volte alla settimana pulisci/fai pulire casa?");
+qst.setProperty("code", "Q42");
+qst.setProperty("show_rand", false);
+vector q430_opts = new vector {
+"Ogni giorno",
+"2-3 volte alla settimana",
+"Una volta alla settimana",
+"Meno di una volta alla settimana"
+};
+qst.setProperty("options", q430_opts);
+send qst;
+
+// Q450: CHOICE
+qst = new question("choice", 450);
+qst.setProperty("text", "Quali detersivi utilizzi/fai utilizzare maggiormente?");
+qst.setProperty("code", "Q44");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q450_opts = new vector {
+"Candeggina",
+"Detersivo per lavatrice",
+"Detersivo per pavimenti",
+"Detersivo per piatti",
+"Detersivo per superfici",
+"Prodotti ecologici",
+"Sgrassatore",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q450_opts);
+send qst;
+
+// Q460: CHOICE
+qst = new question("choice", 460);
+qst.setProperty("text", "Quali strumenti utilizzi per pulire casa?");
+qst.setProperty("code", "Q45");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q460_opts = new vector {
+"Aspirapolvere",
+"Mop e secchio",
+"Panni in microfibra",
+"Robot aspirapolvere",
+"Scopa e paletta",
+"Altri strumenti (specificare)#sf#so"
+};
+qst.setProperty("options", q460_opts);
+send qst;
+
+sel=system.getProperty("ans460_0");
+if (sel==true) 
+{ 
+
+// Q470: CHOICE
+qst = new question("choice", 470);
+qst.setProperty("text", "Hai detto di utilizzare un’aspirapolvere di che marca è ?(Se più di uno indica il principale)");
+qst.setProperty("code", "Q46");
+qst.setProperty("show_rand", false);
+vector q470_opts = new vector {
+"Bosch",
+"Dyson",
+"Electrolux",
+"Haier",
+"Hoover",
+"LG",
+"Miele",
+"Philips",
+"Rowenta",
+"Samsung",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q470_opts);
+send qst;
+
+}
+
+sel=system.getProperty("ans460_3");
+if (sel==true) 
+{ 
+// Q480: CHOICE
+qst = new question("choice", 480);
+qst.setProperty("text", "Hai detto di utilizzare un robot aspirapolvere di quale marca è? (Se più di uno indica il principale)");
+qst.setProperty("code", "Q47");
+qst.setProperty("show_rand", false);
+vector q480_opts = new vector {
+"Ecovacs",
+"Eufy",
+"Haier",
+"iRobot Roomba",
+"LG",
+"Neato",
+"Roborock",
+"Samsung",
+"Xiaomi",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q480_opts);
+send qst;
+}
+
+// Q490: CHOICE
+qst = new question("choice", 490);
+qst.setProperty("text", "Utilizzi prodotti specifici per profumare la casa?");
+qst.setProperty("code", "Q48");
+qst.setProperty("show_rand", false);
+vector q490_opts = new vector {
+"No",
+"Sì"
+};
+qst.setProperty("options", q490_opts);
+send qst;
+
+ansId=system.getProperty("ans490");
+
+if (ansId==1)
+{
+// Q500: CHOICE
+qst = new question("choice", 500);
+qst.setProperty("text", "Quali prodotti utilizzi?");
+qst.setProperty("code", "Q49");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q500_opts = new vector {
+"Candele profumate",
+"Deodoranti spray",
+"Diffusori di oli essenziali",
+"Pot-pourri",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q500_opts);
+send qst;
+}
+
+}

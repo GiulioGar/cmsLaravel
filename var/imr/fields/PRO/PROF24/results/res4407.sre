@@ -1,0 +1,39 @@
+2.0;PRO;PROF24;4407;097URPU67Z;26/11/2024 20:45:09 CET;26/11/2024 20:51:42 CET;393;3;490;sysSID=PROF24;sysPRJ=PRO;sysUID=097URPU67Z;device=desktop;lang=it;sysIID=4407
+concept;1
+choice;10;6;2
+choice;20;23;4
+choice;30;8;2
+choice;40;5;1
+choice;50;2;1
+choice;70;2;0
+choice;100;2;1
+choice;110;8;00000010;6
+choice;130;4;1
+choice;140;4;2
+choice;150;6;1
+choice;160;6;1
+choice;170;7;0001010;3
+choice;180;4;2
+choice;190;4;0
+choice;200;2;0
+choice;250;2;1
+choice;260;6;4
+choice;270;4;2
+choice;280;8;11101100;0
+choice;290;2;1
+choice;300;10;0000000010;8
+choice;310;2;0
+choice;320;31;0010000000011000001000000000001;2;comp30:Donato Inglese
+choice;330;2;1
+choice;340;6;000100;3
+choice;350;4;0
+choice;360;2;0
+choice;400;9;001110100;2
+choice;410;4;1
+choice;420;6;100110;0
+choice;430;4;1
+choice;440;4;2
+choice;450;8;01111010;1
+choice;460;6;111010;1
+choice;470;11;10;comp10:De Longhi
+choice;490;2;0
