@@ -524,3 +524,110 @@ h3 {font-size: 15px!important;}
   .bs-tooltip-auto[x-placement^=right] .tooltip-arrow::before {
     background-color: #222E3C !important;
   }
+
+  /* =========================
+   CARD STYLING
+   ========================= */
+.quality-card {
+    border: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    margin-bottom: 1rem;
+  }
+
+  .quality-card-header {
+    background-color: #f8f9fa; /* un grigio chiaro */
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+  }
+
+  .quality-card-header h5 {
+    margin: 0;
+    font-weight: 600;
+    color:aliceblue
+  }
+
+  .quality-card-body {
+    padding: 1rem;
+  }
+
+  /* =========================
+     TABLE SCROLL + STICKY HEADER
+     ========================= */
+  .quality-table-container {
+    max-height: 350px;       /* imposta l'altezza massima */
+    overflow-y: auto;        /* scroll verticale */
+    position: relative;      /* per gestire sticky header */
+  }
+
+  .custom-quality-table {
+    margin-bottom: 0; /* rimuove eventuali spazi in eccesso */
+    font-size: 0.85rem; /* riduce il font (rimpicciolito) */
+  }
+
+  .custom-quality-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa; /* colore sfondo dell'header */
+    z-index: 10;
+    box-shadow: inset 0 -1px 0 #dee2e6;
+  }
+
+  .custom-quality-table tbody tr:nth-child(even){
+    background-color: #fdfdfd;
+  }
+
+  /* --- Stile comune per entrambe le card --- */
+.quality-card-header {
+    padding: 0.75rem 1rem;
+    /* eventuali bordi, spaziature, radius, ecc. */
+    border-radius: 3px 3px 0 0;
+}
+
+/* --- Card a sinistra (Statistiche Generali) --- */
+.quality-header-left {
+    background-color: #9ece6c; /* Esempio: verde */
+    color: #fff;
+}
+
+/* --- Card a destra (Lista Interviste) --- */
+.quality-header-right {
+    background-color: #222E3C; /* Esempio: blu */
+    color: #fff!important;
+}
+
+/* --- Contenitore tabella con scroll e header fisso --- */
+.quality-table-container {
+    max-height: 400px; /* o ciò che preferisci */
+    overflow-y: auto;  /* attiva lo scroll verticale */
+}
+
+/* --- Tabella custom: font più piccolo, thead sticky --- */
+.quality-table-interviews {
+    font-size: 0.85rem; /* rimpicciolisce il font */
+    border-collapse: separate; /* se vuoi rifiniture particolari */
+}
+
+.quality-table-interviews thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f1f1f1; /* Colore intestazione */
+    z-index: 2; /* assicura che resti in primo piano */
+}
+
+.quality-table-container {
+    max-height: 300px; /* imposta l'altezza desiderata */
+    overflow-y: auto;
+}
+
+.quality-table-lower thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #f1f1f1;
+}
+
+.small {
+    font-size: 0.7rem; /* o altra dimensione piccola */
+}
+

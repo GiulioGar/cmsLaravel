@@ -50,7 +50,7 @@
 
             <!-- Controllo Qualità -->
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('fieldQuality.index') }}">
+                <a class="nav-link" href="{{ route('fieldQuality.index', ['prj' => $prj, 'sid' => $sid]) }}">
                     <i class="fas fa-check-circle me-1"></i> Controllo Qualità
                 </a>
             </li>
@@ -101,18 +101,146 @@
 
         <!-- Contenuto principale della pagina -->
         <div class="row">
-            <div class="col-12">
-                <h1>Pagina di Controllo Qualità</h1>
-                <p>Questa pagina è estesa dal layout <code>layouts.main</code> e include lo stile <code>fieldControl.css</code>.</p>
+            <!-- COLONNA SINISTRA -->
+            <div class="col-md-5">
+                <div class="card quality-card mb-4">
+                    <div class="quality-card-header quality-header-left">
+                        <h5 class="mb-0">Statistiche Generali</h5>
+                    </div>
+                    <div class="quality-card-body">
+                        <p><strong>Punteggio medio:</strong> {{ number_format($averageScore, 1) }}</p>
+                        <p><strong>Migliore:</strong> {{ number_format($maxScore, 1) }}</p>
+                        <p><strong>Peggiore:</strong> {{ number_format($minScore, 1) }}</p>
+                        <p><strong>LOI media:</strong> {{ $loiMediaFormatted }} minuti</p>
+                    </div>
+                </div>
+            </div>
 
-                {{-- Esempio di uso di eventuali dati passati dal Controller --}}
-                @if(isset($dummyData['title']))
-                    <p><strong>Titolo dinamico:</strong> {{ $dummyData['title'] }}</p>
-                @endif
+            <!-- COLONNA DESTRA -->
+            <div class="col-md-7">
+                <div class="card quality-card mb-4">
+                    <div class="quality-card-header quality-header-right">
+                        <h5 class="mb-0">Lista interviste (complete)</h5>
+                    </div>
+                    <div class="quality-card-body p-0">
+                        @if(count($completeInterviews) > 0)
+                            <!-- Contenitore per scroll e header fisso -->
+                            <div class="quality-table-container">
+                                <table class="table table-hover quality-table-interviews">
+                                    <thead>
+                                        <tr>
+                                            <th>IID</th>
+                                            <th>UID</th>
+                                            <th>Punteggio</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($completeInterviews as $interview)
+                                            <tr>
+                                                <td>{{ $interview['iid'] }}</td>
+                                                <td>{{ $interview['uid'] }}</td>
+                                                <!-- punteggio con decimale fisso -->
+                                                <td>{{ number_format($interview['score'], 1) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="p-3">
+                                <p class="text-muted">Nessuna intervista completa trovata.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div><!-- row -->
+
+
+        <!-- SECONDA RIGA -->
+<div class="row">
+    <!-- COLONNA SINISTRA (30%) -->
+    <div class="col-md-4">
+        <div class="quality-card shadow-sm mb-4">
+            <div class="quality-card-header quality-header-left">
+                <h5 class="mb-0">Controllo LOI</h5>
+            </div>
+            <div class="quality-card-body">
+                <div class="quality-table-container">
+                    <table class="table table-hover quality-table-lower">
+                        <thead>
+                            <tr>
+                                <th class="small">IID</th>
+                                <th class="small">UID</th>
+                                <th class="small">LOI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($loiData as $item)
+                                <tr>
+                                   <!-- IID -->
+                                    <td class="small">{{ $item['iid'] }}</td>
+
+                                    <!-- UID -->
+                                    <td class="small">{{ $item['uid'] }}</td>
+
+                                    <!-- LOI (minuti.secondi) -->
+                                    <td class="small">{{ $item['loi'] }} min.</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-
     </div>
+
+    <!-- COLONNA DESTRA (70%) -->
+    <div class="col-md-8">
+        <div class="quality-card shadow-sm mb-4">
+            <div class="quality-card-header quality-header-right">
+                <h5 class="mb-0">Controllo Domande Aperte</h5>
+            </div>
+            <div class="quality-card-body">
+                <div class="quality-table-container">
+                    <table class="table table-hover quality-table-lower">
+                        <thead>
+                            <tr>
+                                <th class="small">IID</th>
+                                <th class="small">UID</th>
+                                <th class="small">Codice</th>
+                                <th class="small">Testo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($openQuestionsData as $open)
+                                            <tr>
+                                                <td class="small">{{ $open['iid'] }}</td>
+                                                <td class="small">{{ $open['uid'] }}</td>
+
+                                                <!-- Codice con tooltip -->
+                                                <td class="small">
+                                                    <span data-bs-toggle="tooltip"
+                                                        title="{{ $open['tooltip'] }}">
+                                                        {{ $open['codice'] }}
+                                                    </span>
+                                                </td>
+
+                                                <!-- Risposta open -->
+                                                <td class="small">{{ $open['openResponse'] }}</td>
+                                            </tr>
+                                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- FINE SECONDA RIGA -->
+
+
+    </div><!-- container -->
 @endsection
 
 @section('scripts')

@@ -54,7 +54,7 @@
 
             <!-- Controllo Qualità -->
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('fieldQuality.index') }}">
+                <a class="nav-link" href="{{ route('fieldQuality.index', ['prj' => $prj, 'sid' => $sid]) }}">
                     <i class="fas fa-check-circle me-1"></i> Controllo Qualità
                 </a>
             </li>
