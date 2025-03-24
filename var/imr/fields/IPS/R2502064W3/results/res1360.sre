@@ -1,0 +1,15 @@
+2.0;IPS;R2502064W3;1360;TVC962BBIQ;18/03/2025 21:29:20 CET;18/03/2025 21:31:13 CET;113;4;100;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=TVC962BBIQ;device=mobile;lang=it;sysIID=1360
+choice;7;107;92
+choice;8;7903;6700
+choice;9;7;6
+choice;10;2;0
+open;20;51
+choice;30;5;3
+open;40;10144
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111100;1
+choice;92;20;11
+choice;93;4;0
+choice;100;6;010100;1

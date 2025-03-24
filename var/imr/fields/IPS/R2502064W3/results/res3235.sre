@@ -1,0 +1,19 @@
+2.0;IPS;R2502064W3;3235;IDEXNOMBKUEHADKIG5978;21/03/2025 11:58:52 CET;21/03/2025 12:01:35 CET;163;4;210;device=mobile;lang=it;sysIID=3235;sysPRJ=IPS;sysSID=R2502064W3;pid=5974;version=v01;pan=4;sysUID=IDEXNOMBKUEHADKIG5978
+choice;7;107;54
+choice;8;7903;3964
+choice;9;7;2
+choice;10;2;1
+open;20;47
+choice;30;5;3
+open;40;20010
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110000;0
+choice;92;20;8
+choice;93;4;0
+choice;100;6;100100;0
+choice;110;3;100;0
+choice;120;4;2
+choice;130;3;0
+choice;210;15;14;comp14:Merit

@@ -1,0 +1,15 @@
+2.0;IPS;R2502064W3;1086;OCZ86YFP6L;18/03/2025 14:58:33 CET;18/03/2025 15:14:47 CET;974;4;100;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=OCZ86YFP6L;device=desktop;lang=it;sysIID=1086
+choice;7;107;42
+choice;8;7903;3221
+choice;9;7;0
+choice;10;2;0
+open;20;50
+choice;30;5;3
+open;40;01010
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1100000;1
+choice;92;20;0
+choice;93;4;3
+choice;100;6;011000;2

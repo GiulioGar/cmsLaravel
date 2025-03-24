@@ -1,0 +1,33 @@
+2.0;IPS;R2502064W3;452;4eee42a3cd;18/03/2025 07:15:25 CET;18/03/2025 07:24:29 CET;544;3;880;device=mobile;lang=it;r1=1;sysIID=452;sysPRJ=IPS;sysSID=R2502064W3;version=v01;leg=99;sysUID=4eee42a3cd
+choice;7;107;7
+choice;8;7903;586
+choice;9;7;5
+choice;10;2;1
+open;20;42
+choice;30;5;2
+open;40;70010
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110100;0
+choice;92;20;12
+choice;93;4;3
+choice;100;6;100100;0
+choice;110;3;010;1
+choice;120;4;1
+choice;130;3;0
+choice;150;3;0
+choice;170;5;10110;0
+choice;175;2;1
+scale;200;3;3;1;-1;0
+choice;210;15;12
+choice;212;15;12
+choice;215;17;00100001001010000;12
+choice;220;17;00100001000010000;12
+choice;230;17;00000000000010000;12
+scale;240;17;3;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;0;-1;-1;-1;-1
+choice;400;11;10110000000;2
+concept;850
+open;855;Mi viene in mente che bisogna salvaguarda seriamente la propria salute x una vita più lunga d sana 
+choice;860;5;1
+choice;880;5;1

@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1491;GPE8GE742Z;19/03/2025 10:15:10 CET;19/03/2025 10:16:43 CET;93;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=GPE8GE742Z;device=mobile;lang=it;sysIID=1491
+choice;7;107;59
+choice;8;7903;4367
+choice;9;7;1
+choice;10;2;1
+open;20;43
+choice;30;5;2
+open;40;08015
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0100100;4
+choice;92;20;13
+choice;93;4;3

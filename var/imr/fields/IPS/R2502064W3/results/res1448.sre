@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1448;Y5VN22DENS;19/03/2025 07:16:16 CET;19/03/2025 07:17:15 CET;59;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=Y5VN22DENS;device=desktop;lang=it;sysIID=1448
+choice;7;107;23
+choice;8;7903;1908
+choice;9;7;0
+choice;10;2;0
+open;20;52
+choice;30;5;3
+open;40;66020
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;1
+choice;92;20;0
+choice;93;4;3

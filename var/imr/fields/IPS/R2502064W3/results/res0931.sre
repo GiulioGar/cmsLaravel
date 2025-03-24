@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;931;BIGLUG426;18/03/2025 13:26:03 CET;18/03/2025 13:27:19 CET;76;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=BIGLUG426;device=mobile;lang=it;sysIID=931
+choice;7;107;12
+choice;8;7903;1050
+choice;9;7;0
+choice;10;2;0
+open;20;50
+choice;30;5;3
+open;40;13898
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;92;20;11
+choice;93;4;0

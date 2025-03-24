@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1011;9EP537IQGA;18/03/2025 14:05:36 CET;18/03/2025 14:11:21 CET;345;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=9EP537IQGA;device=desktop;lang=it;sysIID=1011
+choice;7;107;13
+choice;8;7903;1093
+choice;9;7;5
+choice;10;2;0
+open;20;39
+choice;30;5;2
+open;40;40128
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0110000;1
+choice;92;20;4
+choice;93;4;1

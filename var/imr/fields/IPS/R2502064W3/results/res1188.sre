@@ -1,0 +1,15 @@
+2.0;IPS;R2502064W3;1188;63N88GEEO5;18/03/2025 16:26:38 CET;18/03/2025 16:28:24 CET;106;4;100;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=63N88GEEO5;device=mobile;lang=it;sysIID=1188
+choice;7;107;105
+choice;8;7903;7739
+choice;9;7;3
+choice;10;2;0
+open;20;53
+choice;30;5;3
+open;40;36061
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1000000;0
+choice;92;20;19
+choice;93;4;1
+choice;100;6;001000;2

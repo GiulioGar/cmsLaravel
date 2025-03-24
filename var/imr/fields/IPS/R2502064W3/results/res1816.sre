@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1816;6FS20FRF4T;20/03/2025 07:18:15 CET;20/03/2025 07:19:40 CET;85;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=6FS20FRF4T;device=mobile;lang=it;sysIID=1816
+choice;7;107;26
+choice;8;7903;2306
+choice;9;7;0
+choice;10;2;0
+open;20;51
+choice;30;5;3
+open;40;26040
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111110;1
+choice;92;20;8
+choice;93;4;0

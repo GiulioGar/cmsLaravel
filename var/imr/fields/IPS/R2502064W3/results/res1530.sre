@@ -1,0 +1,11 @@
+2.0;IPS;R2502064W3;1530;YQHD5E21EZ;19/03/2025 11:27:55 CET;19/03/2025 11:29:35 CET;100;4;60;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=YQHD5E21EZ;device=mobile;lang=it;sysIID=1530
+choice;7;107;95
+choice;8;7903;7023
+choice;9;7;2
+choice;10;2;1
+open;20;54
+choice;30;5;3
+open;40;31020
+choice;60;2;1
+choice;92;20;19
+choice;93;4;1

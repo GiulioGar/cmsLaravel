@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;398;Z2R60PUPID;17/03/2025 22:06:31 CET;17/03/2025 22:08:21 CET;110;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=Z2R60PUPID;device=mobile;lang=it;sysIID=398
+choice;7;107;92
+choice;8;7903;6700
+choice;9;7;6
+choice;10;2;0
+open;20;56
+choice;30;5;3
+open;40;10126
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;1
+choice;92;20;11
+choice;93;4;0

@@ -72,8 +72,12 @@ Route::post('/fieldControl/targetField/addTarget', [TargetFieldController::class
      Route::post('/fieldControl/targetField/assignTarget', [TargetFieldController::class, 'assignTarget'])
      ->name('targetField.assignTarget');
 
+//ROTTE AGGIUNTA PAROLE IN FILE JSON
+     Route::post('/fieldQuality/addToWhiteList', [FieldQualityController::class, 'addToWhiteList'])
+     ->name('fieldQuality.addToWhiteList');
 
-
+Route::post('/fieldQuality/addToBlackList', [FieldQualityController::class, 'addToBlackList'])
+     ->name('fieldQuality.addToBlackList');
 
 
 

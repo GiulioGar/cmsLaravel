@@ -1,0 +1,19 @@
+2.0;IPS;R2502064W3;2749;IDEXNOTAAOXHZCQZI1226;21/03/2025 10:24:48 CET;21/03/2025 10:25:53 CET;65;4;210;device=desktop;lang=it;sysIID=2749;sysPRJ=IPS;sysSID=R2502064W3;pid=1222;version=v01;pan=4;sysUID=IDEXNOTAAOXHZCQZI1226
+choice;7;107;72
+choice;8;7903;5304
+choice;9;7;1
+choice;10;2;0
+open;20;26
+choice;30;5;1
+open;40;85038
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;20;1
+choice;93;4;3
+choice;100;6;111110;0
+choice;110;3;111;2
+choice;120;4;1
+choice;130;3;0
+choice;210;15;14;comp14:philip morris

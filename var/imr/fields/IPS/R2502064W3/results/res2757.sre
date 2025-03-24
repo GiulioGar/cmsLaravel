@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;2757;IDEXNODBRKVSGAYVB5074;21/03/2025 10:25:02 CET;21/03/2025 10:26:13 CET;71;4;90;device=mobile;lang=it;sysIID=2757;sysPRJ=IPS;sysSID=R2502064W3;pid=5070;version=v01;pan=4;sysUID=IDEXNODBRKVSGAYVB5074
+choice;7;107;13
+choice;8;7903;1093
+choice;9;7;5
+choice;10;2;0
+open;20;50
+choice;30;5;3
+open;40;40134
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0101010;1
+choice;92;20;4
+choice;93;4;1

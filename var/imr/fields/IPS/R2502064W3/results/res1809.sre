@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1809;K5ZEN48ORA;19/03/2025 23:29:37 CET;19/03/2025 23:30:30 CET;53;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=K5ZEN48ORA;device=mobile;lang=it;sysIID=1809
+choice;7;107;32
+choice;8;7903;2732
+choice;9;7;5
+choice;10;2;1
+open;20;61
+choice;30;5;3
+open;40;50144
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;1
+choice;92;20;15
+choice;93;4;2

@@ -1,0 +1,24 @@
+2.0;IPS;R2502064W3;2858;IDEXNOZPZCHCBNEFI5218;21/03/2025 10:30:42 CET;21/03/2025 10:32:45 CET;123;5;150;device=mobile;lang=it;sysIID=2858;sysPRJ=IPS;sysSID=R2502064W3;pid=5214;version=v01;pan=4;sysUID=IDEXNOZPZCHCBNEFI5218
+choice;7;107;20
+choice;8;7903;1629
+choice;9;7;3
+choice;10;2;0
+open;20;57
+choice;30;5;3
+open;40;81100
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;20;3
+choice;93;4;3
+choice;100;6;101100;0
+choice;110;3;010;1
+choice;120;4;3
+choice;130;3;0
+choice;140;3;0
+choice;150;3;0
+choice;170;5;11101;0
+choice;175;2;1
+choice;210;15;10
+choice;212;15;10

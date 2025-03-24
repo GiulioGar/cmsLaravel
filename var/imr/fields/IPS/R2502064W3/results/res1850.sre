@@ -1,0 +1,31 @@
+2.0;IPS;R2502064W3;1850;ADK5K2DB6W;20/03/2025 11:10:04 CET;20/03/2025 11:17:17 CET;433;3;880;device=mobile;lang=it;r1=2;sysIID=1850;sysPRJ=IPS;sysSID=R2502064W3;version=v01;leg=99;sysUID=ADK5K2DB6W
+choice;7;107;44
+choice;8;7903;3430
+choice;9;7;2
+choice;10;2;1
+open;20;57
+choice;30;5;3
+open;40;73018
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1000000;0
+choice;92;20;12
+choice;93;4;3
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;170;5;10000;0
+choice;175;2;1
+scale;200;3;3;2;0;2
+choice;210;15;2
+choice;212;15;2
+choice;215;17;00100000000000000;2
+choice;220;17;00100000000000000;2
+choice;230;17;00100000000000000;2
+scale;240;17;3;-1;-1;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;400;11;00100000000;2
+concept;850
+open;855;Sembra buono 
+choice;860;5;1
+choice;880;5;2

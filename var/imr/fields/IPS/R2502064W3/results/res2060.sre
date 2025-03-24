@@ -1,0 +1,18 @@
+2.0;IPS;R2502064W3;2060;IDEXNOPRWYASUDZTK550;20/03/2025 15:49:26 CET;20/03/2025 15:50:53 CET;87;4;210;device=desktop;lang=it;sysIID=2060;sysPRJ=IPS;sysSID=R2502064W3;pid=546;version=v01;pan=4;sysUID=IDEXNOPRWYASUDZTK550
+choice;7;107;79
+choice;8;7903;5593
+choice;9;7;1
+choice;10;2;1
+open;20;60
+choice;30;5;3
+open;40;47854
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110100;2
+choice;92;20;4
+choice;93;4;1
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;210;15;14;comp14:Rothmans

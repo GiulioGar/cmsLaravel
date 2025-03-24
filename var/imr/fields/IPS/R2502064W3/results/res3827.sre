@@ -1,0 +1,18 @@
+2.0;IPS;R2502064W3;3827;4BAWA7QKDK;22/03/2025 08:45:25 CET;22/03/2025 08:46:36 CET;71;4;210;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=4BAWA7QKDK;device=mobile;lang=it;sysIID=3827
+choice;7;107;54
+choice;8;7903;3921
+choice;9;7;3
+choice;10;2;1
+open;20;50
+choice;30;5;3
+open;40;20081
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1100100;0
+choice;92;20;8
+choice;93;4;0
+choice;100;6;101000;0
+choice;120;4;3
+choice;130;3;0
+choice;210;15;14;comp14:Elysir

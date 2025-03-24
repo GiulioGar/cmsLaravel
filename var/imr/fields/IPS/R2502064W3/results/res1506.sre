@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1506;SP7A5XAOVN;19/03/2025 10:37:21 CET;19/03/2025 10:38:28 CET;67;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=SP7A5XAOVN;device=desktop;lang=it;sysIID=1506
+choice;7;107;100
+choice;8;7903;7413
+choice;9;7;3
+choice;10;2;0
+open;20;61
+choice;30;5;3
+open;40;30027
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;1
+choice;92;20;19
+choice;93;4;1

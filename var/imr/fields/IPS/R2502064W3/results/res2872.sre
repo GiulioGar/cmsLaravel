@@ -1,0 +1,18 @@
+2.0;IPS;R2502064W3;2872;IDEXNOJEWQKZIAPTN1313;21/03/2025 10:31:42 CET;21/03/2025 10:33:19 CET;97;4;210;device=mobile;lang=it;sysIID=2872;sysPRJ=IPS;sysSID=R2502064W3;pid=1309;version=v01;pan=4;sysUID=IDEXNOJEWQKZIAPTN1313
+choice;7;107;89
+choice;8;7903;6338
+choice;9;7;3
+choice;10;2;0
+open;20;50
+choice;30;5;3
+open;40;74016
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1000100;0
+choice;92;20;12
+choice;93;4;3
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;210;15;14;comp14:Marlboro 

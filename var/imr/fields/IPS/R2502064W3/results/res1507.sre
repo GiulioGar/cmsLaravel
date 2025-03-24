@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1507;6SYC18VQP3;19/03/2025 10:38:41 CET;19/03/2025 10:39:10 CET;29;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=6SYC18VQP3;device=mobile;lang=it;sysIID=1507
+choice;7;107;17
+choice;8;7903;1485
+choice;9;7;2
+choice;10;2;1
+open;20;38
+choice;30;5;2
+open;40;09032
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;2
+choice;92;20;13
+choice;93;4;3

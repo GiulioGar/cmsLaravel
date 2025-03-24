@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1554;LCUA41RLDI;19/03/2025 12:23:13 CET;19/03/2025 12:24:38 CET;85;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=LCUA41RLDI;device=desktop;lang=it;sysIID=1554
+choice;7;107;77
+choice;8;7903;5488
+choice;9;7;2
+choice;10;2;1
+open;20;47
+choice;30;5;3
+open;40;42049
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;1
+choice;92;20;4
+choice;93;4;1

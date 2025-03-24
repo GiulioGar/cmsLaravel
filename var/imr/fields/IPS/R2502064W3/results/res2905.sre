@@ -1,0 +1,18 @@
+2.0;IPS;R2502064W3;2905;IDEXNOMTTUARGXSKB5434;21/03/2025 10:33:58 CET;21/03/2025 10:37:49 CET;231;4;210;device=mobile;lang=it;sysIID=2905;sysPRJ=IPS;sysSID=R2502064W3;pid=5430;version=v01;pan=4;sysUID=IDEXNOMTTUARGXSKB5434
+choice;7;107;1
+choice;8;7903;80
+choice;9;7;3
+choice;10;2;0
+open;20;51
+choice;30;5;3
+open;40;15033
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1000100;0
+choice;92;20;11
+choice;93;4;0
+choice;100;6;100000;0
+choice;120;4;3
+choice;130;3;0
+choice;210;15;14;comp14:Elixyr

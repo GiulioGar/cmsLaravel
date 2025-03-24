@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;3880;NRLIPTFNNO;23/03/2025 17:59:25 CET;23/03/2025 18:00:12 CET;47;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=NRLIPTFNNO;device=desktop;lang=it;sysIID=3880
+choice;7;107;11
+choice;8;7903;844
+choice;9;7;1
+choice;10;2;1
+open;20;49
+choice;30;5;3
+open;40;24050
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000100;4
+choice;92;20;8
+choice;93;4;0

@@ -1,0 +1,18 @@
+2.0;IPS;R2502064W3;2647;IDEXNOIUBJGSHLEAD1156;21/03/2025 10:19:23 CET;21/03/2025 10:21:40 CET;137;4;210;device=mobile;lang=it;sysIID=2647;sysPRJ=IPS;sysSID=R2502064W3;pid=1152;version=v01;pan=4;sysUID=IDEXNOIUBJGSHLEAD1156
+choice;7;107;49
+choice;8;7903;3683
+choice;9;7;1
+choice;10;2;1
+open;20;41
+choice;30;5;2
+open;40;62010
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110000;0
+choice;92;20;9
+choice;93;4;2
+choice;100;6;110000;0
+choice;120;4;3
+choice;130;3;0
+choice;210;15;14;comp14:Lucky Strike 

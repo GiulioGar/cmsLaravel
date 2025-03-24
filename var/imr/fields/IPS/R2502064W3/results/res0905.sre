@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;905;OIL5Q90ING;18/03/2025 13:15:18 CET;18/03/2025 13:16:13 CET;55;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=OIL5Q90ING;device=mobile;lang=it;sysIID=905
+choice;7;107;80
+choice;8;7903;5684
+choice;9;7;6
+choice;10;2;0
+open;20;38
+choice;30;5;2
+open;40;00040
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000110;4
+choice;92;20;6
+choice;93;4;2

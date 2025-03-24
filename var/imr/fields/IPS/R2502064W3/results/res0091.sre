@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;91;DVUL6LNO5D;17/03/2025 15:07:04 CET;17/03/2025 15:09:00 CET;116;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=DVUL6LNO5D;device=desktop;lang=it;sysIID=91
+choice;7;107;95
+choice;8;7903;6957
+choice;9;7;1
+choice;10;2;1
+open;20;32
+choice;30;5;2
+open;40;31041
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0110000;2
+choice;92;20;19
+choice;93;4;1

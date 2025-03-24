@@ -1,0 +1,34 @@
+2.0;IPS;R2502064W3;1247;0T5FN934OD;18/03/2025 17:54:52 CET;18/03/2025 17:57:31 CET;159;3;880;device=mobile;lang=it;r1=1;sysIID=1247;sysPRJ=IPS;sysSID=R2502064W3;version=v01;leg=99;sysUID=0T5FN934OD
+choice;7;107;81
+choice;8;7903;5741
+choice;9;7;2
+choice;10;2;0
+open;20;49
+choice;30;5;3
+open;40;45026
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;20;19
+choice;93;4;1
+choice;100;6;111110;0
+choice;110;3;111;2
+choice;120;4;2
+choice;130;3;0
+choice;140;3;0
+choice;150;3;0
+choice;160;3;0
+choice;170;5;11101;0
+choice;175;2;1
+choice;210;15;12
+choice;212;15;12
+choice;215;17;00110001000010000;12
+choice;220;17;00000001000010000;12
+choice;230;17;00000001000010000;12
+scale;240;17;3;-1;-1;-1;-1;-1;-1;-1;0;-1;-1;-1;-1;0;-1;-1;-1;-1
+choice;400;11;00111001000;3
+concept;850
+open;855;Buona confezione 
+choice;860;5;0
+choice;880;5;0

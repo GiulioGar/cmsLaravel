@@ -206,30 +206,88 @@
                     <table class="table table-hover quality-table-lower">
                         <thead>
                             <tr>
+                                <th class="small">+</th> <!-- Colonna modale 3 puntini -->
                                 <th class="small">IID</th>
                                 <th class="small">UID</th>
+                                <th class="small">Panel</th>
                                 <th class="small">Codice</th>
                                 <th class="small">Testo</th>
+                                <th class="small">Check</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($openQuestionsData as $open)
-                                            <tr>
-                                                <td class="small">{{ $open['iid'] }}</td>
-                                                <td class="small">{{ $open['uid'] }}</td>
+                            @foreach($openQuestionsData as $index => $open)
+                                @php
+                                    // Un ID univoco per la modale
+                                    $modalId = "modalOpen_{$open['iid']}_{$index}";
+                                @endphp
 
-                                                <!-- Codice con tooltip -->
-                                                <td class="small">
-                                                    <span data-bs-toggle="tooltip"
-                                                        title="{{ $open['tooltip'] }}">
-                                                        {{ $open['codice'] }}
-                                                    </span>
-                                                </td>
+                                <tr>
+                                    <!-- Colonna con 3 puntini che apre la modale -->
+                                    <td class="small">
+                                        <!-- Link che apre modale -->
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">
+                                            <i class="fas fa-ellipsis-h"></i>
+                                        </a>
+                                    </td>
 
-                                                <!-- Risposta open -->
-                                                <td class="small">{{ $open['openResponse'] }}</td>
-                                            </tr>
-                                        @endforeach
+                                    <td class="small">{{ $open['iid'] }}</td>
+                                    <td class="small">{{ $open['uid'] }}</td>
+                                    <td class="small">{{ $open['panel'] }}</td>
+                                    <td class="small">
+                                        <span data-bs-toggle="tooltip" title="{{ $open['tooltip'] }}">
+                                            {{ $open['codice'] }}
+                                        </span>
+                                    </td>
+                                    <td class="small">{{ $open['openResponse'] }}</td>
+                                    <td class="small">
+                                        @if(!empty($open['isFake']) && $open['isFake'] === true)
+                                            <i class="fas fa-exclamation" style="color: red;" title="Risposta dubbia"></i>
+                                        @endif
+                                    </td>
+                                </tr>
+
+                                <!-- Modale -->
+                                <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-labelledby="{{ $modalId }}Label" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-scrollable">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="{{ $modalId }}Label">
+                                                    Risposta Aperta (IID: {{ $open['iid'] }})
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+
+                                            <div class="modal-body">
+                                                <p><strong>Testo:</strong></p>
+                                                <p>{{ $open['openResponse'] }}</p>
+
+                                                <hr/>
+
+                                                <!-- Bottoni per whitelist e blacklist -->
+                                                <div class="d-grid gap-2">
+                                                    <button class="btn"
+                                                    style="background-color: white; color: black; border:1px solid #ccc"
+                                                    onclick="addToWhiteList('{{ $open['openResponse'] }}')">
+                                                Aggiungi a Whitelist
+                                            </button>
+                                            <button class="btn"
+                                            style="background-color: black; color: white; border:1px solid #000"
+                                            onclick="addToBlackList('{{ $open['openResponse'] }}')">
+                                        Aggiungi a Blacklist
+                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Fine Modale -->
+
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -265,5 +323,59 @@
             });
         });
     </script>
+
+<script>
+    function addToWhiteList(responseText) {
+        fetch("{{ route('fieldQuality.addToWhiteList') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                text: responseText
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                alert("La parola è stata aggiunta alla whitelist!");
+                window.location.reload();
+            } else {
+                alert("Errore: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Si è verificato un errore durante l'aggiunta alla whitelist.");
+        });
+    }
+
+    function addToBlackList(responseText) {
+        fetch("{{ route('fieldQuality.addToBlackList') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                text: responseText
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                alert("La parola è stata aggiunta alla blacklist!");
+                window.location.reload();
+            } else {
+                alert("Errore: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Si è verificato un errore durante l'aggiunta alla blacklist.");
+        });
+    }
+</script>
 
 @endsection

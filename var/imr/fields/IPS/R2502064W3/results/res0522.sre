@@ -1,0 +1,18 @@
+2.0;IPS;R2502064W3;522;4FSOXSP570;18/03/2025 10:25:18 CET;18/03/2025 10:26:08 CET;50;4;130;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=4FSOXSP570;device=desktop;lang=it;sysIID=522
+choice;7;107;15
+choice;8;7903;1288
+choice;9;7;4
+choice;10;2;1
+open;20;47
+choice;30;5;3
+open;40;25125
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1100110;1
+choice;92;20;8
+choice;93;4;0
+choice;100;6;101100;2
+choice;110;3;100;0
+choice;120;4;1
+choice;130;3;1

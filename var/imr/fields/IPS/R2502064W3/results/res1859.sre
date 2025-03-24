@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1859;CZKBOCW65O;20/03/2025 12:22:40 CET;20/03/2025 12:25:45 CET;185;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=CZKBOCW65O;device=mobile;lang=it;sysIID=1859
+choice;7;107;54
+choice;8;7903;4044
+choice;9;7;0
+choice;10;2;1
+open;20;55
+choice;30;5;3
+open;40;20080
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0011100;2
+choice;92;20;8
+choice;93;4;0

@@ -1,0 +1,15 @@
+2.0;IPS;R2502064W3;49;UPM5BNLBDX;17/03/2025 14:50:08 CET;17/03/2025 14:52:26 CET;138;4;100;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=UPM5BNLBDX;device=mobile;lang=it;sysIID=49
+choice;7;107;63
+choice;8;7903;4705
+choice;9;7;4
+choice;10;2;1
+open;20;41
+choice;30;5;2
+open;40;43126
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1101100;0
+choice;92;20;4
+choice;93;4;1
+choice;100;6;001100;2

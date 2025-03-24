@@ -1,0 +1,14 @@
+2.0;IPS;R2502064W3;1012;MI5BT23L6N;18/03/2025 14:06:01 CET;18/03/2025 14:07:52 CET;111;4;90;version=v01;sysSID=R2502064W3;sysPRJ=IPS;sysUID=MI5BT23L6N;device=mobile;lang=it;sysIID=1012
+choice;7;107;78
+choice;8;7903;5560
+choice;9;7;0
+choice;10;2;1
+open;20;65
+choice;30;5;3
+open;40;02040
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0010000;2
+choice;92;20;6
+choice;93;4;2

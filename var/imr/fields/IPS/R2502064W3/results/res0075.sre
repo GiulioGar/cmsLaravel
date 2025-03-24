@@ -1,0 +1,32 @@
+2.0;IPS;R2502064W3;75;3DLC4OGSP3;17/03/2025 14:58:14 CET;17/03/2025 15:01:15 CET;181;3;880;device=mobile;lang=it;r1=0;sysIID=75;sysPRJ=IPS;sysSID=R2502064W3;version=v01;leg=99;sysUID=3DLC4OGSP3
+choice;7;107;52
+choice;8;7903;3793
+choice;9;7;0
+choice;10;2;1
+open;20;59
+choice;30;5;3
+open;40;75010
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;20;1
+choice;93;4;3
+choice;100;6;101000;0
+choice;120;4;3
+choice;130;3;0
+choice;140;3;0
+choice;170;5;11010;0
+choice;175;2;1
+scale;200;3;3;-1;0;2
+choice;210;15;2
+choice;212;15;2
+choice;215;17;01110001000010000;2
+choice;220;17;00100000000000000;2
+choice;230;17;00100000000000000;2
+scale;240;17;3;-1;-1;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;400;11;00000011100;6
+concept;850
+open;855;La trovo bella
+choice;860;5;1
+choice;880;5;1
