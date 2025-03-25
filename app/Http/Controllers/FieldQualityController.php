@@ -511,7 +511,9 @@ private function isSingleWordWithIllegalSequence(string $resp): bool
     // Lista sequenze illegali (da estendere nel tempo)
     $illegalPatterns = [
         'dfy', 'fyu', 'efg', 'fgu', 'drt', 'dgu', 'guu', 'dyu', 'xgu',
-        'fgi', 'zfg', 'waq', 'iuy', 'dty', 'tyu', 'rtt', 'dgy', 'gyu'
+        'fgi', 'zfg', 'waq', 'iuy', 'dty', 'tyu', 'rtt', 'dgy', 'gyu',
+            'qya', 'qop', 'qen', 'aqk', 'ojd', 'ejk', 'axq', 'exkz',
+            'uuu', 'iii', 'jjj', 'abg', 'obm', 'apk', 'atk', 'xxz'
     ];
 
     // Controllo sequenze illegali nella parola singola

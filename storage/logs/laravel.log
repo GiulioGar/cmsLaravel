@@ -3225,3 +3225,7 @@
 [2025-03-24 16:29:11] local.WARNING: parseDateToCarbon() - Impossibile parsare la data: [26/10/2024 23:20:51 CEST], errore: Trailing data  
 [2025-03-24 16:29:11] local.WARNING: parseDateToCarbon() - Impossibile parsare la data: [26/10/2024 23:48:00 CEST], errore: Trailing data  
 [2025-03-24 16:29:11] local.WARNING: parseDateToCarbon() - Impossibile parsare la data: [27/10/2024 02:31:11 CEST], errore: Trailing data  
+[2025-03-25 09:08:13] local.ERROR: Maximum execution time of 60 seconds exceeded {"exception":"[object] (Symfony\\Component\\ErrorHandler\\Error\\FatalError(code: 0): Maximum execution time of 60 seconds exceeded at C:\\xampp\\htdocs\\cmsLaravel\\app\\Http\\Controllers\\FieldControlController.php:66)
+[stacktrace]
+#0 {main}
+"} 

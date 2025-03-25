@@ -227,7 +227,7 @@
                                     <td class="small">
                                         <!-- Link che apre modale -->
                                         <a href="#" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">
-                                            <i class="fas fa-ellipsis-h"></i>
+                                            <i class="fas fa-ellipsis-v"></i>
                                         </a>
                                     </td>
 
@@ -242,7 +242,7 @@
                                     <td class="small">{{ $open['openResponse'] }}</td>
                                     <td class="small">
                                         @if(!empty($open['isFake']) && $open['isFake'] === true)
-                                            <i class="fas fa-exclamation" style="color: red;" title="Risposta dubbia"></i>
+                                           <b> <span class="fas fa-exclamation" style="color: red;" title="Risposta dubbia"></span></b>
                                         @endif
                                     </td>
                                 </tr>
