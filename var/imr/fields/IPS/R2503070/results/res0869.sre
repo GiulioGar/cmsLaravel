@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;869;DLUVAF6ILX;05/04/2025 18:13:40 CEST;05/04/2025 18:14:46 CEST;66;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=DLUVAF6ILX;device=desktop;lang=it;sysIID=869
+choice;7;107;86
+choice;8;7903;6135
+choice;9;7;4
+choice;10;2;0
+open;20;68
+choice;22;5;4
+open;40;96100
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;9222;20;14
+choice;9333;4;3

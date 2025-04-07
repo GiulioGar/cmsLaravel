@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;701;FETN7VZ712;05/04/2025 14:17:51 CEST;05/04/2025 14:18:52 CEST;61;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=FETN7VZ712;device=mobile;lang=it;sysIID=701
+choice;7;107;77
+choice;8;7903;5477
+choice;9;7;2
+choice;10;2;0
+open;20;41
+choice;22;5;2
+open;40;42027
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111110;1
+choice;9222;20;4
+choice;9333;4;1

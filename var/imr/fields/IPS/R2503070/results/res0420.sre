@@ -1,0 +1,11 @@
+2.0;IPS;R2503070;420;GFMK0G6BDN;03/04/2025 15:26:30 CEST;<unknown>;0;0;9333;sysSID=R2503070;sysPRJ=IPS;sysUID=GFMK0G6BDN;device=desktop;lang=it;sysIID=420
+choice;7;107;69
+choice;8;7903;0
+choice;9;7;3
+choice;10;2;0
+open;20;39
+choice;22;5;2
+open;40;56127
+choice;60;2;0
+choice;9222;20;15
+choice;9333;4;2

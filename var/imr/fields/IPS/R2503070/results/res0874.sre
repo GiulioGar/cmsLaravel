@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;874;40GRLOSTYI;05/04/2025 18:27:24 CEST;05/04/2025 18:28:46 CEST;82;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=40GRLOSTYI;device=desktop;lang=it;sysIID=874
+choice;7;107;8
+choice;8;7903;631
+choice;9;7;3
+choice;10;2;1
+open;20;47
+choice;22;5;3
+open;40;26849
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;8;10011100;0
+choice;120;4;2
+choice;9222;20;12
+choice;9333;4;3

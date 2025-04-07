@@ -1,0 +1,18 @@
+2.0;IPS;R2503070;743;GOPEHQPG36;05/04/2025 14:47:22 CEST;05/04/2025 14:50:06 CEST;164;4;100;sysSID=R2503070;sysPRJ=IPS;sysUID=GOPEHQPG36;device=mobile;lang=it;sysIID=743
+choice;7;107;7
+choice;8;7903;585
+choice;9;7;3
+choice;10;2;1
+open;20;24
+choice;22;5;1
+open;40;70022
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110110;0
+choice;92;8;10101100;2
+choice;93;8;10101100;2
+choice;100;8;00001100;4
+choice;120;4;3
+choice;9222;20;12
+choice;9333;4;3

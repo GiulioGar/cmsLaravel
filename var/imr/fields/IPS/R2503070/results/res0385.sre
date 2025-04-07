@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;385;9LQOM2LIXO;03/04/2025 14:58:53 CEST;03/04/2025 14:59:57 CEST;64;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=9LQOM2LIXO;device=desktop;lang=it;sysIID=385
+choice;7;107;77
+choice;8;7903;5485
+choice;9;7;2
+choice;10;2;0
+open;20;68
+choice;22;5;4
+open;40;42048
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0101100;1
+choice;9222;20;4
+choice;9333;4;1

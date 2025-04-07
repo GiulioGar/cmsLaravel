@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;796;8Q7I1NRB7H;05/04/2025 15:37:52 CEST;05/04/2025 15:39:03 CEST;71;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=8Q7I1NRB7H;device=mobile;lang=it;sysIID=796
+choice;7;107;56
+choice;8;7903;4130
+choice;9;7;2
+choice;10;2;0
+open;20;55
+choice;22;5;3
+open;40;20821
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;9222;20;8
+choice;9333;4;0

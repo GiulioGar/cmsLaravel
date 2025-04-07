@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;832;MPFBODRY1D;05/04/2025 16:47:34 CEST;05/04/2025 16:48:33 CEST;59;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=MPFBODRY1D;device=desktop;lang=it;sysIID=832
+choice;7;107;80
+choice;8;7903;5684
+choice;9;7;6
+choice;10;2;0
+open;20;69
+choice;22;5;4
+open;40;00196
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111010;2
+choice;9222;20;6
+choice;9333;4;2

@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;623;6N4OF81TIN;04/04/2025 13:56:01 CEST;04/04/2025 13:57:44 CEST;103;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=6N4OF81TIN;device=mobile;lang=it;sysIID=623
+choice;7;107;15
+choice;8;7903;1372
+choice;9;7;2
+choice;10;2;0
+open;20;68
+choice;22;5;4
+open;40;25018
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;1
+choice;9222;20;8
+choice;9333;4;0

@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;460;DO21OMEUDA;03/04/2025 16:26:32 CEST;03/04/2025 16:27:37 CEST;65;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=DO21OMEUDA;device=desktop;lang=it;sysIID=460
+choice;7;107;7
+choice;8;7903;601
+choice;9;7;2
+choice;10;2;0
+open;20;65
+choice;22;5;3
+open;40;70025
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111100;0
+choice;92;8;10000000;0
+choice;120;4;3
+choice;9222;20;12
+choice;9333;4;3

@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;311;GUEST;03/04/2025 09:44:52 CEST;03/04/2025 09:45:14 CEST;22;4;92;debug=true;browser=variables;device=desktop;lang=it;sysIID=311;sysRST=1
+choice;7;107;0
+choice;8;7903;0
+choice;9;7;3
+choice;10;2;0
+open;20;45
+choice;22;5;3
+open;40;45545
+choice;60;2;0
+choice;70;8;10000000;0
+choice;80;8;00000001;7
+choice;90;7;1000000;0
+choice;92;8;10010000;3
+choice;120;4;0
+choice;9222;20;14
+choice;9333;4;3

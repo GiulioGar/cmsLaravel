@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;347;Q63VAYP35A;03/04/2025 14:45:43 CEST;03/04/2025 14:46:51 CEST;68;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=Q63VAYP35A;device=mobile;lang=it;sysIID=347
+choice;7;107;32
+choice;8;7903;2732
+choice;9;7;5
+choice;10;2;0
+open;20;51
+choice;22;5;3
+open;40;50100
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000110;4
+choice;9222;20;15
+choice;9333;4;2

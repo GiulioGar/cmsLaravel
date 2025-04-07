@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;1065;SXFI9GULBC;06/04/2025 23:35:24 CEST;06/04/2025 23:36:56 CEST;92;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=SXFI9GULBC;device=mobile;lang=it;sysIID=1065
+choice;7;107;54
+choice;8;7903;4031
+choice;9;7;2
+choice;10;2;0
+open;20;55
+choice;22;5;3
+open;40;20030
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0110100;1
+choice;9222;20;8
+choice;9333;4;0

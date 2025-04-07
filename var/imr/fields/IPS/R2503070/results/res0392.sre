@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;392;AU09T39GBP;03/04/2025 15:03:13 CEST;03/04/2025 15:18:19 CEST;906;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=AU09T39GBP;device=mobile;lang=it;sysIID=392
+choice;7;107;57
+choice;8;7903;4178
+choice;9;7;3
+choice;10;2;1
+open;20;56
+choice;22;5;3
+open;40;80026
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1000000;0
+choice;92;8;11011000;0
+choice;120;4;3
+choice;9222;20;3
+choice;9333;4;3

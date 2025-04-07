@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;852;0SV1L618DS;05/04/2025 17:37:19 CEST;05/04/2025 17:38:16 CEST;57;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=0SV1L618DS;device=mobile;lang=it;sysIID=852
+choice;7;107;12
+choice;8;7903;1057
+choice;9;7;0
+choice;10;2;1
+open;20;40
+choice;22;5;2
+open;40;13899
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111100;1
+choice;9222;20;11
+choice;9333;4;0

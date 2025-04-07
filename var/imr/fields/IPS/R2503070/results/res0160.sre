@@ -1,0 +1,10 @@
+2.0;IPS;R2503070;160;96IMGHQHOU;02/04/2025 13:31:32 CEST;<unknown>;0;0;9333;sysSID=R2503070;sysPRJ=IPS;sysUID=96IMGHQHOU;device=mobile;lang=it;sysIID=160
+choice;7;107;46
+choice;8;7903;3545
+choice;9;7;3
+choice;10;2;0
+open;20;45
+choice;22;5;3
+open;40;57025
+choice;9222;20;15
+choice;9333;4;2

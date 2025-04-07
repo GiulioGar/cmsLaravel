@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;248;FANXE2I12D;02/04/2025 18:27:48 CEST;02/04/2025 18:28:53 CEST;65;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=FANXE2I12D;device=desktop;lang=it;sysIID=248
+choice;7;107;33
+choice;8;7903;2789
+choice;9;7;3
+choice;10;2;0
+open;20;63
+choice;22;5;3
+open;40;71030
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0110100;1
+choice;9222;20;12
+choice;9333;4;3

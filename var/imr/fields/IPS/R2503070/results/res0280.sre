@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;280;OS7PZV2EP4;02/04/2025 22:14:54 CEST;02/04/2025 22:16:48 CEST;114;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=OS7PZV2EP4;device=desktop;lang=it;sysIID=280
+choice;7;107;50
+choice;8;7903;3763
+choice;9;7;1
+choice;10;2;1
+open;20;66
+choice;22;5;4
+open;40;46036
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111100;0
+choice;92;8;10000000;0
+choice;120;4;3
+choice;9222;20;8
+choice;9333;4;0

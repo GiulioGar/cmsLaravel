@@ -117,8 +117,11 @@ class FieldQualityController extends Controller
             return $a['iid'] <=> $b['iid'];
         });
 
-        // 8) Applichiamo Criterio LOI e otteniamo la LOI media (in secondi)
+        // 8a) Applichiamo Criterio LOI e otteniamo la LOI media (in secondi)
         $loiMediaSec = $this->applyLoiCriterion($completeInterviews);
+
+        // 8b) Applichiamo Criterio "Domande Aperte" (fake = -0.7, non fake = +0.2)
+        $this->applyOpenQuestionsCriterion($completeInterviews, $openQuestionsData);
 
         // 9) Convertiamo la LOI media in "minuti.secondi"
         $loiMediaFormatted = '0.00';
@@ -313,6 +316,44 @@ class FieldQualityController extends Controller
 
         return $loiMediaSec;
     }
+
+    /**
+ * Applica un bonus/malus basato sulle domande aperte:
+ * - Se la domanda è FAKE => -0.7
+ * - Se la domanda NON è FAKE => +0.2
+ *
+ * Nota: Un'intervista può avere più domande aperte. Ciascuna incide cumulativamente.
+ */
+private function applyOpenQuestionsCriterion(array &$completeInterviews, array $openQuestionsData): void
+{
+    // Creiamo una mappa veloce di interview (chiave = iid)
+    // così possiamo aggiornare il punteggio senza dover ciclare ogni volta
+    $indexedInterviews = [];
+    foreach ($completeInterviews as &$iv) {
+        $indexedInterviews[$iv['iid']] = &$iv;
+    }
+    unset($iv); // buona pratica quando si usa & (reference)
+
+    // Ora iteriamo su tutte le "open" e aggiorniamo il punteggio
+    foreach ($openQuestionsData as $open) {
+        $iid = $open['iid'] ?? null;
+        if (!$iid) {
+            continue; // se manca iid, saltiamo
+        }
+
+        // Cerchiamo l'intervista corrispondente
+        if (!isset($indexedInterviews[$iid])) {
+            continue; // se non c'è match, skip
+        }
+
+        // Se "isFake" = true => -0.7, altrimenti => +0.2
+        if (!empty($open['isFake']) && $open['isFake'] === true) {
+            $indexedInterviews[$iid]['score'] -= 0.7;
+        } else {
+            $indexedInterviews[$iid]['score'] += 0.2;
+        }
+    }
+}
 
     private function readFirstLine($filePath)
     {

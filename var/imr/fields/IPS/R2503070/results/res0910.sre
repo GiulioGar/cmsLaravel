@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;910;EMC0Y1HSMB;05/04/2025 20:00:11 CEST;05/04/2025 20:00:48 CEST;37;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=EMC0Y1HSMB;device=desktop;lang=it;sysIID=910
+choice;7;107;26
+choice;8;7903;2285
+choice;9;7;3
+choice;10;2;0
+open;20;45
+choice;22;5;3
+open;40;26013
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110000;0
+choice;92;8;10001000;0
+choice;120;4;3
+choice;9222;20;8
+choice;9333;4;0

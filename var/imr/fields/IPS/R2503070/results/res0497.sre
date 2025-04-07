@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;497;25IRIGEEXT;03/04/2025 18:15:55 CEST;03/04/2025 18:17:29 CEST;94;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=25IRIGEEXT;device=mobile;lang=it;sysIID=497
+choice;7;107;25
+choice;8;7903;2144
+choice;9;7;3
+choice;10;2;0
+open;20;61
+choice;22;5;3
+open;40;87100
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0100100;4
+choice;9222;20;2
+choice;9333;4;3

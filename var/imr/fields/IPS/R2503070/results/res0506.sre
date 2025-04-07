@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;506;VU8KS103CK;03/04/2025 18:41:12 CEST;03/04/2025 18:42:15 CEST;63;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=VU8KS103CK;device=desktop;lang=it;sysIID=506
+choice;7;107;92
+choice;8;7903;6726
+choice;9;7;0
+choice;10;2;1
+open;20;32
+choice;22;5;2
+open;40;10068
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000100;4
+choice;9222;20;11
+choice;9333;4;0

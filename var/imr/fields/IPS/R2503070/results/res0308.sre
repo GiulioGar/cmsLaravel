@@ -1,0 +1,25 @@
+2.0;IPS;R2503070;308;GUEST;03/04/2025 09:35:54 CEST;<unknown>;0;0;139;debug=true;browser=variables;device=desktop;lang=it;sysIID=308;sysRST=1
+choice;7;107;0
+choice;8;7903;0
+choice;9;7;3
+choice;10;2;0
+open;20;44
+choice;22;5;2
+open;40;44444
+choice;60;2;0
+choice;70;8;10000000;0
+choice;80;8;00000001;7
+choice;90;7;1000000;0
+choice;92;8;00110000;2
+choice;93;8;00110000;2
+choice;100;8;00110000;2
+choice;103;3;0
+choice;115;3;0
+choice;120;4;0
+choice;139;3;0
+choice;210;12;100000000000;0
+scale;220;12;3;0;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+choice;225;12;100000000000;0
+choice;227;12;0
+choice;9222;20;14
+choice;9333;4;3

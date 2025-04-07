@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;113;XD99LTVGMH;02/04/2025 11:56:05 CEST;02/04/2025 11:58:47 CEST;162;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=XD99LTVGMH;device=desktop;lang=it;sysIID=113
+choice;7;107;25
+choice;8;7903;2144
+choice;9;7;3
+choice;10;2;0
+open;20;42
+choice;22;5;2
+open;40;87050
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;1
+choice;92;8;10000100;0
+choice;120;4;0
+choice;9222;20;2
+choice;9333;4;3

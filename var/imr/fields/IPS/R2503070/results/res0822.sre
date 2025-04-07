@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;822;DBN64KD2T1;05/04/2025 16:33:51 CEST;05/04/2025 16:35:12 CEST;81;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=DBN64KD2T1;device=desktop;lang=it;sysIID=822
+choice;7;107;36
+choice;8;7903;2967
+choice;9;7;6
+choice;10;2;0
+open;20;64
+choice;22;5;3
+open;40;16145
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111100;0
+choice;92;8;10001000;0
+choice;120;4;3
+choice;9222;20;7
+choice;9333;4;0

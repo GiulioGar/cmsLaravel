@@ -726,7 +726,7 @@ private function getDataSummaryByDate($directory, $panelNames)
 private function parseDateToCarbon($rawDate)
 {
     // Rimuoviamo la parte " CET"
-    $cleanDate = str_replace(' CET', '', trim($rawDate));
+    $cleanDate = str_replace([' CET', ' CEST'], '', trim($rawDate));
 
     try {
         // Esempio: "d/m/Y H:i:s", "25/02/2025 17:01:52"
@@ -751,7 +751,7 @@ private function formatDate($dateString)
     Log::debug("Tentativo di formattare la data dopo trim: [{$dateString}]");
 
     // Rimuovo la parte " CET" perché non viene parsata da createFromFormat() in molte configurazioni
-    $cleanString = str_replace(' CET', '', $dateString);
+    $cleanString = str_replace([' CET', ' CEST'], '', trim($dateString));
 
     // Loggo il valore dopo aver tolto CET
     Log::debug("Data dopo rimozione 'CET': [{$cleanString}]");

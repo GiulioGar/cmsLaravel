@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;947;53FB5HUKJX;05/04/2025 22:42:42 CEST;05/04/2025 22:43:26 CEST;44;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=53FB5HUKJX;device=desktop;lang=it;sysIID=947
+choice;7;107;90
+choice;8;7903;6353
+choice;9;7;2
+choice;10;2;0
+open;20;42
+choice;22;5;2
+open;40;64011
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0010000;2
+choice;9222;20;0
+choice;9333;4;3

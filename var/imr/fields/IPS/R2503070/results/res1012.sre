@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;1012;S45WYDDA1V;06/04/2025 12:25:22 CEST;06/04/2025 12:26:20 CEST;58;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=S45WYDDA1V;device=desktop;lang=it;sysIID=1012
+choice;7;107;74
+choice;8;7903;5332
+choice;9;7;3
+choice;10;2;0
+open;20;44
+choice;22;5;2
+open;40;97015
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0111110;1
+choice;9222;20;14
+choice;9333;4;3

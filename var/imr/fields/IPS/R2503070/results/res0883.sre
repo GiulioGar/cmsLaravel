@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;883;UQT40FTXCR;05/04/2025 18:45:16 CEST;05/04/2025 18:46:35 CEST;79;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=UQT40FTXCR;device=desktop;lang=it;sysIID=883
+choice;7;107;21
+choice;8;7903;1726
+choice;9;7;5
+choice;10;2;0
+open;20;55
+choice;22;5;3
+open;40;95121
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000001;6
+choice;9222;20;14
+choice;9333;4;3

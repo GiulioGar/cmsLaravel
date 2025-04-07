@@ -1,0 +1,17 @@
+2.0;IPS;R2503070;171;HS1C2LT21S;02/04/2025 13:50:12 CEST;02/04/2025 13:52:03 CEST;111;4;93;sysSID=R2503070;sysPRJ=IPS;sysUID=HS1C2LT21S;device=mobile;lang=it;sysIID=171
+choice;7;107;57
+choice;8;7903;4156
+choice;9;7;3
+choice;10;2;0
+open;20;45
+choice;22;5;3
+open;40;80011
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111110;0
+choice;92;8;11111110;2
+choice;93;8;11000110;0
+choice;120;4;3
+choice;9222;20;3
+choice;9333;4;3

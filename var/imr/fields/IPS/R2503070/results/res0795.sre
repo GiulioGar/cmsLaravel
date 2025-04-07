@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;795;Y31F2FPM45;05/04/2025 15:37:00 CEST;05/04/2025 15:38:15 CEST;75;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=Y31F2FPM45;device=mobile;lang=it;sysIID=795
+choice;7;107;36
+choice;8;7903;2946
+choice;9;7;0
+choice;10;2;0
+open;20;69
+choice;22;5;4
+open;40;16031
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0011000;2
+choice;9222;20;7
+choice;9333;4;0

@@ -1,0 +1,15 @@
+2.0;IPS;R2503070;603;DH1UGLL7OY;04/04/2025 09:30:07 CEST;<unknown>;0;0;80;sysSID=R2503070;sysPRJ=IPS;sysUID=DH1UGLL7OY;device=mobile;lang=it;sysIID=603
+choice;7;107;44
+choice;8;7903;3403
+choice;9;7;0
+choice;10;2;0
+open;20;57
+choice;22;5;3
+open;40;73036
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111010;0
+choice;120;4;2
+choice;9222;20;12
+choice;9333;4;3

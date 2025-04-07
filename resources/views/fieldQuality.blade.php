@@ -10,7 +10,7 @@
 <nav class="navbar custom-navbar mb-4">
     <div class="container-fluid d-flex align-items-center justify-content-between px-0">
         <!-- Brand a sinistra -->
-        <a class="navbar-brand d-flex align-items-center" href="#">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url('fieldControl?prj='.$prj.'&sid='.$sid) }}">
             <i class="fas fa-chart-bar me-2"></i>
             <span>Status Field</span>
         </a>
@@ -296,6 +296,35 @@
     </div>
 </div>
 <!-- FINE SECONDA RIGA -->
+
+<!-- TERZA RIGA -->
+<div class="row">
+    <!-- COLONNA SINISTRA (50%) -->
+    <div class="col-md-6">
+        <div class="quality-card shadow-sm mb-4">
+            <div class="quality-card-header quality-header-left">
+                <h5 class="mb-0">Quality Scale</h5>
+            </div>
+            <div class="quality-card-body">
+                <!-- Contenuto futuro per Quality Scale -->
+            </div>
+        </div>
+    </div>
+
+    <!-- COLONNA DESTRA (50%) -->
+    <div class="col-md-6">
+        <div class="quality-card shadow-sm mb-4">
+            <div class="quality-card-header quality-header-right">
+                <h5 class="mb-0">Other Controls</h5>
+            </div>
+            <div class="quality-card-body">
+                <!-- Contenuto futuro per Other Controls -->
+            </div>
+        </div>
+    </div>
+</div>
+<!-- FINE TERZA RIGA -->
+
 
 
     </div><!-- container -->

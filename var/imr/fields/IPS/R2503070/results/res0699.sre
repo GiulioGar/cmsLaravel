@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;699;QSQDCURBRL;05/04/2025 14:16:11 CEST;05/04/2025 14:17:38 CEST;87;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=QSQDCURBRL;device=mobile;lang=it;sysIID=699
+choice;7;107;92
+choice;8;7903;6700
+choice;9;7;6
+choice;10;2;0
+open;20;62
+choice;22;5;3
+open;40;10123
+choice;60;2;0
+choice;70;8;00100000;2
+choice;80;8;00000001;7
+choice;90;7;1011000;0
+choice;92;8;10000000;0
+choice;120;4;3
+choice;9222;20;11
+choice;9333;4;0

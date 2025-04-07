@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;250;EUWW61V21P;02/04/2025 18:32:36 CEST;02/04/2025 18:34:21 CEST;105;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=EUWW61V21P;device=desktop;lang=it;sysIID=250
+choice;7;107;1
+choice;8;7903;151
+choice;9;7;2
+choice;10;2;0
+open;20;77
+choice;22;5;4
+open;40;15067
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1010000;0
+choice;92;8;10000000;0
+choice;120;4;3
+choice;9222;20;11
+choice;9333;4;0

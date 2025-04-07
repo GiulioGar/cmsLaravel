@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;674;LXKR36I2LO;05/04/2025 14:06:39 CEST;05/04/2025 14:07:04 CEST;25;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=LXKR36I2LO;device=mobile;lang=it;sysIID=674
+choice;7;107;54
+choice;8;7903;3926
+choice;9;7;1
+choice;10;2;0
+open;20;42
+choice;22;5;2
+open;40;20100
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0100000;1
+choice;9222;20;8
+choice;9333;4;0

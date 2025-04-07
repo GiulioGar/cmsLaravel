@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;319;HF840V3S59;03/04/2025 11:59:02 CEST;03/04/2025 12:00:40 CEST;98;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=HF840V3S59;device=desktop;lang=it;sysIID=319
+choice;7;107;57
+choice;8;7903;4164
+choice;9;7;2
+choice;10;2;0
+open;20;53
+choice;22;5;3
+open;40;80042
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1111000;0
+choice;92;8;10001000;0
+choice;120;4;0
+choice;9222;20;3
+choice;9333;4;3

@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;287;8XD816B901;02/04/2025 23:24:32 CEST;02/04/2025 23:26:40 CEST;128;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=8XD816B901;device=desktop;lang=it;sysIID=287
+choice;7;107;54
+choice;8;7903;4007
+choice;9;7;2
+choice;10;2;0
+open;20;60
+choice;22;5;3
+open;40;20068
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0010000;2
+choice;9222;20;8
+choice;9333;4;0

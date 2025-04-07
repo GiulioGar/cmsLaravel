@@ -1,0 +1,14 @@
+2.0;IPS;R2503070;742;MGVRF37R5A;05/04/2025 14:46:20 CEST;05/04/2025 14:47:59 CEST;99;4;90;sysSID=R2503070;sysPRJ=IPS;sysUID=MGVRF37R5A;device=mobile;lang=it;sysIID=742
+choice;7;107;20
+choice;8;7903;1691
+choice;9;7;0
+choice;10;2;1
+open;20;25
+choice;22;5;1
+open;40;81050
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;0000100;4
+choice;9222;20;3
+choice;9333;4;3

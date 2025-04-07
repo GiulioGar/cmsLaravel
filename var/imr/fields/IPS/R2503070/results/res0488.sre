@@ -1,0 +1,16 @@
+2.0;IPS;R2503070;488;DHENI65SVE;03/04/2025 17:41:17 CEST;03/04/2025 17:42:54 CEST;97;4;92;sysSID=R2503070;sysPRJ=IPS;sysUID=DHENI65SVE;device=mobile;lang=it;sysIID=488
+choice;7;107;7
+choice;8;7903;617
+choice;9;7;2
+choice;10;2;0
+open;20;45
+choice;22;5;3
+open;40;70029
+choice;60;2;0
+choice;70;8;00000001;7
+choice;80;8;00000001;7
+choice;90;7;1110100;0
+choice;92;8;00011000;3
+choice;120;4;3
+choice;9222;20;12
+choice;9333;4;3
