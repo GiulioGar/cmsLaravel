@@ -31,6 +31,9 @@ class FieldQualityController extends Controller
         // 6) Eventuali domande aperte
         $openQuestionsData = [];
 
+        // 6b) Nuovo array per le scale
+      $scaleData = []; // Qui memorizzeremo la varianza delle scale singole
+
         // 7) Lettura file .sre
         if (is_dir($directory)) {
             $files = glob($directory . "/*.sre");
@@ -86,6 +89,9 @@ class FieldQualityController extends Controller
 
                     // *** LEGGIAMO TUTTE LE RIGHE open: ***
                     $this->extractOpenQuestions($file, $iid, $uid,$panelUsed,$openQuestionsData);
+
+                    // Scale: estraiamo in un pass dedicato
+                    $this->extractScaleData($file, $iid, $uid, $scaleData);
                 }
             }
         }
@@ -176,7 +182,11 @@ class FieldQualityController extends Controller
 
             // Seconda riga - destra
             'openQuestionsData' => $openQuestionsData,
+
+             // Terza riga - "Quality Scale"
+             'scaleData' => $scaleData,
         ]);
+    
     }
 
    // *** FUNZIONE 1) Legge TUTTO il file .sre (oltre la prima linea) e cerca righe "open;...".
@@ -681,6 +691,143 @@ public function addToBlackList(Request $request)
     return response()->json(['success' => true]);
 }
 
+/**
+     * Legge TUTTE le righe del file .sre per trovare righe "scale;...."
+     * e calcolare varianza (cambi consecutivi).
+     */
+    private function extractScaleData(string $filePath, string $iid, string $uid, array &$scaleData): void
+    {
+        $handle = fopen($filePath, 'r');
+        if (!$handle) {
+            return;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            $line = trim($line);
+            // parseScaleLine restituisce un array con info se è scale singola, altrimenti null
+            $parsed = $this->parseScaleLine($line);
+            if ($parsed !== null) {
+                // Aggiungiamo i campi iid, uid, panel ecc. se servono
+                $parsed['iid'] = $iid;
+                $parsed['uid'] = $uid;
+
+                // Salviamo
+                $scaleData[] = $parsed;
+            }
+        }
+        fclose($handle);
+    }
+
+
+/**
+ * Controlla se la riga indica una scale singola da considerare.
+ * Se sì, calcola varianza (numero di cambi consecutivi) e %.
+ * Ritorna array con questionId, changes, changesPct, answers, ecc., altrimenti null.
+ */
+private function parseScaleLine(string $line): ?array
+{
+    $fields = explode(";", trim($line));
+
+    // 1) Deve iniziare con "scale"
+    if (empty($fields[0]) || $fields[0] !== 'scale') {
+        return null;
+    }
+
+    // L'indicazione "terzo dato deve essere superiore a 7" non è più
+    // un check iniziale, lo faremo dopo aver filtrato i -1 effettivi.
+
+    // Per sicurezza, controlliamo se esistono i campi [1,2,3] => questionId, nRows, nCols
+    if (!isset($fields[1], $fields[2], $fields[3])) {
+        return null;
+    }
+
+    $questionId = (int)$fields[1];
+    // $nRows = (int)$fields[2];  // Non lo usiamo più per la soglia, lo useremo come informativo
+    // $nCols = (int)$fields[3];  // Idem, lo lasciamo come info
+
+    $nRows = (int)$fields[2];
+    $nCols = (int)$fields[3];
+
+    // 2) Distinguere scale multiple (l'ultimo campo se blocco 0/1 lungo => skip)
+    $lastField = end($fields);
+    if (preg_match('/^[01]+$/', $lastField) && strlen($lastField) > 5) {
+        // E' multi-scale => scartiamo
+        return null;
+    }
+
+    // 3) Le risposte partono da index=4 in poi
+    $answersRaw = array_slice($fields, 4);
+    if (empty($answersRaw)) {
+        return null; // nessuna risposta => skip
+    }
+
+    // Convertiamo in int
+    $allAnswers = array_map('intval', $answersRaw);
+
+    // 4) Filtriamo i -1 (non conteggiamo come risposte valide)
+    $filteredAnswers = array_filter($allAnswers, function($val) {
+        return $val !== -1;
+    });
+    $countValid = count($filteredAnswers);
+
+    // 5) Se dopo aver escluso i -1 restano 7 o meno risposte, scartiamo
+    if ($countValid <= 7) {
+        return null;
+    }
+
+    // 6) Calcoliamo la varianza = numero di cambi consecutivi
+    //    NB: usiamo $filteredAnswers
+    $changes = $this->countSequentialChanges(array_values($filteredAnswers));
+    $totalAnswers = $countValid;
+    $changesPct = 0;
+    if ($totalAnswers > 0) {
+        $changesPct = (int) round(($changes / $totalAnswers) * 100);
+    }
+
+    // 7) Ritorniamo i dati
+    return [
+        'questionId' => $questionId,
+        'nRows'      => $nRows,
+        'nCols'      => $nCols,
+        'answers'    => array_values($filteredAnswers), // se vuoi memorizzare quelle "valide"
+        'changes'    => $changes,
+        'changesPct' => $changesPct,
+    ];
+}
+
+private function populateScaleQuestionsDetails(array &$scaleData, array $questionMap): void
+{
+    foreach ($scaleData as &$row) {
+        $qId = $row['questionId'] ?? null;
+        if (isset($questionMap[$qId])) {
+            $row['code']    = $questionMap[$qId]['code'];
+            $row['tooltip'] = $questionMap[$qId]['text'];
+        } else {
+            $row['code']    = 'unknown';
+            $row['tooltip'] = 'Domanda non presente';
+        }
+    }
+    unset($row);
+}
+
+
+    /**
+     * Conta i cambi consecutivi nella sequenza di risposte.
+     */
+    private function countSequentialChanges(array $answers): int
+    {
+        $count = count($answers);
+        if ($count < 2) {
+            return 0;
+        }
+        $changes = 0;
+        for ($i = 1; $i < $count; $i++) {
+            if ($answers[$i] !== $answers[$i - 1]) {
+                $changes++;
+            }
+        }
+        return $changes;
+    }
 
 
 }

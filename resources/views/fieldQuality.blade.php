@@ -303,10 +303,43 @@
     <div class="col-md-6">
         <div class="quality-card shadow-sm mb-4">
             <div class="quality-card-header quality-header-left">
-                <h5 class="mb-0">Quality Scale</h5>
+                <h5 class="mb-0">Qualità domande a griglia singola</h5>
             </div>
-            <div class="quality-card-body">
-                <!-- Contenuto futuro per Quality Scale -->
+            <div class="quality-card-body p-0">
+                @if(count($scaleData) > 0)
+                    <!-- Contenitore con scroll e font ridotto -->
+                    <div class="quality-table-container" style="max-height: 350px; overflow-y: auto;">
+                        <table class="table table-hover quality-table-lower">
+                            <thead>
+                                <tr>
+                                    <th class="small">IID</th>
+                                    <th class="small">QuestionId</th>
+                                    <th class="small">Changes %</th>
+                                    <th class="small">#Changes</th>
+                                    <th class="small">Tot Risposte</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($scaleData as $scale)
+                                    @php
+                                        $totAnswers = count($scale['answers']);
+                                    @endphp
+                                    <tr>
+                                        <td class="small">{{ $scale['iid'] }}</td>
+                                        <td class="small">{{ $scale['questionId'] }}</td>
+                                        <td class="small">{{ $scale['changesPct'] }}%</td>
+                                        <td class="small">{{ $scale['changes'] }}</td>
+                                        <td class="small">{{ $totAnswers }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="p-3">
+                        <p class="text-muted">Nessuna scale da visualizzare.</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
