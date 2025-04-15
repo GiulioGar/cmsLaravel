@@ -313,9 +313,11 @@
                             <thead>
                                 <tr>
                                     <th class="small">IID</th>
-                                    <th class="small">QuestionId</th>
+                                    <th class="small">UID</th>
+                                    <th class="small">Panel</th>
+                                    <th class="small">Domanda</th>
                                     <th class="small">Changes %</th>
-                                    <th class="small">#Changes</th>
+                                    <!-- RIMOSSA colonna #Changes -->
                                     <th class="small">Tot Risposte</th>
                                 </tr>
                             </thead>
@@ -325,10 +327,26 @@
                                         $totAnswers = count($scale['answers']);
                                     @endphp
                                     <tr>
+                                        <!-- IID -->
                                         <td class="small">{{ $scale['iid'] }}</td>
-                                        <td class="small">{{ $scale['questionId'] }}</td>
+
+                                        <!-- UID -->
+                                        <td class="small">{{ $scale['uid'] }}</td>
+
+                                        <!-- Panel -->
+                                        <td class="small">{{ $scale['panel'] }}</td>
+
+                                        <!-- Codice con tooltip -->
+                                        <td class="small">
+                                            <span data-bs-toggle="tooltip" title="{{ $scale['tooltip'] }}">
+                                                {{ $scale['code'] }}
+                                            </span>
+                                        </td>
+
+                                        <!-- Changes % -->
                                         <td class="small">{{ $scale['changesPct'] }}%</td>
-                                        <td class="small">{{ $scale['changes'] }}</td>
+
+                                        <!-- Totale risposte -->
                                         <td class="small">{{ $totAnswers }}</td>
                                     </tr>
                                 @endforeach
@@ -347,20 +365,122 @@
     <!-- COLONNA DESTRA (50%) -->
     <div class="col-md-6">
         <div class="quality-card shadow-sm mb-4">
-            <div class="quality-card-header quality-header-right">
+            <div class="quality-card-header quality-header-right d-flex align-items-center justify-content-between">
                 <h5 class="mb-0">Other Controls</h5>
+
+                <!-- Bottone con icona + -->
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addControllerModal">
+                    <i class="fas fa-plus"></i>
+                </button>
             </div>
-            <div class="quality-card-body">
-                <!-- Contenuto futuro per Other Controls -->
+            <div class="quality-card-body" style="min-height: 200px;">
+                <!-- Contenuto placeholder per ora -->
+                <p class="text-muted">[In lavorazione...]</p>
             </div>
         </div>
     </div>
-</div>
 <!-- FINE TERZA RIGA -->
 
 
 
     </div><!-- container -->
+
+<!-- Modale "Aggiungi -Controller" -->
+<div class="modal fade" id="addControllerModal" tabindex="-1" aria-labelledby="addControllerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg"> <!-- large se servono più campi -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addControllerModalLabel">Aggiungi -Controller</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Form per i filtri -->
+                <form id="addControllerForm">
+                    <!-- CAMPOS: Domanda 1, Operatore, Risposta 1 -->
+                    <div class="mb-3">
+                        <label for="question1" class="form-label">Domanda 1</label>
+                        <select class="form-select" id="question1" name="question1">
+                            <option value="">-- Seleziona domanda --</option>
+                            @foreach($questionsFromApi as $q)
+                                @if(in_array($q['type'], ['choice','open']))
+                                    <option value="{{ $q['id'] }}">
+                                        {{ $q['code'] }} - {{ Str::limit($q['text'], 50) }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3 d-flex gap-2 align-items-end">
+                        <div>
+                            <label for="operator1" class="form-label">Operatore</label>
+                            <select class="form-select" id="operator1" name="operator1">
+                                <option value="=">=</option>
+                                <option value=">">></option>
+                                <option value="<"><</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="answer1" class="form-label">Risposta 1</label>
+                            <input type="text" class="form-control" id="answer1" name="answer1" placeholder="Valore risposta">
+                        </div>
+                    </div>
+
+                    <hr/>
+
+                    <div class="mb-2 d-flex align-items-center">
+                        <label class="form-label me-2">Logica:</label>
+                        <select class="form-select w-auto" id="logicalOperator" name="logicalOperator">
+                            <option value="AND">AND</option>
+                            <option value="OR">OR</option>
+                        </select>
+                        <span class="ms-2">(opzionale se domanda 2 non è selezionata)</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="question2" class="form-label">Domanda 2 (opzionale)</label>
+                        <select class="form-select" id="question2" name="question2">
+                            <option value="">-- Nessuna --</option>
+                            @foreach($questionsFromApi as $q)
+                                @if(in_array($q['type'], ['choice','open']))
+                                    <option value="{{ $q['id'] }}">
+                                        {{ $q['code'] }} - {{ Str::limit($q['text'], 50) }}
+                                    </option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3 d-flex gap-2 align-items-end">
+                        <div>
+                            <label for="operator2" class="form-label">Operatore</label>
+                            <select class="form-select" id="operator2" name="operator2">
+                                <option value="=">=</option>
+                                <option value=">">></option>
+                                <option value="<"><</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="answer2" class="form-label">Risposta 2</label>
+                            <input type="text" class="form-control" id="answer2" name="answer2" placeholder="Valore risposta">
+                        </div>
+                    </div>
+                </form>
+                <!-- Fine form -->
+            </div><!-- modal-body -->
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <!-- Bottone di salvataggio -->
+                <button type="submit" form="addControllerForm" class="btn btn-primary">
+                    Salva Filtro
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
@@ -439,5 +559,48 @@
         });
     }
 </script>
+
+<script>
+    document.getElementById("addControllerForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        // Serializzi i campi
+        let formData = new FormData(this);
+        let payload = {
+            question1:       formData.get('question1'),
+            operator1:       formData.get('operator1'),
+            answer1:         formData.get('answer1'),
+            logicalOperator: formData.get('logicalOperator'),
+            question2:       formData.get('question2'),
+            operator2:       formData.get('operator2'),
+            answer2:         formData.get('answer2')
+        };
+
+        fetch("{{ route('fieldQuality.saveFilter') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success){
+                alert("Filtro salvato correttamente!");
+                // Chiudi modale
+                var modal = bootstrap.Modal.getInstance(document.getElementById('addControllerModal'));
+                modal.hide();
+                // location.reload(); // se vuoi ricaricare la pagina
+            } else {
+                alert("Errore: " + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Errore generico nel salvataggio del filtro.");
+        });
+    });
+    </script>
 
 @endsection

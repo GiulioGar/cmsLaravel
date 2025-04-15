@@ -91,16 +91,19 @@ class FieldQualityController extends Controller
                     $this->extractOpenQuestions($file, $iid, $uid,$panelUsed,$openQuestionsData);
 
                     // Scale: estraiamo in un pass dedicato
-                    $this->extractScaleData($file, $iid, $uid, $scaleData);
+                    $this->extractScaleData($file, $iid, $uid, $panelUsed, $scaleData);
                 }
             }
         }
 
          // *** 1) Scarichiamo da Primis l'elenco domande e creiamo la questionMap ***
          $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
+         $apiResponse = $primis->listQuestions($prj, $sid);
+         $questionsFromApi = $apiResponse['questions'] ?? [];
 
          // *** 2) Completiamo i dati in $openQuestionsData con "codice" e "text" da questionMap ***
          $this->populateOpenQuestionsDetails($openQuestionsData, $questionMap);
+         $this->populateScaleQuestionsDetails($scaleData, $questionMap);
 
          // *** 3) Ordiniamo $openQuestionsData per UID (e volendo per IID) ***
          usort($openQuestionsData, function($a, $b) {
@@ -128,6 +131,9 @@ class FieldQualityController extends Controller
 
         // 8b) Applichiamo Criterio "Domande Aperte" (fake = -0.7, non fake = +0.2)
         $this->applyOpenQuestionsCriterion($completeInterviews, $openQuestionsData);
+
+        //// 8c) Criterio Scale Changes
+        $this->applyScaleChangesCriterion($completeInterviews, $scaleData);
 
         // 9) Convertiamo la LOI media in "minuti.secondi"
         $loiMediaFormatted = '0.00';
@@ -185,8 +191,9 @@ class FieldQualityController extends Controller
 
              // Terza riga - "Quality Scale"
              'scaleData' => $scaleData,
+             'questionsFromApi' => $questionsFromApi,
         ]);
-    
+
     }
 
    // *** FUNZIONE 1) Legge TUTTO il file .sre (oltre la prima linea) e cerca righe "open;...".
@@ -238,6 +245,9 @@ class FieldQualityController extends Controller
     {
         // Chiamiamo la rotta ->listQuestions($prj, $sid)
         $response = $primis->listQuestions($prj, $sid);
+
+
+
 
         if (!isset($response['questions']) || !is_array($response['questions'])) {
             // Nessuna domanda disponibile
@@ -364,6 +374,55 @@ private function applyOpenQuestionsCriterion(array &$completeInterviews, array $
         }
     }
 }
+
+/**
+ * Applica bonus/malus per la varianza delle scale (changesPct) al punteggio dell'intervista.
+ * Logica:
+ *  0%        => -0.2
+ *  1-20%     => -0.1
+ *  21-65%    =>  0
+ *  66%-100%  => +0.1
+ */
+private function applyScaleChangesCriterion(array &$completeInterviews, array $scaleData): void
+{
+    // Creiamo una mappa intervista [iid => &...] come reference
+    $indexedInterviews = [];
+    foreach ($completeInterviews as &$iv) {
+        // Usiamo iid come chiave, come avviene altrove
+        $indexedInterviews[$iv['iid']] = &$iv;
+    }
+    unset($iv);
+
+    // Ora scansioniamo le scale
+    foreach ($scaleData as $scale) {
+        $iid = $scale['iid'] ?? null;
+        if (!$iid) {
+            continue; // Se manca iid, skip
+        }
+        if (!isset($indexedInterviews[$iid])) {
+            continue; // Non c'è corrispondenza con un'intervista
+        }
+
+        // Leggiamo changesPct
+        $pct = $scale['changesPct'] ?? 0;
+
+        // Applichiamo la logica
+        if ($pct === 0) {
+            // -0.2
+            $indexedInterviews[$iid]['score'] -= 0.2;
+        } elseif ($pct >= 1 && $pct <= 20) {
+            // -0.1
+            $indexedInterviews[$iid]['score'] -= 0.1;
+        } elseif ($pct >= 21 && $pct <= 65) {
+            // 0 => nessuna modifica
+            // $indexedInterviews[$iid]['score'] += 0;
+        } else {
+            // 66%-100% => +0.1
+            $indexedInterviews[$iid]['score'] += 0.1;
+        }
+    }
+}
+
 
     private function readFirstLine($filePath)
     {
@@ -695,7 +754,7 @@ public function addToBlackList(Request $request)
      * Legge TUTTE le righe del file .sre per trovare righe "scale;...."
      * e calcolare varianza (cambi consecutivi).
      */
-    private function extractScaleData(string $filePath, string $iid, string $uid, array &$scaleData): void
+    private function extractScaleData(string $filePath, string $iid, string $uid,string $panelUsed, array &$scaleData): void
     {
         $handle = fopen($filePath, 'r');
         if (!$handle) {
@@ -710,6 +769,7 @@ public function addToBlackList(Request $request)
                 // Aggiungiamo i campi iid, uid, panel ecc. se servono
                 $parsed['iid'] = $iid;
                 $parsed['uid'] = $uid;
+                $parsed['panel'] = $panelUsed;
 
                 // Salviamo
                 $scaleData[] = $parsed;
@@ -827,6 +887,26 @@ private function populateScaleQuestionsDetails(array &$scaleData, array $questio
             }
         }
         return $changes;
+    }
+
+    public function saveFilter(Request $request)
+    {
+        // Esempio di lettura parametri
+        $question1 = $request->input('question1');
+        $operator1 = $request->input('operator1');
+        $answer1   = $request->input('answer1');
+        $logicalOperator = $request->input('logicalOperator');
+        $question2 = $request->input('question2');
+        $operator2 = $request->input('operator2');
+        $answer2   = $request->input('answer2');
+
+        // Log o salvataggio su DB...
+        Log::info("Salvataggio Filtro: ", compact(
+            'question1','operator1','answer1','logicalOperator','question2','operator2','answer2'
+        ));
+
+        // Esempio di JSON response
+        return response()->json(['success' => true]);
     }
 
 
