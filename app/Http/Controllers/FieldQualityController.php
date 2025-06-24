@@ -12,6 +12,7 @@ class FieldQualityController extends Controller
 {
     public function index(Request $request, PrimisApiService $primis)
     {
+
         // 1) Parametri GET
         $prj = $request->query('prj');
         $sid = $request->query('sid');
@@ -165,6 +166,35 @@ class FieldQualityController extends Controller
         // 12) Info base panel
         $panelData = DB::table('t_panel_control')->where('sur_id', $sid)->first();
 
+        //stat generali
+
+        // 1) Numero totale di interviste
+        $totalInterviews = count($completeInterviews);
+
+        // 2) Classificazione per fascia di punteggio
+        $highCount = collect($completeInterviews)->filter(fn($iv) => $iv['score'] >= 6.4)->count();
+        $acceptCount = collect($completeInterviews)->filter(fn($iv) => $iv['score'] >= 5 && $iv['score'] < 6.4)->count();
+        $lowCount = $totalInterviews - $highCount - $acceptCount;
+
+        // 3) Percentuali (evita divisione per zero)
+        if ($totalInterviews > 0) {
+            $pctHigh = round($highCount / $totalInterviews * 100);
+            $pctAccept = round($acceptCount / $totalInterviews * 100);
+            $pctLow = 100 - $pctHigh - $pctAccept;
+        } else {
+            $pctHigh = $pctAccept = $pctLow = 0;
+        }
+
+        // 4) Passa i nuovi valori alla view
+        $dataExtras = [
+            'totalInterviews' => $totalInterviews,
+            'pctHigh'         => $pctHigh,
+            'pctAccept'       => $pctAccept,
+            'pctLow'          => $pctLow,
+        ];
+
+
+
         // 13) Return view
         return view('fieldQuality', [
             'prj' => $prj,
@@ -192,7 +222,7 @@ class FieldQualityController extends Controller
              // Terza riga - "Quality Scale"
              'scaleData' => $scaleData,
              'questionsFromApi' => $questionsFromApi,
-        ]);
+        ],$dataExtras);
 
     }
 

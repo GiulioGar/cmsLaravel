@@ -79,8 +79,6 @@ Route::post('/fieldControl/targetField/addTarget', [TargetFieldController::class
 Route::post('/fieldQuality/addToBlackList', [FieldQualityController::class, 'addToBlackList'])
      ->name('fieldQuality.addToBlackList');
 
-     Route::post('/fieldQuality/saveFilter', [FieldQualityController::class, 'saveFilter'])
-     ->name('fieldQuality.saveFilter');
 
 
 
