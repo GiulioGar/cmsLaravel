@@ -8,6 +8,7 @@ use App\Http\Controllers\FieldControlController;
 use App\Http\Controllers\PrimisController;
 use App\Http\Controllers\TargetFieldController;
 use App\Http\Controllers\FieldQualityController;
+use App\Http\Controllers\CampionamentoController;
 
 
 // Rotte per il login e logout
@@ -50,6 +51,21 @@ Route::post('/reset-bloccate', [FieldControlController::class, 'resetBloccate'])
 
 Route::get('/fieldQuality', [FieldQualityController::class, 'index'])
     ->name('fieldQuality.index');
+
+// Rotta per la pagina 'Campionamento'
+Route::get('/campionamento', function () {
+    return view('campionamento');
+})->name('campionamento');
+
+Route::get('/campionamento', [CampionamentoController::class, 'index'])
+     ->name('campionamento');
+
+Route::get('/campionamento/panel-data/{sur_id}', [CampionamentoController::class, 'panelData'])
+     ->name('campionamento.panel-data');
+
+// routes/web.php
+Route::post('/campionamento/utenti-disponibili', [CampionamentoController::class, 'utentiDisponibili'])
+     ->name('campionamento.utenti');
 
 
 // Pagina 'Imposta Target': mostra la lista domande

@@ -8,6 +8,8 @@
     <meta name="description" content="Responsive Admin & Dashboard Template based on Bootstrap 5">
     <meta name="author" content="AdminKit">
     <meta name="keywords" content="adminkit, bootstrap, bootstrap 5, admin, dashboard, template, responsive, css, sass, html, theme, front-end, ui kit, web">
+    <meta name="csrf-token" content="{{ csrf_token() }}"> {{-- nel layout <head> --}}
+
 
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link rel="shortcut icon" href="{{ asset('img/icons/logoSmall.png') }}" />
@@ -70,10 +72,12 @@
                     </li>
 
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="">
-                            <i class="align-middle" data-feather="log-in"></i> <span class="align-middle">Campionamento</span>
+                        <a class="sidebar-link" href="{{ route('campionamento') }}">
+                            <i class="align-middle" data-feather="log-in"></i>
+                            <span class="align-middle">Campionamento</span>
                         </a>
                     </li>
+
 
                     <li class="sidebar-header">Tools</li>
                     <li class="sidebar-item">
