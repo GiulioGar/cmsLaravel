@@ -63,9 +63,11 @@ Route::get('/campionamento', [CampionamentoController::class, 'index'])
 Route::get('/campionamento/panel-data/{sur_id}', [CampionamentoController::class, 'panelData'])
      ->name('campionamento.panel-data');
 
-// routes/web.php
 Route::post('/campionamento/utenti-disponibili', [CampionamentoController::class, 'utentiDisponibili'])
      ->name('campionamento.utenti');
+
+Route::post('/campionamento/crea', [CampionamentoController::class, 'creaCampioni'])
+    ->name('campionamento.crea');
 
 
 // Pagina 'Imposta Target': mostra la lista domande

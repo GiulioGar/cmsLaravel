@@ -317,6 +317,8 @@
 
       {{-- SOLO TOTALE --}}
       <div id="disponibili-results" class="mt-3" style="display:none;"></div>
+      <div id="crea-campione-results" class="mt-3" style="display:none;"></div>
+
     </div>
   </div>
 </div>
@@ -334,16 +336,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const campioneCard = document.getElementById('campione-card');
   const listEl       = document.getElementById('sottocampioni-list');
   const resultsBox   = document.getElementById('disponibili-results');
+  const btnCrea      = document.getElementById('btn-crea-campione');
+
   const MAX          = 3;
+  let CAMPIONE_FINAL = false;
 
   // Array globale dei sottocampioni
   window.sottocampioni = window.sottocampioni || [];
 
-  // === (1) Abilita/Disabilita controlli in base alla Ricerca ===
+  // === Abilita/Disabilita controlli in base alla Ricerca ===
   function updateRicercaState() {
     const hasRicerca = !!(selRicerca && selRicerca.value);
     if (selTarget) selTarget.disabled = !hasRicerca;
-    if (btnAdd)    btnAdd.disabled    = !hasRicerca || window.sottocampioni.length >= MAX;
+    if (btnAdd)    btnAdd.disabled    = !hasRicerca || window.sottocampioni.length >= MAX || CAMPIONE_FINAL;
   }
   updateRicercaState();
 
@@ -351,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selRicerca.addEventListener('change', () => {
       updateRicercaState();
       // reset conteggi visivi e risultati se cambio ricerca
-      window.sottocampioni.forEach(sc => { delete sc.count; });
+      window.sottocampioni.forEach(sc => { delete sc.count; sc.invite = 1; });
       renderCampione();
       clearDisponibili();
     });
@@ -378,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     exclude: 'Escludi Ricerche'
   };
 
-  // === Render lista sottocampioni (mostrare sempre) ===
+  // === Render lista sottocampioni (sempre visibile se presenti) ===
   function renderCampione() {
     if (!window.sottocampioni.length) {
       if (campioneCard) campioneCard.style.display = 'none';
@@ -393,55 +398,101 @@ document.addEventListener('DOMContentLoaded', () => {
     window.sottocampioni.forEach((sc, i) => {
       const wrap = document.createElement('div');
       wrap.className = 'border-left pl-2 mb-2';
-      const countBadge = Number.isFinite(sc.count) ? sc.count : '…';
       wrap.innerHTML = `
         <div class="d-flex justify-content-between align-items-start">
           <strong>
             Sottocampione ${i+1}
             <span class="text-muted ml-2">
               <i data-feather="users" class="align-text-bottom"></i>
-              (${countBadge})
+              (${Number.isFinite(sc.count) ? sc.count : '…'})
             </span>
           </strong>
           <button data-index="${i}" class="btn btn-sm btn-outline-danger btn-delete">
             <i data-feather="trash-2"></i>
           </button>
         </div>
-        <ul class="small mb-2" style="list-style:none;padding-left:0;">
+
+        <!-- Inviti -->
+        <div class="mt-2">
+          <label class="small mb-1">Inviti</label>
+          <div class="input-group input-group-sm" data-index="${i}">
+            <div class="input-group-prepend">
+              <span class="input-group-text"><i data-feather="mail"></i></span>
+            </div>
+            <input
+              type="number"
+              class="form-control sc-invite"
+              min="1"
+              ${Number.isFinite(sc.count) ? `max="${sc.count}"` : ``}
+              value="${Number.isFinite(sc.invite) ? sc.invite : 1}"
+              ${Number.isFinite(sc.count) && !CAMPIONE_FINAL ? `` : `disabled`}
+              inputmode="numeric"
+            >
+            <div class="input-group-append">
+              <span class="input-group-text">/ ${Number.isFinite(sc.count) ? sc.count : '—'}</span>
+            </div>
+          </div>
+          <small class="text-muted">Seleziona da 1 al massimo disponibile.</small>
+        </div>
+
+        <ul class="small mb-2 mt-2" style="list-style:none;padding-left:0;">
           ${Object.entries(sc)
               .filter(([k,v]) => ['sesso','eta','regioni','aree','province','ampiezza','iscritto_dal','livello_attivita','target','exclude'].includes(k))
               .map(([k,v]) => v ? `<li><strong>${labels[k]}:</strong> ${v}</li>` : '')
               .join('')}
-        </ul>`;
+        </ul>
+      `;
       listEl.appendChild(wrap);
     });
 
     if (window.feather) feather.replace();
 
-    // cancella sottocampione → ricalcola
-    listEl.querySelectorAll('.btn-delete').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.dataset.index, 10);
-        window.sottocampioni.splice(idx, 1);
-        renderCampione();
-        clearDisponibili();
-        fetchCountsAndRender(); // ricalcolo dopo la cancellazione
+    // Enforcement blocchi post-finalizzazione
+    if (CAMPIONE_FINAL) {
+      // rimuovo i pulsanti elimina
+      listEl.querySelectorAll('.btn-delete').forEach(btn => btn.remove());
+      // nascondo "Crea Campioni"
+      if (btnCrea) btnCrea.style.display = 'none';
+      // blocco aggiunta sottocampioni
+      if (btnAdd) btnAdd.disabled = true;
+    } else {
+      // bind cancellazione sottocampione (unico punto)
+      listEl.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index, 10);
+          window.sottocampioni.splice(idx, 1);
+          renderCampione();
+          clearDisponibili();
+          // ricalcolo conteggi/totale dopo la cancellazione
+          fetchCountsAndRender();
+        });
+      });
+      // mostra "Crea Campioni"
+      if (btnCrea) btnCrea.style.display = 'inline-block';
+      // aggiorna pulsante aggiunta campione
+      updateRicercaState();
+    }
+
+    // binding: variazione inviti → salva su modello e clamp tra [1, max]
+    listEl.querySelectorAll('.sc-invite').forEach(inp => {
+      const idx = parseInt(inp.closest('.input-group').dataset.index, 10);
+      inp.addEventListener('input', () => {
+        const sc = window.sottocampioni[idx];
+        const max = Number.isFinite(sc.count) ? sc.count : 1;
+        let v = parseInt(inp.value || '1', 10);
+        if (isNaN(v) || v < 1) v = 1;
+        if (v > max) v = max;
+        inp.value = v;
+        sc.invite = v;
       });
     });
-
-    updateRicercaState();
   }
 
   // === Calcolo conteggi e totale (auto) ===
   async function fetchCountsAndRender() {
-    if (!selRicerca || !selRicerca.value) {
-      clearDisponibili();
-      return;
-    }
-    if (!window.sottocampioni.length) {
-      clearDisponibili();
-      return;
-    }
+    if (!selRicerca || !selRicerca.value) { clearDisponibili(); return; }
+    if (!window.sottocampioni.length)     { clearDisponibili(); return; }
+
     const samples = window.sottocampioni.map(sc => ({
       sesso: (sc.sesso || '').split('/').filter(Boolean),
       eta_da: sc.eta ? parseInt(sc.eta.split('-')[0], 10) : null,
@@ -476,9 +527,17 @@ document.addEventListener('DOMContentLoaded', () => {
           if (window.sottocampioni[i]) window.sottocampioni[i].count = it.count;
         });
       }
+
+      // clamp inviti in base al nuovo count
+      window.sottocampioni.forEach(sc => {
+        if (!Number.isFinite(sc.count)) return;
+        if (!Number.isFinite(sc.invite)) sc.invite = 1;
+        if (sc.invite < 1) sc.invite = 1;
+        if (sc.invite > sc.count) sc.invite = sc.count;
+      });
+
       renderCampione();
       renderTotale(data.total);
-
     } catch (err) {
       console.error(err);
     }
@@ -503,13 +562,11 @@ document.addEventListener('DOMContentLoaded', () => {
     resultsBox.style.display = 'block';
   }
 
-  // === CLICK: Aggiungi Campione (salvo target testo + target_id) ===
+  // === CLICK: Aggiungi Campione ===
   if (btnAdd) {
     btnAdd.addEventListener('click', () => {
-      if (!selRicerca || !selRicerca.value) {
-        alert('Seleziona prima una Ricerca.');
-        return;
-      }
+      if (CAMPIONE_FINAL) { alert('Campione già generato. Usa "Pulisci" per ricominciare.'); return; }
+      if (!selRicerca || !selRicerca.value) { alert('Seleziona prima una Ricerca.'); return; }
       if (window.sottocampioni.length >= MAX) return;
 
       const sesso = Array.from(document.querySelectorAll('input[name="sesso[]"]:checked'))
@@ -538,7 +595,8 @@ document.addEventListener('DOMContentLoaded', () => {
         sesso, eta, regioni, aree, province, ampiezza,
         iscritto_dal, livello_attivita,
         target: targetText, target_id: targetId,
-        exclude
+        exclude,
+        invite: 1
       };
 
       window.sottocampioni.push(sc);
@@ -548,8 +606,156 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // === Generazione CSV (Crea Campioni) ===
+  if (btnCrea) {
+    btnCrea.addEventListener('click', async () => {
+      if (!selRicerca || !selRicerca.value) { alert('Seleziona prima una Ricerca.'); return; }
+      if (!window.sottocampioni.length)     { alert('Aggiungi almeno un sottocampione.'); return; }
+
+      const samples = window.sottocampioni.map(sc => ({
+        sesso: (sc.sesso || '').split('/').filter(Boolean),
+        eta_da: sc.eta ? parseInt(sc.eta.split('-')[0], 10) : null,
+        eta_a:  sc.eta ? parseInt(sc.eta.split('-')[1], 10) : null,
+        regioni: sc.regioni ? sc.regioni.split(',').map(s => s.trim()).filter(Boolean) : [],
+        aree:    sc.aree    ? sc.aree.split(',').map(s => s.trim()).filter(Boolean) : [],
+        province_id: sc.province ? sc.province.split(',').map(s => s.trim()).filter(Boolean) : [],
+        ampiezza: sc.ampiezza ? sc.ampiezza.split(',').map(s => s.trim()).filter(Boolean) : [],
+        target_id: sc.target_id || null,
+        invite: Number.isFinite(sc.count) ? Math.min(sc.invite || 1, sc.count) : (sc.invite || 1)
+      }));
+
+      const excludeCodes = (document.getElementById('exclude_ricerche')?.value || '').trim();
+      const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+      try {
+        const res = await fetch(`{{ route('campionamento.crea') }}`, {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': token, 'Accept':'application/json' },
+          body: JSON.stringify({
+            sur_id: selRicerca.value,
+            exclude_codes: excludeCodes,
+            samples: samples
+          })
+        });
+
+        const raw = await res.text();
+        let data; try { data = JSON.parse(raw); } catch(e) { console.error(raw); alert('Risposta non valida'); return; }
+
+        // mostra pannello risultato CSV
+        renderCsvResult(data);
+        // campione finalizzato → blocca UI sottocampioni e nascondi "Crea Campioni"
+        CAMPIONE_FINAL = true;
+        renderCampione();
+      } catch (err) {
+        console.error(err);
+        alert('Errore durante la creazione del campione.');
+      }
+    });
+  }
+
   // primo render
   renderCampione();
+
+  // === Renderer risultato CSV (download, copia, PULISCI) ===
+  function renderCsvResult(data) {
+    const box = document.getElementById('crea-campione-results');
+    if (!box) return;
+
+    const count    = data.enabled_count || 0;
+    const filename = data.filename || 'campione.csv';
+    const csvText  = data.csv_text || '';
+    const csvB64   = data.csv_base64 || '';
+
+    const html = `
+      <div class="card shadow-sm">
+        <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between">
+          <div class="mb-2 mb-md-0">
+            <div class="small text-muted">Utenti abilitati</div>
+            <div class="h3 mb-0">${count}</div>
+          </div>
+          <div class="d-flex align-items-center">
+            <button id="btn-download-csv" class="btn btn-sm btn-primary mr-2">
+              <i data-feather="download"></i> Download CSV
+            </button>
+            <button id="btn-copy-csv" class="btn btn-sm btn-outline-secondary mr-2">
+              <i data-feather="copy"></i> Copia contenuto
+            </button>
+            <button id="btn-clear-all" class="btn btn-sm btn-outline-danger">
+              <i data-feather="x-circle"></i> Pulisci
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    box.innerHTML = html;
+    box.style.display = 'block';
+    if (window.feather) feather.replace();
+
+    // Download dal base64
+    const btnDl = document.getElementById('btn-download-csv');
+    if (btnDl) {
+      btnDl.addEventListener('click', () => {
+        const bytes = atob(csvB64);
+        const arr = new Uint8Array(bytes.length);
+        for (let i=0; i<bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+        const blob = new Blob([arr], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+    }
+
+    // Copia negli appunti il testo CSV
+    const btnCopy = document.getElementById('btn-copy-csv');
+    if (btnCopy) {
+      btnCopy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(csvText);
+          btnCopy.classList.remove('btn-outline-secondary');
+          btnCopy.classList.add('btn-success');
+          btnCopy.innerHTML = '<i data-feather="check"></i> Copiato';
+          if (window.feather) feather.replace();
+          setTimeout(() => {
+            btnCopy.classList.remove('btn-success');
+            btnCopy.classList.add('btn-outline-secondary');
+            btnCopy.innerHTML = '<i data-feather="copy"></i> Copia contenuto';
+            if (window.feather) feather.replace();
+          }, 2000);
+        } catch(e) {
+          alert('Impossibile copiare negli appunti.');
+        }
+      });
+    }
+
+    // PULISCI → svuota i due box risultati + reset stato/app (listener AGGREGATO QUI!)
+    const btnClear = document.getElementById('btn-clear-all');
+    if (btnClear) {
+      btnClear.addEventListener('click', () => {
+        // svuoto e nascondo i box risultati
+        const res1 = document.getElementById('disponibili-results');
+        const res2 = document.getElementById('crea-campione-results');
+        if (res1) { res1.innerHTML = ''; res1.style.display = 'none'; }
+        if (res2) { res2.innerHTML = ''; res2.style.display = 'none'; }
+
+        // reset stato e dati
+        window.sottocampioni = [];
+        CAMPIONE_FINAL = false;
+
+        // reset form sinistro (se desideri mantenerlo)
+        document.getElementById('campionamentoForm')?.reset();
+
+        // UI torna “pulita”
+        renderCampione();
+      });
+    }
+  }
 });
 </script>
 @endsection
+
