@@ -9,6 +9,7 @@ use App\Http\Controllers\PrimisController;
 use App\Http\Controllers\TargetFieldController;
 use App\Http\Controllers\FieldQualityController;
 use App\Http\Controllers\CampionamentoController;
+use App\Http\Controllers\AbilitaUidController;
 
 
 // Rotte per il login e logout
@@ -69,6 +70,13 @@ Route::post('/campionamento/utenti-disponibili', [CampionamentoController::class
 Route::post('/campionamento/crea', [CampionamentoController::class, 'creaCampioni'])
     ->name('campionamento.crea');
 
+// rotte abilita UID
+Route::get('/abilita-uid', [AbilitaUidController::class, 'index'])->name('abilita.uid');
+Route::post('/abilita-uid/genera', [AbilitaUidController::class, 'store'])->name('abilita.uid.genera');
+// CRUD Panel (AJAX)
+Route::post('/panel/store', [AbilitaUidController::class, 'storePanel']);
+Route::post('/panel/update', [AbilitaUidController::class, 'updatePanel']);
+Route::delete('/panel/delete/{id}', [AbilitaUidController::class, 'deletePanel']);
 
 // Pagina 'Imposta Target': mostra la lista domande
 Route::get('/fieldControl/targetField', [TargetFieldController::class, 'index'])

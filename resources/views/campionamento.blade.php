@@ -260,7 +260,7 @@
               {{-- Livello attività (ignorato in query) --}}
               <div class="form-group col-md-6">
                 <label for="livello_attivita">Attività</label>
-                <select id="livello_attivita" name="livello_attivita" class="form-control">
+                <select id="livello_attivita" name="livello_attivita" class="form-control" disabled>
                   <option value="">--</option>
                   <option value="Alto">Alto</option>
                   <option value="Medio">Medio</option>

@@ -81,7 +81,7 @@
 
                     <li class="sidebar-header">Tools</li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="">
+                        <a class="sidebar-link" href="{{ route('abilita.uid') }}">
                             <i class="align-middle" data-feather="square"></i> <span class="align-middle">Abilita UID</span>
                         </a>
                     </li>
