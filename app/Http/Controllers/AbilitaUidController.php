@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\UidGeneratorService;
+use Illuminate\Support\Facades\File;
 
 class AbilitaUidController extends Controller
 {
@@ -124,4 +125,140 @@ class AbilitaUidController extends Controller
         DB::table('t_fornitoriPanel')->where('id', $id)->delete();
         return response()->json(['success' => true]);
     }
+
+
+    /**
+     * AJAX: restituisce conteggi file .sre e status t_respint
+     */
+    public function showRightPanelData(Request $request)
+    {
+        $sid = $request->input('sid');
+        $prj = $request->input('prj');
+
+        if (!$sid || !$prj) {
+            return response()->json(['success' => false, 'message' => 'Parametri mancanti.'], 400);
+        }
+
+        $directory = base_path("var/imr/fields/$prj/$sid/results/");
+        $totalFiles = 0;
+        $lastFile = '—';
+
+        if (is_dir($directory)) {
+            $files = glob($directory . "/*.sre");
+            $totalFiles = count($files);
+            if ($totalFiles > 0) {
+                rsort($files);
+                $lastFile = basename($files[0]);
+            }
+        }
+
+        // Conteggi per status nella tabella t_respint
+        $statusCounts = DB::table('t_respint')
+            ->select('status', DB::raw('COUNT(*) as totale'))
+            ->where('sid', $sid)
+            ->groupBy('status')
+            ->pluck('totale', 'status');
+
+        return response()->json([
+            'success' => true,
+            'totalFiles' => $totalFiles,
+            'lastFile' => $lastFile,
+            'statusCounts' => $statusCounts
+        ]);
+    }
+
+    /**
+     * Abilita una lista di UID (inserisce in t_respint)
+     */
+    public function enableUids(Request $request)
+{
+    $sid = $request->input('sid');
+    $prj = $request->input('prj');
+    $uidsRaw = trim($request->input('uids'));
+
+    if (!$sid || !$prj || !$uidsRaw) {
+        return response()->json(['success' => false, 'message' => 'Parametri mancanti.'], 400);
+    }
+
+    $uids = preg_split('/\r\n|\r|\n/', $uidsRaw);
+    $inserted = 0;
+    $log = [];
+
+    foreach ($uids as $uid) {
+        $uid = trim($uid);
+        if ($uid === '') continue;
+
+        $exists = DB::table('t_respint')->where('sid', $sid)->where('uid', $uid)->exists();
+        if ($exists) continue;
+
+        DB::table('t_respint')->insert([
+            'sid' => $sid,
+            'uid' => $uid,
+            'status' => 0,
+            'iid' => -1,
+            'prj_name' => $prj,
+        ]);
+        $inserted++;
+        $log[] = "UID {$uid} abilitato";
+    }
+
+    return response()->json([
+        'success' => true,
+        'count' => $inserted,
+        'actions' => array_slice($log, -5)
+    ]);
+}
+
+public function resetIids(Request $request)
+{
+    $sid = $request->input('sid');
+    $prj = $request->input('prj');
+    $iidsRaw = trim($request->input('iids'));
+
+    if (!$sid || !$prj || !$iidsRaw) {
+        return response()->json(['success' => false, 'message' => 'Parametri mancanti.'], 400);
+    }
+
+    $iids = preg_split('/\r\n|\r|\n/', $iidsRaw);
+    $directory = base_path("var/imr/fields/$prj/$sid/results/");
+    $updated = 0;
+    $deleted = 0;
+    $log = [];
+
+    foreach ($iids as $iid) {
+        $iid = trim($iid);
+        if ($iid === '') continue;
+
+        $affected = DB::table('t_respint')
+            ->where('sid', $sid)
+            ->where('iid', $iid)
+            ->update(['status' => 0, 'iid' => -1]);
+
+        if ($affected > 0) {
+            $updated += $affected;
+            $log[] = "IID {$iid} resettato";
+        }
+
+        if (is_dir($directory)) {
+            $pattern = "$directory/*$iid*.sre";
+            foreach (glob($pattern) as $file) {
+                if (File::exists($file)) {
+                    File::delete($file);
+                    $deleted++;
+                    $log[] = "File eliminato: " . basename($file);
+                }
+            }
+        }
+    }
+
+    return response()->json([
+        'success' => true,
+        'updated' => $updated,
+        'deleted' => $deleted,
+        'actions' => array_slice($log, -5)
+    ]);
+}
+
+
+
 }

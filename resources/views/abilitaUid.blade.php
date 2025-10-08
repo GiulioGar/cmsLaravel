@@ -22,7 +22,7 @@
         background: none;
         color: #007bff;
         border: none;
-        font-size: 20px;
+        font-size: 15px;
         margin-left: 6px;
         cursor: pointer;
         transition: 0.2s;
@@ -44,88 +44,191 @@
 @section('content')
 <div class="container-fluid px-4">
     <div class="row">
-        <!-- COLONNA SINISTRA 60% -->
-        <div class="col-lg-7 col-md-8">
 
-            {{-- CARD 1: GENERATORE --}}
-            <div class="card">
-                <div class="card-header">Generatore Links - Abilita UID</div>
-                <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
+<!-- COLONNA SINISTRA (principale) -->
+<div class="col-lg-7 col-md-8">
 
-                    <form action="{{ route('abilita.uid.genera') }}" method="POST" class="row g-3">
-                        @csrf
-
-                        <div class="col-md-6">
-                            <label class="form-label">SID</label>
-                            <select name="sid" id="sid" class="form-select" onchange="updatePrj(this.value)" required>
-                                <option value="">-- Seleziona SID --</option>
-                                @foreach($surveys as $s)
-                                    <option value="{{ $s->sid }}">{{ $s->sid }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">PRJ</label>
-                            <input type="text" name="prj" id="prj" class="form-control" readonly required>
-                        </div>
-
-                        <div class="col-md-8">
-                            <label class="form-label">Panel
-                                <button type="button" class="btn-add" title="Gestisci Panel" data-bs-toggle="modal" data-bs-target="#panelModal">➕</button>
-                            </label>
-                            <select name="panel_code" class="form-select" required>
-                                <option value="">-- Seleziona Panel --</option>
-                                @foreach($panels as $p)
-                                    <option value="{{ $p->panel_code }}">{{ $p->panel_code }} - {{ $p->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Numero di Link</label>
-                            <input type="number" name="num_links" min="1" max="10000" class="form-control" required>
-                        </div>
-
-                        <div class="col-12 text-end mt-2">
-                            <button type="submit" class="btn btn-primary">Genera Links</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-{{-- CARD 2: LINKS GENERATI --}}
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <span>Links Generati</span>
-        @if(session('links'))
-        <div>
-            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="copyLinks()">
-                <i class="fa fa-copy"></i> Copia Tutti
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-success" onclick="exportCSV()">
-                <i class="fa fa-file-csv"></i> Esporta CSV
-            </button>
+    {{-- CARD 1: GENERATORE --}}
+    <div class="card mb-3 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <i class="fa fa-link"></i> Generatore Links - Abilita UID
         </div>
-        @endif
+
+        <div class="card-body">
+            @if(session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
+            <form action="{{ route('abilita.uid.genera') }}" method="POST" class="row g-3">
+                @csrf
+
+                <div class="col-md-6">
+                    <label class="form-label">SID</label>
+                    <select name="sid" id="sid" class="form-select" onchange="updatePrjAndGuestLink(this.value)" required>
+                        <option value="">-- Seleziona SID --</option>
+                        @foreach($surveys as $s)
+                            <option value="{{ $s->sid }}">{{ $s->sid }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">PRJ</label>
+                    <input type="text" name="prj" id="prj" class="form-control" readonly required>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label text-muted mb-1">Link GUEST</label>
+                    <div class="input-group">
+                        <input type="text" id="guestLink" class="form-control form-control-sm" readonly placeholder="Seleziona un SID per generare il link...">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyGuestLink()">
+                            <i class="fa fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <label class="form-label">Panel
+                        <button type="button" class="btn-add" title="Gestisci Panel" data-bs-toggle="modal" data-bs-target="#panelModal">⟳</button>
+                    </label>
+                    <select name="panel_code" class="form-select" required>
+                        <option value="">-- Seleziona Panel --</option>
+                        @foreach($panels as $p)
+                            <option value="{{ $p->panel_code }}">{{ $p->panel_code }} - {{ $p->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Numero di Link</label>
+                    <input type="number" name="num_links" min="1" max="10000" class="form-control" required>
+                </div>
+
+                <div class="col-12 text-end mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-bolt"></i> Genera Links
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="card-body">
-        @if(session('links'))
-            <textarea id="generatedLinks" class="form-control" rows="10" readonly>@foreach(session('links') as $l){{ $l['link'] }}&#10;@endforeach</textarea>
-        @else
-            <p class="text-muted m-0">Nessun link generato ancora.</p>
-        @endif
+    {{-- CARD 2: LINKS GENERATI --}}
+    <div class="card shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            <i class="fa fa-list"></i> Links Generati
+        </div>
+        <div class="card-body">
+            @if(session('links'))
+                <div class="d-flex justify-content-end mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="copyLinks()">
+                        <i class="fa fa-copy"></i> Copia Tutti
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="exportCSV()">
+                        <i class="fa fa-file-csv"></i> Esporta CSV
+                    </button>
+                </div>
+                <textarea id="generatedLinks" class="form-control" rows="10" readonly>@foreach(session('links') as $l){{ $l['link'] }}&#10;@endforeach</textarea>
+            @else
+                <p class="text-muted m-0">Nessun link generato ancora.</p>
+            @endif
+        </div>
     </div>
+
 </div>
 
-        </div>
+<!-- COLONNA DESTRA -->
+<div class="col-lg-5 col-md-4">
 
-        <!-- COLONNA DESTRA (vuota per ora) -->
-        <div class="col-lg-5 col-md-4"></div>
+    {{-- CARD 1: SELEZIONE SID + PRJ --}}
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white">Gestione UID / IID</div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-7">
+                    <label class="form-label">SID</label>
+                    <select id="sidRight" class="form-select" onchange="updatePrjRight(this.value)">
+                        <option value="">-- Seleziona SID --</option>
+                        @foreach($surveys as $s)
+                            <option value="{{ $s->sid }}">{{ $s->sid }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">PRJ</label>
+                    <input type="text" id="prjRight" class="form-control" readonly>
+                </div>
+                <div class="col-12 text-end">
+                    <button class="btn btn-outline-secondary" onclick="refreshResults()">
+                        <i class="fa fa-sync-alt"></i> Aggiorna Dati
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- CARD 2: INSERIMENTO UID/IID --}}
+    <div class="card mb-3">
+        <div class="card-header bg-info text-white">UID/IID</div>
+        <div class="card-body">
+            <label class="form-label">Inserisci UID o IID (uno per riga)</label>
+            <textarea id="uidInput" class="form-control" rows="6" placeholder="Esempio:&#10;IDEXCINABC1234&#10;IDEXDYNXYZ5678&#10;o IID numerici"></textarea>
+            <div class="mt-3 text-end">
+                <button class="btn btn-success me-2" onclick="enableUids()">
+                    <i class="fa fa-check"></i> Abilita UID
+                </button>
+                <button class="btn btn-danger" onclick="resetIids()">
+                    <i class="fa fa-trash"></i> Elimina File + Reset IID
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- CARD 3: FINESTRA RISULTATI --}}
+    <div class="card">
+        <div class="card-header bg-secondary text-white">Risultati</div>
+        <div class="card-body" id="resultsBox">
+            <p class="text-muted">Seleziona una ricerca e premi <b>Aggiorna Dati</b> per visualizzare le informazioni.</p>
+            <hr>
+            <div id="resultsContent" style="display:none;">
+                <p><strong>Totale file .sre:</strong> <span id="totalFiles">0</span></p>
+                <p><strong>Ultimo file:</strong> <span id="lastFile">—</span></p>
+                <hr>
+                <h6>Utenti per Status:</h6>
+                <table class="table table-sm table-bordered text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Status</th>
+                            <th>Conteggio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statusTable">
+                        <tr><td>0</td><td>—</td></tr>
+                        <tr><td>1</td><td>—</td></tr>
+                        <tr><td>2</td><td>—</td></tr>
+                        <tr><td>3</td><td>—</td></tr>
+                        <tr><td>4</td><td>—</td></tr>
+                        <tr><td>5</td><td>—</td></tr>
+                        <tr><td>6</td><td>—</td></tr>
+                        <tr><td>7</td><td>—</td></tr>
+                    </tbody>
+                </table>
+                        <h6>Ultime modifiche</h6>
+        <ul id="lastActions" class="list-group small">
+            <li class="list-group-item text-muted">Nessuna operazione recente</li>
+        </ul>
+            </div>
+        </div>
+        <hr>
+
+
+    </div>
+
+</div>
+
+
+
+
     </div>
 </div>
 
@@ -314,6 +417,186 @@ function exportCSV() {
     link.download = filename;
     link.click();
 }
+
+// === AGGIORNA PRJ E LINK GUEST ===
+function updatePrjAndGuestLink(selectedSid) {
+    const s = surveyData.find(item => item.sid === selectedSid);
+    const prjField = document.getElementById('prj');
+    const guestInput = document.getElementById('guestLink');
+
+    prjField.value = s ? s.prj_name : '';
+    if (selectedSid && s) {
+        guestInput.value = `https://www.primisoft.com/primis/run.do?sid=${selectedSid}&prj=${s.prj_name}&uid=GUEST`;
+    } else {
+        guestInput.value = '';
+    }
+}
+
+// === COPIA LINK GUEST ===
+function copyGuestLink() {
+    const guestInput = document.getElementById('guestLink');
+    if (!guestInput.value) {
+        Swal.fire({ icon: 'info', title: 'Nessun link GUEST disponibile' });
+        return;
+    }
+    guestInput.select();
+    guestInput.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    Swal.fire({
+        icon: 'success',
+        title: 'Copiato!',
+        text: 'Il link GUEST è stato copiato negli appunti.',
+        timer: 1500,
+        showConfirmButton: false
+    });
+}
+
+
+
+// === COLONNA DESTRA: AGGIORNA PRJ ===
+
+// --- Popola PRJ automaticamente a destra ---
+const surveyDataRight = @json($surveys);
+function updatePrjRight(selectedSid) {
+    const s = surveyDataRight.find(item => item.sid === selectedSid);
+    document.getElementById('prjRight').value = s ? s.prj_name : '';
+}
+
+
+// --- Placeholder funzioni (STEP 2 le implementeremo) ---
+// === AGGIORNA FINESTRA RISULTATI ===
+function refreshResults() {
+    const sid = document.getElementById('sidRight').value;
+    const prj = document.getElementById('prjRight').value;
+    if (!sid || !prj) {
+        Swal.fire({ icon: 'warning', title: 'Attenzione', text: 'Seleziona prima SID e PRJ.' });
+        return;
+    }
+
+    fetch('{{ url("/abilita-uid/show-data") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ sid, prj })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            Swal.fire({ icon: 'error', title: 'Errore', text: data.message });
+            return;
+        }
+
+        document.getElementById('resultsContent').style.display = 'block';
+        document.getElementById('totalFiles').innerText = data.totalFiles;
+        document.getElementById('lastFile').innerText = data.lastFile;
+
+        // Reset tabella
+        const statusTable = document.getElementById('statusTable');
+        statusTable.innerHTML = '';
+        for (let i = 0; i <= 7; i++) {
+            const count = data.statusCounts[i] || 0;
+            statusTable.innerHTML += `<tr><td>${i}</td><td>${count}</td></tr>`;
+        }
+    })
+    .catch(() => Swal.fire({ icon: 'error', title: 'Errore di rete' }));
+}
+
+// === ABILITA UID (con log dinamico) ===
+function enableUids() {
+    const sid = document.getElementById('sidRight').value;
+    const prj = document.getElementById('prjRight').value;
+    const uids = document.getElementById('uidInput').value.trim();
+
+    if (!sid || !prj || !uids) {
+        Swal.fire({ icon: 'warning', title: 'Attenzione', text: 'Seleziona SID/PRJ e inserisci almeno un UID.' });
+        return;
+    }
+
+    fetch('{{ url("/abilita-uid/enable-uids") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ sid, prj, uids })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({ icon: 'success', title: 'UID abilitati', text: `${data.count} UID inseriti.` });
+            updateLog(data.actions);
+            refreshResults();
+        } else {
+            Swal.fire({ icon: 'error', title: 'Errore', text: data.message });
+        }
+    })
+    .catch(() => Swal.fire({ icon: 'error', title: 'Errore di rete' }));
+}
+
+// === RESET IID (con log dinamico e gestione errori) ===
+function resetIids() {
+    const sid = document.getElementById('sidRight').value;
+    const prj = document.getElementById('prjRight').value;
+    const iids = document.getElementById('uidInput').value.trim();
+
+    if (!sid || !prj || !iids) {
+        Swal.fire({ icon: 'warning', title: 'Attenzione', text: 'Seleziona SID/PRJ e inserisci almeno un IID.' });
+        return;
+    }
+
+    Swal.fire({
+        icon: 'warning',
+        title: 'Conferma azione',
+        text: 'Vuoi davvero eliminare i file .sre e resettare questi IID?',
+        showCancelButton: true,
+        confirmButtonText: 'Sì, procedi',
+        cancelButtonText: 'Annulla'
+    }).then(result => {
+        if (!result.isConfirmed) return;
+
+        fetch('{{ url("/abilita-uid/reset-iids") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ sid, prj, iids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Reset completato',
+                    html: `Aggiornati <b>${data.updated}</b> record<br>Cancellati <b>${data.deleted}</b> file`
+                });
+                updateLog(data.actions);
+                refreshResults();
+            } else {
+                Swal.fire({ icon: 'error', title: 'Errore', text: data.message });
+            }
+        })
+        .catch(() => Swal.fire({ icon: 'error', title: 'Errore di rete' }));
+    });
+}
+
+// === AGGIORNA LOG DINAMICO ===
+function updateLog(actions) {
+    const list = document.getElementById('lastActions');
+    if (!actions || actions.length === 0) {
+        list.innerHTML = '<li class="list-group-item text-muted">Nessuna operazione recente</li>';
+        return;
+    }
+
+    list.innerHTML = '';
+    actions.slice().reverse().forEach(a => {
+        list.innerHTML += `<li class="list-group-item list-group-item-light">${a}</li>`;
+    });
+}
+
+
 
 
 
