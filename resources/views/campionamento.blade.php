@@ -49,6 +49,13 @@
                 </option>
               @endforeach
             </select>
+
+            <div class="form-check mt-2">
+            <input type="checkbox" id="chk-followup" class="form-check-input">
+            <label for="chk-followup" class="form-check-label">Rilancia utenti già invitati</label>
+            </div>
+
+
           </div>
         </div>
 
@@ -337,6 +344,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const listEl       = document.getElementById('sottocampioni-list');
   const resultsBox   = document.getElementById('disponibili-results');
   const btnCrea      = document.getElementById('btn-crea-campione');
+const chkFollowup  = document.getElementById('chk-followup');
+
 
   const MAX          = 3;
   let CAMPIONE_FINAL = false;
@@ -400,13 +409,14 @@ document.addEventListener('DOMContentLoaded', () => {
       wrap.className = 'border-left pl-2 mb-2';
       wrap.innerHTML = `
         <div class="d-flex justify-content-between align-items-start">
-          <strong>
-            Sottocampione ${i+1}
-            <span class="text-muted ml-2">
-              <i data-feather="users" class="align-text-bottom"></i>
-              (${Number.isFinite(sc.count) ? sc.count : '…'})
-            </span>
-          </strong>
+<strong>
+  Sottocampione ${i+1}
+  <span class="text-muted ml-2">
+    <i data-feather="users" class="align-text-bottom"></i>
+    (${Number.isFinite(sc.count) ? sc.count : '…'})
+  </span>
+  ${sc.followup ? '<span class="badge badge-info ml-1">Follow-up</span>' : ''}
+</strong>
           <button data-index="${i}" class="btn btn-sm btn-outline-danger btn-delete">
             <i data-feather="trash-2"></i>
           </button>
@@ -493,16 +503,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!selRicerca || !selRicerca.value) { clearDisponibili(); return; }
     if (!window.sottocampioni.length)     { clearDisponibili(); return; }
 
-    const samples = window.sottocampioni.map(sc => ({
-      sesso: (sc.sesso || '').split('/').filter(Boolean),
-      eta_da: sc.eta ? parseInt(sc.eta.split('-')[0], 10) : null,
-      eta_a:  sc.eta ? parseInt(sc.eta.split('-')[1], 10) : null,
-      regioni: sc.regioni ? sc.regioni.split(',').map(s => s.trim()).filter(Boolean) : [],
-      aree:    sc.aree    ? sc.aree.split(',').map(s => s.trim()).filter(Boolean) : [],
-      province_id: sc.province ? sc.province.split(',').map(s => s.trim()).filter(Boolean) : [],
-      ampiezza: sc.ampiezza ? sc.ampiezza.split(',').map(s => s.trim()).filter(Boolean) : [],
-      target_id: sc.target_id || null
-    }));
+const samples = window.sottocampioni.map(sc => ({
+  sesso: (sc.sesso || '').split('/').filter(Boolean),
+  eta_da: sc.eta ? parseInt(sc.eta.split('-')[0], 10) : null,
+  eta_a:  sc.eta ? parseInt(sc.eta.split('-')[1], 10) : null,
+  regioni: sc.regioni ? sc.regioni.split(',').map(s => s.trim()).filter(Boolean) : [],
+  aree:    sc.aree    ? sc.aree.split(',').map(s => s.trim()).filter(Boolean) : [],
+  province_id: sc.province ? sc.province.split(',').map(s => s.trim()).filter(Boolean) : [],
+  ampiezza: sc.ampiezza ? sc.ampiezza.split(',').map(s => s.trim()).filter(Boolean) : [],
+  target_id: sc.target_id || null,
+  invite: Number.isFinite(sc.count) ? Math.min(sc.invite || 1, sc.count) : (sc.invite || 1),
+  followup: sc.followup || false   // ✅ CORRETTO — ogni campione mantiene il suo stato
+}));
+
+
 
     const excludeCodes = (document.getElementById('exclude_ricerche')?.value || '').trim();
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -515,7 +529,8 @@ document.addEventListener('DOMContentLoaded', () => {
           sur_id: selRicerca.value,
           exclude_codes: excludeCodes,
           samples: samples,
-          debug: false
+          debug: true,
+          followup: chkFollowup?.checked || false
         })
       });
       const raw = await res.text();
@@ -591,13 +606,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const excludeEl = document.getElementById('exclude_ricerche');
       const exclude   = excludeEl ? excludeEl.value.trim() : '';
 
-      const sc = {
-        sesso, eta, regioni, aree, province, ampiezza,
-        iscritto_dal, livello_attivita,
-        target: targetText, target_id: targetId,
-        exclude,
-        invite: 1
-      };
+ const sc = {
+  sesso, eta, regioni, aree, province, ampiezza,
+  iscritto_dal, livello_attivita,
+  target: targetText, target_id: targetId,
+  exclude,
+  invite: 1,
+  followup: chkFollowup?.checked || false // ✅ aggiunto: salva nel sottocampione
+};
 
       window.sottocampioni.push(sc);
       renderCampione();
@@ -612,17 +628,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!selRicerca || !selRicerca.value) { alert('Seleziona prima una Ricerca.'); return; }
       if (!window.sottocampioni.length)     { alert('Aggiungi almeno un sottocampione.'); return; }
 
-      const samples = window.sottocampioni.map(sc => ({
-        sesso: (sc.sesso || '').split('/').filter(Boolean),
-        eta_da: sc.eta ? parseInt(sc.eta.split('-')[0], 10) : null,
-        eta_a:  sc.eta ? parseInt(sc.eta.split('-')[1], 10) : null,
-        regioni: sc.regioni ? sc.regioni.split(',').map(s => s.trim()).filter(Boolean) : [],
-        aree:    sc.aree    ? sc.aree.split(',').map(s => s.trim()).filter(Boolean) : [],
-        province_id: sc.province ? sc.province.split(',').map(s => s.trim()).filter(Boolean) : [],
-        ampiezza: sc.ampiezza ? sc.ampiezza.split(',').map(s => s.trim()).filter(Boolean) : [],
-        target_id: sc.target_id || null,
-        invite: Number.isFinite(sc.count) ? Math.min(sc.invite || 1, sc.count) : (sc.invite || 1)
-      }));
+const samples = window.sottocampioni.map(sc => ({
+  sesso: (sc.sesso || '').split('/').filter(Boolean),
+  eta_da: sc.eta ? parseInt(sc.eta.split('-')[0], 10) : null,
+  eta_a:  sc.eta ? parseInt(sc.eta.split('-')[1], 10) : null,
+  regioni: sc.regioni ? sc.regioni.split(',').map(s => s.trim()).filter(Boolean) : [],
+  aree:    sc.aree    ? sc.aree.split(',').map(s => s.trim()).filter(Boolean) : [],
+  province_id: sc.province ? sc.province.split(',').map(s => s.trim()).filter(Boolean) : [],
+  ampiezza: sc.ampiezza ? sc.ampiezza.split(',').map(s => s.trim()).filter(Boolean) : [],
+  target_id: sc.target_id || null,
+  invite: Number.isFinite(sc.count) ? Math.min(sc.invite || 1, sc.count) : (sc.invite || 1),
+  followup: sc.followup || false   // ✅ CORRETTO — legge il valore interno al sottocampione
+}));
+
+
 
       const excludeCodes = (document.getElementById('exclude_ricerche')?.value || '').trim();
       const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -634,7 +653,8 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({
             sur_id: selRicerca.value,
             exclude_codes: excludeCodes,
-            samples: samples
+            samples: samples,
+            followup: chkFollowup?.checked || false
           })
         });
 
