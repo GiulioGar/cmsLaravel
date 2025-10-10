@@ -1,0 +1,18 @@
+{
+    'type': 'multiopen',
+    'name': 'multiopen_qst',
+    'properties': [
+            { 'name': 'page_title', 'value': 'Multi Open' },
+            { 'name': 'page_intro', 'value': '' },
+            { 'name': 'page_openTitles', 'value': [
+                    'Domanda aperta 1',
+                    'Domanda aperta 2',
+                    'Domanda aperta 3',
+                    'Domanda aperta 4',
+                    'Domanda aperta 5'
+                ]}  
+        ],
+    'references': [
+            { 'name': 'page_openName', 'ref': 'selection' }
+        ]
+}

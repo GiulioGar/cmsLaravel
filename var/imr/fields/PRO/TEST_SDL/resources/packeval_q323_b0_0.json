@@ -1,0 +1,38 @@
+{
+    'type': 'packeval',
+    'name': 'packeval_q323_b0_0',
+    'properties': [
+            { 'name': 'page_title', 'value': 'Valutazione bottiglia' },
+            { 'name': 'page_question_title', 'value': '<p>Le faremo ora alcune domande in cui dovrà colorare con il mouse alcune parti della confezione. La preghiamo di osservare la confezione con attenzione e rispondere alle domande seguenti colorando fino ad un massimo di tre aree.</p>Quali parti del flacone attraggono maggiormente la Sua attenzione? ' },
+            { 'name': 'page_question_instructions', 'value': 'La preghiamo di colorare queste  parti nel modo più accurato possibile,può colorare fino ad un massimo di 3 aree.<br/>Se Nessuna pu&ograve; colorare lo sfondo bianco' },
+            { 'name': 'page_config', 'value': {
+                    'image': {
+                            'url': 'http://www.primisoft.com/fields/PRO/TEST_SDL/resources/b0_0.jpg',
+                            'height': 629,
+                            'width': 629
+                           
+                        },
+                    'shapes': [ 
+                                { 'id': 1, 'type': 'rectangle', 'tl': [22, 2], 'width':203, 'height':138, 'debugname' : 'tappo' },
+
+                                ],
+                    'max_user_shapes': 3,
+                    'allow_undo': true,
+                    'allow_erase_all': true,
+                    'properties' : {
+                                  'pencilwidth': 4,
+                                  'pencilcolor': 'red',
+                                  'controlid': 'controls',
+                                  'debug': false,
+                                  'predefinedopacity': 0
+                            }
+                    }
+                },
+           { 'name': 'page_collisions_q323_b0_0', 'value': [
+                    'selq323_b0_0_1', 'selq323_b0_0_2', 'selq323_b0_0_3', 'selq323_b0_0_4', 'selq323_b0_0_5', 'selq323_b0_0_6', 'selq323_b0_0_7', 'selq323_b0_0_8', 'selq323_b0_0_9', 'selq323_b0_0_10', 'selq323_b0_0_11', 'selq323_b0_0_12', 'selq323_b0_0_13','selq323_b0_0_14' ,'selq323_b0_0_15'
+                ] }
+        ],
+    'references': [
+            { 'name': 'page_collisions_q323_b0_0', 'ref': 'selection' }
+    ]
+}

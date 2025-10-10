@@ -1,0 +1,52 @@
+{
+    'type': 'packeval',
+    'name': 'packeval_world1',
+    'properties': [
+            { 'name': 'page_title', 'value': 'World Map 1' },
+            { 'name': 'page_question_title', 'value': 'Now we will show yoou western world map. Imagine your next trip on a cruise, which places would you go to/visit?' },
+            { 'name': 'page_question_instructions', 'value': 'Please draw up 3 different areas you would visit <b>in a future curise</b>' },
+            { 'name': 'page_config', 'value': {
+                    'image': {
+                            'url': 'http://www.primisoft.com/fields/SIL/ITA1502027/resources/world1.jpg',
+                            'width': 640,
+                            'height': 640 
+                        },
+                    'shapes': [ 
+                                { 'id': 1, 'type': 'rectangle', 'tl': [483, 0], 'width': 129, 'height':185, 'debugname' : 'Groelandia' },
+                                { 'id': 2, 'type': 'rectangle', 'tl': [129, 45], 'width': 327, 'height':217, 'debugname' : 'Canada' },
+                                { 'id': 3, 'type': 'rectangle', 'tl': [235, 264], 'width': 115, 'height':93, 'debugname' : 'UsaPacificoMessico' },
+                                { 'id': 4, 'type': 'rectangle', 'tl': [235, 357], 'width': 115, 'height':93, 'debugname' : 'Centro' },
+                                { 'id': 5, 'type': 'rectangle', 'tl': [372, 260], 'width': 64, 'height':74, 'debugname' : 'UsaAtlantico' },
+                                { 'id': 6, 'type': 'rectangle', 'tl': [370, 344], 'width': 64, 'height':74, 'debugname' : 'CubaCentro' },
+                                { 'id': 7, 'type': 'rectangle', 'tl': [430, 388], 'width': 109, 'height':65, 'debugname' : 'VenezuelaBrasil1' },
+                                { 'id': 8, 'type': 'rectangle', 'tl': [436, 465], 'width': 100, 'height':176, 'debugname' : 'Brasil2Argentina' },
+                                { 'id': 9, 'type': 'rectangle', 'tl': [352, 444], 'width': 65, 'height':186, 'debugname' : 'EcuadorCile' },
+                              
+                              ],
+                    'max_user_shapes': 3,
+                    'allow_undo': true,
+                    'allow_erase_all': true,
+                    'properties' : {
+                                  'pencilwidth': 3,
+                                  'pencilcolor': 'red',
+                                  'controlid': 'controls',
+                                  'debug': true,
+                                  'predefinedopacity': 0
+                            }
+                    }
+                },
+           { 'name': 'page_collisions_world1', 'value': [
+                    'wolrd1_sel1',  'wolrd1_sel2', 'wolrd1_sel3', 'wolrd1_sel4', 'wolrd1_sel5', 'wolrd1_sel6', 'wolrd1_sel7','wolrd1_sel8','wolrd1_sel9'
+                ] },
+           { 'name': 'page_labels', 'value': { 
+                    'back': 'Back', 
+                    'next': 'Next',
+                    'clear': 'Clear',
+                    'status': 'Shape {1} of {2}', 
+                    'error_1': '<p>Draw at least one shape to go on ...</p>' 
+               } }
+        ],
+    'references': [
+            { 'name': 'page_collisions_world1', 'ref': 'selection' }
+    ]
+}

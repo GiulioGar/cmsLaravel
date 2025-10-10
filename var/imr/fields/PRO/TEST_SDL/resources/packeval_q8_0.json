@@ -1,0 +1,64 @@
+{
+    'type': 'packeval',
+    'name': 'packeval_q8_0',
+    'properties': [
+            { 'name': 'page_title', 'value': 'Valutazione etichetta' },
+            { 'name': 'page_question_title', 'value': 'Quali parti dell&#39;etichetta non le piacciono in particolare?' },
+            { 'name': 'page_question_instructions', 'value': 'Colori queste parti sull&#39;etichetta il pi&ugrave; accuratamente possibile.' },
+            { 'name': 'page_config', 'value': {
+                    'image': {
+                            'url': 'http://www.primisoft.com/fields/BRS/ITA1312119/resources/et_0.jpg',
+                            'width': 640,
+                            'height': 640
+                        },
+                    'shapes': [ 
+                                { 'id': 1, 'type': 'rectangle', 'tl': [164, 37], 'width': 296, 'height':55, 'debugname' : 'sfondo' },
+                                { 'id': 2, 'type': 'rectangle', 'tl': [228, 93], 'width': 130, 'height':43, 'debugname' : 'carciofo' },
+                                { 'id': 3, 'type': 'rectangle', 'tl': [273, 135], 'width': 83, 'height':35, 'debugname' : 'carciofo' },
+                                { 'id': 4, 'type': 'rectangle', 'tl': [279, 250], 'width': 127, 'height':116, 'debugname' : 'carciofo' },
+                                { 'id': 5, 'type': 'rectangle', 'tl': [265, 167], 'width': 43, 'height':20, 'debugname' : 'carciofo' },
+                                { 'id': 6, 'type': 'rectangle', 'tl': [165, 140], 'width': 102, 'height':217, 'debugname' : 'cynar' },
+                                { 'id': 7, 'type': 'rectangle', 'tl': [270, 188], 'width': 158, 'height':61, 'debugname' : 'cynar' },
+                                { 'id': 8, 'type': 'rectangle', 'tl': [355, 129], 'width': 109, 'height':57, 'debugname' : 'cynar' },
+                                { 'id': 9, 'type': 'rectangle', 'tl': [433, 187], 'width': 42, 'height':39, 'debugname' : 'cynar' },
+                               { 'id': 10, 'type': 'rectangle', 'tl': [136, 192], 'width': 28, 'height':143, 'debugname' : 'cynar' },
+                               { 'id': 11, 'type': 'rectangle', 'tl': [211, 397], 'width': 191, 'height':50, 'debugname' : 'ricetta' },
+                               { 'id': 12, 'type': 'rectangle', 'tl': [217, 455], 'width': 190, 'height':32, 'debugname' : 'base' },
+                               { 'id': 13, 'type': 'rectangle', 'tl': [253, 506], 'width': 119, 'height':116, 'debugname' : 'cynarina' },
+                               { 'id': 14, 'type': 'rectangle', 'tl': [167, 93], 'width': 61, 'height':45, 'debugname' : 'sfondo' },
+                              { 'id': 15, 'type': 'rectangle', 'tl': [179, 497], 'width': 60, 'height':71, 'debugname' : 'sfondo' },
+                                { 'id': 16, 'type': 'rectangle', 'tl': [390, 497], 'width': 49, 'height':70, 'debugname' : 'sfondo' }
+                              ],
+                    'max_user_shapes': 3,
+                    'allow_undo': true,
+                    'allow_erase_all': true,
+                    'properties' : {
+                                  'pencilwidth': 4,
+                                  'pencilcolor': 'blue',
+                                  'controlid': 'controls',
+                                  'debug': false,
+                                  'predefinedopacity': 0
+                            }
+                    }
+                },
+                
+           { 
+           'name': 'page_collisions_q8_0', 'value': 
+                    [
+                   'sel_1', 'sel_2', 'sel_3','sel_4','sel_5','sel_6', 'sel_7','sel_8','sel_9','sel_10','sel_11','sel_12', 'sel_13','sel_14','sel_15','sel_16'
+                    ] 
+          },
+          
+                
+          { 'name': 'page_labels', 'value': { 
+                    'back': 'Indietro', 
+                    'next': 'Avanti',
+                    'clear': 'Annulla',
+                    'status': 'Colorati {1} di {2}', 
+                    'error_1': '<p>Colorare almeno una parte per proseguire...</p>' 
+               } }
+        ],
+    'references': [
+            { 'name': 'page_collisions_q8_0', 'ref': 'selection' }
+    ]
+}

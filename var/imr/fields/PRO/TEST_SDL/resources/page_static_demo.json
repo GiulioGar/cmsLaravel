@@ -1,0 +1,8 @@
+{
+    'type': 'static',
+    'name': 'static_demo',
+    'properties': [
+            { 'name': 'page_title', 'value': 'Static Page Demo' },
+            { 'name': 'page_content', 'value': '<p>Welcome to the pages DEMO. This is a <b>static</b> page!</p>' }
+        ]
+}

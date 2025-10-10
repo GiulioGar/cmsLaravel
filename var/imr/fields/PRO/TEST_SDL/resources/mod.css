@@ -1,0 +1,64 @@
+.table-container {
+    display: table;
+    width: 100%;
+    margin-top: 1em;
+    border-collapse: collapse; /* unisce i bordi */
+    font-family: Arial, sans-serif;
+  }
+  
+  .table-row {
+    display: table-row;
+  }
+  
+  .table-cell {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #ccc;
+  }
+  
+  /* Intestazione color verde */
+  .table-header .table-cell {
+    color: #000;               /* testo bianco */
+    font-weight: bold;
+    border-color: #006600;     /* bordo più scuro se vuoi */
+  }
+  
+  /* Colonne con sfumature diverse */
+  .col0 {
+    background:#f9fbf7;
+  }
+  .col1 {
+    background: #ffffff ;
+  }
+  .col2 {
+    background:#fffdf7;
+  }
+  
+#title {
+    font-size: 1.3em;
+  }
+  
+  /* Miglioriamo un pochino l’aspetto del radio button */
+  .radio input[type="radio"] {
+    transform: scale(1.2);
+    margin-right: 4px;
+    cursor: pointer;
+  }
+
+  .highlight-column {
+    background-color: #b2f8b28f !important;
+    /* 
+       "!important" serve nel caso in cui ci siano già altre regole
+       di background (ad esempio le sfumature) da sovrascrivere.
+       Puoi variare il colore come preferisci.
+    */
+    transition: background 0.3s ease;
+  }
+
+  .table-cell[class*='col'] { cursor: pointer; }
+.table-cell[class*='col']:focus { outline: 2px solid #6aa9ff; outline-offset: 2px; }
+
+  
+  .container-component { border:1px dotted; padding:30px;}

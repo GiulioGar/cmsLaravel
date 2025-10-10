@@ -1,0 +1,20 @@
+
+
+.navbar {
+    display: none;
+  }
+
+#title {
+    display: none;
+}
+
+body {
+    margin: 0px 0 0 !important;
+  }
+
+.container {
+
+    padding-left: 0px !important;
+
+
+}

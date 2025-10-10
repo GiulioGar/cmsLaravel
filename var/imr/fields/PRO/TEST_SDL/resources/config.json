@@ -1,0 +1,91 @@
+{
+ "interview": {
+        "development": {},
+        "production" : {
+            "allow_go_back": false,
+            "redirections": [{
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 3,
+                    "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+				{
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 4,
+                   "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+                
+                {
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 5,
+                     "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+
+
+                {
+                    "parameter_name": "pan",
+                    "parameter_value": "1",
+                    "exit_code": 3,
+                    "redirect_to": "https://s.cint.com/Survey/Complete?ProjectToken=3c64effd-7e12-4f6d-9a47-c945439bce0a"
+                }, {
+                    "parameter_name": "pan",
+                    "parameter_value": "1",
+                    "exit_code": 4,
+                    "redirect_to": "https://s.cint.com/Survey/EarlyScreenOut?ProjectToken=5405a6fc-9441-534f-ab04-0649e3e9b987"
+                },
+                
+                {
+                    "parameter_name": "pan",
+                    "parameter_value": "1",
+                    "exit_code": 5,
+                    "redirect_to": "https://s.cint.com/Survey/QuotaFull?ProjectToken=5405a6fc-9441-534f-ab04-0649e3e9b987"
+                }
+					
+			
+						
+			 ],
+             "ssi": {
+                "secure_key_1": 62279,
+                "secure_key_2": 56430
+            }
+    }
+          
+},
+
+"quota": {
+    "total_interviews": 2100,    
+        "targets": [
+        {
+            "name": "sesso",
+            "description": "sesso",
+            "question_id": 30,
+            "option_id": [0,1],
+            "value": 4000
+        },
+
+
+
+        {
+            "name": "eta",
+            "description": "eta",
+            "question_id": 50,
+            "option_id": [1,2,3,4,5],
+            "value": 4000
+        },
+
+        {
+            "name": "pers",
+            "description": "pers",
+            "question_id": 135,
+            "option_id": [0,1,2,3,4,5,6,7,8,9,10,11],
+            "value": 200
+        }
+               
+        
+                    
+         ]
+}
+
+}

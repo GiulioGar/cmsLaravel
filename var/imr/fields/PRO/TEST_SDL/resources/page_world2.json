@@ -1,0 +1,65 @@
+{
+    'type': 'packeval',
+    'name': 'packeval_world2',
+    'properties': [
+            { 'name': 'page_title', 'value': 'World Map 2' },
+            { 'name': 'page_question_title', 'value': 'Now we will show you east world map. Imagine your next trip on a cruise, which places would you go to/visit?' },
+            { 'name': 'page_question_instructions', 'value': 'Please draw up 3 different areas you would visit <b>in a future curise</b>' },
+            { 'name': 'page_config', 'value': {
+                    'image': {
+                            'url': 'http://www.primisoft.com/fields/SIL/ITA1502027/resources/world2.jpg',
+                            'width': 640,
+                            'height': 640 
+                        },
+                    'shapes': [ 
+                                { 'id': 1, 'type': 'rectangle', 'tl': [31, 0], 'width': 199, 'height':86, 'debugname' : 'Artico' },
+                                { 'id': 2, 'type': 'rectangle', 'tl': [54, 111], 'width': 100, 'height':86, 'debugname' : 'Norvegia' },
+                                { 'id': 3, 'type': 'rectangle', 'tl': [0, 198], 'width': 57, 'height':86, 'debugname' : 'InghSpa' },
+                                { 'id': 4, 'type': 'rectangle', 'tl': [70, 251], 'width':105, 'height':62, 'debugname' : 'Mediterraneo' },
+                                { 'id': 5, 'type': 'rectangle', 'tl': [0, 383], 'width':105, 'height':62, 'debugname' : 'GolfoGuinea' },
+                                { 'id': 6, 'type': 'rectangle', 'tl': [64, 467], 'width':99, 'height':89, 'debugname' : 'sudAfrica' },
+                                { 'id': 7, 'type': 'rectangle', 'tl': [176, 453], 'width':59, 'height':72, 'debugname' : 'madagascar' },
+                                { 'id': 8, 'type': 'rectangle', 'tl': [199, 387], 'width':54, 'height':57, 'debugname' : 'seychelles' },
+                                { 'id': 9, 'type': 'rectangle', 'tl': [261, 340], 'width':89, 'height':68, 'debugname' : 'arabIndia' },
+                                { 'id': 10, 'type': 'rectangle', 'tl': [360, 354], 'width':89, 'height':37, 'debugname' : 'thailandia' },
+                                { 'id': 11, 'type': 'rectangle', 'tl': [368, 394], 'width':129, 'height':61, 'debugname' : 'indonesia' },
+                                { 'id': 12, 'type': 'rectangle', 'tl': [453, 297], 'width':58, 'height':91, 'debugname' : 'filippineGiapp' },
+                                { 'id': 13, 'type': 'rectangle', 'tl': [517, 369], 'width':121, 'height':86, 'debugname' : 'micronesia' },
+                                { 'id': 14, 'type': 'rectangle', 'tl': [417, 464], 'width':138, 'height':33, 'debugname' : 'australiaNord' },
+                                { 'id': 15, 'type': 'rectangle', 'tl': [414, 515], 'width':148, 'height':94, 'debugname' : 'australiaSud' },
+                                { 'id': 16, 'type': 'rectangle', 'tl': [13, 590], 'width':290, 'height':48, 'debugname' : 'antartico' },
+                                { 'id': 17, 'type': 'rectangle', 'tl': [577, 521], 'width':61, 'height':117, 'debugname' : 'newzeland' },
+                                { 'id': 18, 'type': 'rectangle', 'tl': [361, 40], 'width':203, 'height':204, 'debugname' : 'russiaoriente' },
+                 
+                              
+                              ],
+                    'max_user_shapes': 3,
+                    'allow_undo': true,
+                    'allow_erase_all': true,
+                    'properties' : {
+                                  'pencilwidth': 3,
+                                  'pencilcolor': 'red',
+                                  'controlid': 'controls',
+                                  'debug': true,
+                                  'predefinedopacity': 0
+                            }
+                    }
+                },
+           { 'name': 'page_collisions_world2', 'value': [
+                    'world2_sel1',  'world2_sel2', 'world2_sel3', 'world2_sel4', 'world2_sel5', 'world2_sel6', 'world2_sel7','world2_sel8',
+                    'world2_sel9',  'world2_sel10', 'world2_sel11', 'world2_sel12', 'world2_sel13', 'world2_sel14', 'world2_sel15','world2_sel16',
+					'world2_sel17','world2_sel18'
+				
+                ] },
+           { 'name': 'page_labels', 'value': { 
+                    'back': 'Back', 
+                    'next': 'Next',
+                    'clear': 'Clear',
+                    'status': 'Shape {1} of {2}', 
+                    'error_1': '<p>Draw at least one shape to go on ...</p>' 
+               } }
+        ],
+    'references': [
+            { 'name': 'page_collisions_world2', 'ref': 'selection' }
+    ]
+}

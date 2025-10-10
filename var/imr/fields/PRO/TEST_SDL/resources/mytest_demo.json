@@ -1,0 +1,19 @@
+{
+'type':'mytest',
+'name':'mytest_demo',
+
+	'properties':[
+			{'name':'page_title', 'value':'Prove Giulio'},
+			{'name':'page_intro', 'value':'Scegli un frutto:'},
+			{'name':'page_typ', 'value':'radio'},
+			{'name':'page_itm', 'value':['Mela','Pera','Banana','Pesca','Albicocca','Uva']
+					},
+				],	
+					
+	'references': [ {'name':'page_itm', 'ref':'mysel'}
+	
+                      ]			
+
+}
+
+

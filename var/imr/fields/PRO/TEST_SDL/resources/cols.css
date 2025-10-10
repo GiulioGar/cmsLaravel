@@ -1,0 +1,20 @@
+
+
+div#content {
+    position: absolute;
+    left: 10px;
+    top: 50px;
+    padding: 1em 10px;
+}
+
+div#question-footer input.next {
+    height: 30px;
+	float:left;
+	margin-top:50px;
+}
+
+div#question-footer {
+
+float:left;
+margin-top:50px;
+}

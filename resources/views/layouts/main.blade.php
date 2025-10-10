@@ -86,7 +86,7 @@
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="">
+                        <a class="sidebar-link" href="{{ route('autotest.index') }}">
                             <i class="align-middle" data-feather="check-square"></i> <span class="align-middle">Autotest</span>
                         </a>
                     </li>

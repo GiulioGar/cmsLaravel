@@ -1,0 +1,51 @@
+{
+    'type': 'packeval',
+    'name': 'packeval_q42_1',
+    'properties': [
+            { 'name': 'page_title', 'value': 'Valutazione confezione' },
+            { 'name': 'page_question_title', 'value': 'Quali parti/aree di questa confezione attirano maggiormente la sua attenzione? ' },
+            { 'name': 'page_question_instructions', 'value': 'Guardi con attenzione la confezione e poi risponda alle seguenti domande colorando fino ad un massimo di 3 aree.' },
+            { 'name': 'page_config', 'value': {
+                    'image': {
+                            'url': 'http://www.primisoft.com/fields/PRO/TEST_SDL/resources/ex2.jpg',
+                            'height': 629,
+                            'width': 629
+
+                        },
+                    'shapes': [
+                                { 'id': 1, 'type': 'rectangle', 'tl': [247, 9], 'width':109, 'height':133, 'debugname' : 'tappo' },
+                                { 'id': 2, 'type': 'rectangle', 'tl': [236, 178], 'width':110, 'height':80, 'debugname' : 'cane' },
+                                { 'id': 3, 'type': 'rectangle', 'tl': [236, 259], 'width':119, 'height':38, 'debugname' : 'sano e bello' },
+                                { 'id': 4, 'type': 'rectangle', 'tl': [346, 198], 'width':48, 'height':45, 'debugname' : 'bolle' },
+                                { 'id': 5, 'type': 'rectangle', 'tl': [207, 161], 'width':20, 'height':27, 'debugname' : 'bolle' },
+                                { 'id': 6, 'type': 'rectangle', 'tl': [225, 321], 'width':131, 'height':38, 'debugname' : 'shampoo' },                                
+                                { 'id': 7, 'type': 'rectangle', 'tl': [239, 357], 'width':119, 'height':30, 'debugname' : 'neutron' }, 
+                                { 'id': 8, 'type': 'rectangle', 'tl': [249, 387], 'width':88, 'height':22, 'debugname' : 'fisiologico' },
+                                { 'id': 9, 'type': 'rectangle', 'tl': [246, 413], 'width':80, 'height':39, 'debugname' : 'talco' }, 
+                                { 'id': 10, 'type': 'rectangle', 'tl': [266, 463], 'width':40, 'height':40, 'debugname' : 'bayer' }, 
+                                 { 'id': 11, 'type': 'rectangle', 'tl': [238, 508], 'width':102, 'height':47, 'debugname' : 'pulisce' }, 
+                                 { 'id': 12, 'type': 'rectangle', 'tl': [238, 572], 'width':101, 'height':32, 'debugname' : 'cani e cuccioli' }, 
+                                { 'id': 13, 'type': 'rectangle', 'tl': [209, 301], 'width':190, 'height':20, 'debugname' : 'sfondo rosa' }, 
+                                { 'id': 14, 'type': 'rectangle', 'tl': [369, 354], 'width':36, 'height':217, 'debugname' : 'sfondo rosa' },
+                                { 'id': 15, 'type': 'rectangle', 'tl': [200, 388], 'width':37, 'height':100, 'debugname' : 'sfondo rosa' },                                 
+                             ],
+                    'max_user_shapes': 3,
+                    'allow_undo': true,
+                    'allow_erase_all': true,
+                    'properties' : {
+                                  'pencilwidth': 4,
+                                  'pencilcolor': 'red',
+                                  'controlid': 'controls',
+                                  'debug': true,
+                                  'predefinedopacity': 0
+                            }
+                    }
+                },
+           { 'name': 'page_collisions_q42_1', 'value': [
+                           'sel_1', 'sel_2', 'sel_3', 'sel_4', 'sel_5', 'sel_6', 'sel_7', 'sel_8', 'sel_9', 'sel_10', 'sel_12', 'sel_13', 'sel_14', 'sel_15', 'sel_16'
+                ] }
+        ],
+    'references': [
+            { 'name': 'page_collisions_q42_1', 'ref': 'selection' }
+    ]
+}

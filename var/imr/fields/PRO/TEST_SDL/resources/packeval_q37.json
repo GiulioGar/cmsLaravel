@@ -1,0 +1,50 @@
+{
+    'type': 'packeval',
+    'name': 'packeval_q37',
+    'properties': [
+            { 'name': 'page_title', 'value': 'Valutazione confezione' },
+            { 'name': 'page_question_title', 'value': 'Quali parti/aree di questa confezione in particolare le piacciono di meno? ' },
+            { 'name': 'page_question_instructions', 'value': 'Guardi con attenzione la confezione e poi risponda alle seguenti domande colorando fino ad un massimo di 3 aree.' },
+            { 'name': 'page_config', 'value': {
+                    'image': {
+                            'url': 'http://www.primisoft.com/fields/PRO/TEST_SDL/resources/pata.png',
+                            'width': 513,
+                            'height': 647 
+                        },
+                    'shapes': [ 
+                                { 'id': 1, 'type': 'rectangle', 'tl': [0, 56], 'width': 208, 'height':133, 'debugname' : 'farfalla' },
+                                { 'id': 2, 'type': 'rectangle', 'tl': [208, 93], 'width': 152, 'height':95, 'debugname' : 'logo' },
+                                { 'id': 3, 'type': 'rectangle', 'tl': [361, 34], 'width': 48, 'height':48, 'debugname' : 'simbolo' },
+                                { 'id': 4, 'type': 'rectangle', 'tl': [410, 39], 'width': 77, 'height':39, 'debugname' : 'bandiera' },
+                                { 'id': 5, 'type': 'rectangle', 'tl': [378, 85], 'width': 96, 'height':37, 'debugname' : 'peso' },
+                                { 'id': 6, 'type': 'rectangle', 'tl': [115, 188], 'width': 272, 'height':209, 'debugname' : 'patasnella' },
+                                { 'id': 7, 'type': 'rectangle', 'tl': [207, 395], 'width': 266, 'height':106, 'debugname' : 'pataImg' },
+                                { 'id': 8, 'type': 'rectangle', 'tl': [60, 463], 'width': 133, 'height':57, 'debugname' : 'pataScritta' },
+                                { 'id': 9, 'type': 'rectangle', 'tl': [40, 522], 'width': 171, 'height':58, 'debugname' : 'forno' },
+                                { 'id': 10, 'type': 'rectangle', 'tl': [216, 508], 'width': 171, 'height':58, 'debugname' : 'girasole' },
+                                { 'id': 11, 'type': 'rectangle', 'tl': [369, 506], 'width': 124, 'height':84, 'debugname' : 'settanta' },
+                                { 'id': 12, 'type': 'rectangle', 'tl': [39, 228], 'width': 55, 'height':237, 'debugname' : 'sfondoBianco' },
+                                { 'id': 13, 'type': 'rectangle', 'tl': [423, 150], 'width': 49, 'height':235, 'debugname' : 'sfondoBianco' },
+                               { 'id': 14, 'type': 'rectangle', 'tl': [20, 586], 'width': 493, 'height':49, 'debugname' : 'sfondoBlu' },
+                               { 'id': 15, 'type': 'rectangle', 'tl': [151, 15], 'width': 216, 'height':47, 'debugname' : 'sfondoGiallo' },
+                              ],
+                    'max_user_shapes': 3,
+                    'allow_undo': true,
+                    'allow_erase_all': true,
+                    'properties' : {
+                                  'pencilwidth': 4,
+                                  'pencilcolor': 'red',
+                                  'controlid': 'controls',
+                                  'debug': false,
+                                  'predefinedopacity': 0
+                            }
+                    }
+                },
+           { 'name': 'page_collisions_37', 'value': [
+                           'sel_1', 'sel_2', 'sel_3','sel_4','sel_5','sel_6', 'sel_7','sel_8','sel_9','sel_10','sel_11','sel_12', 'sel_13','sel_14','sel_15'
+                ] }
+        ],
+    'references': [
+            { 'name': 'page_collisions_37', 'ref': 'selection' }
+    ]
+}

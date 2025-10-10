@@ -1,0 +1,117 @@
+#export vars "blocco"
+
+void main() 
+{
+// variabili comuni
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+string labelCheck;
+int r1;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+boolean selCheck;
+string cpt;
+int preQid;
+int n;
+int reCod;
+int selintCheck;
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "scripts:mod.js");
+string autotest=system.getProperty("test");
+string uid = system.getProperty("sysUID");
+if (autotest=="1" || uid=="GUEST" || uid=="null") {
+system.setProperty("env", "debug:true");  system.setProperty("env", "browser:variables");}
+string err;
+
+if (autotest=="1") {system.setProperty("env", "scripts:modtest.js");}
+
+int selCon;
+int rm;
+int idx;
+int Nran=12;
+int codID;
+
+int blocco;
+
+// Q10: CONCEPT
+qst = new question("concept", 10);
+qst.setProperty("text", "Buongiorno. Il mio nome è  e sono un intervistatore/intervistatrice di Interactive, un istituto di ricerche di mercato. Stiamo conducendo un’indagine tra i consumatori e vorremmo rivolgerle qualche domanda. (Se rifiuta ringraziare e chiudere)");
+qst.setProperty("code", "q10");
+send qst; 
+
+qst = new question("choice", 12);
+qst.setProperty("text", "Intervista realizzata su telefono:  ");
+qst.setProperty("code", "disp");
+vector q12_opts = new vector {
+"FISSO",
+"MOBILE"
+};
+qst.setProperty("options", q12_opts);
+send qst;
+
+// Q50: CHOICE
+qst = new question("choice", 50);
+qst.setProperty("text", "Registrare il genere:");
+qst.setProperty("code", "Q2");
+qst.setProperty("show_rand", false);
+vector q50_opts = new vector {
+"Uomo",
+"Donna"
+};
+qst.setProperty("options", q50_opts);
+send qst; 
+
+
+// Q60: CHOICE
+qst = new question("choice", 60);
+qst.setProperty("text", "<p>Parliamo di Centri Commerciali presenti nella sua zona. </p>Quali le vengono in mente? <b><div class='info'>(Spontanea - NON LEGGERE)</div></b>");
+qst.setProperty("code", "Q3");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q60_opts = new vector {
+"Cormano",
+"Arese",
+"Bicocca Village",
+"Bonola",
+"Cascina Merlata",
+"Centro Sarca",
+"La Fontana (Cinisello Balsamo)",
+"Metropoli (Novate Milanese)",
+"Portello",
+"Vulcano (Sesto San Giovanni)",
+"#shPortello",
+"#shSan Giuliano",
+"Altro (specificare)#sf#so",
+"Nessuno#se#sf"
+};
+qst.setProperty("options", q60_opts);
+send qst; 
+
+// Q90: CHOICE
+qst = new question("choice", 90);
+qst.setProperty("text", "Parliamo del CC Cormano. <p>Quanto spesso lo frequenta?</p>");
+qst.setProperty("code", "Q6");
+qst.setProperty("show_rand", false);
+vector q90_opts = new vector {
+"Più volte a settimana",
+"1 volta alla settimana",
+"1 volta ogni due settimane",
+"1 volta al mese",
+"1 volta ogni 2/3 mesi",
+"Più raramente"
+};
+qst.setProperty("options", q90_opts);
+send qst; 
+
+}

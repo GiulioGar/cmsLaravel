@@ -1,0 +1,47 @@
+.title{
+font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    text-align: left;
+    border: none;
+    color: #191919;
+    margin-bottom:15px;
+}
+.tb {
+width:1000px;
+font-family:Verdana;
+}
+
+.item{
+width:200px;
+border:1px solid #BFBFBF;
+background-color: #F9F9F9;
+
+}
+
+.itemSel{
+width:200px;
+background-color:#C0C0C0;
+border:1px solid #BFBFBF;
+background-color: #D5D5D5;
+font-weight:bold;
+
+}
+
+.qst{
+width:160px;
+border:1px solid #BFBFBF;
+text-align:center;
+background-color:#FF6464;
+}
+
+.qstSel{
+width:160px;
+border:1px solid #BFBFBF;
+text-align:center;
+background-color:#F00000;
+font-weight:bold;
+}
+
+select {
+width:45mm !important; max-width: 45mm !important; overflow: hidden !important;
+}

@@ -1,0 +1,35 @@
+blockquote, dd{padding:0 0 0 2em;}
+pre, code, samp, kbd, var{font:100% mono-space,monospace;}
+pre{overflow:auto;}
+abbr, acronym{
+		text-transform:uppercase;
+		border-bottom:1px dotted #000;
+		letter-spacing:1px;
+	}
+abbr[title], acronym[title]{cursor: help; }
+small{font-size:.9em;}
+sup, sub{font-size:.8em;}
+em, cite, q{font-style:italic;}
+
+
+#zoomImg{ min-width:1100px !important;}
+
+#zoomImg img {cursor:url('http://www.primisoft.com/fields/PRO/TEST_SDL/resources/lente.png'), auto; }
+
+#easy_zoom{
+	width:400px;
+	height:440px;	
+	border:5px solid #eee;
+	background:#fff;
+	color:#333;
+	position:absolute;
+	top:190px;
+	left:1025px;
+	overflow:hidden;
+	-moz-box-shadow:0 0 10px #777;
+	-webkit-box-shadow:0 0 10px #777;
+	box-shadow:0 0 10px #777;
+	/* vertical and horizontal alignment used for preloader text */
+	line-height:400px;
+	text-align:center;
+	}

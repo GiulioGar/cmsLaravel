@@ -1,0 +1,5 @@
+2.0;PRO;TEST_SDL;53;GUEST;10/10/2025 11:41:16 CEST;<unknown>;0;0;60;sysRST=1;debug=true;lang=it;sysIID=53;sysPRJ=PRO;mioprj=PRO;sysSID=TEST_SDL;miosid=TEST_SDL;browser=variables;test=1;sysUID=GUEST
+concept;10
+choice;12;2;1
+choice;50;2;0
+choice;60;14;00110011100000;2

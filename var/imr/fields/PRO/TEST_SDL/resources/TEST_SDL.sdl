@@ -1,0 +1,182 @@
+
+void main() {
+
+// variabili comuni
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+string labelCheck;
+int r1;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+boolean selCheck;
+string cpt;
+int preQid;
+int n;
+int nArr;
+int reCod;
+int selintCheck;
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "scripts:mod.js");
+string autotest=system.getProperty("test");
+string uid = system.getProperty("sysUID");
+if (autotest=="1" || uid=="GUEST" || uid=="null") {
+system.setProperty("env", "debug:true");  system.setProperty("env", "browser:variables");}
+string err;
+
+string all;
+string mozCode;
+string allinea;   
+
+string scriptzoom="<script type='text/javascript' src='https://www.primisoft.com/fields/script/jquery.fancybox.js?v=2.1.5'></script><script type='text/javascript''> $(document).ready(function() { $('.fancybox').fancybox();});</script>";
+
+int leg=99;
+
+boolean selVape;
+boolean selFMC;
+boolean selHP;
+boolean selSac;
+
+boolean sezVape;
+boolean sezFMC;
+boolean sezArro;
+boolean sezHP;
+boolean sezSac;
+
+boolean dual;
+boolean poly;
+
+boolean selNeo;
+boolean selVeo;
+boolean selTerea;
+boolean selLevia;
+
+boolean awVeo;
+
+int count12;
+int count345;
+int totalCount;
+int qFmc;
+int qHp;
+int qVape;
+int countB;
+
+int ansS10a;
+int ansS10c;
+int ansS10e;
+boolean selB;
+int countQ12;
+
+autotest="1";
+
+if (autotest=="1") {system.setProperty("env", "scripts:modtest.js");}
+
+//variabile mobile
+string deviceType = system.getProperty("user_agent:deviceType");
+string ss1 = deviceType.trim();
+system.setProperty("device",ss1);
+boolean live=true;
+string version="v01";
+if (autotest=="1") {version="auotest";}
+system.setProperty("version",version);
+
+
+all="<script type='text/javascript' src='https://www.primisoft.com/fields/script/all.js'></script>";
+mozCode="<script type='text/javascript'>$(window).load(function() {allinea(5,50,90);});</script>";
+allinea=all+mozCode;  
+
+
+vector q150_rows = new vector {
+"Galbani Professionale<br/><img width='60%' src='https://www.primisoft.com/fields/LMI/R2406085/resources/i0.png' alt='' />",
+"Granarolo Expert<br/><img width='60%' src='https://www.primisoft.com/fields/LMI/R2406085/resources/i1.png' alt='' />",
+"Valcolatte<br/><img width='60%' src='https://www.primisoft.com/fields/LMI/R2406085/resources/i2.png' alt='' />",
+"Casa Modena Professional<br/><img width='60%' src='https://www.primisoft.com/fields/LMI/R2406085/resources/i3.png' alt='' />",
+"Nessuna di queste#se#sf"
+};
+
+// Q150: SCALE
+qst = new question("scale", 150);
+qst.setProperty("text", "Leggerà ora alcune caratteristiche che altri professionisti hanno associato alle marche che sta valutando. <p><b>Per ciascun aspetto indichi a quale o quali delle marche lei lo associa maggiormente</b>, (può selezionarne 1 sola, due, tutte o nessuna)</p>");
+qst.setProperty("code", "B.4");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+qst.setProperty("rows", q150_rows);
+vector q150_cols = new vector {
+"Ha prodotti di qualità costante",
+"Ha un ottimo rapporto qualità-prezzo",
+"Ha un’offerta di prodotti studiata apposta per i professionisti",
+"È innovativa",
+"Offre prodotti che stimolano la creatività",
+"È molto apprezzata dai nostri Clienti",
+"Offre prodotti facili da usare",
+"Ha una gamma di prodotti molto ampia e diversificata",
+"Offre prodotti che facilitano il lavoro di noi professionisti",
+"Ha prodotti che permettono di preparare ricette sane e genuine",
+"Offre prodotti unici sul mercato",
+"Offre soluzioni riciclabili",
+"Offre prodotti con performances funzionali eccellenti"
+};
+qst.setProperty("cols", q150_cols);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "onebyone");
+}
+send qst;
+
+qst = new question("scale", 1);
+qst.setProperty("text", "Test");
+qst.setProperty("code", "q1");
+qst.setProperty("show_rand", true);
+vector q1_rows = new vector { "a", "b", "c" };
+vector q1_cols = new vector { "1", "2", "3" };
+qst.setProperty("rows", q1_rows);
+qst.setProperty("cols", q1_cols);
+send qst;
+
+
+qst = new question("scale", 3);
+qst.setProperty("text", "Test");
+qst.setProperty("code", "q2");
+qst.setProperty("show_rand", true);
+qst.setProperty("view", "columns");
+qst.setProperty("rows", q1_rows);
+qst.setProperty("cols", q1_cols);
+send qst;
+
+qst = new question("scale", 5);
+qst.setProperty("text", "Test");
+qst.setProperty("selection", "multiple");
+qst.setProperty("code", "q3");
+qst.setProperty("show_rand", true);
+qst.setProperty("rows", q1_rows);
+qst.setProperty("cols", q1_cols);
+send qst;
+
+qst = new question("scale", 7);
+qst.setProperty("text", "Test");
+qst.setProperty("selection", "multiple");
+qst.setProperty("code", "q4");
+qst.setProperty("show_rand", true);
+qst.setProperty("view", "columns");
+qst.setProperty("rows", q1_rows);
+qst.setProperty("cols", q1_cols);
+send qst;
+
+
+
+
+
+
+
+}
