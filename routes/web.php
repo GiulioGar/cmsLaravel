@@ -11,6 +11,8 @@ use App\Http\Controllers\FieldQualityController;
 use App\Http\Controllers\CampionamentoController;
 use App\Http\Controllers\AbilitaUidController;
 use App\Http\Controllers\AutotestController;
+use App\Http\Controllers\ConceptToolController;
+use App\Http\Controllers\PanelController;
 
 
 // Rotte per il login e logout
@@ -89,6 +91,20 @@ Route::get('/autotest', [AutotestController::class, 'index'])->name('autotest.in
 Route::post('/autotest/start', [AutotestController::class, 'start'])->name('autotest.start');
 Route::post('/autotest/progress', [AutotestController::class, 'progress'])->name('autotest.progress');
 Route::post('/autotest/status', [AutotestController::class, 'status'])->name('autotest.status');
+
+// Rotte per il Concept Tool
+Route::get('/concept-tool', [ConceptToolController::class, 'index'])->name('concept.index');
+Route::post('/concept-tool', [ConceptToolController::class, 'process'])->name('concept.process');
+
+// ============================================
+// PANEL - Gestione Utenti
+// ============================================
+
+Route::get('/panel/users', [PanelController::class, 'index'])->name('panel.users');
+Route::get('/panel/users/data', [PanelController::class, 'getData'])->name('panel.users.data');
+Route::post('/panel/users/refresh-cache', [PanelController::class, 'refreshActivityCache'])
+    ->name('panel.users.refresh');
+
 
 
 // Pagina 'Imposta Target': mostra la lista domande

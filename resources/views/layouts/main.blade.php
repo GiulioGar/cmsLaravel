@@ -91,22 +91,22 @@
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="">
+                        <a class="sidebar-link" href="{{ route('concept.index') }}">
                             <i class="align-middle" data-feather="grid"></i> <span class="align-middle">Concept Tool</span>
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="">
-                            <i class="align-middle" data-feather="align-left"></i> <span class="align-middle">Focus Point</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-item">
-                        <a class="sidebar-link" href="">
+                        <a class="sidebar-link" href="http://mailer.interactive-mr.com/admin/compila_mail_gest.php" target="_blank">
                             <i class="align-middle" data-feather="coffee"></i> <span class="align-middle">MAILER</span>
                         </a>
                     </li>
 
                     <li class="sidebar-header">Panel</li>
+                    <li class="sidebar-item">
+                        <a class="sidebar-link" href="{{ route('panel.users') }}">
+                            <i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Gestione Utenti</span>
+                        </a>
+                    </li>
                     <li class="sidebar-item">
                         <a class="sidebar-link" href="">
                             <i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Premi</span>
