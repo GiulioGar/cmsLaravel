@@ -13,6 +13,7 @@ use App\Http\Controllers\AbilitaUidController;
 use App\Http\Controllers\AutotestController;
 use App\Http\Controllers\ConceptToolController;
 use App\Http\Controllers\PanelController;
+use App\Http\Controllers\UserProfileController;
 
 
 // Rotte per il login e logout
@@ -104,6 +105,11 @@ Route::get('/panel/users', [PanelController::class, 'index'])->name('panel.users
 Route::get('/panel/users/data', [PanelController::class, 'getData'])->name('panel.users.data');
 Route::post('/panel/users/refresh-cache', [PanelController::class, 'refreshActivityCache'])
     ->name('panel.users.refresh');
+Route::get('/panel/info-annuale/{anno}', [PanelController::class, 'getAnnualPanelInfo'])
+    ->name('panel.info.annuale');
+Route::post('/panel/users/export', [PanelController::class, 'exportUsers'])
+    ->name('panel.users.export');
+Route::get('/panel/user/{uid}', [UserProfileController::class, 'show'])->name('panel.user.show');
 
 
 
