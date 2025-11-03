@@ -104,6 +104,48 @@
             margin-bottom: 1rem;
         }
     }
+
+
+    /* Migliora compattezza tabella */
+    #usersTable {
+        font-size: 0.8rem;
+        line-height: 1.2;
+        white-space: nowrap; /* evita ritorni a capo */
+    }
+
+    #usersTable td, #usersTable th {
+        padding: 4px 6px !important;
+        vertical-align: middle;
+    }
+
+    /* Tronca testi troppo lunghi con ellissi */
+    #usersTable td {
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Header più compatto */
+    .card-header {
+        padding: 0.6rem 0.8rem;
+    }
+
+    /* Colore alternato per righe */
+    #usersTable tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    /* Etichette badge più piccole */
+    .badge {
+        font-size: 0.7rem;
+        padding: 3px 6px;
+    }
+
+    /* Colonna % con badge centrato */
+    td.text-center {
+        text-align: center;
+    }
+
 </style>
 
 <div class="container-fluid mt-4">
@@ -114,12 +156,13 @@
 
             {{-- HEADER UTENTI --}}
             <div class="card mb-4">
-                <div class="card-header header-primary">
-                    <h5><i class="bi bi-people-fill"></i> Gestione Utenti Panel</h5>
-                    <button id="refreshCache" class="btn btn-sm btn-light text-primary btn-modern">
-                        <i class="bi bi-arrow-clockwise me-1"></i> Aggiorna Attività
-                    </button>
-                </div>
+<div class="card-header header-primary d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><i class="bi bi-people-fill"></i> Gestione Utenti Panel</h5>
+    <button id="btnUpdateActivity" class="btn btn-sm btn-light text-primary fw-bold shadow-sm">
+        <i class="bi bi-arrow-repeat me-1"></i> Aggiorna dati
+    </button>
+</div>
+
                 <div class="card-body bg-light">
                     <table id="usersTable" class="table table-hover table-bordered align-middle mb-0">
                         <thead class="table-primary text-center">
@@ -257,21 +300,6 @@
 @section('scripts')
 <script>
 
-$('#refreshCache').on('click', function() {
-    if (confirm('Vuoi aggiornare i dati di attività? Questa operazione può richiedere alcuni secondi.')) {
-        $(this).prop('disabled', true).text('⏳ Aggiornamento in corso...');
-        $.post('{{ route("panel.users.refresh") }}', {_token: '{{ csrf_token() }}'}, function(resp) {
-            if (resp.success) {
-                alert('✅ ' + resp.message);
-                $('#usersTable').DataTable().ajax.reload();
-            } else {
-                alert('❌ Errore: ' + resp.message);
-            }
-        }).always(() => {
-            $('#refreshCache').prop('disabled', false).text('🔄 Aggiorna Attività');
-        });
-    }
-});
 
 
 $(document).ready(function () {
@@ -326,7 +354,17 @@ columns: [
         return `<span class="badge" style="background:${color};">${data}</span>`;
     }
 },
-{ data: 'ultima_attivita', title: 'Ultima Azione', className: 'text-center', defaultContent: '-' },
+{
+    data: 'ultima_attivita',
+    title: 'Ultima Azione',
+    className: 'text-center',
+    defaultContent: '-',
+    render: function (data, type, row) {
+        if (!data) return '-';
+        // Rimuove eventuali frazioni di secondo e formato compatto
+        return data.replace(/\.\d+$/, '').replace('T', ' ').substring(0, 16);
+    }
+},
     { data: 'inviti', title: 'Inviti', className: 'text-center' },
     { data: 'attivita', title: 'Attività', className: 'text-center' },
     { data: 'partecipazione', title: '%', className: 'text-center' }
@@ -338,13 +376,41 @@ columnDefs: [
 ],
 
 
-        pageLength: 25,
+        pageLength: 40,
         responsive: true,
         language: {
             url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/it-IT.json'
         }
     });
 });
+
+
+// =====================
+// 🔄 AGGIORNA DATI PANEL
+// =====================
+$('#btnUpdateActivity').on('click', function() {
+    if (!confirm('Vuoi aggiornare i dati del panel? L\'operazione può richiedere alcuni minuti.')) return;
+
+    const btn = $(this);
+    btn.prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Aggiornamento in corso...');
+
+    $.get('{{ route("panel.users.update.activity") }}')
+        .done(function(resp) {
+            if (resp.success) {
+                alert('✅ Aggiornamento completato con successo!');
+                $('#usersTable').DataTable().ajax.reload(null, false);
+            } else {
+                alert('⚠️ Errore: ' + (resp.message || 'Aggiornamento non riuscito.'));
+            }
+        })
+        .fail(function(xhr) {
+            alert('❌ Errore durante l\'aggiornamento: ' + xhr.statusText);
+        })
+        .always(function() {
+            btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Aggiorna dati');
+        });
+});
+
 
 
 function loadPanelInfo(anno) {

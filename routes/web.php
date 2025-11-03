@@ -103,13 +103,13 @@ Route::post('/concept-tool', [ConceptToolController::class, 'process'])->name('c
 
 Route::get('/panel/users', [PanelController::class, 'index'])->name('panel.users');
 Route::get('/panel/users/data', [PanelController::class, 'getData'])->name('panel.users.data');
-Route::post('/panel/users/refresh-cache', [PanelController::class, 'refreshActivityCache'])
-    ->name('panel.users.refresh');
 Route::get('/panel/info-annuale/{anno}', [PanelController::class, 'getAnnualPanelInfo'])
     ->name('panel.info.annuale');
 Route::post('/panel/users/export', [PanelController::class, 'exportUsers'])
     ->name('panel.users.export');
 Route::get('/panel/user/{uid}', [UserProfileController::class, 'show'])->name('panel.user.show');
+Route::get('/panel/update-activity', [\App\Http\Controllers\PanelController::class, 'updateUserActivity'])
+    ->name('panel.users.update.activity');
 
 
 

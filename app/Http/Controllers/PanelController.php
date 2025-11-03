@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+
 
 class PanelController extends Controller
 {
@@ -24,45 +26,29 @@ public function getData(Request $request)
     $search = trim($request->input('search.value', ''));
 
     // ===============================
-    // Subquery aggregata attività cache
-    // ===============================
-$cacheSub = DB::table('t_user_activity_cache')
-    ->select(
-        'uid',
-        'inviti',
-        DB::raw('click AS attivita'),
-        DB::raw('ROUND(CASE WHEN inviti > 0 THEN (click / inviti * 100) ELSE 0 END) AS partecipazione')
-    );
-
-    // ===============================
-    // Subquery ultima attività da t_user_history
-    // ===============================
-    $historySub = DB::table('t_user_history')
-        ->select('user_id', DB::raw('MAX(event_date) AS last_event'))
-        ->groupBy('user_id');
-
-    // ===============================
-    // Query principale
+    // QUERY BASE: t_user_info + t_user_activity
     // ===============================
     $query = DB::table('t_user_info as u')
-        ->leftJoinSub($cacheSub, 'c', function ($join) {
-            $join->on('c.uid', '=', 'u.user_id');
-        })
-        ->leftJoinSub($historySub, 'h', function ($join) {
-            $join->on('h.user_id', '=', 'u.user_id');
-        })
+        ->leftJoin('t_user_activity as a', 'a.uid', '=', 'u.user_id')
         ->select(
             'u.user_id',
             'u.email',
             'u.birth_date',
             'u.reg_date',
-            DB::raw('COALESCE(c.inviti, 0) as inviti'),
-            DB::raw('COALESCE(c.attivita, 0) as attivita'),
-            DB::raw('COALESCE(c.partecipazione, 0) as partecipazione'),
-            DB::raw('h.last_event as last_event')
+            DB::raw('IFNULL(a.invites_count, 0) AS inviti'),
+            DB::raw('IFNULL(a.completes_count, 0) + IFNULL(a.screenouts_count, 0) + IFNULL(a.quotafull_count, 0) AS attivita'),
+            DB::raw('CASE
+                        WHEN IFNULL(a.invites_count,0) > 0
+                        THEN ROUND(((IFNULL(a.completes_count,0) + IFNULL(a.screenouts_count,0) + IFNULL(a.quotafull_count,0)) / a.invites_count) * 100, 1)
+                        ELSE 0
+                     END AS partecipazione'),
+            DB::raw('a.last_update AS ultima_attivita')
         )
         ->where('u.active', 1);
 
+    // ===============================
+    // FILTRO DI RICERCA
+    // ===============================
     if ($search !== '') {
         $query->where(function ($q) use ($search) {
             $q->where('u.user_id', 'like', "%{$search}%")
@@ -70,17 +56,20 @@ $cacheSub = DB::table('t_user_activity_cache')
         });
     }
 
+    // ===============================
+    // PAGINAZIONE E ORDINAMENTO
+    // ===============================
     $recordsTotal = DB::table('t_user_info')->where('active', 1)->count();
     $recordsFiltered = $query->count();
 
     $users = $query
-        ->orderByDesc(DB::raw('COALESCE(c.attivita, 0)'))
+        ->orderByDesc(DB::raw('a.last_update'))
         ->offset($start)
         ->limit($length)
         ->get();
 
     // ===============================
-    // Calcoli aggiuntivi in PHP
+    // ELABORAZIONI SECONDARIE (es. età, validità email, anzianità)
     // ===============================
     $data = $users->map(function ($user) {
         $now = \Carbon\Carbon::now();
@@ -93,7 +82,7 @@ $cacheSub = DB::table('t_user_activity_cache')
         // Email valida
         $user->email_valida = preg_match('/^[^@\s]+@[^@\s]+\.[^@\s]+$/', $user->email);
 
-        // 🔹 Calcolo anzianità iscrizione
+        // Anzianità iscrizione (in mesi)
         $user->anzianita = null;
         if (!empty($user->reg_date)) {
             $reg = \Carbon\Carbon::parse($user->reg_date);
@@ -109,28 +98,11 @@ $cacheSub = DB::table('t_user_activity_cache')
             else $user->anzianita = '10 anni +';
         }
 
-        // 🔹 Calcolo ultima attività
-        $user->ultima_attivita = '-';
-        if (!empty($user->last_event)) {
-            $event = \Carbon\Carbon::parse($user->last_event);
-            $diffGiorni = $event->diffInDays($now);
-            $diffMesi = $event->diffInMonths($now);
-            $diffAnni = $event->diffInYears($now);
-
-            if ($diffGiorni < 31) {
-                $user->ultima_attivita = $diffGiorni === 0 ? 'Oggi' : "{$diffGiorni} giorni fa";
-            } elseif ($diffMesi < 12) {
-                $user->ultima_attivita = "{$diffMesi} mesi fa";
-            } else {
-                $user->ultima_attivita = "{$diffAnni} anni fa";
-            }
-        }
-
         return $user;
     });
 
     // ===============================
-    // Output per DataTables
+    // OUTPUT per DataTables
     // ===============================
     return response()->json([
         'draw' => intval($request->input('draw')),
@@ -140,54 +112,154 @@ $cacheSub = DB::table('t_user_activity_cache')
     ]);
 }
 
-
-
-
-public function refreshActivityCache()
+public function updateUserActivity()
 {
-    try {
-        // 1️⃣ Svuota la cache precedente
-        DB::table('t_user_activity_cache')->truncate();
+    $startTime = microtime(true);
+    Log::info('=== [updateUserActivity] Inizio aggiornamento ===');
 
-        // 2️⃣ Rigenera i dati aggregati
-        DB::statement("
- INSERT INTO t_user_activity_cache (uid, inviti, click, complete_millebytes, sospese, non_target, updated_at)
-            SELECT
-                uid,
-                COUNT(*) AS inviti,
-                SUM(CASE WHEN iid != -1 THEN 1 ELSE 0 END) AS click,
-                SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) AS complete_millebytes,
-                SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS sospese,
-                SUM(CASE WHEN status IN (4,5) THEN 1 ELSE 0 END) AS non_target,
-                NOW()
-            FROM t_respint
-            GROUP BY uid
-        ");
+    DB::transaction(function () {
 
-        // 3️⃣ Aggiorna anche il campo 'actions' in t_user_info per ciascun utente
+        // 1️⃣ Legge il checkpoint corrente
+        $ckpt = DB::table('t_user_activity_ckpt')->where('id', 1)->first();
+        $lastInviteId  = (int) ($ckpt->last_invite_id ?? 0);
+        $lastHistoryId = (int) ($ckpt->last_history_id ?? 0);
+
+        Log::info('[updateUserActivity] Checkpoint attuale', [
+            'last_invite_id'  => $lastInviteId,
+            'last_history_id' => $lastHistoryId,
+        ]);
+
+        // 2️⃣ Conta nuovi record effettivamente da elaborare
+        $newInvites = DB::table('t_abilitatipanel')->where('id', '>', $lastInviteId)->count();
+        $newHistory = DB::table('t_user_history')->where('id', '>', $lastHistoryId)->count();
+
+        Log::info('[updateUserActivity] Record da elaborare', [
+            'newInvites' => $newInvites,
+            'newHistory' => $newHistory,
+        ]);
+
+        // Se non c'è nulla di nuovo, esci subito
+        if ($newInvites === 0 && $newHistory === 0) {
+            Log::info('[updateUserActivity] Nessun nuovo record da elaborare. Uscita.');
+            return;
+        }
+
+        // 3️⃣ AGGIORNAMENTO INVITI
+        $startInviti = microtime(true);
         DB::statement("
-            UPDATE t_user_info AS u
-            INNER JOIN (
+            INSERT INTO t_user_activity (uid, invites_count)
+            SELECT T.uid, SUM(T.inviti) AS invites_count
+            FROM (
+                -- 🔹 1) Inviti panel: t_abilitatipanel con SID presente in t_panel_control
                 SELECT
-                    uid,
-                    SUM(CASE WHEN iid != -1 THEN 1 ELSE 0 END) AS attivita
-                FROM t_respint
-                GROUP BY uid
-            ) AS r ON r.uid = u.user_id
-            SET u.actions = r.attivita
-        ");
+                    a.uid,
+                    COUNT(*) AS inviti
+                FROM t_abilitatipanel a
+                JOIN t_panel_control p ON p.sur_id = a.sid
+                JOIN t_user_info u ON u.user_id = a.uid
+                WHERE p.panel = 1
+                  AND a.id > {$lastInviteId}
+                GROUP BY a.uid
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Cache e campo "actions" aggiornati correttamente.'
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Errore: ' . $e->getMessage()
-        ]);
-    }
+                UNION ALL
+
+                -- 🔹 2) Inviti CINT: eventi con 'cint' nel tipo evento
+                SELECT
+                    h.user_id AS uid,
+                    COUNT(*) AS inviti
+                FROM t_user_history h
+                JOIN t_user_info u ON u.user_id = h.user_id
+                WHERE h.event_type LIKE '%cint%'
+                  AND h.id > {$lastHistoryId}
+                GROUP BY h.user_id
+            ) AS T
+            GROUP BY T.uid
+            ON DUPLICATE KEY UPDATE
+                invites_count = t_user_activity.invites_count + VALUES(invites_count)
+        ");
+        Log::info('[updateUserActivity] Inviti aggiornati in ' . round(microtime(true) - $startInviti, 2) . ' sec');
+
+        // 4️⃣ AGGIORNAMENTO ATTIVITÀ
+        $startAttivita = microtime(true);
+        DB::statement("
+            INSERT INTO t_user_activity (uid, completes_count, screenouts_count, quotafull_count, last_update)
+            SELECT
+                H.user_id,
+                SUM(H.add_complete),
+                SUM(H.add_screenout),
+                SUM(H.add_quotafull),
+                MAX(H.max_event_dt)
+            FROM (
+                -- 🔹 Eventi standard (Primis)
+                SELECT
+                    h.user_id,
+                    SUM(h.event_type = 'interview_complete')  AS add_complete,
+                    SUM(h.event_type = 'interview_screenout') AS add_screenout,
+                    SUM(h.event_type = 'interview_quotafull') AS add_quotafull,
+                    MAX(h.event_date) AS max_event_dt
+                FROM t_user_history h
+                JOIN t_user_info u ON u.user_id = h.user_id
+                JOIN t_abilitatipanel a
+                    ON a.uid = h.user_id
+                    AND a.sid = REPLACE(REPLACE(SUBSTRING_INDEX(SUBSTRING_INDEX(h.event_info, ',', 2), ',', -1), '(', ''), ')', '')
+                WHERE h.id > {$lastHistoryId}
+                  AND h.event_type IN ('interview_complete','interview_screenout','interview_quotafull')
+                GROUP BY h.user_id
+
+                UNION ALL
+
+                -- 🔹 Eventi CINT (non richiedono match con panel)
+                SELECT
+                    h.user_id,
+                    SUM(h.event_type = 'interview_complete_cint')  AS add_complete,
+                    SUM(h.event_type = 'interview_screenout_cint') AS add_screenout,
+                    SUM(h.event_type = 'interview_quotafull_cint') AS add_quotafull,
+                    MAX(h.event_date) AS max_event_dt
+                FROM t_user_history h
+                JOIN t_user_info u ON u.user_id = h.user_id
+                WHERE h.id > {$lastHistoryId}
+                  AND h.event_type IN (
+                        'interview_complete_cint',
+                        'interview_screenout_cint',
+                        'interview_quotafull_cint'
+                  )
+                GROUP BY h.user_id
+            ) AS H
+            GROUP BY H.user_id
+            ON DUPLICATE KEY UPDATE
+                completes_count  = t_user_activity.completes_count  + VALUES(completes_count),
+                screenouts_count = t_user_activity.screenouts_count + VALUES(screenouts_count),
+                quotafull_count  = t_user_activity.quotafull_count  + VALUES(quotafull_count),
+                last_update      = GREATEST(t_user_activity.last_update, VALUES(last_update))
+        ");
+        Log::info('[updateUserActivity] Attività aggiornate in ' . round(microtime(true) - $startAttivita, 2) . ' sec');
+
+        // 5️⃣ AGGIORNA CHECKPOINT SOLO SE EFFETTIVAMENTE LAVORATO
+        DB::statement("
+            UPDATE t_user_activity_ckpt
+            SET
+                last_invite_id  = (SELECT IFNULL(MAX(id), last_invite_id) FROM t_abilitatipanel),
+                last_history_id = (SELECT IFNULL(MAX(id), last_history_id) FROM t_user_history),
+                updated_at      = NOW()
+            WHERE id = 1
+        ");
+        Log::info('[updateUserActivity] Checkpoint aggiornato');
+    }); // <-- chiusura DB::transaction
+
+    $elapsed = round(microtime(true) - $startTime, 2);
+    Log::info('=== [updateUserActivity] Fine aggiornamento (' . $elapsed . 's) ===');
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Aggiornamento completato in ' . $elapsed . ' secondi.'
+    ]);
 }
+
+
+
+
+
+
 
 public function getAnnualPanelInfo($anno)
 {
