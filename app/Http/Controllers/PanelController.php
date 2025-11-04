@@ -255,6 +255,40 @@ public function updateUserActivity()
     ]);
 }
 
+/**
+ * Aggiorna il campo "actions" di t_user_info
+ * in base ai totali di t_user_activity.
+ */
+public function updateUserActions()
+{
+    $start = microtime(true);
+    Log::info('=== [updateUserActions] Inizio aggiornamento ===');
+
+    try {
+        // Aggiornamento massivo con JOIN
+        $updated = DB::update("
+            UPDATE t_user_info u
+            JOIN t_user_activity a ON a.uid = u.user_id
+            SET u.actions = a.completes_count + a.screenouts_count + a.quotafull_count
+            WHERE u.active = 1
+        ");
+
+        $elapsed = round(microtime(true) - $start, 2);
+        Log::info("[updateUserActions] Aggiornate {$updated} righe in {$elapsed}s");
+
+        return response()->json([
+            'success' => true,
+            'message' => "Aggiornamento campo actions completato ({$updated} utenti aggiornati).",
+            'elapsed' => $elapsed
+        ]);
+    } catch (\Exception $e) {
+        Log::error('[updateUserActions] Errore: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Errore durante l’aggiornamento delle actions.'
+        ]);
+    }
+}
 
 
 
@@ -432,6 +466,120 @@ private function getAreaMap()
         4 => 'Sud + Isole',
     ];
 }
+
+
+/**
+ * Restituisce il numero di utenti iscritti da almeno 3 anni
+ * che non hanno alcuna azione negli ultimi 3 anni.
+ */
+public function getInactiveUsersOver3Years()
+{
+    try {
+        $threeYearsAgo = now()->subYears(3);
+
+        // Totale utenti attivi
+        $totAttivi = DB::table('t_user_info')
+            ->where('active', 1)
+            ->count();
+
+        // Utenti attivi iscritti da ≥3 anni e senza eventi negli ultimi 3 anni
+        $baseQuery = DB::table('t_user_info as u')
+            ->where('u.active', 1)
+            ->whereDate('u.reg_date', '<=', $threeYearsAgo)
+            ->whereNotIn('u.user_id', function ($q) use ($threeYearsAgo) {
+                $q->select('user_id')
+                  ->from('t_user_history')
+                  ->whereNotNull('event_date')
+                  ->where('event_date', '>=', $threeYearsAgo);
+            });
+
+        $inattivi = (clone $baseQuery)->where(function ($q) {
+            $q->whereNull('u.actions')->orWhere('u.actions', '=', 0);
+        })->count();
+
+        $abandoners = (clone $baseQuery)->where('u.actions', '>', 0)->count();
+
+        $totale = $inattivi + $abandoners;
+        $percTot = $totAttivi > 0 ? round(($totale / $totAttivi) * 100, 2) : 0;
+        $percInattivi = $totale > 0 ? round(($inattivi / $totale) * 100, 1) : 0;
+        $percAbandoners = $totale > 0 ? round(($abandoners / $totale) * 100, 1) : 0;
+
+        return response()->json([
+            'success' => true,
+            'tot_attivi' => $totAttivi,
+            'totale' => $totale,
+            'perc_totale' => $percTot,
+            'inattivi' => $inattivi,
+            'abandoners' => $abandoners,
+            'perc_inattivi' => $percInattivi,
+            'perc_abandoners' => $percAbandoners
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('[getInactiveUsersOver3Years] Errore: ' . $e->getMessage());
+        return response()->json(['success' => false]);
+    }
+}
+
+
+
+/**
+ * Restituisce l'elenco dettagliato degli utenti inattivi da ≥3 anni.
+ */
+/**
+ * Restituisce l'elenco degli utenti inattivi o abandoners (da ≥3 anni).
+ */
+public function listInactiveUsersOver3Years(Request $request)
+{
+    try {
+        $threeYearsAgo = now()->subYears(3);
+        $target = $request->query('target', 'inattivi'); // inattivi | abandoners
+
+        $query = DB::table('t_user_info as u')
+            ->leftJoin('t_user_activity as a', 'a.uid', '=', 'u.user_id')
+            ->select(
+                'u.user_id',
+                'u.email',
+                'u.reg_date',
+                DB::raw("COALESCE(u.provenienza, '-') as provenienza"),
+                DB::raw("COALESCE(u.actions, 0) as actions")
+            )
+            ->where('u.active', 1)
+            // iscritti da almeno 3 anni
+            ->whereDate('u.reg_date', '<=', $threeYearsAgo)
+            // nessuna azione negli ultimi 3 anni
+            ->whereNotIn('u.user_id', function ($q) use ($threeYearsAgo) {
+                $q->select('user_id')
+                  ->from('t_user_history')
+                  ->whereNotNull('event_date')
+                  ->where('event_date', '>=', $threeYearsAgo);
+            });
+
+        if ($target === 'inattivi') {
+            $query->where(function ($q) {
+                $q->whereNull('u.actions')->orWhere('u.actions', '=', 0);
+            });
+        } elseif ($target === 'abandoners') {
+            $query->where('u.actions', '>', 0);
+        }
+
+        $users = $query->orderBy('u.reg_date')->limit(500)->get();
+
+        return response()->json([
+            'success' => true,
+            'target' => $target,
+            'count' => $users->count(),
+            'users' => $users
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('[listInactiveUsersOver3Years] Errore: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => 'Errore durante la lettura utenti inattivi.']);
+    }
+}
+
+
+
 
 
 }

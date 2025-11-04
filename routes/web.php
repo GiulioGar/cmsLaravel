@@ -110,6 +110,21 @@ Route::post('/panel/users/export', [PanelController::class, 'exportUsers'])
 Route::get('/panel/user/{uid}', [UserProfileController::class, 'show'])->name('panel.user.show');
 Route::get('/panel/update-activity', [\App\Http\Controllers\PanelController::class, 'updateUserActivity'])
     ->name('panel.users.update.activity');
+Route::get('/panel/users/update-actions', [PanelController::class, 'updateUserActions'])
+    ->name('panel.users.update.actions');
+Route::get('/panel/users/inactive-3y', [PanelController::class, 'getInactiveUsersOver3Years'])
+    ->name('panel.users.inactive.3y');
+Route::get('/panel/users/inactive-3y/list', [PanelController::class, 'listInactiveUsersOver3Years'])
+    ->name('panel.users.inactive.3y.list');
+
+
+
+// Rotte gestione stato utente
+Route::post('/user/{user_id}/deactivate', [App\Http\Controllers\UserProfileController::class, 'deactivate'])->name('user.deactivate');
+Route::post('/user/{user_id}/delete', [App\Http\Controllers\UserProfileController::class, 'delete'])->name('user.delete');
+Route::post('/user/{user_id}/activate', [App\Http\Controllers\UserProfileController::class, 'activate'])->name('user.activate');
+Route::post('/user/{user_id}/update-info', [App\Http\Controllers\UserProfileController::class, 'updateAnagrafica'])->name('user.update.info');
+Route::post('/user/{user_id}/bonus-malus', [App\Http\Controllers\UserProfileController::class, 'assignBonusMalus'])->name('user.bonus.malus');
 
 
 

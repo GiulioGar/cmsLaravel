@@ -288,12 +288,157 @@
                     </div>
                 </div>
             </div>
+
+{{-- UTENTI INATTIVI 3+ ANNI --}}
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-header header-secondary d-flex align-items-center justify-content-between">
+        <h6 class="mb-0"><i class="bi bi-clock-history"></i> Utenti inattivi da 3+ anni</h6>
+        <div class="d-flex gap-2">
+            <button id="btnRefreshInactive" class="btn btn-sm btn-light text-secondary shadow-sm">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="card-body text-center py-4 position-relative">
+        {{-- Loader --}}
+        <div id="inactiveCountLoader" class="text-muted small" style="display:none;">
+            <div class="spinner-border text-secondary mb-2" style="width:1.8rem;height:1.8rem;"></div>
+            <div>Calcolo in corso...</div>
+        </div>
+
+        {{-- Contenuto principale --}}
+        <div id="inactiveCountBox" class="d-none">
+            <div class="mb-3">
+                <div class="display-6 fw-bold text-danger mb-1" id="inactiveTotalValue">0</div>
+                <div class="text-muted small">utenti totali inattivi / abandoners (≥ 3 anni)</div>
+            </div>
+
+            {{-- Split numerico --}}
+            <div class="row justify-content-center mb-3">
+                <div class="col-5 border-end">
+                    <div class="fw-bold text-danger fs-5" id="inactiveCountValue">0</div>
+                    <div class="small text-muted">Inattivi<br>(0 actions)</div>
+                </div>
+                <div class="col-5">
+                    <div class="fw-bold text-warning fs-5" id="abandonersCountValue">0</div>
+                    <div class="small text-muted">Abandoners<br>(>0 actions)</div>
+                </div>
+            </div>
+
+            {{-- Barra complessiva --}}
+            <div class="progress mx-auto mb-2" style="height: 10px; width: 80%;">
+                <div id="inactivePercentBar" class="progress-bar bg-danger" role="progressbar" style="width: 0%;"></div>
+            </div>
+
+            <div class="text-muted small mb-3">
+                <span id="inactivePercentValue">0%</span> su <span id="inactiveTotalActives">0</span> utenti attivi
+            </div>
+
+            <div class="d-flex justify-content-center gap-2">
+                <button id="btnShowInactiveList" class="btn btn-sm btn-outline-danger shadow-sm">
+                    <i class="bi bi-person-x"></i> Mostra Inattivi
+                </button>
+                <button id="btnShowAbandonersList" class="btn btn-sm btn-outline-warning shadow-sm">
+                    <i class="bi bi-person-dash"></i> Mostra Abandoners
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
         </div>
         {{-- ====== FINE COLONNA DESTRA ====== --}}
     </div>
 </div>
+
+
+
+{{-- 🔹 Modal elenco utenti inattivi --}}
+<div class="modal fade" id="modalInactiveList" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-secondary text-white">
+        <h6 class="modal-title"><i class="bi bi-list-ul me-1"></i> Elenco utenti inattivi da 3+ anni</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div id="inactiveListLoader" class="text-center my-4">
+          <div class="spinner-border text-secondary" style="width: 2rem; height: 2rem;"></div>
+          <p class="mt-2 text-muted small">Caricamento in corso...</p>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-striped table-hover align-middle mb-0 text-center" id="inactiveUsersTable" style="display:none;">
+            <thead class="table-light">
+              <tr>
+                <th>Data Registrazione</th>
+                <th>User ID</th>
+                <th>Email</th>
+                <th>Provenienza</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle"></i> Chiudi
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 @endsection
 
+{{-- 🔹 Toasts Bootstrap per messaggi dinamici --}}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 2000;">
+  <div id="toastContainer"></div>
+</div>
+
+<script>
+/**
+ * Mostra un toast dinamico.
+ * @param {string} message - Testo del messaggio
+ * @param {string} type - success | error | warning | info
+ */
+function showToast(message, type = 'success') {
+    const toastId = 'toast-' + Date.now();
+    let bgClass = 'bg-success text-white';
+    if (type === 'error') bgClass = 'bg-danger text-white';
+    else if (type === 'warning') bgClass = 'bg-warning text-dark';
+    else if (type === 'info') bgClass = 'bg-info text-white';
+
+    const toastHtml = `
+      <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 shadow mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body fw-semibold">${message}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    `;
+    const container = document.getElementById('toastContainer');
+    container.insertAdjacentHTML('beforeend', toastHtml);
+
+    const toastEl = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+</script>
 
 
 
@@ -386,30 +531,47 @@ columnDefs: [
 
 
 // =====================
-// 🔄 AGGIORNA DATI PANEL
+// 🔄 AGGIORNA DATI PANEL + ACTIONS (con toasts)
 // =====================
 $('#btnUpdateActivity').on('click', function() {
-    if (!confirm('Vuoi aggiornare i dati del panel? L\'operazione può richiedere alcuni minuti.')) return;
+    if (!confirm('Vuoi aggiornare i dati del panel? L’operazione può richiedere alcuni minuti.')) return;
 
     const btn = $(this);
     btn.prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Aggiornamento in corso...');
 
+    // STEP 1️⃣ - Aggiorna attività
     $.get('{{ route("panel.users.update.activity") }}')
         .done(function(resp) {
             if (resp.success) {
-                alert('✅ Aggiornamento completato con successo!');
-                $('#usersTable').DataTable().ajax.reload(null, false);
+                showToast('Aggiornamento attività completato, aggiorno azioni...', 'info');
+
+                // STEP 2️⃣ - Aggiorna campo actions
+                $.get('{{ route("panel.users.update.actions") }}')
+                    .done(function(resp2) {
+                        if (resp2.success) {
+                            showToast('✅ ' + resp2.message, 'success');
+                            $('#usersTable').DataTable().ajax.reload(null, false);
+                        } else {
+                            showToast('⚠️ ' + (resp2.message || 'Aggiornamento actions non riuscito.'), 'warning');
+                        }
+                    })
+                    .fail(function(xhr) {
+                        showToast('❌ Errore update actions: ' + xhr.statusText, 'error');
+                    })
+                    .always(function() {
+                        btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Aggiorna dati');
+                    });
             } else {
-                alert('⚠️ Errore: ' + (resp.message || 'Aggiornamento non riuscito.'));
+                showToast('⚠️ ' + (resp.message || 'Aggiornamento attività non riuscito.'), 'warning');
+                btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Aggiorna dati');
             }
         })
         .fail(function(xhr) {
-            alert('❌ Errore durante l\'aggiornamento: ' + xhr.statusText);
-        })
-        .always(function() {
+            showToast('❌ Errore update attività: ' + xhr.statusText, 'error');
             btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-1"></i> Aggiorna dati');
         });
 });
+
 
 
 
@@ -500,6 +662,37 @@ $('#downloadCsv').on('click', function() {
     form.submit();
     form.remove();
 });
+
+
+// =======================
+// 👥 INATTIVI + ABANDONERS SPLITTATI
+// =======================
+function loadInactiveUsers(showToastMessage = false) {
+    $('#inactiveCountLoader').show();
+    $('#inactiveCountBox').addClass('d-none');
+
+    $.get('{{ route("panel.users.inactive.3y") }}')
+        .done(function(resp) {
+            if (resp.success) {
+                const tot = resp.totale || 0;
+                const attivi = resp.tot_attivi || 0;
+                const percTot = resp.perc_totale || 0;
+
+                $('#inactiveTotalValue').text(tot.toLocaleString());
+                $('#inactiveTotalActives').text(attivi.toLocaleString());
+                $('#inactivePercentValue').text(percTot + '%');
+                $('#inactivePercentBar').css('width', percTot + '%');
+
+                // Split dettagli
+                $('#inactiveCountValue').text(resp.inattivi.toLocaleString());
+                $('#abandonersCountValue').text(resp.abandoners.toLocaleString());
+
+                $('#inactiveCountBox').removeClass('d-none');
+            }
+        })
+        .always(() => $('#inactiveCountLoader').hide());
+}
+
 
 
 

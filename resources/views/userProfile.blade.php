@@ -137,6 +137,28 @@
     vertical-align: middle;
 }
 
+.badge[role="button"] {
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: all .2s;
+}
+.badge[role="button"]:hover {
+    transform: scale(1.05);
+    opacity: .9;
+}
+
+.btn-outline-primary.position-absolute {
+    background-color: #fff;
+    border-color: #0d6efd;
+    color: #0d6efd;
+    transition: all 0.2s ease;
+}
+.btn-outline-primary.position-absolute:hover {
+    background-color: #0d6efd;
+    color: #fff;
+}
+
+
 </style>
 
 <div class="container-fluid mt-4">
@@ -154,24 +176,57 @@
                         <div class="card shadow-sm mb-4 border-0">
                             <div class="card-body">
                                 <div class="row align-items-center">
-                                    {{-- 👤 Colonna sinistra: Avatar + Info base --}}
-                                    <div class="col-md-6 d-flex align-items-center">
-                                        <div class="me-3">
-                                            <img src="https://ui-avatars.com/api/?name={{ urlencode($user->full_name ?? $user->user_id) }}&background=0D8ABC&color=fff&size=90"
-                                                class="rounded-circle shadow-sm border border-2 border-light" alt="avatar">
-                                        </div>
-                                        <div>
-                                            <h4 class="fw-bold mb-1">{{ $user->full_name ?? $user->user_id }}</h4>
-                                            <div class="text-muted small mb-1">
-                                                <i class="bi bi-envelope me-1"></i> {{ $user->email }}
-                                            </div>
-                                            <div>
-                                                <span class="badge bg-success d-inline-flex align-items-center px-3 py-2 shadow-sm">
-                                                    <i class="bi bi-check-circle me-1"></i> Attivo
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
+                        {{-- 👤 Colonna sinistra: Avatar + Info base (versione migliorata) --}}
+                        <div class="col-md-6 d-flex align-items-center">
+                            <div class="me-3 position-relative">
+                                {{-- Avatar ridotto --}}
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode($user->full_name ?? $user->user_id) }}&background=0D8ABC&color=fff&size=70"
+                                    class="rounded-circle shadow-sm border border-2 border-light" alt="avatar">
+
+                                {{-- Bottone modifica sopra avatar --}}
+                                <button class="btn btn-sm btn-outline-primary position-absolute top-0 end-0 translate-middle p-1"
+                                        style="border-radius: 50%;"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEditAnagrafica"
+                                        title="Modifica anagrafica">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </div>
+
+                            <div>
+                                <h5 class="fw-bold mb-1">{{ $user->full_name ?? $user->user_id }}</h5>
+
+                                <div class="text-muted small mb-1">
+                                    <i class="bi bi-envelope me-1"></i> {{ $user->email ?? '-' }}
+                                </div>
+
+                                <div class="text-muted small mb-2">
+                                    <i class="bi bi-paypal me-1 text-primary"></i> {{ $user->paypalEmail ?? '-' }}
+                                </div>
+
+                                {{-- 🔹 Stato utente --}}
+                                <div>
+                                    @if($user->active == 1)
+                                        <span class="badge bg-success rounded-pill px-3 py-2"
+                                            role="button"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalUserActive"
+                                            title="Gestisci stato utente">
+                                            <i class="bi bi-check-circle me-1"></i> Attivo
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger rounded-pill px-3 py-2"
+                                            role="button"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalUserInactive"
+                                            title="Gestisci stato utente">
+                                            <i class="bi bi-x-circle me-1"></i> Non Attivo
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
 
                                     {{-- 📋 Colonna destra: Info aggiuntive --}}
                                     <div class="col-md-6 text-md-end mt-3 mt-md-0">
@@ -216,12 +271,6 @@
                     {{-- 🔹 SEZIONE ATTIVITÀ --}}
 {{-- 🔹 SEZIONE ATTIVITÀ --}}
 <div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-white border-0 pb-0">
-        <h5 class="fw-semibold mb-0">
-            <i class="bi bi-activity text-primary me-2"></i> Attività utente
-        </h5>
-    </div>
-
     <div class="card-body">
         <div class="row g-3">
 
@@ -245,6 +294,23 @@
                     </div>
                 </div>
             </div>
+
+            {{-- Bytes totali + gestione Bonus/Malus --}}
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
+                        <div class="kpi-icon text-primary mb-2"><i class="bi bi-coin fs-3"></i></div>
+                        <div id="userPoints" class="kpi-value fs-4 fw-bold">{{ $user->points ?? 0 }}</div>
+                        <div class="kpi-label text-muted small mb-2">Bytes totali</div>
+
+                        {{-- Bottone per assegnare Bonus o Malus --}}
+                        <button class="btn btn-sm btn-outline-primary mt-auto"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalBonusMalus">
+                            <i class="bi bi-plus-slash-minus me-1"></i> Bonus / Malus
+                        </button>
+                    </div>
+                </div>
+
 
             {{-- Click --}}
             <div class="col-6 col-md-4 col-lg-3">
@@ -416,4 +482,300 @@
     </div>
 </div>
 
+
+{{-- 🔹 Modal utente attivo --}}
+<div class="modal fade" id="modalUserActive" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white">
+                <h6 class="modal-title"><i class="bi bi-person-gear me-1"></i> Gestione utente attivo</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3">Cosa desideri fare con <strong>{{ $user->full_name ?? $user->user_id }}</strong>?</p>
+                <button class="btn btn-outline-warning me-2" id="btnDeactivate">
+                    <i class="bi bi-person-dash me-1"></i> Disattiva
+                </button>
+                <button class="btn btn-outline-danger" id="btnDelete">
+                    <i class="bi bi-trash me-1"></i> Elimina definitivamente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- 🔹 Modal utente non attivo --}}
+<div class="modal fade" id="modalUserInactive" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h6 class="modal-title"><i class="bi bi-person-plus me-1"></i> Riattiva utente</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3">Vuoi riattivare <strong>{{ $user->full_name ?? $user->user_id }}</strong>?</p>
+                <button class="btn btn-outline-success" id="btnActivate">
+                    <i class="bi bi-person-check me-1"></i> Attiva utente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- 🔹 Modale modifica anagrafica --}}
+<div class="modal fade" id="modalEditAnagrafica" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h6 class="modal-title"><i class="bi bi-person-lines-fill me-1"></i> Modifica anagrafica utente</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="formEditAnagrafica">
+                    @csrf
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" id="editEmail" class="form-control"
+                               value="{{ $user->email ?? '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">PayPal Email</label>
+                        <input type="email" name="paypalEmail" id="editPaypalEmail" class="form-control"
+                               value="{{ $user->paypalEmail ?? '' }}">
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnSaveAnagrafica">
+                    <i class="bi bi-save me-1"></i> Salva modifiche
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- 🔹 Modale Bonus / Malus --}}
+<div class="modal fade" id="modalBonusMalus" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+        <h6 class="modal-title"><i class="bi bi-coin me-1"></i> Assegna Bonus o Malus</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="formBonusMalus">
+          @csrf
+          <div class="mb-3">
+            <label class="form-label">Tipo</label>
+            <select id="bmType" class="form-select">
+              <option value="Bonus" selected>Bonus (+)</option>
+              <option value="Malus">Malus (−)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Valore punti</label>
+            <input type="number" id="bmValue" class="form-control" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Motivazione</label>
+            <textarea id="bmMotivation" class="form-control" rows="3" maxlength="255" required></textarea>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btnSaveBonusMalus">
+          <i class="bi bi-check2-circle me-1"></i> Conferma
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{-- 🔹 Contenitore Toasts Bootstrap --}}
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 2000">
+  <div id="toastContainer"></div>
+</div>
+
+<script>
+// Funzione helper per mostrare un toast
+function showToast(message, type = 'success') {
+    const toastId = 'toast-' + Date.now();
+    const bgClass = type === 'error' ? 'bg-danger text-white' :
+                    type === 'warning' ? 'bg-warning text-dark' :
+                    'bg-success text-white';
+
+    const toastHtml = `
+      <div id="${toastId}" class="toast align-items-center ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body fw-semibold">${message}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    `;
+
+    const container = document.getElementById('toastContainer');
+    container.insertAdjacentHTML('beforeend', toastHtml);
+
+    const toastEl = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+</script>
+
+
 @endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const userId = "{{ $user->user_id }}";
+
+    // ===========================
+    // 🔹 GESTIONE STATO UTENTE
+    // ===========================
+
+    // Disattivazione
+    document.getElementById('btnDeactivate')?.addEventListener('click', () => {
+        if (confirm('Confermi la disattivazione dell’utente?')) {
+            sendUserAction(`/user/${userId}/deactivate`, 'modalUserActive');
+        }
+    });
+
+    // Eliminazione
+    document.getElementById('btnDelete')?.addEventListener('click', () => {
+        if (confirm('Confermi l’eliminazione definitiva dell’utente?')) {
+            sendUserAction(`/user/${userId}/delete`, 'modalUserActive');
+        }
+    });
+
+    // Riattivazione
+    document.getElementById('btnActivate')?.addEventListener('click', () => {
+        if (confirm('Confermi la riattivazione dell’utente?')) {
+            sendUserAction(`/user/${userId}/activate`, 'modalUserInactive');
+        }
+    });
+
+    function sendUserAction(url, modalId) {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Chiudi la modale associata
+                const modalEl = document.getElementById(modalId);
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                modalInstance?.hide();
+
+                // Mostra messaggio e ricarica pagina
+                setTimeout(() => {
+                   showToast(data.message, 'success');
+                    location.reload();
+                }, 300);
+            } else {
+                showToast(data.message || 'Errore durante l\'operazione.', 'error');
+            }
+        })
+        .catch(() => showToast('Errore di connessione.', 'error'));
+    }
+
+    // ===========================
+    // 🔹 MODIFICA ANAGRAFICA
+    // ===========================
+    document.getElementById('btnSaveAnagrafica')?.addEventListener('click', () => {
+        const email = document.getElementById('editEmail').value.trim();
+        const paypalEmail = document.getElementById('editPaypalEmail').value.trim();
+
+        fetch(`/user/${userId}/update-info`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ email, paypalEmail })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Chiude la modale anagrafica
+                const modalEl = document.getElementById('modalEditAnagrafica');
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                modalInstance?.hide();
+
+                // Feedback e refresh
+                setTimeout(() => {
+                    showToast(data.message, 'success');
+                    location.reload();
+                }, 300);
+            } else {
+                showToast(data.message || 'Errore durante l\'operazione.', 'error');
+            }
+        })
+        .catch(() => showToast('Errore di connessione.', 'error'));
+    });
+});
+
+
+
+// ===========================
+// 🔹 BONUS / MALUS
+// ===========================
+document.getElementById('btnSaveBonusMalus')?.addEventListener('click', () => {
+    const userId = "{{ $user->user_id }}";
+    const rawType = document.getElementById('bmType').value; // "Bonus" | "Malus"
+    const type = rawType.toUpperCase();                      // normalizzato in "BONUS" | "MALUS"
+    const value = parseInt(document.getElementById('bmValue').value.trim());
+    const motivation = document.getElementById('bmMotivation').value.trim();
+
+    if (!value || !motivation) {
+        showToast('Compila tutti i campi.');
+        return;
+    }
+
+    fetch(`/user/${userId}/bonus-malus`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({ type, value, motivation })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // ✅ Chiudi la modale
+            const modalEl = document.getElementById('modalBonusMalus');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance?.hide();
+
+            // ✅ Messaggio e ricarica
+            setTimeout(() => {
+                showToast(data.message, 'success');
+                location.reload();
+            }, 300);
+        } else {
+            showToast(data.message || 'Errore durante l\'operazione.', 'error');
+        }
+    })
+    .catch(() => showToast('Errore di connessione.', 'error'));
+});
+
+
+
+</script>
+@endsection
+
