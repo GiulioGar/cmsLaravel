@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-<main class="content">
+<main>
     <div class="container-fluid p-0">
 
         {{-- RIGA CHE CONTIENE LA CARD E LA TABELLA --}}
@@ -75,39 +75,14 @@
                                     </td>
 
                                     {{-- Andamento (grafico a ciambella con Chart.js) --}}
-                                    <td>
-                                        <canvas style="text-align: center"
-                                            id="chart-{{ $row->sur_id }}"
-                                            width="120" height="45">
-                                        </canvas>
-
-                                        {{-- Script di inizializzazione chart --}}
-                                        <script>
-                                            document.addEventListener("DOMContentLoaded", function() {
-                                                var ctx = document.getElementById("chart-{{ $row->sur_id }}").getContext("2d");
-                                                var andamento = {{ $andamento }};
-
-                                                new Chart(ctx, {
-                                                    type: "doughnut",
-                                                    data: {
-                                                        labels: ["Goal %", "Missing %"],
-                                                        datasets: [{
-                                                            data: [andamento, 100 - andamento],
-                                                            backgroundColor: ["#4CAF50", "#E0E0E0"],
-                                                            borderWidth: 1
-                                                        }]
-                                                    },
-                                                    options: {
-                                                        responsive: false,
-                                                        maintainAspectRatio: false,
-                                                        cutoutPercentage: 70,
-                                                        legend: { display: false },
-                                                        tooltips: { enabled: true }
-                                                    }
-                                                });
-                                            });
-                                        </script>
-                                    </td>
+                                        <td>
+                                            <canvas
+                                                id="chart-{{ $row->sur_id }}"
+                                                width="120"
+                                                height="70"
+                                                data-andamento="{{ $andamento }}">
+                                            </canvas>
+                                        </td>
 
                                     {{-- Scadenza --}}
                                     <td>
@@ -627,7 +602,8 @@ document.addEventListener("DOMContentLoaded", function() {
     let months = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
                   "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
 
-    let ctx = document.getElementById('completesChart').getContext('2d');
+    let completesCanvas = document.getElementById('completesChart');
+let ctx = completesCanvas ? completesCanvas.getContext('2d') : null;
 
     if (ctx) {
         new Chart(ctx, {
@@ -674,7 +650,8 @@ document.addEventListener("DOMContentLoaded", function() {
         let months = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
                       "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
 
-        let ctx = document.getElementById('projectsChart').getContext('2d');
+        let projectsCanvas = document.getElementById('projectsChart');
+        let ctx = projectsCanvas ? projectsCanvas.getContext('2d') : null;
 
         if (ctx) {
             new Chart(ctx, {
@@ -717,8 +694,9 @@ document.addEventListener("DOMContentLoaded", function() {
     let clientLabels = Object.keys(clientData);
     let clientValues = Object.values(clientData);
 
-    let clientCtx = document.getElementById('clientChart').getContext('2d');
-    if (clientCtx) {
+   let clientCanvas = document.getElementById('clientChart');
+    if (clientCanvas) {
+        let clientCtx = clientCanvas.getContext('2d');
         new Chart(clientCtx, {
             type: 'bar',
             data: {
@@ -764,6 +742,95 @@ document.addEventListener("DOMContentLoaded", function() {
         setInterval(scrollTable, 3000); // Scorrimento automatico ogni 3 secondi
     });
     </script>
+
+<script>
+(function () {
+
+    const centerTextPlugin = {
+        id: 'centerText',
+        afterDraw(chart) {
+            const text = chart.$centerText || '';
+            if (!text) return;
+
+            const ctx = chart.ctx;
+
+            // calcolo centro: compatibile v2 e v3/v4
+            const x = chart.width / 2;
+            const y = chart.height / 2;
+
+            ctx.save();
+            ctx.font = '700 13px Inter, Arial, sans-serif';
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x, y);
+            ctx.restore();
+        }
+    };
+
+    function initRowDoughnuts() {
+        const canvases = document.querySelectorAll('canvas[id^="chart-"]');
+
+        if (typeof window.Chart === 'undefined') {
+            setTimeout(initRowDoughnuts, 300);
+            return;
+        }
+
+        const isV2 = !!(Chart.defaults && Chart.defaults.global);
+
+        canvases.forEach(function (canvas) {
+            const andamento = parseInt(canvas.dataset.andamento || "0", 10);
+            const ctx = canvas.getContext('2d');
+
+            if (canvas._chartInstance && typeof canvas._chartInstance.destroy === 'function') {
+                canvas._chartInstance.destroy();
+            }
+
+            // 🔥 testo: nascondi per 0 e 100 come richiesto
+            const centerText = ( andamento === 100) ? '' : (andamento + '%');
+
+            const chart = new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    datasets: [{
+                        data: [andamento, 100 - andamento],
+                        backgroundColor: ["#4CAF50", "#E0E0E0"],
+                        borderWidth: 0
+                    }]
+                },
+                options: isV2 ? {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    cutoutPercentage: 65,
+                    legend: { display: false },
+                    tooltips: { enabled: false }
+                } : {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                },
+                plugins: [centerTextPlugin]
+            });
+
+            // ✅ passiamo il testo al plugin in modo compatibile v2/v3/v4
+            chart.$centerText = centerText;
+
+            // update per assicurarsi che venga disegnato subito
+            chart.update();
+
+            canvas._chartInstance = chart;
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", initRowDoughnuts);
+    window.addEventListener("load", initRowDoughnuts);
+
+})();
+</script>
 
 @endsection
 

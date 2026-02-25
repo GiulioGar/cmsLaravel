@@ -28,7 +28,8 @@ class LoginController extends Controller
         // Confronta la password (usando md5) se l'utente esiste
         if ($user && $user->password === md5($request->input('password'))) {
             // Salva l'ID dell'utente in sessione (o altri dati se necessario)
-            $request->session()->put('user', $user->id);
+           $request->session()->put('user', $user->id);
+            $request->session()->put('user_name', $user->name);
 
             // Reindirizza al dashboard (o altra pagina protetta)
             return redirect()->route('index');
@@ -42,6 +43,8 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         $request->session()->flush();
+         $request->session()->invalidate();
+         $request->session()->regenerateToken();
         return redirect()->route('login');
     }
 }
