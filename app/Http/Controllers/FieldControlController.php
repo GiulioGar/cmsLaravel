@@ -24,7 +24,11 @@ class FieldControlController extends Controller
         $quotaData = $this->getQuotaData($sid);
 
         // Percorso della directory dei file .sre
-        $directory = base_path("var/imr/fields/$prj/$sid/results/");
+        $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+        if (!is_dir($directory)) {
+            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
 
         // Definizione dei panel
         $panelNames = [
@@ -789,7 +793,11 @@ public function downloadCSV(Request $request)
     }
 
     // Percorso della directory dei file .sre
-    $directory = base_path("var/imr/fields/$prj/$sid/results/");
+    $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+    if (!is_dir($directory)) {
+        $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+    }
 
     if (!is_dir($directory)) {
         return redirect()->back()->with('error', 'Directory dei file .sre non trovata.');
@@ -971,7 +979,11 @@ public function resetBloccate(Request $request)
     $sid = $request->input('sid');
 
     // Percorso della directory dei file .sre
-    $directory = base_path("var/imr/fields/$prj/$sid/results/");
+    $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+    if (!is_dir($directory)) {
+        $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+    }
 
     if (!is_dir($directory)) {
         return response()->json(['success' => false, 'message' => 'Directory non trovata.'], 404);

@@ -78,8 +78,10 @@ class SurveyController extends Controller
 
                 // 3) Creiamo l’URL dove passiamo prj e sid
                 //    Ad esempio: /fieldControl?prj=XXX&sid=YYY
-                $url = '/fieldControl?prj=' . urlencode($row->prj)
-                     . '&sid=' . urlencode($row->sur_id);
+                $url = url('fieldControl') . '?' . http_build_query([
+                    'prj' => $row->prj,
+                    'sid' => $row->sur_id,
+                ]);
 
                 // 4) Costruiamo il link con un effetto hover (class bootstrap o stile personalizzato)
                 //    Mettiamo "title" per un tooltip, e un eventuale classe per hover
