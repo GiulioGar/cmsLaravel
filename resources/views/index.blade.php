@@ -7,104 +7,172 @@
         {{-- RIGA CHE CONTIENE LA CARD E LA TABELLA --}}
         <div class="row">
             <div class="col-12 col-lg-12 col-xxl-12 d-flex">
-                <div class="card flex-fill">
-                    <div class="card-header">
-                        <h4 class="card-title mb-0">Progetti in corso</h4>
-                    </div>
-
-                    <table class="table table-hover table-striped align-middle">
-                        <thead>
-                            <tr>
-                                <th>Ricerca</th>
-                                <th class="d-none d-xl-table-cell">Info</th>
-                                <th>IR</th>
-                                <th>LOI</th>
-                                <th>Andamento</th>
-                                <th>Scadenza</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($records as $row)
-                                @php
-                                    // Calcolo IR e classi colore
-                                    $ir = floatval($row->red_surv ?? 0);
-                                    $irClass = 'text-success'; // Default verde
-                                    if ($ir < 30) {
-                                        $irClass = 'text-danger'; // Rosso se sotto 30%
-                                    } elseif ($ir < 65) {
-                                        $irClass = 'text-warning'; // Giallo se tra 30% e 65%
-                                    }
-
-                                    // Calcolo andamento (percentuale tra 'complete' e 'goal', max 100%)
-                                    $andamento = 0;
-                                    if (!empty($row->goal) && is_numeric($row->goal) && $row->goal > 0) {
-                                        $andamento = min(100, round(($row->complete / $row->goal) * 100));
-                                    }
-
-                                    // Calcolo scadenza (differenza in giorni dalla data odierna)
-                                    // $oggi viene passato dal controller come Carbon::now()
-                                    $differenza = null;
-                                    if (!empty($row->end_field)) {
-                                        $endFieldDate = \Carbon\Carbon::parse($row->end_field);
-                                        // diffInDays con secondo parametro "false" per avere numeri negativi se la data è passata
-                                        $differenza = $oggi->diffInDays($endFieldDate, false);
-                                    }
-                                @endphp
-
-                                <tr>
-                                    {{-- Ricerca (sur_id) --}}
-                                    <td>{{ $row->sur_id }}</td>
-
-                                    {{-- Info (description) visibile solo da XL in su --}}
-                                    <td class="d-none d-xl-table-cell">{{ $row->description }}</td>
-
-                                    {{-- IR (incidenza) con colore dinamico --}}
-                                    <td>
-                                        <span class="fa-solid fa-computer-mouse"></span> &nbsp;
-                                        <b>
-                                            <span class="{{ $irClass }}">
-                                                {{ $row->red_surv }}%
-                                            </span>
-                                        </b>
-                                    </td>
-
-                                    {{-- LOI (durata) con icona --}}
-                                    <td>
-                                        <span class="fa-solid fa-business-time"></span> &nbsp;
-                                        {{ $row->durata }} min.
-                                    </td>
-
-                                    {{-- Andamento (grafico a ciambella con Chart.js) --}}
-                                        <td>
-                                            <canvas
-                                                id="chart-{{ $row->sur_id }}"
-                                                width="120"
-                                                height="70"
-                                                data-andamento="{{ $andamento }}">
-                                            </canvas>
-                                        </td>
-
-                                    {{-- Scadenza --}}
-                                    <td>
-                                        @if (is_null($differenza))
-                                            <span class="badge bg-secondary">N/A</span>
-                                        @else
-                                            @if ($differenza === 0)
-                                                <span class="badge bg-primary">Oggi</span>
-                                            @elseif ($differenza < 0)
-                                                <span class="badge bg-danger">Scaduto</span>
-                                            @else
-                                                <span class="badge bg-success">{{ $differenza }} giorni</span>
-                                            @endif
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-
-                </div>
+<div class="card flex-fill shadow-sm border-0">
+    <div class="card-header bg-white border-0 pb-0">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <h4 class="card-title mb-1">Progetti in corso</h4>
+                <div class="text-muted small">Elenco ricerche aperte e stato avanzamento</div>
             </div>
+            <div class="text-muted small">
+                <i class="fa-solid fa-circle-info"></i> Attenzione per Scaduto si intende la scadenza prevista non vuol dire che il field sia chiuso
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body pt-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="tblProjects">
+                <thead class="table-light">
+                    <tr>
+                        <th style="min-width: 140px;">Ricerca</th>
+                        <th class="text-center" style="min-width: 90px;">IR</th>
+                        <th class="text-center" style="min-width: 90px;">LOI</th>
+                        <th class="text-center" style="min-width: 160px;">Andamento</th>
+                        <th class="text-center" style="min-width: 120px;">Scadenza</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @php
+$prjColors = [
+    'COS' => '#3270A0',
+    'FER' => '#59200A',
+    'IPS' => '#121B5A',
+    'BRS' => '#10394E',
+    'ABO' => '#28754E',
+    'AST' => '#FFBF00',
+    'STR' => '#D01E5C',
+    'SRM' => '#213259',
+    'LME' => '#A9CA48',
+    'RCK' => '#FF0B77',
+    'ROS' => '#15636E',
+    'ATN' => '#0071BD',
+    'LMI' => '#cd2927',
+    'UNB' => '#004071',
+    'HAI' => '#000000',
+    'PAR' => '#184785',
+    'AMP' => '#CE285C',
+];
+
+$defaultColor = '#9DCE6B';
+@endphp
+
+                    @foreach($records as $row)
+                        @php
+                            $ir = floatval($row->red_surv ?? 0);
+                            $irClass = 'text-success';
+                            if ($ir < 30) $irClass = 'text-danger';
+                            elseif ($ir < 65) $irClass = 'text-warning';
+
+                            $andamento = 0;
+                            if (!empty($row->goal) && is_numeric($row->goal) && $row->goal > 0) {
+                                $andamento = min(100, round(($row->complete / $row->goal) * 100));
+                            }
+
+                            $differenza = null;
+                            if (!empty($row->end_field)) {
+                                $endFieldDate = \Carbon\Carbon::parse($row->end_field);
+                                $differenza = $oggi->diffInDays($endFieldDate, false);
+                            }
+
+                            $fieldUrl = url('fieldControl') . '?prj=' . urlencode($row->prj) . '&sid=' . urlencode($row->sur_id);
+                        @endphp
+
+                        <tr class="project-row">
+
+                            {{-- RICERCA --}}
+                <td style="min-width:240px;">
+    @php
+        $prj = strtoupper($row->prj ?? '');
+        $badgeColor = $prjColors[$prj] ?? $defaultColor;
+        $fieldUrl = url('fieldControl') . '?prj=' . urlencode($row->prj) . '&sid=' . urlencode($row->sur_id);
+    @endphp
+
+    <div class="d-flex justify-content-between align-items-start">
+
+        <div>
+            <div class="d-flex align-items-center gap-2">
+
+                {{-- Badge PRJ colorato --}}
+                <span class="badge"
+                      style="background-color: {{ $badgeColor }}; color: #ffffff; font-weight:600;">
+                    {{ $prj }}
+                </span>
+
+                {{-- SUR_ID --}}
+                <span class="fw-bold">
+                    {{ $row->sur_id }}
+                </span>
+
+            </div>
+
+            {{-- Description sotto --}}
+            <div class="text-muted small text-truncate mt-1"
+                 style="max-width:300px;">
+                {{ $row->description }}
+            </div>
+        </div>
+
+        {{-- Icona apertura --}}
+        <a href="{{ $fieldUrl }}"
+           class="text-primary ms-2"
+           title="Apri Field Control">
+            <i class="bi bi-folder-symlink fs-3"></i>
+        </a>
+
+    </div>
+</td>
+
+
+                            {{-- IR --}}
+                            <td class="text-center">
+                                <span class="fw-semibold {{ $irClass }}">
+                                    {{ $row->red_surv }}%
+                                </span>
+                            </td>
+
+                            {{-- LOI --}}
+                            <td class="text-center">
+                                <span class="text-muted">{{ $row->durata }} min</span>
+                            </td>
+
+                            {{-- ANDAMENTO --}}
+                            <td class="align-middle">
+                                <div class="d-flex justify-content-center align-items-center" style="height:70px;">
+                                    <canvas
+                                        class="row-doughnut"
+                                        id="chart-{{ $row->sur_id }}"
+                                        width="120"
+                                        height="70"
+                                        data-andamento="{{ $andamento }}">
+                                    </canvas>
+                                </div>
+                            </td>
+
+                            {{-- SCADENZA --}}
+                            <td class="text-center">
+                                @if (is_null($differenza))
+                                    <span class="badge bg-secondary">N/A</span>
+                                @elseif ($differenza === 0)
+                                    <span class="badge bg-primary">Oggi</span>
+                                @elseif ($differenza < 0)
+                                    <span class="badge bg-danger">Scaduto</span>
+                                @elseif ($differenza <= 7)
+                                    <span class="badge bg-warning text-dark">{{ $differenza }} giorni</span>
+                                @else
+                                    <span class="badge bg-success">{{ $differenza }} giorni</span>
+                                @endif
+                            </td>
+
+                        </tr>
+                    @endforeach
+                    </tbody>
+
+            </table>
+        </div>
+    </div>
+</div>
         </div>
         {{-- Fine row e card --}}
 
@@ -356,7 +424,7 @@
                     <div class="col-md-6">
                         <div class="card shadow">
                             <div class="card-body p-3">
-                                <h6 class="card-title text-uppercase text-center">Progetti per Cliente (2025)</h6>
+                                <h6 class="card-title text-uppercase text-center">Progetti per Cliente - {{ $currentYear }}</h6>
                                 <div class="table-responsive mt-2">
                                     <table class="table table-sm table-striped text-center">
                                         <thead class="table-info">
@@ -644,48 +712,64 @@ let ctx = completesCanvas ? completesCanvas.getContext('2d') : null;
 </script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        let monthlyOpenProjects = @json($monthlyOpenProjects);
+document.addEventListener("DOMContentLoaded", function () {
 
-        let months = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
-                      "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+    const monthlyOpenProjects = @json($monthlyOpenProjects);
 
-        let projectsCanvas = document.getElementById('projectsChart');
-        let ctx = projectsCanvas ? projectsCanvas.getContext('2d') : null;
+    const months = ["Gen","Feb","Mar","Apr","Mag","Giu",
+                    "Lug","Ago","Set","Ott","Nov","Dic"];
 
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: months,
-                    datasets: [
-                        {
-                            label: 'Progetti Aperti',
-                            data: Object.values(monthlyOpenProjects),
-                            backgroundColor: [
-                        "rgba(255, 99, 132, 0.7)", // Rosso
-                        "rgba(54, 162, 235, 0.7)", // Blu
-                        "rgba(255, 206, 86, 0.7)", // Giallo
-                        "rgba(75, 192, 192, 0.7)", // Verde
-                        "rgba(255, 159, 64, 0.7)", // Arancione
-                        "rgba(153, 102, 255, 0.7)", // Viola
-                        "rgba(201, 203, 207, 0.7)"  // Grigio
-                    ],
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
+    // Costruiamo valori in modo sicuro 1..12
+    const values = months.map((_, i) => {
+        const monthIndex = i + 1;
+        return monthlyOpenProjects[monthIndex] ?? 0;
+    });
+
+    // 🎨 Sfumature personalizzate tra #404044 e #9DCE6B
+    const colors = [
+        "#404044", // Gen
+        "#4C4F4F",
+        "#585A5A",
+        "#646565",
+        "#707070",
+        "#7C7B7B",
+        "#889687",
+        "#93A27C",
+        "#9DCE6B", // Set
+        "#8BBE5F",
+        "#79AD53",
+        "#679C47"
+    ];
+
+    const canvas = document.getElementById('projectsChart');
+    const ctx = canvas ? canvas.getContext('2d') : null;
+    if (!ctx || typeof window.Chart === 'undefined') return;
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Progetti Aperti',
+                data: values,
+                backgroundColor: colors,
+                borderRadius: 6,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true }
+            },
+            plugins: {
+                legend: { display: false }
+            }
         }
     });
-    </script>
+});
+</script>
 
     <script>
 document.addEventListener("DOMContentLoaded", function() {

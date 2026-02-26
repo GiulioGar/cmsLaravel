@@ -14,7 +14,7 @@ class DashboardController extends Controller
          * 1) Query per i record di t_panel_control
          */
         $records = DB::select("
-            SELECT sur_id, description, red_surv, durata, goal, complete, end_field
+            SELECT prj, sur_id, description, red_surv, durata, goal, complete, end_field
             FROM t_panel_control
             WHERE stato = 0
             ORDER BY stato, giorni_rimanenti ASC, id DESC
@@ -267,14 +267,14 @@ class DashboardController extends Controller
         }
 
         /**
- *  Numero di progetti aperti nel 2025 (suddivisi per mese)
+ *  Numero di progetti aperti nel $currentYear (suddivisi per mese)
  */
 $monthlyOpenProjects = array_fill(1, 12, 0);
 
 $openProjects = DB::select("
     SELECT MONTH(sur_date) AS month, COUNT(*) AS total
     FROM t_panel_control
-    WHERE YEAR(sur_date) = 2025
+    WHERE YEAR(sur_date) = $currentYear
     GROUP BY month
 ");
 
@@ -285,12 +285,12 @@ foreach ($openProjects as $row) {
 
 
 /**
- * 11) Numero totale di contatti nel 2025
+ * 11) Numero totale di contatti nel $currentYear
  */
 $resultTotalContacts = DB::select("
     SELECT SUM(contatti) AS total_contacts
     FROM t_panel_control
-    WHERE YEAR(sur_date) = 2025
+    WHERE YEAR(sur_date) = $currentYear
 ");
 
 $totalContacts = $resultTotalContacts[0]->total_contacts ?? 0;
@@ -303,7 +303,7 @@ $totalContacts = $resultTotalContacts[0]->total_contacts ?? 0;
 $resultAvgRed = DB::select("
     SELECT AVG(red_panel) AS avg_red_panel, AVG(red_surv) AS avg_red_surv
     FROM t_panel_control
-    WHERE YEAR(sur_date) = 2025
+    WHERE YEAR(sur_date) = $currentYear
 ");
 
 $avgRedPanel = round($resultAvgRed[0]->avg_red_panel ?? 0, 2);
@@ -351,12 +351,12 @@ foreach ($activityLog as $row) {
 }
 
 /**
- * 14) Divisione per cliente dei progetti eseguiti nel 2025
+ * 14) Divisione per cliente dei progetti eseguiti nel $currentYear
  */
 $projectsByClient = DB::select("
     SELECT cliente, COUNT(*) AS total
     FROM t_panel_control
-    WHERE YEAR(sur_date) = 2025
+    WHERE YEAR(sur_date) = $currentYear
     GROUP BY cliente
 ");
 
