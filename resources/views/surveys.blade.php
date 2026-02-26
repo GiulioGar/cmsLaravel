@@ -112,7 +112,7 @@ table.dataTable thead th {
                 <label class="input-group-text" for="panel">Panel:</label>
               </div>
               <!-- Esempio: 1=Millebytes, 0=Esterno, 2=Target -->
-              <select name="panelMod" required class="custom-select" id="panelMod">
+              <select name="panel" required class="custom-select" id="panelMod">
                 <option value="1">Millebytes</option>
                 <option value="0">Esterno</option>
                 <option value="2">Target</option>
@@ -155,8 +155,8 @@ table.dataTable thead th {
                 required
                 type="number"
                 class="form-control"
-                name="complete"
-                id="complete"
+                name="goal"
+                id="goal_edit"
                 placeholder="0">
             </div>
 
@@ -547,25 +547,20 @@ $(document).ready(function() {
         var id = $(this).data('id');
 
         $.ajax({
-            url: '/surveys/' + id + '/edit',
+            url: '{{ route("surveys.edit", ":id") }}'.replace(':id', id),
             type: 'GET',
             success: function(response) {
                 // Riempi i campi
                 $('#survey-id').val(response.id);
                 $('#sur_id').val(response.sur_id);
-                $('#panel').val(response.panel);
+                $('#panelMod').val(response.panel);
                 $('#sex_target').val(response.sex_target);
                 $('#age1_target').val(response.age1_target);
                 $('#age2_target').val(response.age2_target);
-                $('#complete').val(response.complete);
+                $('#goal_edit').val(response.goal ?? 0);
 
-                if (response.end_field) {
-                    let dateTimeParts = response.end_field.split(' ');
-                    let dateOnly = dateTimeParts[0];
-                    $('#end_field').val(dateOnly);
-                } else {
-                    $('#end_field').val('');
-                }
+                // end_field arriva già "YYYY-MM-DD" dal controller
+                $('#end_field').val(response.end_field ?? '');
                 $('#descrizione').val(response.description);
                 $('#stato').val(response.stato);
 
@@ -585,26 +580,22 @@ $(document).ready(function() {
         var id = $('#survey-id').val();
         var formData = $(this).serialize();
 
-        $.ajax({
-            url: '/surveys/' + id,
-            type: 'POST', // method spoofing _method=PUT
-            data: formData,
-            success: function(response) {
-                if (response.success) {
-                    $('#editSurveyModal').modal('hide');
-                    // Ricarica la tabella
-                    table.ajax.reload(function() {
-                        table.page('first').draw('page');
-                    }, false);
-
-                } else {
-                    alert('Errore in aggiornamento');
+            $.ajax({
+                url: '{{ route("surveys.update", ":id") }}'.replace(':id', id),
+                type: 'POST', // ok perché usi spoofing _method=PUT
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        $('#editSurveyModal').modal('hide');
+                        table.ajax.reload(null, false);
+                    } else {
+                        alert('Errore in aggiornamento');
+                    }
+                },
+                error: function(xhr) {
+                    alert('Errore di rete o validazione');
                 }
-            },
-            error: function(xhr) {
-                alert('Errore di rete o validazione');
-            }
-        });
+            });
     });
 
 

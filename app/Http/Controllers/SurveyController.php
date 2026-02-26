@@ -143,18 +143,32 @@ class SurveyController extends Controller
             ->make(true);
     }
 
-    public function edit($id)
-    {
-        $survey = PanelControl::findOrFail($id);
+            public function edit($id)
+            {
+                $survey = PanelControl::findOrFail($id);
 
-        // Se end_field è "2024-10-09 00:00:00", trasformalo in "2024-10-09"
-        if (!empty($survey->end_field)) {
-            $survey->end_field = \Carbon\Carbon::parse($survey->end_field)
-                                ->format('Y-m-d');
-        }
+                // normalizza end_field per input type="date"
+                $endField = null;
+                if (!empty($survey->end_field)) {
+                    $endField = \Carbon\Carbon::parse($survey->end_field)->format('Y-m-d');
+                }
 
-        return response()->json($survey);
-    }
+                return response()->json([
+                    'id'          => $survey->id,
+                    'sur_id'      => $survey->sur_id,
+                    'panel'       => $survey->panel,
+                    'sex_target'  => $survey->sex_target,
+                    'age1_target' => $survey->age1_target,
+                    'age2_target' => $survey->age2_target,
+
+                    // QUI: interviste in modale = goal (colonna goal in t_panel_control)
+                    'goal'        => $survey->goal,
+
+                    'description' => $survey->description,
+                    'stato'       => $survey->stato,
+                    'end_field'   => $endField,
+                ]);
+            }
 
 
         public function update(Request $request, $id)
@@ -171,7 +185,7 @@ class SurveyController extends Controller
                     'sex_target'   => 'in:1,2,3',       // 1=Uomo, 2=Donna, 3=Uomo/Donna
                     'age1_target'  => 'nullable|integer|min:0|max:120',
                     'age2_target'  => 'nullable|integer|min:0|max:120',
-                    'complete'     => 'nullable|integer|min:0',
+                    'goal'     => 'nullable|integer|min:0',
                     'end_field'    => 'nullable|date',  // Se ricevi solo "YYYY-MM-DD"
                     'description'  => 'nullable|string',
                     'stato'        => 'in:0,1',         // 0=Aperto, 1=Chiuso

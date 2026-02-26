@@ -49,7 +49,6 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::get('/surveys/data', [SurveyController::class, 'getData'])->name('surveys.data');
     Route::get('/surveys/{id}/edit', [SurveyController::class, 'edit'])->name('surveys.edit');
     Route::put('/surveys/{id}', [SurveyController::class, 'update'])->name('surveys.update');
-    Route::post('/surveys/{id}/update', [SurveyController::class, 'update'])->name('surveys.update');
     Route::post('/surveys', [SurveyController::class, 'store'])->name('surveys.store');
     Route::get('/surveys/available-sids', [SurveyController::class, 'getAvailableSurIds'])->name('surveys.available-sids');
     Route::get('/surveys/prj-info', [SurveyController::class, 'getPrjInfo'])->name('surveys.prj-info');
