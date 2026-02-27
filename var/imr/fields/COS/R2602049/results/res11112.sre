@@ -1,0 +1,10 @@
+2.0;COS;R2602049;11112;IDEXNOKNFTVALQEGO4038;23/02/2026 12:10:19 CET;23/02/2026 12:10:45 CET;26;4;70;sysSID=R2602049;lan=1;sysPRJ=COS;sysUID=IDEXNOKNFTVALQEGO4038;pan=4;sysIID=11112;lang=it;rtrLan=1
+choice;3;20;14
+choice;4;4;3
+concept;10
+choice;20;2;0
+choice;28;4;0
+choice;30;2;1
+open;50;44
+choice;60;4;1
+choice;70;2;0

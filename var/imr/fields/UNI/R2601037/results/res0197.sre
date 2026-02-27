@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;197;IDEXNOITRKUCTOSNR252;27/02/2026 09:03:57 CET;27/02/2026 09:19:17 CET;920;3;440;device=mobile;lang=it;sysIID=197;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=4;cella=3;pan=4;sysUID=IDEXNOITRKUCTOSNR252
+choice;7;107;0
+concept;10
+open;30;64
+choice;40;7;5
+choice;50;2;0
+choice;70;5;11100;2
+choice;80;5;11000;0
+choice;90;6;2
+choice;100;3;0
+choice;120;13;1100110100000;4
+choice;130;13;4
+choice;160;10;9
+open;170;La vicinanza e l’atmosfera generale 
+open;180;Non ne trovo 
+choice;190;10;1101011100;0
+scale;200;10;10;7;7;-1;6;-1;7;6;6;-1;-1
+scale;210;7;10;7;7;6;7;6;6;6
+scale;240;13;10;7;6;6;7;7;7;7;6;6;6;6;6;6
+choice;250;3;1
+choice;260;3;2
+concept;270
+open;280;Servizi alla persona come manicure e pedicure e centro massaggi 
+scale;290;12;5;0;0;0;1;0;1;0;0;1;0;0;0
+open;300;Lo vorrei più grande con l’avvicendamento di negozi 
+scale;310;13;5;1;1;0;1;0;0;-1;1;0;0;1;0;0
+ordering;311;11;0;9;10;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;0;3;1;2
+open;371;Palestre, centro benessere e servizio alle persone 
+choice;381;5;1
+choice;390;6;110110;0
+choice;392;6;1
+choice;394;7;1010100;0
+choice;400;5;1
+choice;410;6;0
+choice;420;7;1
+choice;430;5;4
+choice;440;5;00110;2
+scale;5100;1;5;4
+scale;5200;1;5;3
+scale;5300;1;5;3
+scale;5400;1;5;3

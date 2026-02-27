@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;111;IDEXNOWAVKZEGAWKF123;26/02/2026 16:36:59 CET;26/02/2026 16:42:53 CET;354;3;440;device=mobile;lang=it;sysIID=111;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=3;cella=2;pan=4;sysUID=IDEXNOWAVKZEGAWKF123
+choice;7;107;0
+concept;10
+open;30;34
+choice;40;7;2
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;10000;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;1010110000000;4
+choice;130;13;4
+choice;160;10;9
+open;170;Ci sono negozi che mi interessano ed è piacevole fare un giro per passare tempo 
+open;180;Ci sono diversi locali chiusi che potrebbero essere sfruttati e mancherebbe un cinema multisala 
+choice;190;10;1101100000;3
+scale;200;10;10;6;6;-1;6;6;-1;-1;-1;-1;-1
+scale;210;7;10;3;4;4;4;4;4;4
+scale;240;13;10;3;3;4;4;3;3;4;3;4;4;4;3;4
+choice;250;3;0
+choice;260;3;0
+concept;270
+open;280;Un negozio di merchindising nerd e un cinema multisala 
+scale;290;12;5;1;0;1;1;1;2;2;2;0;2;2;1
+open;300;Più luminoso e con pareti più colorate 
+scale;310;13;5;1;1;1;3;1;2;-1;2;2;0;1;2;1
+ordering;311;11;7;0;3;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;1;2;3;0
+open;373;Negozi di merch nerd, negozi di hobbystica e cinema 
+choice;381;5;1
+choice;390;6;110010;0
+choice;392;6;1
+choice;394;7;0110000;2
+choice;400;5;1
+choice;410;6;0
+choice;420;7;0
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;2
+scale;5200;1;5;3
+scale;5300;1;5;4
+scale;5400;1;5;3

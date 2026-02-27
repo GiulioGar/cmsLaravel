@@ -1,0 +1,42 @@
+2.0;UNI;R2601037;166;IDEXNORSUXTYLWOVA279;26/02/2026 19:51:34 CET;26/02/2026 20:13:01 CET;1287;3;440;device=mobile;lang=it;sysIID=166;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=4;cella=3;pan=4;sysUID=IDEXNORSUXTYLWOVA279
+choice;7;107;0
+concept;10
+open;30;66
+choice;40;7;6
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;11000;0
+choice;90;6;0
+choice;100;3;0
+choice;120;13;0111111000010;6
+choice;130;13;3
+choice;160;10;6
+open;170;La gentilezza del personale, i negozi  
+open;180;Non ci sono negozi giardinaggio 
+choice;190;10;1100001100;0
+scale;200;10;10;4;4;-1;-1;-1;-1;5;5;-1;-1
+scale;210;7;10;4;4;5;5;5;3;5
+scale;240;13;10;4;3;3;5;5;5;5;3;3;5;5;5;5
+choice;250;3;1
+choice;260;3;2
+concept;270
+open;280;Hm, action, zara
+scale;290;12;5;1;1;2;1;1;0;1;1;0;2;2;2
+open;300;Va bene così 
+scale;310;13;5;2;1;2;1;0;1;-1;2;0;0;1;1;1
+ordering;311;11;1;0;8;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;3;2;1;0
+open;377;Giardinaggio, calzolaio, tabacchino, merceria, 
+choice;381;5;1
+choice;390;6;010000;1
+choice;392;6;1
+choice;394;7;1100000;1
+choice;400;5;2
+choice;410;6;4
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

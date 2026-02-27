@@ -1,0 +1,45 @@
+2.0;UNI;R2601037;10;GUEST;24/02/2026 15:20:58 CET;24/02/2026 15:42:22 CET;1284;3;440;debug=true;device=desktop;lang=it;sysIID=10;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=1;cella=0;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92021
+open;30;44
+choice;40;7;3
+choice;50;2;1
+choice;60;5;11100;1
+choice;70;5;00001;4
+choice;80;5;11000;0
+choice;90;6;2
+choice;100;3;1
+choice;111;5;1
+choice;120;13;1100100000010;4
+choice;130;13;11
+choice;160;10;9
+open;170;mi piace molto la conad
+open;180;vorrei che  ci fosse una fermata del bus più vicino
+choice;190;10;1110000000;2
+scale;200;10;10;7;8;8;-1;-1;-1;-1;-1;-1;-1
+scale;210;7;10;8;7;9;8;8;9;7
+scale;240;13;10;9;8;9;8;8;7;8;8;9;7;7;7;7
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;vorrei ci fosse il mc donald
+scale;290;12;5;0;1;1;1;1;1;0;1;1;0;0;1
+open;300;aggiungerei più luci
+scale;310;13;5;1;1;0;1;1;0;-1;0;1;1;1;1;0
+concept;320
+ordering;370;4;0;1;2;3
+open;371;vorrei ci fosse un parrucchiere come balato
+choice;381;5;1
+choice;390;6;110000;0
+choice;392;6;0
+choice;394;7;0001100;3
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;2
+choice;440;5;00010;3
+scale;5100;1;5;4
+scale;5200;1;5;3
+scale;5300;1;5;3
+scale;5400;1;5;4

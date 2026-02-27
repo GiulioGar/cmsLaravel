@@ -1,0 +1,23 @@
+2.0;UNI;R2601037;145;IDEXNONNREOXSUMBP150;26/02/2026 17:57:02 CET;<unknown>;0;0;40;version=v01;sysSID=R2601037;sysPRJ=UNI;sysUID=IDEXNONNREOXSUMBP150;device=mobile;pan=4;sysIID=145;lang=it
+choice;7;107;0
+concept;10
+open;30;58
+choice;40;7;5
+choice;50;2;1
+choice;70;5;11100;0
+choice;80;5;11100;1
+choice;90;6;3
+choice;100;3;0
+choice;120;13;1010100000000;0
+choice;130;13;0
+choice;160;10;7
+open;170;Ci sono negozi interessanti per me
+open;180;C'è confusione visto che è il migliore in zona 
+choice;190;10;0100011100;1
+scale;200;10;10;-1;4;-1;-1;-1;5;4;3;-1;-1
+scale;240;13;10;4;5;3;5;4;2;4;2;3;2;3;5;4
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;300;Mi piacerebbero ci fossero più negozi di abbigliamento e più di ristorazione 
+scale;310;13;5;1;1;0;1;1;0;-1;1;1;0;1;0;0

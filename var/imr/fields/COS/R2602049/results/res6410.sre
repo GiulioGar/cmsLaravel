@@ -1,0 +1,9 @@
+2.0;COS;R2602049;6410;IDEXNOUPQALMNLYSF64255;20/02/2026 15:32:56 CET;<unknown>;0;0;60;sysSID=R2602049;lan=4;sysPRJ=COS;sysUID=IDEXNOUPQALMNLYSF64255;pan=4;sysIID=6410;lang=de;rtrLan=4
+concept;10
+choice;20;2;0
+choice;28;4;3
+choice;30;2;0
+open;50;38
+choice;60;4;1
+choice;100001;16;4
+choice;100003;7;1

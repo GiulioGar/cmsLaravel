@@ -1,0 +1,42 @@
+2.0;UNI;R2601037;195;IDEXNOLOPWCTZYQDN253;27/02/2026 08:50:32 CET;27/02/2026 09:07:06 CET;994;3;440;device=desktop;lang=it;sysIID=195;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=2;cella=1;pan=4;sysUID=IDEXNOLOPWCTZYQDN253
+choice;7;107;0
+concept;10
+open;30;58
+choice;40;7;5
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;11000;1
+choice;90;6;3
+choice;100;3;1
+choice;111;5;0
+choice;120;13;1010010000000;0
+choice;130;13;5
+choice;160;10;6
+open;170;HA DIVERSI NEGOZI DOVE POTER ACQUISTARE 
+open;180;La distanza per raggiungerlo
+choice;190;10;0101001000;3
+scale;200;10;10;-1;7;-1;6;-1;-1;6;-1;-1;-1
+scale;240;13;10;4;5;5;5;4;8;8;5;5;5;5;4;5
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;piu negozi di abbigliamento economico alla portata di tutti
+scale;290;12;5;0;0;1;1;1;0;0;2;0;3;1;0
+open;300;colori vivaci e molte piu piante nelle zone di ristoro
+scale;310;13;5;0;0;0;3;2;0;-1;2;0;2;1;0;2
+ordering;311;11;0;6;10;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;3;2;1;0
+open;377;abbigliamento per tutte le tasche e divertimento
+choice;381;5;2
+choice;390;6;100100;0
+choice;392;6;3
+choice;394;7;1010000;2
+choice;400;5;1
+choice;410;6;4
+choice;430;5;2
+choice;440;5;00100;2
+scale;5100;1;5;1
+scale;5200;1;5;2
+scale;5300;1;5;3
+scale;5400;1;5;3

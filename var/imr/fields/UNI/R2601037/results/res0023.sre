@@ -1,0 +1,44 @@
+2.0;UNI;R2601037;23;GUEST;24/02/2026 16:12:20 CET;24/02/2026 16:34:04 CET;1304;3;440;debug=true;device=desktop;lang=it;sysIID=23;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=2;cella=1;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92015
+open;30;45
+choice;40;7;4
+choice;50;2;1
+choice;60;5;10000;0
+choice;70;5;01000;1
+choice;80;5;11000;0
+choice;90;6;2
+choice;100;3;0
+choice;120;13;1000110001000;4
+choice;130;13;4
+choice;160;10;8
+open;170;E' un centro molto vicino e comodo per me.
+open;180;Non ci sono aspetti che non mi piacciono del centro.
+choice;190;10;1111111110;1
+scale;200;10;10;8;8;8;9;9;8;9;8;8;-1
+scale;210;7;10;8;9;9;9;9;8;8
+scale;240;13;10;8;9;8;9;8;9;8;9;9;8;8;9;8
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;Cinema multisala.
+scale;290;12;5;0;1;0;1;1;1;0;0;1;0;1;1
+open;300;Linee pulite e contemporanee.
+scale;310;13;5;0;0;0;1;1;0;-1;1;0;0;0;0;0
+concept;320
+ordering;370;4;1;3;2;0
+open;373;Immagino un centro con brand trendy e accessibili, una libreria con angolo lettura per famiglie, una yogurteria moderna, un’area realtà virtuale e laboratori creativi per i più piccoli.
+choice;381;5;1
+choice;390;6;111010;1
+choice;392;6;1
+choice;394;7;1010100;0
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;3
+choice;440;5;01100;1
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

@@ -1,8 +1,0 @@
-2.0;ESD;R2502057;411;IDEXDYPZSCMOSBWPA414;17/02/2025 18:06:29 CET;<unknown>;0;0;105;sysSID=R2502057;sysPRJ=ESD;sysUID=IDEXDYPZSCMOSBWPA414;psid=-SpSK_Db-AkzKymVnFvUBw**;lang=en;sysIID=411;pan=2
-choice;10;2;0
-choice;20;11;00000000001;10
-choice;30;2;1
-choice;50;2;0
-open;60;55
-choice;65;6;0
-choice;105;4;0

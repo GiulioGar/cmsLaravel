@@ -1,0 +1,41 @@
+2.0;UNI;R2601037;180;IDEXNOYHMWQKMFBSW99;26/02/2026 23:25:53 CET;26/02/2026 23:34:11 CET;498;3;430;device=desktop;lang=it;sysIID=180;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=3;cella=2;pan=4;sysUID=IDEXNOYHMWQKMFBSW99
+choice;7;107;0
+concept;10
+open;30;58
+choice;40;7;5
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;10000;0
+choice;90;6;0
+choice;100;3;0
+choice;120;13;0011100101000;4
+choice;130;13;2
+choice;160;10;9
+open;170;comodità accessibiità
+open;180;posteggio
+choice;190;10;0100000000;1
+scale;200;10;10;-1;7;-1;-1;-1;-1;-1;-1;-1;-1
+scale;240;13;10;9;9;7;9;9;4;9;9;6;9;9;9;7
+choice;250;3;1
+choice;260;3;2
+concept;270
+open;280;non spo
+scale;290;12;5;1;0;0;3;0;1;1;3;0;2;0;0
+open;300;più luminoso
+scale;310;13;5;1;1;1;3;1;1;-1;1;4;0;4;1;1
+ordering;311;11;0;10;9;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;0;1;2;3
+open;371;non sp
+choice;381;5;3
+choice;390;6;110010;0
+choice;392;6;0
+choice;394;7;1000000;0
+choice;400;5;0
+choice;410;6;0
+choice;420;7;2
+choice;430;5;0
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

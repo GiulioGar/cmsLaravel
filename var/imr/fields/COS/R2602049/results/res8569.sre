@@ -1,0 +1,10 @@
+2.0;COS;R2602049;8569;IDEXNOUBTSZDPEMXL4480;23/02/2026 10:07:11 CET;23/02/2026 10:24:20 CET;1029;4;70;sysSID=R2602049;lan=1;sysPRJ=COS;sysUID=IDEXNOUBTSZDPEMXL4480;pan=4;sysIID=8569;lang=it;rtrLan=1
+choice;3;20;14
+choice;4;4;3
+concept;10
+choice;20;2;0
+choice;28;4;0
+choice;30;2;0
+open;50;56
+choice;60;4;2
+choice;70;2;0

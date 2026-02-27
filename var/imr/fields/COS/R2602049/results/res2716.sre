@@ -1,0 +1,11 @@
+2.0;COS;R2602049;2716;IDEXNOGNSSKYJAWVB30704;19/02/2026 13:38:30 CET;19/02/2026 13:38:58 CET;28;4;80;sysSID=R2602049;lan=2;sysPRJ=COS;sysUID=IDEXNOGNSSKYJAWVB30704;pan=4;sysIID=2716;lang=es;rtrLan=2
+concept;10
+choice;20;2;0
+choice;28;4;1
+choice;30;2;0
+open;50;50
+choice;60;4;1
+choice;70;2;1
+choice;80;5;2
+choice;3000;18;9
+choice;4000;4;2

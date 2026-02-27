@@ -1,0 +1,44 @@
+2.0;UNI;R2601037;82;GUEST;25/02/2026 17:43:46 CET;25/02/2026 17:55:19 CET;693;3;440;debug=true;device=desktop;lang=it;sysIID=82;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=3;cella=2;sysUID=GUEST
+concept;10
+choice;12;2;1
+open;20;92015
+open;30;49
+choice;40;7;4
+choice;50;2;1
+choice;60;5;10000;0
+choice;70;5;01100;2
+choice;80;5;10100;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;1101111100110;5
+choice;130;13;4
+choice;160;10;7
+open;170;E' un centro molto vicino e comodo per me.
+open;180;Non ci sono aspetti negativi.
+choice;190;10;1111111110;1
+scale;200;10;10;9;8;9;9;8;9;9;9;9;-1
+scale;210;7;10;9;9;9;8;9;9;8
+scale;240;13;10;8;9;9;9;9;9;9;9;9;9;8;9;8
+choice;250;3;0
+choice;260;3;2
+concept;270
+open;280;Vorrei qualche offerta in più di ristoranti anche tavole calde dove poter consumare un pasto in pausa pranzo.
+scale;290;12;5;0;1;0;0;1;0;1;0;0;1;0;1
+open;300;Colori vivaci che trasmettono allegria.
+scale;310;13;5;1;1;0;0;0;1;-1;1;1;1;1;1;1
+concept;320
+ordering;370;4;2;0;3;1
+open;375;Vorrei che la Città dei Templi – città del Gusto ideale offrisse più ristoranti e una tavola calda dove poter fermarsi a pranzo.
+choice;381;5;0
+choice;390;6;110010;0
+choice;392;6;1
+choice;394;7;1110000;0
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;2
+choice;440;5;00100;2
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

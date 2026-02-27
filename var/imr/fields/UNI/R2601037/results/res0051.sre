@@ -1,0 +1,44 @@
+2.0;UNI;R2601037;51;GUEST;25/02/2026 15:09:39 CET;25/02/2026 15:25:11 CET;932;3;440;debug=true;device=desktop;lang=it;sysIID=51;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=4;cella=3;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92021
+open;30;66
+choice;40;7;6
+choice;50;2;0
+choice;60;5;00001;4
+choice;70;5;10100;0
+choice;80;5;10000;0
+choice;90;6;5
+choice;100;3;1
+choice;111;5;0
+choice;120;13;0000000000010;11
+choice;130;13;11
+choice;160;10;8
+open;170;il supermercato
+open;180;non ci sono parcheggi custoditi
+choice;190;10;1000000000;0
+scale;200;10;10;7;-1;-1;-1;-1;-1;-1;-1;-1;-1
+scale;210;7;10;7;7;9;8;8;5;8
+scale;240;13;10;9;6;6;8;8;8;7;8;8;6;7;8;9
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;aggiungerei sorbillo
+scale;290;12;5;0;1;1;0;1;1;1;2;1;0;1;1
+open;300;non cambierei nulla
+scale;310;13;5;0;0;1;1;1;1;-1;1;0;1;0;2;1
+concept;320
+ordering;370;4;1;2;0;3
+open;373;mi piacerebbe ci fossero degli spazi per guardare le partite
+choice;381;5;2
+choice;390;6;100000;0
+choice;392;6;0
+choice;394;7;0000100;4
+choice;400;5;1
+choice;410;6;5
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;3
+scale;5200;1;5;3
+scale;5300;1;5;4
+scale;5400;1;5;4

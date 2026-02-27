@@ -47,7 +47,7 @@
             <li class="nav-item">
                 <a class="nav-link"
                    href="{{ route('targetField.index', ['prj' => $prj, 'sid' => $sid]) }}">
-                   <i class="fas fa-bullseye me-1"></i> Imposta Target
+                   <i class="fa-solid fa-arrows-down-to-people"></i> Imposta Target
                 </a>
             </li>
 
@@ -98,111 +98,219 @@
 
 
 
-
-
-    <div class="row">
-        <!-- Card 1: RICERCA -->
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="stat-badge badge-dark">RICERCA</div>
-                    <span class="ms-3 stat-text">{{ $panelData->sur_id ?? 'N/A' }}</span>
+<div class="row g-3">
+    {{-- CARD: RICERCA --}}
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card stat-kpi kpi-theme-slate h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="kpi-label">
+                            <i class="fas fa-folder-open "></i>
+                            Ricerca
+                        </div>
+                        <div class="kpi-value">
+                            #{{ $panelData->sur_id ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <span class="kpi-chip kpi-chip-dark">ID</span>
                 </div>
-                <h3 class="mt-2 stat-value">{{ $panelData->description ?? 'No description available' }}</h3>
-                <p class="text-muted">Cliente: {{ $panelData->cliente ?? 'No description available' }}</p>
+
+                <div class="kpi-subtitle mt-2">
+                    {{ $panelData->description ?? 'No description available' }}
+                </div>
+
+                @php
+                $goal = (int) ($panelData->goal ?? 0);
+                $complete = (int) ($counts['complete'] ?? 0);
+                $pct = ($goal > 0) ? min(100, round(($complete / $goal) * 100)) : 0;
+            @endphp
+
+            <div class="kpi-progress mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="text-muted">Avanzamento</small>
+                    <small class="fw-semibold">{{ $complete }} / {{ $goal ?: 'N/A' }} ({{ $pct }}%)</small>
+                </div>
+                <div class="progress kpi-progressbar" role="progressbar" aria-valuenow="{{ $pct }}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar kpi-progressfill" style="width:0" data-pct="{{ $pct }}"></div>
+                </div>
             </div>
-        </div>
 
-        <!-- Card 2: TARGET -->
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="stat-badge badge-red">TARGET</div>
-                    <span class="ms-3 stat-text">{{ $panelData->paese ?? 'N/A' }}</span>
+                <div class="kpi-meta mt-3">
+                    <div class="kpi-row">
+                        <span class="kpi-key">Cliente</span>
+                        <span class="kpi-val">{{ $panelData->cliente ?? 'N/A' }}</span>
+                    </div>
                 </div>
-                <h3 class="mt-2 stat-value">{{ $panelData->goal ?? 'N/A' }} interviste</h3>
-                <p class="text-muted">
-                    @if($panelData->sex_target == 1)
-                        Uomo
-                    @elseif($panelData->sex_target == 2)
-                        Donna
-                    @elseif($panelData->sex_target == 3)
-                        Uomo/Donna
-                    @else
-                        N/A
-                    @endif
-                    {{ $panelData->age1_target ?? 'N/A' }} - {{ $panelData->age2_target ?? 'N/A' }} anni
-                </p>
-            </div>
-        </div>
-
-        <!-- Card 3: TIMING -->
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="stat-badge badge-green">TIMING</div>
-                    <span class="ms-3 stat-text">
-                        Giorni in field:
-                        <b>
-                            @if($panelData->stato == 1)
-                                {{ $panelData->sur_date ? \Carbon\Carbon::parse($panelData->sur_date)->diffInDays(now()) : 'N/A' }}
-                            @elseif($panelData->stato == 0 && $panelData->end_field)
-                                {{ \Carbon\Carbon::parse($panelData->sur_date)->diffInDays(\Carbon\Carbon::parse($panelData->end_field)) }}
-                            @else
-                                N/A
-                            @endif
-                        </b>
-                    </span>
-                </div>
-                <h3 class="mt-2 stat-value">
-                    <span> Inizio: {{ $panelData->sur_date ? \Carbon\Carbon::parse($panelData->sur_date)->format('d/m/Y') : 'N/A' }}</span>
-                    <br/><br/>
-                    <span>Fine: {{ $panelData->end_field ? \Carbon\Carbon::parse($panelData->end_field)->format('d/m/Y') : 'N/A' }}</span>
-                </h3>
-            </div>
-        </div>
-
-        <!-- Card 4: INFO -->
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="stat-badge badge-blue">INFO</div>
-                    <span class="ms-3 stat-text">
-                        @if($panelData->stato == 0)
-                            Aperta
-                        @elseif($panelData->stato == 1)
-                            Chiusa
-                        @else
-                            N/A
-                        @endif
-                    </span>
-                </div>
-                <h3 class="mt-2 stat-value">
-                    Durata: {{ $panelData->durata ?? 'N/A' }} minuti <br/>
-                    Panel:
-                    @if(!empty($panelCounts))
-                        {{ implode(', ', array_keys($panelCounts)) }}
-                    @else
-                        N/A
-                    @endif
-
-                </h3>
             </div>
         </div>
     </div>
+
+    {{-- CARD: TARGET --}}
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card stat-kpi kpi-theme-red h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="kpi-label">
+                            <i class="fa-solid fa-arrows-down-to-people "></i>
+                            Target
+                        </div>
+                        <div class="kpi-value">
+                            {{ $panelData->goal ?? 'N/A' }}
+                            <span class="kpi-unit">interviste</span>
+                        </div>
+                    </div>
+                    <span class="kpi-chip kpi-chip-red">{{ $panelData->paese ?? 'N/A' }}</span>
+                </div>
+
+                @php
+                    $sexLabel = 'N/A';
+                    if (($panelData->sex_target ?? null) == 1) $sexLabel = 'Uomo';
+                    elseif (($panelData->sex_target ?? null) == 2) $sexLabel = 'Donna';
+                    elseif (($panelData->sex_target ?? null) == 3) $sexLabel = 'Uomo/Donna';
+                @endphp
+
+                <div class="kpi-meta mt-3">
+                    <div class="kpi-row">
+                        <span class="kpi-key">Sesso</span>
+                        <span class="kpi-val">{{ $sexLabel }}</span>
+                    </div>
+                    <div class="kpi-row">
+                        <span class="kpi-key">Età</span>
+                        <span class="kpi-val">{{ $panelData->age1_target ?? 'N/A' }}–{{ $panelData->age2_target ?? 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- CARD: TIMING --}}
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card stat-kpi kpi-theme-green h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="kpi-label">
+                            <i class="fas fa-clock "></i>
+                            Timing
+                        </div>
+
+                        @php
+                            $giorniField = 'N/A';
+                            if (($panelData->stato ?? null) == 1) {
+                                $giorniField = $panelData->sur_date ? \Carbon\Carbon::parse($panelData->sur_date)->diffInDays(now()) : 'N/A';
+                            } elseif (($panelData->stato ?? null) == 0 && $panelData->end_field) {
+                                $giorniField = \Carbon\Carbon::parse($panelData->sur_date)->diffInDays(\Carbon\Carbon::parse($panelData->end_field));
+                            }
+                        @endphp
+
+                        <div class="kpi-value">
+                            {{ $giorniField }}
+                            <span class="kpi-unit">giorni</span>
+                        </div>
+                    </div>
+                    <span class="kpi-chip kpi-chip-green">Field</span>
+                </div>
+
+                <div class="kpi-meta mt-3">
+                    <div class="kpi-row">
+                        <span class="kpi-key">Inizio</span>
+                        <span class="kpi-val">
+                            {{ $panelData->sur_date ? \Carbon\Carbon::parse($panelData->sur_date)->format('d/m/Y') : 'N/A' }}
+                        </span>
+                    </div>
+                    <div class="kpi-row">
+                        <span class="kpi-key">Fine</span>
+                        <span class="kpi-val">
+                            {{ $panelData->end_field ? \Carbon\Carbon::parse($panelData->end_field)->format('d/m/Y') : 'N/A' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- CARD: INFO --}}
+    <div class="col-12 col-md-6 col-xl-3">
+        <div class="card stat-kpi kpi-theme-blue h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <div class="kpi-label">
+                           <i class="fas fa-info-circle "></i>
+                            Info
+                        </div>
+
+                        @php
+                            $statusLabel = 'N/A';
+                            $statusChipClass = 'kpi-chip-dark';
+                            $statusIcon = 'fas fa-question-circle';
+
+                            if (($panelData->stato ?? null) == 0) {
+                                $statusLabel = 'Aperta';
+                                $statusChipClass = 'kpi-chip-blue';
+                                $statusIcon = 'fa-solid fa-door-open';   // oppure fa-circle
+                            }
+                            elseif (($panelData->stato ?? null) == 1) {
+                                $statusLabel = 'Chiusa';
+                                $statusChipClass = 'kpi-chip-dark';
+                                $statusIcon = 'fa-solid fa-door-closed';          // oppure fa-check-circle
+                            }
+                        @endphp
+
+                        <div class="kpi-value">
+                            {{ $panelData->durata ?? 'N/A' }}
+                            <span class="kpi-unit">min</span>
+                        </div>
+                    </div>
+
+                    <span class="kpi-chip {{ $statusChipClass }}">
+                        <i class="{{ $statusIcon }} me-1"></i>
+                        {{ $statusLabel }}
+                    </span>
+                </div>
+
+                <div class="kpi-meta mt-3">
+                    <div class="kpi-row">
+                        <span class="kpi-key">Panel</span>
+                        <span class="kpi-val">
+                            @if(!empty($panelCounts))
+                                {{ implode(', ', array_keys($panelCounts)) }}
+                            @else
+                                N/A
+                            @endif
+                        </span>
+                    </div>
+
+                    <div class="kpi-split mt-2">
+                        <div class="kpi-mini">
+                            <div class="kpi-mini-key">IR</div>
+                            <div class="kpi-mini-val">{{ $redemption ?? 0 }}%</div>
+                        </div>
+                        <div class="kpi-mini">
+                            <div class="kpi-mini-key">Contatti</div>
+                            <div class="kpi-mini-val">{{ $counts['contatti'] ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
 
         <!-- prima riga dopo le card con status + filtrate -->
 
         <div class="row mt-5">
 
             <div class="col-md-6">
-                <div class="d-flex custom-tab-container">
-                    <!-- Menu laterale -->
-                    <div class="custom-nav-container">
-                        <ul class="nav flex-column nav-pills custom-nav-pills" id="menu-tabs">
+                <div class="d-flex custom-tab-container fc-split">
+                    <div class="custom-nav-container fc-side">
+                        <ul class="nav flex-column nav-pills custom-nav-pills fc-side-nav" id="menu-tabs">
                             <!-- Tab Home (sempre presente e attivo) -->
                             <li class="nav-item">
-                                <a class="nav-link active" id="tab1-tab" data-bs-toggle="pill" href="#tab1">
+                                <a class="nav-link active fc-side-link" id="tab1-tab" data-bs-toggle="pill" href="#tab1">
                                     <i class="fas fa-home me-2"></i> Totale
                                 </a>
                             </li>
@@ -211,7 +319,7 @@
                             @if(count($panelCounts) > 1)
                             @foreach ($panelCounts as $panelName => $panelData)
                                 <li class="nav-item">
-                                    <a class="nav-link" id="tab{{ $loop->index + 2 }}-tab" data-bs-toggle="pill" href="#tab{{ $loop->index + 2 }}">
+                                    <a class="nav-link fc-side-link" id="tab{{ $loop->index + 2 }}-tab" data-bs-toggle="pill" href="#tab{{ $loop->index + 2 }}">
                                         <i class="fas fa-chart-pie me-2"></i> {{ $panelName }}
                                     </a>
                                 </li>
@@ -222,74 +330,183 @@
                     </div>
 
                     <!-- Contenuto della tab -->
-                    <div class="tab-content custom-tab-content">
+                    <div class="tab-content custom-tab-content fc-tab-area">
                         <!-- Tab Home - Totale -->
-                        <div class="tab-pane fade show active" id="tab1">
-                            <h4>Totale</h4>
-                            <table class="table custom-table">
-                                <tbody>
-                                    <tr><td><strong>Complete:</strong></td><td>{{ $counts['complete'] }}</td></tr>
-                                    <tr><td><strong>Non in target:</strong></td><td>{{ $counts['non_target'] }}</td></tr>
-                                    <tr><td><strong>Over Quota:</strong></td><td>{{ $counts['over_quota'] }}</td></tr>
-                                    <tr><td><strong>Sospese:</strong></td><td>{{ $counts['sospese'] }}</td></tr>
-                                    <tr><td><strong>Bloccate:</strong></td><td>{{ $counts['bloccate'] }}</td></tr>
-                                    <tr><td><strong>Contatti:</strong></td><td>{{ $counts['contatti'] }}</td></tr>
-                                    <tr><td><strong>Redemption (IR):</strong></td><td>{{ $redemption }}%</td></tr>
+                    <div class="tab-pane fade show active" id="tab1">
 
-                                    <!-- Mostra "Abilitati Panel" e "Utenti Disponibili" SOLO se c'è un solo panel -->
-                                    @if(count($panelCounts) == 1 && array_key_exists('Interactive', $panelCounts))
-                                        <tr><td><strong>Abilitati Panel:</strong></td><td>{{ $abilitati }}</td></tr>
-                                        <tr><td><strong>Utenti Disponibili:</strong></td><td>{{ $utentiDisponibili }}</td></tr>
-                                        <tr>
-                                            <td>
-                                                <strong>Stima Interviste:</strong>
-                                                <i class="fas fa-info-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    title="La stima interviste si intende per interviste totali, non tiene conto di quote o target.">
-                                                </i>
-                                            </td>
-                                            <td>{{ $stimaInterviste }} *</td>
-                                        </tr>
+                        <div class="fc-kpi-card">
+                            <div class="fc-kpi-head">
+                                <div>
+                                    <div class="fc-kpi-eyebrow">Riepilogo</div>
+                                    <div class="fc-kpi-title">Totale</div>
+                                </div>
 
-                                    @endif
+                                <div class="fc-kpi-ir">
+                                    <div class="fc-kpi-ir-label">IR</div>
+                                    <div class="fc-kpi-ir-value">{{ $redemption }}%</div>
+                                </div>
+                            </div>
 
+                            <div class="fc-kpi-progress mt-3" data-ir="{{ $redemption }}">
+                                <div class="fc-kpi-progress-track">
+                                    <div class="fc-kpi-progress-fill" style="width: {{ $redemption }}%"></div>
+                                </div>
+                                <div class="fc-kpi-progress-meta">
+                                    <span>0%</span>
+                                    <span>100%</span>
+                                </div>
+                            </div>
 
-                                </tbody>
-                            </table>
+                            <div class="fc-kpi-grid mt-3">
+                                <div class="fc-kpi-item fc-ok">
+                                    <div class="fc-kpi-label">Complete</div>
+                                    <div class="fc-kpi-value">{{ $counts['complete'] }}</div>
+                                </div>
+
+                                <div class="fc-kpi-item fc-warn">
+                                    <div class="fc-kpi-label">Non in target</div>
+                                    <div class="fc-kpi-value">{{ $counts['non_target'] }}</div>
+                                </div>
+
+                                <div class="fc-kpi-item fc-danger">
+                                    <div class="fc-kpi-label">Over quota</div>
+                                    <div class="fc-kpi-value">{{ $counts['over_quota'] }}</div>
+                                </div>
+
+                                <div class="fc-kpi-item fc-info">
+                                    <div class="fc-kpi-label">Sospese</div>
+                                    <div class="fc-kpi-value">{{ $counts['sospese'] }}</div>
+                                </div>
+
+                                <div class="fc-kpi-item fc-dark">
+                                    <div class="fc-kpi-label">Bloccate</div>
+                                    <div class="fc-kpi-value">{{ $counts['bloccate'] }}</div>
+                                </div>
+
+                                <div class="fc-kpi-item">
+                                    <div class="fc-kpi-label">Contatti</div>
+                                    <div class="fc-kpi-value">{{ $counts['contatti'] }}</div>
+                                </div>
+                            </div>
+
+                            @if(count($panelCounts) == 1 && array_key_exists('Interactive', $panelCounts))
+                                <div class="fc-kpi-extra mt-3">
+                                    <div class="fc-kpi-extra-item">
+                                        <div class="fc-kpi-label">Abilitati panel</div>
+                                        <div class="fc-kpi-value">{{ $abilitati }}</div>
+                                    </div>
+
+                                    <div class="fc-kpi-extra-item">
+                                        <div class="fc-kpi-label">Utenti disponibili</div>
+                                        <div class="fc-kpi-value">{{ $utentiDisponibili }}</div>
+                                    </div>
+
+                                    <div class="fc-kpi-extra-item fc-wide">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="fc-kpi-label mb-0">Stima interviste</div>
+                                            <i class="fas fa-info-circle text-primary"
+                                            data-bs-toggle="tooltip"
+                                            title="La stima interviste si intende per interviste totali, non tiene conto di quote o target."></i>
+                                        </div>
+                                        <div class="fc-kpi-value">{{ $stimaInterviste }} <span class="fc-kpi-note">*</span></div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
+
+                    </div>
 
                         <!-- Generazione dinamica dei contenuti dei panel -->
                         @foreach ($panelCounts as $panelName => $panelData)
                             <div class="tab-pane fade" id="tab{{ $loop->index + 2 }}">
-                                <h4>{{ $panelName }}</h4>
-                                <table class="table custom-table">
-                                    <tbody>
-                                        <tr><td><strong>Complete:</strong></td><td>{{ $panelData['complete'] }}</td></tr>
-                                        <tr><td><strong>Non in target:</strong></td><td>{{ $panelData['non_target'] }}</td></tr>
-                                        <tr><td><strong>Over Quota:</strong></td><td>{{ $panelData['over_quota'] }}</td></tr>
-                                        <tr><td><strong>Sospese:</strong></td><td>{{ $panelData['sospese'] }}</td></tr>
-                                        <tr><td><strong>Bloccate:</strong></td><td>{{ $panelData['bloccate'] }}</td></tr>
-                                        <tr><td><strong>Contatti:</strong></td><td>{{ $panelData['contatti'] }}</td></tr>
-                                        <tr><td><strong>Redemption (IR):</strong></td><td>{{ $panelData['redemption'] ?? 'N/A' }}%</td></tr>
 
-                                        <!-- Mostra "Abilitati Panel" e "Utenti Disponibili" SOLO nel tab Interactive -->
-                                        @if($panelName == "Interactive" && count($panelCounts) > 1)
-                                            <tr><td><strong>Abilitati Panel:</strong></td><td>{{ $abilitati }}</td></tr>
-                                            <tr><td><strong>Utenti Disponibili:</strong></td><td>{{ $utentiDisponibili }}</td></tr>
-                                            <tr>
-                                                <td>
-                                                    <strong>Stima Interviste:</strong>
-                                                    <i class="fas fa-info-circle text-primary" data-bs-toggle="tooltip" data-bs-placement="top"
-                                                        title="La stima interviste si intende per interviste totali, non tiene conto di quote o target.">
-                                                    </i>
-                                                </td>
-                                                <td>{{ $stimaInterviste }}</td>
-                                            </tr>
+                                @php
+                                    $panelIr = $panelData['redemption'] ?? 0;
+                                    if (!is_numeric($panelIr)) { $panelIr = 0; }
+                                @endphp
 
-                                        @endif
+                                <div class="fc-kpi-card">
 
+                                    <div class="fc-kpi-head">
+                                        <div>
+                                            <div class="fc-kpi-eyebrow">Panel</div>
+                                            <div class="fc-kpi-title">{{ $panelName }}</div>
+                                        </div>
 
-                                    </tbody>
-                                </table>
+                                        <div class="fc-kpi-ir">
+                                            <div class="fc-kpi-ir-label">IR</div>
+                                            <div class="fc-kpi-ir-value">{{ $panelIr }}%</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="fc-kpi-progress mt-3" data-ir="{{ $panelIr }}">
+                                        <div class="fc-kpi-progress-track">
+                                            <div class="fc-kpi-progress-fill" style="width: {{ $panelIr }}%"></div>
+                                        </div>
+                                        <div class="fc-kpi-progress-meta">
+                                            <span>0%</span>
+                                            <span>100%</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="fc-kpi-grid mt-3">
+                                        <div class="fc-kpi-item fc-ok">
+                                            <div class="fc-kpi-label">Complete</div>
+                                            <div class="fc-kpi-value">{{ $panelData['complete'] }}</div>
+                                        </div>
+
+                                        <div class="fc-kpi-item fc-warn">
+                                            <div class="fc-kpi-label">Non in target</div>
+                                            <div class="fc-kpi-value">{{ $panelData['non_target'] }}</div>
+                                        </div>
+
+                                        <div class="fc-kpi-item fc-danger">
+                                            <div class="fc-kpi-label">Over quota</div>
+                                            <div class="fc-kpi-value">{{ $panelData['over_quota'] }}</div>
+                                        </div>
+
+                                        <div class="fc-kpi-item fc-info">
+                                            <div class="fc-kpi-label">Sospese</div>
+                                            <div class="fc-kpi-value">{{ $panelData['sospese'] }}</div>
+                                        </div>
+
+                                        <div class="fc-kpi-item fc-dark">
+                                            <div class="fc-kpi-label">Bloccate</div>
+                                            <div class="fc-kpi-value">{{ $panelData['bloccate'] }}</div>
+                                        </div>
+
+                                        <div class="fc-kpi-item">
+                                            <div class="fc-kpi-label">Contatti</div>
+                                            <div class="fc-kpi-value">{{ $panelData['contatti'] }}</div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Extra SOLO per Interactive (come prima), quando ci sono più panel --}}
+                                    @if($panelName == "Interactive" && count($panelCounts) > 1)
+                                        <div class="fc-kpi-extra mt-3">
+                                            <div class="fc-kpi-extra-item">
+                                                <div class="fc-kpi-label">Abilitati panel</div>
+                                                <div class="fc-kpi-value">{{ $abilitati }}</div>
+                                            </div>
+
+                                            <div class="fc-kpi-extra-item">
+                                                <div class="fc-kpi-label">Utenti disponibili</div>
+                                                <div class="fc-kpi-value">{{ $utentiDisponibili }}</div>
+                                            </div>
+
+                                            <div class="fc-kpi-extra-item fc-wide">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="fc-kpi-label mb-0">Stima interviste</div>
+                                                    <i class="fas fa-info-circle text-primary"
+                                                    data-bs-toggle="tooltip"
+                                                    title="La stima interviste si intende per interviste totali, non tiene conto di quote o target."></i>
+                                                </div>
+                                                <div class="fc-kpi-value">{{ $stimaInterviste }}</div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -301,31 +518,58 @@
             {{-- FINE MENU SINISTRA CON RISULTATO
 
             INIZIO MENU DESTRA CON GRAFICI FILTRATE --}}
-            <div class="col-md-6">
-                <div class="custom-tab-container-modern">
-                    <!-- Menu di navigazione effetto scheda -->
-                    <ul class="nav custom-nav-tabs-modern" id="panel-nav">
-                        @foreach ($panelCounts as $panelName => $panelData)
-                            <li class="nav-item">
-                                <a class="nav-link modern-tab-link {{ $loop->first ? 'active' : '' }}" id="tab-panel-{{ $loop->index }}-nav" data-bs-toggle="pill" href="#tab-panel-{{ $loop->index }}">
-                                    <i class="fas fa-chart-pie me-2"></i> {{ $panelName }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
+<div class="col-md-6">
+    <div class="custom-tab-container-modern fc-chart-wrap">
 
-                    <!-- Contenuto delle tab -->
-                    <div class="tab-content custom-tab-content-modern">
-                        @foreach ($panelCounts as $panelName => $panelData)
-                            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-panel-{{ $loop->index }}">
-                                <br/>
-                                <h5 class="mt-3">Analisi Filtrate</h5>
-                                <canvas id="chart-panel-{{ $loop->index }}"></canvas> <!-- Canvas univoco per ogni panel -->
+        <!-- Tabs panel (stessi id/link) -->
+        <ul class="nav custom-nav-tabs-modern fc-chart-tabs" id="panel-nav">
+            @foreach ($panelCounts as $panelName => $panelData)
+                <li class="nav-item">
+                    <a class="nav-link modern-tab-link fc-chart-tab {{ $loop->first ? 'active' : '' }}"
+                       id="tab-panel-{{ $loop->index }}-nav"
+                       data-bs-toggle="pill"
+                       href="#tab-panel-{{ $loop->index }}">
+                        <i class="fas fa-chart-pie me-2"></i> {{ $panelName }}
+                    </a>
+                </li>
+            @endforeach
+        </ul>
+
+        <!-- Contenuto -->
+        <div class="tab-content custom-tab-content-modern fc-chart-content">
+            @foreach ($panelCounts as $panelName => $panelData)
+                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                     id="tab-panel-{{ $loop->index }}">
+
+                    <div class="fc-chart-card">
+                        <div class="fc-chart-head">
+                            <div>
+                                <div class="fc-chart-eyebrow">CHECK</div>
+                                <div class="fc-chart-title">Analisi filtrate</div>
+                                <div class="fc-chart-subtitle">
+                                    Panel: <b>{{ $panelName }}</b> — principali domande di screenout
+                                </div>
                             </div>
-                        @endforeach
+
+                            <div class="fc-chart-badge">
+                                <i class="fas fa-filter me-2"></i> Screenout
+                            </div>
+                        </div>
+
+                        <div class="fc-chart-body">
+                            <div class="fc-chart-canvas">
+                                <canvas id="chart-panel-{{ $loop->index }}"></canvas>
+                            </div>
+                        </div>
+
                     </div>
+
                 </div>
-            </div>
+            @endforeach
+        </div>
+
+    </div>
+</div>
 
 
             {{-- FINE PARTE SINISTRA GRAFICI FILTRATE --}}
@@ -647,6 +891,7 @@
 
                         options: {
                                     responsive: true,
+                                    maintainAspectRatio: false,
                                     plugins: {
                                         tooltip: {
                                             callbacks: {
@@ -784,6 +1029,33 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 </script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('.kpi-progressfill').forEach(function (bar) {
+        const pct = bar.getAttribute('data-pct') || 0;
+        // piccola delay per permettere il render e poi animare
+        setTimeout(() => { bar.style.width = pct + '%'; }, 80);
+    });
+});
+</script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".fc-kpi-progress").forEach(function (wrap) {
+    var fill = wrap.querySelector(".fc-kpi-progress-fill");
+    if (!fill) return;
+
+    var ir = parseFloat(wrap.getAttribute("data-ir") || "0");
+    if (isNaN(ir)) ir = 0;
+    ir = Math.max(0, Math.min(100, ir));
+
+    // parte da 0 e anima fino al valore
+    fill.style.width = "0%";
+    requestAnimationFrame(function () {
+      fill.style.width = ir + "%";
+    });
+  });
+});
+</script>
 
 @endsection

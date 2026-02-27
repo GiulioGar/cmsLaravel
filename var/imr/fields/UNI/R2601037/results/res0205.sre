@@ -1,0 +1,32 @@
+2.0;UNI;R2601037;205;IDEXNORNTXYFDYGXL247;27/02/2026 13:08:46 CET;27/02/2026 13:17:09 CET;503;7;370;device=mobile;lang=it;sysIID=205;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=1;cella=0;pan=4;sysUID=IDEXNORNTXYFDYGXL247
+choice;7;107;0
+concept;10
+open;30;57
+choice;40;7;5
+choice;50;2;0
+choice;70;5;11100;0
+choice;80;5;10000;0
+choice;90;6;2
+choice;100;3;0
+choice;120;13;0110100000010;4
+choice;130;13;4
+choice;160;10;8
+open;170;Svariati negozi di ogni genere 
+open;180;Scarsità di mezzi pubblici 
+choice;190;10;1001000100;7
+scale;200;10;10;6;-1;-1;5;-1;-1;-1;6;-1;-1
+scale;210;7;10;5;6;5;6;6;4;5
+scale;240;13;10;3;6;6;6;6;6;6;6;5;5;6;6;4
+choice;250;3;0
+choice;260;3;2
+concept;270
+open;280;Nulla va bene così 
+scale;290;12;5;2;2;2;1;2;2;2;1;0;0;1;2
+open;300;Ottimo 
+scale;310;13;5;2;2;1;1;0;1;-1;1;1;0;1;0;1
+ordering;311;11;1;9;10;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+scale;5100;1;5;3
+scale;5200;1;5;3
+scale;5300;1;5;1
+scale;5400;1;5;2

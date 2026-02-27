@@ -1,0 +1,35 @@
+2.0;UNI;R2601037;15;GUEST;24/02/2026 15:37:14 CET;24/02/2026 16:04:20 CET;1626;3;440;debug=true;device=desktop;lang=it;sysIID=15;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=2;cella=1;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92020
+open;30;60
+choice;40;7;5
+choice;50;2;1
+choice;60;5;00001;4
+choice;70;5;11100;2
+choice;80;5;01000;1
+choice;110;3;2
+choice;111;5;1
+choice;140;16;0000000100000000;7
+choice;150;16;7
+concept;270
+open;280;non saprei, non ci vado da molto, non so cosa manchi
+scale;290;12;5;1;2;2;1;2;2;2;2;2;2;2;2
+open;300;è già bello così, c'è molta luce naturale
+scale;310;13;5;2;2;2;2;1;1;-1;2;1;2;1;2;2
+concept;320
+ordering;370;4;2;1;3;0
+open;375;una selezione di ristoranti ampia
+choice;381;5;2
+choice;390;6;100010;0
+choice;392;6;0
+choice;394;7;0011100;4
+choice;400;5;1
+choice;410;6;0
+choice;420;7;0
+choice;430;5;2
+choice;440;5;00010;3
+scale;5100;1;5;2
+scale;5200;1;5;3
+scale;5300;1;5;4
+scale;5400;1;5;2

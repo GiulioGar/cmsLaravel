@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;48;GUEST;25/02/2026 15:01:00 CET;25/02/2026 15:16:12 CET;912;3;440;debug=true;device=desktop;lang=it;sysIID=48;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=3;cella=2;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92020
+open;30;66
+choice;40;7;6
+choice;50;2;1
+choice;60;5;00001;4
+choice;70;5;11100;1
+choice;80;5;10100;0
+choice;90;6;3
+choice;100;3;0
+choice;120;13;1000000100000;7
+choice;130;13;0
+choice;160;10;9
+open;170;ottima la parte di ristoro e le attività organizzate
+open;180;nulla
+choice;190;10;0100000100;1
+scale;200;10;10;-1;8;-1;-1;-1;-1;-1;8;-1;-1
+scale;240;13;10;8;8;9;9;9;8;8;9;8;8;8;8;9
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;non saprei
+scale;290;12;5;1;1;1;2;1;1;2;1;1;0;1;1
+open;300;va benissimo così
+scale;310;13;5;1;2;2;2;2;1;-1;2;2;2;1;1;1
+concept;320
+ordering;370;4;1;2;3;0
+open;373;organizzazione di attività per bambini come hanno fatto a natale, mi è piaciuto molto
+choice;381;5;2
+choice;390;6;110010;0
+choice;392;6;0
+choice;394;7;0110000;1
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;2
+scale;5200;1;5;4
+scale;5300;1;5;3
+scale;5400;1;5;2

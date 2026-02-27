@@ -1,0 +1,11 @@
+2.0;COS;R2602049;4829;IDEXNONIMSMXKFDAU92212;19/02/2026 18:29:14 CET;19/02/2026 18:30:19 CET;65;4;80;sysSID=R2602049;lan=3;sysPRJ=COS;sysUID=IDEXNONIMSMXKFDAU92212;pan=4;sysIID=4829;lang=fr;rtrLan=3
+concept;10
+choice;20;2;0
+choice;28;4;2
+choice;30;2;1
+open;50;75
+choice;60;4;2
+choice;70;2;1
+choice;80;5;2
+choice;3004;25;11
+choice;4004;5;2

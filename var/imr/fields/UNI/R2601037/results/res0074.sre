@@ -1,0 +1,10 @@
+2.0;UNI;R2601037;74;GUEST;25/02/2026 17:17:17 CET;<unknown>;0;0;40;debug=true;device=desktop;lang=it;sysIID=74;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92015
+open;30;75
+choice;40;7;6
+choice;50;2;1
+choice;60;5;10000;0
+choice;70;5;01000;1
+choice;80;5;10000;0

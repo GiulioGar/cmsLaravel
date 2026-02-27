@@ -1,0 +1,14 @@
+2.0;UNI;R2601037;157;IDEXNONOIZTHLNTMD287;26/02/2026 19:21:29 CET;<unknown>;0;0;40;version=v01;sysSID=R2601037;sysPRJ=UNI;sysUID=IDEXNONOIZTHLNTMD287;device=mobile;pan=4;sysIID=157;lang=it
+choice;7;107;0
+concept;10
+open;30;33
+choice;40;7;2
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;01000;1
+choice;110;3;2
+choice;111;5;1
+choice;140;16;1100000000000000;1
+choice;150;16;0
+concept;270
+open;300;Uno stile contemporaneo

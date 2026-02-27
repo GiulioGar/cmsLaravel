@@ -507,7 +507,11 @@ private function getLogData($directory, PrimisApiService $primis, $projectName, 
         $files = glob($directory . "/*.sre");
 
         // Ordiniamo i file in ordine decrescente (dal più recente al più vecchio)
-        rsort($files);
+        usort($files, function ($a, $b) {
+            $na = (int) substr(pathinfo($a, PATHINFO_FILENAME), 3);
+            $nb = (int) substr(pathinfo($b, PATHINFO_FILENAME), 3);
+            return $nb <=> $na;
+        });
 
         // ✅ Otteniamo tutte le domande in un'unica chiamata API
         $response = $primis->listQuestions($projectName, $surveyId);
@@ -1033,6 +1037,7 @@ public function resetBloccate(Request $request)
         'resetCount' => $resetCount
     ]);
 }
+
 
 
 

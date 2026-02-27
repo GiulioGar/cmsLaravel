@@ -1,0 +1,42 @@
+2.0;UNI;R2601037;151;IDEXNOBOUCNYPPJAL15;26/02/2026 18:34:46 CET;26/02/2026 18:42:22 CET;456;3;430;device=mobile;lang=it;sysIID=151;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=4;cella=3;pan=4;sysUID=IDEXNOBOUCNYPPJAL15
+choice;7;107;0
+concept;10
+open;30;51
+choice;40;7;4
+choice;50;2;0
+choice;70;5;11000;1
+choice;80;5;10000;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;0001110000010;11
+choice;130;13;3
+choice;160;10;6
+open;170;Ha un ampio posteggio e numerosi negozi 
+open;180;A volte è troppo caotico 
+choice;190;10;1100000100;0
+scale;200;10;10;6;6;-1;-1;-1;-1;-1;6;-1;-1
+scale;210;7;10;6;6;5;6;6;6;6
+scale;240;13;10;6;6;6;6;6;4;6;6;6;6;5;6;6
+choice;250;3;1
+choice;260;3;2
+concept;270
+open;280;Quelli che ci sono vanno bene 
+scale;290;12;5;3;3;1;3;2;3;1;1;3;3;3;3
+open;300;Avrebbe bisogno di un ritocco esterno 
+scale;310;13;5;2;2;1;1;1;1;-1;1;1;1;1;1;1
+ordering;311;11;9;7;5;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;2;3;0;1
+open;375;Negozi di prodotti tipici e street food 
+choice;381;5;2
+choice;390;6;100000;0
+choice;392;6;0
+choice;394;7;0000100;4
+choice;400;5;1
+choice;410;6;0
+choice;420;7;0
+choice;430;5;0
+scale;5100;1;5;3
+scale;5200;1;5;1
+scale;5300;1;5;2
+scale;5400;1;5;2

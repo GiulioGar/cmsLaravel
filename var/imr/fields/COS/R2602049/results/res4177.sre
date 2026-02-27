@@ -1,0 +1,11 @@
+2.0;COS;R2602049;4177;IDEXNOHZBSVCIPHDW1649;19/02/2026 15:21:03 CET;19/02/2026 15:23:35 CET;152;4;80;sysSID=R2602049;lan=1;sysPRJ=COS;sysUID=IDEXNOHZBSVCIPHDW1649;pan=4;sysIID=4177;lang=it;rtrLan=1
+choice;3;20;8
+choice;4;4;0
+concept;10
+choice;20;2;0
+choice;28;4;0
+choice;30;2;0
+open;50;56
+choice;60;4;2
+choice;70;2;1
+choice;80;5;3

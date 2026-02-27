@@ -1,0 +1,35 @@
+2.0;UNI;R2601037;137;GUEST;26/02/2026 17:19:53 CET;26/02/2026 17:43:30 CET;1417;3;440;debug=true;device=desktop;lang=it;sysIID=137;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=4;cella=3;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92026
+open;30;58
+choice;40;7;5
+choice;50;2;0
+choice;60;5;11000;0
+choice;70;5;00001;4
+choice;80;5;00001;4
+choice;110;3;0
+choice;111;5;4
+choice;140;16;1011000100000000;2
+choice;150;16;0
+concept;270
+open;280;aggiungerei un discount
+scale;290;12;5;1;0;1;1;1;0;1;0;1;2;1;1
+open;300;più colori alle pareti
+scale;310;13;5;1;0;1;1;0;0;-1;1;1;1;1;1;0
+concept;320
+ordering;370;4;3;1;0;2
+open;377; discount
+choice;381;5;2
+choice;390;6;110000;0
+choice;392;6;0
+choice;394;7;0001000;3
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;3
+scale;5200;1;5;3
+scale;5300;1;5;3
+scale;5400;1;5;3

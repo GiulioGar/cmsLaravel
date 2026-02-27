@@ -1,0 +1,45 @@
+2.0;UNI;R2601037;79;GUEST;25/02/2026 17:20:28 CET;25/02/2026 17:51:50 CET;1882;3;440;debug=true;device=desktop;lang=it;sysIID=79;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=2;cella=1;sysUID=GUEST
+concept;10
+choice;12;2;1
+open;20;92026
+open;30;67
+choice;40;7;6
+choice;50;2;0
+choice;60;5;11100;0
+choice;70;5;00001;4
+choice;80;5;11100;0
+choice;90;6;2
+choice;100;3;1
+choice;111;5;0
+choice;120;13;1010001100100;6
+choice;130;13;7
+choice;160;10;8
+open;170;è possibile trovare servizi utili e trascorrere qualche ora in relax, soprattutto per famiglie
+open;180;pochi ristoranti
+choice;190;10;1111111100;5
+scale;200;10;10;8;5;5;6;7;4;6;5;-1;-1
+scale;210;7;10;7;8;7;6;8;7;5
+scale;240;13;10;6;7;8;6;5;7;6;7;6;8;8;7;8
+choice;250;3;2
+choice;260;3;1
+concept;270
+open;280;più negozi di abbigliamento
+scale;290;12;5;0;1;1;1;0;2;1;1;1;2;0;1
+open;300;più piante
+scale;310;13;5;1;2;1;1;2;2;-1;0;2;1;1;0;0
+concept;320
+ordering;370;4;0;1;2;3
+open;371;vorrei ci fossero più occasioni culinarie
+choice;381;5;2
+choice;390;6;110000;0
+choice;392;6;0
+choice;394;7;0001000;3
+choice;400;5;1
+choice;410;6;0
+choice;420;7;3
+choice;430;5;3
+choice;440;5;00010;3
+scale;5100;1;5;3
+scale;5200;1;5;3
+scale;5300;1;5;2
+scale;5400;1;5;3

@@ -1,0 +1,3682 @@
+#export vars "Svar0"
+#export vars "Svar1"
+#export vars "Svar2"
+#export vars "Svar3"
+#export vars "Svar4"
+#export vars "cel"
+#export vars "lg"
+#export vars "rtrLan"
+#export vars "rtr"
+void main() {
+
+// variabili comuni
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+int r1;
+int selint;
+int selintb;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+boolean selb;
+string cpt;
+int preQid;
+int conta;
+int n;
+int reCod;
+int salvai;
+string nascondi_item;
+int selintCheck;
+string labelCheck;
+boolean selCheck;
+int NranPrio;
+boolean saltablocco;
+string idea;
+string ideaPiccola;
+	string textordering1="";
+	string textordering2="";
+	string textordering3="";
+
+ 
+///LEGGERE VARIABILI DI SISTEMA
+string uid = system.getProperty("sysUID");
+string prj = system.getProperty("sysPRJ");
+string sid = system.getProperty("sysSID");
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "scripts:mod.js");
+ 
+string autotest=system.getProperty("test");
+ 
+string cod_concept="<script type='text/javascript' src='https://www.primisoft.com/fields/script/dinNone.js'></script>";
+ 
+if (autotest=="1") {system.setProperty("env", "scripts:modtest.js");}
+ 
+ 
+if (autotest=="1" || uid=="GUEST" || uid=="null") {
+	system.setProperty("env", "debug:true");  system.setProperty("env", "browser:variables");
+}
+ 
+//allinea(colonne, margine_altezza,margine_larghezza)
+string all="<script type='text/javascript' src='https://www.primisoft.com/fields/script/all.js'></script>";
+string mozCode="<script type='text/javascript'>$(window).load(function() {allinea(2,40,140,250);});</script>";
+string allinea=all+mozCode;
+ 
+//allinea(colonne, margine_altezza,margine_larghezza)
+string all_r="<script type='text/javascript' src='https://www.primisoft.com/fields/COS/R2509156W2/resources/all_rank.js'></script>";
+string mozCode_r="<script type='text/javascript'>$(window).load(function() {allinea_r(2,40,600);});</script>";
+string allinea_r=all_r+mozCode_r;	
+ 
+string scriptzoom="<script type='text/javascript' src='https://www.primisoft.com/fields/PRO/MBL047/resources/jquery.fancybox.js?v=2.1.5'></script>";
+string altroscript="<script type='text/javascript'> $(document).ready(function() { $('.fancybox').fancybox();});</script>";
+string fogliostile="<link rel='stylesheet' href='https://www.primisoft.com/fields/PRO/MBL047/resources/jquery.fancybox.css?v=2.1.5' type='text/css' media='screen' />";
+ 
+string imgpiccola=scriptzoom+fogliostile+altroscript+"<p class='info'><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/ITA1902033/resources/Diapositiva6.JPG'><img src='https://www.primisoft.com/fields/FER/ITA1902033/resources/Diapositiva6.JPG'  width='450px' alt='' /></a><br>clicca per ingrandire</p>";
+ 
+ 
+ 
+string inputStringToNumeric="<script type='text/javascript'>$(document).ready(function() {"+
+"$('input.form-control').attr('type', 'number');"+
+"$('input.form-control').attr('step', '.01');"+
+"$('input.form-control').attr({"+
+"'min' : 1,"+  
+"'max' : 99,"+  
+"});"+
+"});</script>";
+ 
+string deviceType = system.getProperty("user_agent:deviceType");
+string osType = system.getProperty("user_agent:osType");
+string browserType = system.getProperty("user_agent:browserType");
+ 
+/*
+qtext = "<p>System Information</p>"+
+		"<ul>"+
+			"<li>OS Type: "+osType+"</li>"+
+			"<li>Browser Type: "+browserType+"</li>"+
+			"<li>Device Type: "+deviceType+"</li>"+
+		"</ul>";
+qst = new question("concept", 5);
+qst.setProperty("text", qtext);
+send qst;
+*/
+ 
+boolean controllomob;
+ 
+string s1 = deviceType.trim();
+ 
+ 
+controllomob=s1.contains("mobile");
+if (controllomob==true){
+allinea_r="";
+allinea="";
+system.setProperty("env", "stylesheet:modmob.css");
+}
+
+
+
+//variabile per ingannare primis e fare in modo che esporti nei dati sempre il vettore di default anzichè quello creato dinamicamente
+//se il setting avviene in una condizione nell'esportazione dei dati viene esportato il vettore di default
+int explode;
+explode=1;
+
+int lang=(int)system.getProperty("lan");
+
+if(lang !=2 && lang !=3 && lang !=4) { lang=1; }  
+system.setProperty("rtrLan",lang);
+
+reCod=lang-1;
+
+string labelvolo;
+
+string delay="<script src='https://www.primisoft.com/fields/ADA/ITA1907111/resources/jquery.countdown.min.js'></script>"+
+	"<script>$(window).load(function() {contorovescia(1000);});</script>";	
+
+
+
+string OrderingModerno="<script> $(window).load(function(){ rankSmartInit({ columns: 2,strict_selection: false, copy: { headline_first: \"Quale destinazione di mare ti piace di più?\", headline_next_template: \"Perfetto! Ora scegli la tua scelta n. {n}.\", headline_done: \"Perfetto! Hai completato la classifica\" } }); }); </script>";
+string ChoiceModerna="<script> $(window).load(function(){ choiceSmartInit({ columns: 2,copy: { headline: \" \" } }); }); </script> ";
+
+
+// Q: 20
+qst = new question("choice", 28);
+qst.setProperty("text", "Language:");
+qst.setProperty("code", "lang");
+vector q28_opts = new vector {
+"Italiano",
+"Spagnolo",
+"Francese",
+"Tedesco"
+};
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+qst.setProperty("options", q28_opts);
+send qst;
+
+ansId=system.getProperty("ans28");
+int lingua=ansId+1;
+
+if (lingua!=4){ return 5; }
+
+string folder;
+folder=q28_opts.get(ansId);
+
+
+	string istruzioni="clicca per ingrandire";
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ istruzioni="haga clic para ampliar"; }
+	//FRANCESE
+	case 3:{ istruzioni="cliquez pour agrandir"; }
+	//TEDESCO
+	case 4:{ istruzioni="Zum Vergrößern klicken"; }	
+	}
+
+
+
+
+
+
+	// Q10: CONCEPT
+	qst = new question("concept", 10);
+	qst.setProperty("text", "Grazie per la tua partecipazione a questa ricerca.</br>Le informazioni che ci vorrai rilasciare rimarranno strettamente confidenziali e saranno utilizzate solamente per gli scopi della ricerca.</br>Non stiamo cercando di venderti alcun prodotto o servizio, né ora né in futuro. Siamo interessati solo alle tue opinioni.");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "Gracias por participar en este estudio.<br><br> La información que nos facilite recibirá un trato estrictamente confidencial y solo se utilizará para los fines relacionados con el estudio.<br> No estamos intentando venderle ningún producto o servicio, ni ahora ni en el futuro. Solo estamos interesados en conocer su opinión. "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Merci de votre participation à cette étude.<br> Les informations que vous voudrez bien nous donner resteront strictement confidentielles et seront utilisées uniquement pour les buts de l'étude.<br> Nous n'essayons pas de vous vendre un produit ou un service, ni maintenant ni dans le futur. Nous ne nous intéressons qu'à vos opinions. "); }
+	//TEDESCO
+	case 4:{ qst.setProperty("text", "Vielen Dank für Ihre Teilnahme an dieser Umfrage.<br>Die von Ihnen bereitgestellten Informationen werden vertraulich und nur zu Umfragezwecken verwendet.<br> Wir beabsichtigen nicht, Ihnen ein Produkt oder eine Dienstleistung zu verkaufen, weder jetzt noch in der Zukunft. Wir sind ausschließlich an Ihrer Meinung interessiert. "); }
+
+	}
+	send qst;
+
+
+ChoiceModerna="<script> $(window).load(function(){ choiceSmartInit({ text_density: 'compact',columns: 2}) }); </script> ";
+
+
+	// Q20: CHOICE
+	qst = new question("choice", 20);
+	qst.setProperty("text", ChoiceModerna+"Partecipando a questa ricerca avrai accesso a informazioni riservate legate allo sviluppo di idee e proposte per nuovi viaggi e tariffe.</br>Ti chiediamo di impegnarti a non utilizzare o divulgare a nessuno le informazioni di cui verrai a conoscenza, non copiare, stampare o scaricare alcuna informazione accessibile nel corso di questo studio.</br>Selezionando “Accetto” qui sotto, dichiari di aver letto, compreso e accettato questi termini.");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", ChoiceModerna+"Al participar en este estudio tendrás acceso a información confidencial vinculada al desarrollo de ideas y propuestas para nuevos viajes y tarifas.<br> Al aceptar el siguiente acuerdo te comprometes a:<br> •	no utilizar o divulgar a nadie la información que tenga en su poder<br> •	no copiar, imprimir o descargar ningún tipo de información a la que tenga acceso durante este estudio<br> Seleccionando la opción “Acepto” que aparece a continuación, declaras que has leído, comprendido y aceptado estos términos.<br> En caso de que infrinjas el compromiso de confidencialidad, tendrás que pagar una sanción por cada infracción cometida, independientemente de la indemnización por el daño sufrido. "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", ChoiceModerna+"En participant à cette enquête, vous aurez accès à des informations confidentielles relatives au développement d’idées et de propositions pour de nouveaux voyages et tarifs.<br> En acceptant le présent accord, vous vous engagez :<br> •	À ne pas utiliser ni divulguer toutes informations qui vous seront fournies<br> •	À ne copier, imprimer ni télécharger aucune information divulguée dans le cadre de cette étude<br> En sélectionnant « ACCEPTER » ci-dessous, vous déclarez avoir lu, compris et accepté les présentes conditions.<br> Toute personne violant les obligations de confidentialité encourra une pénalité pour toute infraction constatée, et sera également responsable de toute réparation du potentiel préjudice subi. "); }
+	//TEDESCO
+	case 4:{ qst.setProperty("text", ChoiceModerna+"Durch die Teilnahme an dieser Forschung bekommen Sie Zugriff auf vertrauliche Informationen zur Entwicklung von Ideen und Vorschlägen für neue Reisen und Tarife.<br> Mit der Annahme der folgenden Vereinbarung verpflichten Sie sich:<br> •	Die Informationen, von denen Sie Kenntnis erlangen, nicht zu verwenden oder weiterzuleiten<br> •	Keine der Informationen, die im Laufe dieser Forschung zugänglich sind, zu kopieren, auszudrucken oder herunterzuladen.<br> Durch Auswahl des untenstehenden Buttons „Akzeptieren“ erklären Sie, diese Bedingungen gelesen, verstanden und akzeptiert zu haben<br>. In dem Fall, in dem Sie die Vertraulichkeitsverpflichtungen verletzen, müssen Sie für jede ermittelte Verletzung eine Strafe zahlen, vorbehaltlich der Entschädigung des erlittenen Schadens. "); }
+
+	}
+	qst.setProperty("code", "ris");
+	qst.setProperty("show_rand", false);
+	vector q20_opts = new vector {
+		"ACCETTA",
+		"RIFIUTA"
+	};
+	vector q20_opts_FRA = new vector {
+	"ACCEPTER",
+	"REFUSER"
+	};
+	vector q20_opts_SPA = new vector {
+	"ACEPTAR",
+	"RECHAZAR"
+	};	
+	vector q20_opts_GER = new vector {
+"AKZEPTIEREN",
+"VERWEIGERN"
+	};				
+	qst.setProperty("options", q20_opts);
+switch(lingua)
+{
+ case 2:{ qst.setProperty("options", q20_opts_SPA); }  //SPA
+ case 3:{ qst.setProperty("options", q20_opts_FRA); }  //FRA
+ case 4:{ qst.setProperty("options", q20_opts_GER); }  //GER
+}	
+	send qst;
+	selint=system.getProperty("ans20");
+	if (selint==1){ return 4; }
+
+
+
+	// Q30: CHOICE
+	qst = new question("choice", 30);
+	qst.setProperty("text", "Sei...");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "Usted es... "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Vous êtes... "); }
+	case 4:{ qst.setProperty("text", "Sie sind "); }
+	}	
+	qst.setProperty("code", "s1");
+	qst.setProperty("show_rand", false);
+	vector q30_opts = new vector {
+		"Uomo",
+		"Donna"
+	};
+	vector q30_opts_FRA = new vector {
+"Homme",
+"Femme"
+	};
+	vector q30_opts_SPA = new vector {
+"Hombre",
+"Mujer"
+	};	
+	vector q30_opts_GER= new vector {
+"Mann",
+"Frau"
+	};			
+	qst.setProperty("options", q30_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q30_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q30_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q30_opts_GER); }  
+	}	
+	send qst;
+
+
+int areaItalia=0;
+if(lingua == 1)
+{
+    qst = new question("choice", 3);
+    qst.setProperty("text", "In quale regione vivi attualmente?");
+    qst.setProperty("code", "s2ITA");
+    vector q3_opts = new vector {
+            "Abruzzo",
+            "Basilicata",
+            "Calabria",
+            "Campania",
+            "Emilia Romagna",
+            "Friuli Venezia Giulia",
+            "Lazio",
+            "Liguria",
+            "Lombardia",
+            "Marche",
+            "Molise",
+            "Piemonte",
+            "Puglia",
+            "Sardegna",
+            "Sicilia",
+            "Toscana",
+            "Trentino Alto Adige",
+            "Umbria",
+            "Valle d'Aosta",
+            "Veneto"
+            };
+    qst.setProperty("options", q3_opts);
+    send qst;
+    ansId=system.getProperty("ans3");
+    ////// RICODIFICA REGIONE IN AREA ///////
+
+
+//if (ansId!=11 && ansId!=18 && ansId!=7 && ansId!=8 && ansId!=19 && ansId!=4 && ansId!=15){ return 4; }
+
+
+    reCod=3;
+	areaItalia=2;
+    switch(ansId)
+        {
+        case 7,8,11,18:{reCod=0; areaItalia=1;}
+        case 4,5,16,19:{reCod=1;areaItalia=1;}
+		case 6,9,15,17,13:{reCod=2;areaItalia=2;}
+        }
+
+qst = new question("choice", 4);
+qst.setProperty("text", "In quale regione vivi attualmente?");
+qst.setProperty("code", "RecAreaITA");
+vector q4_opts = new vector {
+"Nord-Ovest (Piemonte, Val d'Aosta, Liguria, Lombardia;)",
+"Nord-est (Trentino-Alto Adige, Veneto, Friuli-Venezia Giulia, Emilia-Romagna;)",
+"Centro  (Toscana, Umbria, Marche, Lazio, Sardegna)",
+"Sud  (Abruzzo, Molise, Puglia, Campania, Basilicata, Calabria, Sicilia.)"
+};
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+qst.setProperty("options", q4_opts);
+send qst;
+}
+
+if(lingua == 2)
+{
+    qst = new question("choice", 3000);
+    qst.setProperty("text", "¿En qué región vive actualmente?");
+    qst.setProperty("code", "s2SPA");
+    vector q3000_opts = new vector {
+"Andalucía",
+"Aragón",
+"Asturias",
+"Islas Baleares",
+"Islas Canarias",
+"Cantabria",
+"Castilla-La Mancha",
+"Castilla-León",
+"Cataluña (metro Barcelona)",
+"Comunidad Valenciana",
+"Extremadura",
+"Galicia",
+"La Rioja",
+"Madrid",
+"Murcia",
+"Navarra",
+"País Vasco",
+"Ceuta o Melilla"
+            };
+    qst.setProperty("options", q3000_opts);
+    send qst;
+
+ansId=system.getProperty("ans3000");
+    ////// RICODIFICA REGIONE IN AREA ///////
+
+
+reCod=3;
+    switch(ansId)
+        {
+        case 1,2,5,11,12,15,16:{reCod=0;}
+        case 6,7,10,13:{reCod=1;}
+        case 3,8,9:{reCod=2;}
+        }
+
+qst = new question("choice", 4000);
+qst.setProperty("text", "In quale regione vivi attualmente?");
+qst.setProperty("code", "RecAreaSPA");
+vector q4000_opts = new vector {
+"Noroeste y Noreste",
+"Madrid y Centro",
+"Este",
+"Sur y Canarias"
+};
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+qst.setProperty("options", q4000_opts);
+send qst;
+
+}
+
+
+
+if(lingua == 3)
+{
+    qst = new question("choice", 3004);
+    qst.setProperty("text", "Dans quelle région habitez-vous actuellement ?");
+    qst.setProperty("code", "s2FRA");
+    vector q3004_opts = new vector {
+"Ile de France",
+"Picardie",
+"Haute-Normandie (Seine-Maritime)",
+"Nord-Pas de Calais",
+"Champagne-Ardenne",
+"Lorraine",
+"Alsace",
+"Haute-Normandie (Eure)",
+"Basse-Normandie",
+"Bretagne",
+"Centre (Eure-et-Loir, Indre-et-Loire, Loir-et-Cher)",
+"Pays de la Loire",
+"Poitou-Charentes",
+"Centre (Cher, Indre, Loiret)",
+"Bourgogne",
+"Limousin",
+"Auvergne",
+"Franche-Comté",
+"Rhône-Alpes (Ain, Isère, Loire, Rhône, Savoie, Haute-Savoie)",
+"Aquitaine",
+"Midi-Pyrénées",
+"Rhône-Alpes (Ardèche, Drôme)",
+"Languedoc-Roussillon",
+"Provence-Alpes-Côte d'Azur",
+"Corse"
+            };
+    qst.setProperty("options", q3004_opts);
+    send qst;
+
+ansId=system.getProperty("ans3004");
+    ////// RICODIFICA REGIONE IN AREA ///////
+
+reCod=3;
+    switch(ansId)
+        {
+		case 0:{reCod=0;}
+		case 1,2,3,4,5,6:{reCod=1;}
+        case 7,8,9,10,11,12:{reCod=2;}
+		case 13,14,15,16,17,18:{reCod=3;}
+		case 19,20,21,22,23,24:{reCod=4;}
+        }
+
+qst = new question("choice", 4004);
+qst.setProperty("text", "Dans quelle région habitez-vous actuellement ?");
+qst.setProperty("code", "RecAreaFRA");
+vector q4004_opts = new vector {
+"REGION I",
+"REGION II",
+"REGION III",
+"REGION IV",
+"REGION V"
+};
+qst.setProperty("options", q4004_opts);
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+}
+
+
+if(lingua == 4)
+{
+    qst = new question("choice", 100001);
+    qst.setProperty("text", "In welcher Region leben Sie zurzeit?");
+    qst.setProperty("code", "s2GER");
+    vector q100001_opts = new vector {
+"Bremen",
+"Hamburg",
+"Niedersachsen",
+"Schleswig-Holstein",
+"Nordrhein-Westfalen",
+"Hessen",
+"Rheinland-Pfalz",
+"Saarland",
+"Baden-Württemberg",
+"Bayern",
+"Berlin",
+"Brandenburg",
+"Mecklenburg-Vorpommern",
+"Sachsen-Anhalt",
+"Sachsen",
+"Thüringen"
+            };
+    qst.setProperty("options", q100001_opts);
+    send qst;
+
+ansId=system.getProperty("ans100001");
+    ////// RICODIFICA REGIONE IN AREA ///////
+
+reCod=6;
+    switch(ansId)
+        {
+        case 0,1,2,3:{reCod=0;}
+        case 4:{reCod=1;}
+		case 5,6,7:{reCod=2;}
+		case 8:{reCod=3;}
+		case 9:{reCod=4;}
+		case 10,11,12,13:{reCod=5;}
+        }
+
+qst = new question("choice", 100003);
+qst.setProperty("text", "In quale regione vive attualmente?");
+qst.setProperty("code", "RecAreaGER");
+vector q100003_opts = new vector {
+"Region (1) I",
+"Region (2) II",
+"Region (3) IIIa",
+"Region (4) IIIb",
+"Region (5) IV",
+"Region (6) V(a&b)+VI",
+"Region (7) VII"
+};
+qst.setProperty("options", q100003_opts);
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+}
+
+
+
+	// Q50: CONCEPT
+	qst = new question("open", 50);
+	qst.setProperty("text", "Per cortesia indica la tua età.");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "Indíquenos su edad, por favor."); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Veuillez indiquer votre âge."); }
+	case 4:{ qst.setProperty("text", "Würden Sie bitte Ihr Alter angeben?"); }
+	}	
+	qst.setProperty("code", "s3");
+	qst.setProperty("view", "numeric");
+	send qst;
+	int eta=(int)system.getProperty("ans50");
+	 
+	if (eta<20 || eta>75){return 4;}
+	 
+	if(eta<20) { reCod=0;}
+	if(eta>=20 && eta<=50) { reCod=1;}
+	if(eta>=51 && eta<=75) { reCod=2;}
+	if(eta>75 ) { reCod=3;}	
+
+
+
+	// Q60: CHOICE
+	qst = new question("choice", 60);
+	qst.setProperty("text", "Per cortesia indica la tua età.");
+	qst.setProperty("code", "s3rec");
+	qst.setProperty("show_rand", false);
+	vector q60_opts = new vector {
+		"Meno di 20 anni",
+		"20-50 anni",
+		"51-75anni",
+		"Più di 75 anni"
+	};
+	qst.setProperty("options", q60_opts);
+	qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+	qst.setProperty("hidden", true);
+	send qst;
+
+
+	// Q70: CHOICE
+	qst = new question("choice", 70);
+	qst.setProperty("text", "Parliamo ora di vacanze.<br><br>Ti è capitato di <b>andare in crociera</b> (su una nave da crociera) almeno una volta nella vita?");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "Hablemos ahora de vacaciones.<br><br>¿Ha realizado un crucero (en una nave de crucero) al menos una vez en la vida?"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Parlons à présent de vacances.<br><br>Vous est-il déjà arrivé d'aller en croisière  (sur un bateau de croisière) au moins une fois dans votre vie ?"); }
+	case 4:{ qst.setProperty("text", "Haben Sie jemals <b>eine Kreuzfahrt</b>  (auf einem Kreuzfahrtschiff) unternommen, zumindest einmal in Ihrem Leben? "); }
+	}		
+	qst.setProperty("code", "s4");
+	qst.setProperty("show_rand", false);
+	vector q70_opts = new vector {
+		"Si",
+		"No"
+	};
+	vector q70_opts_FRA = new vector {
+		"Oui",
+		"Non"
+	};
+	vector q70_opts_SPA = new vector {
+		"Sí",
+		"No"
+	};	
+	vector q70_opts_GER = new vector {
+		"Ja",
+		"Nein"
+	};		
+	qst.setProperty("options", q70_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q70_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q70_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q70_opts_GER); }  //FRA
+	}		
+	/*
+	if (db=="1"){
+		qst.setProperty("default_answer","{ 'selection': [0]}");
+		qst.setProperty("hidden", true);
+	}
+	*/
+
+	send qst;
+	selint=system.getProperty("ans70");
+	if (selint==0){ return 4; }
+
+
+	// Q80: CHOICE
+	qst = new question("choice", 80);
+	qst.setProperty("text", "Come definiresti il suo interesse ad andare in crociera nei prossimi 2-3 anni?");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "¿Cómo describirías tu opinión acerca de hacer un crucero en los próximos 2 o 3 años? "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Comment définiriez-vous votre intérêt à faire une croisière au cours des 2 ou 3 prochaines années ?  "); }
+	case 4:{ qst.setProperty("text", "Wie würden Sie Ihr Interesse für eine Kreuzfahrt in den nächten 2-3 Jahren bezeichnen?"); }
+	}	
+	qst.setProperty("code", "s5");
+	qst.setProperty("show_rand", false);
+	vector q80_opts = new vector {
+		"Molto interessato",
+		"Abbastanza interessato",
+		"Né interessato né disinteressato",
+		"Poco interessato",
+		"Per niente interessato"
+	};
+
+	vector q80_opts_SPA = new vector {
+"Muy interesado",
+"Bastante interesado",
+"Ni interesado ni desinteresado",
+"Poco interesado",
+"No me interesa absolutamente"
+	};
+
+	vector q80_opts_FRA = new vector {
+"Très intéressé(e)",
+"Assez intéressé(e)",
+"Ni intéressé(e) ni désintéressé(e)",
+"Peu intéressé(e)",
+"Pas du tout intéressé(e)"
+	};	
+
+	vector q80_opts_GER = new vector {
+"Sehr interessiert",
+"Einigermaßen interessiert",
+"Weder noch",
+"Wenig interessiert",
+"Gar nicht interessiert"
+	};		
+	qst.setProperty("options", q80_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q80_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q80_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q80_opts_GER); }  //FRA
+	}		
+	send qst;
+	selint=system.getProperty("ans80");
+	if (selint>1){ return 4; }
+	
+
+
+	// Q90: CONCEPT
+	qst = new question("choice", 90);
+	qst.setProperty("text", "E con quali di queste compagnie <b>non viaggeresti mai</b>?");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "¿Con cuál de estas compañías no viajaría nunca (aunque la haya utilizado en el pasado)? "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Et avec laquelle de ces compagnies ne voyageriez-vous jamais?"); }
+	case 4:{ qst.setProperty("text", "Mit welchen dieser Gesellschaften würden Sie niemals reisen?"); }
+	}		
+	qst.setProperty("code", "s6");
+	qst.setProperty("selection", "multiple");
+	vector q90_opts = new vector {
+"Costa Crociere",
+"MSC Crociere",
+"Royal Caribbean",
+"#aida#sh",
+"#tui#sh",
+"Altro (specificare)#so#sf",
+"Nessuna/ Nessuna di queste#se#sf"
+	};
+	vector q90_opts_SPA = new vector {
+"Costa Cruceros ",
+"MSC Cruceros ",
+"Royal Caribbean",
+"#aida#sh",
+"#tui#sh",
+"Otra (especificar)#so#sf",
+"Ninguna / Ninguna de estas#se#sf"
+	};	
+	vector q90_opts_FRA = new vector {
+"Costa Crociere",
+"MSC Crociere",
+"Royal Caribbean",
+"#aida#sh",
+"#tui#sh",
+"Autre (spécifier)#so#sf",
+"Aucune/ Aucune d'entre elle#se#sf"
+	};	
+	vector q90_opts_GER = new vector {
+"Costa Kreuzfahrten",
+"MSC Kreuzfahrten",
+"Royal Caribbean",
+"Aida Kreuzfahrten",
+"TUI Kreuzfahrten",
+"Sonstige (bitte angeben)#so#sf",
+"Keine davon#se#sf"
+	};		
+	qst.setProperty("options", q90_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q90_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q90_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q90_opts_GER); }  
+	}			
+	send qst;
+	sel=system.getProperty("ans90_0");
+	if (sel==true) { return 4; }
+
+
+
+int cella;
+system.setProperty("cella", "rand:3");
+cella=(int)system.getProperty("cella");
+cella=cella+1;	
+
+/*controllo quote*/
+int c;
+boolean trovato;
+
+int recRTR;
+
+
+//if (lingua==3 && cella==1){ cella=3; }
+//if (lingua==3 && cella==2){ cella=3; }
+//if (lingua==4 && cella==2){ cella=1; }
+
+
+
+while (trovato==false) 
+{
+
+
+if (cella==1 && lingua==1){ recRTR=1; }
+if (cella==2 && lingua==1){ recRTR=2; }
+if (cella==3 && lingua==1){ recRTR=3; }
+
+if (cella==1 && lingua==2){ recRTR=4; }
+if (cella==2 && lingua==2){ recRTR=5; }
+if (cella==3 && lingua==2){ recRTR=6; }
+
+if (cella==1 && lingua==3){ recRTR=7; }
+if (cella==2 && lingua==3){ recRTR=8; }
+if (cella==3 && lingua==3){ recRTR=9; }
+
+if (cella==1 && lingua==4){ recRTR=10; }
+if (cella==2 && lingua==4){ recRTR=11; }
+if (cella==3 && lingua==4){ recRTR=12; }
+
+
+
+c=system.getProperty("quota:total_interviews_"+recRTR);
+if (    ((recRTR==1 || recRTR==4 || recRTR==7 || recRTR==10) && (c>=0))     ||      ((recRTR==2 || recRTR==5 || recRTR==8 || recRTR==11) && (c>=300))     ||   ((recRTR==3 || recRTR==6 || recRTR==9 || recRTR==12) && (c>=400)))
+	{ 
+		if (cella==3) { cella=1;}
+		else { cella=cella+1; }
+	}
+else { trovato=true;}
+}
+
+
+ 
+
+
+int leggiCella=(int)system.getProperty("cel");
+if (leggiCella==0){
+system.setProperty("cel",cella);
+system.setProperty("rtr",recRTR);
+}
+else{
+    if (cella!=leggiCella){ return 4; };
+}
+
+
+//blocco cella 1 per i test
+//cella=1;
+
+
+system.out("<div>Quota: "+c+"</div>");
+system.out("<div>Cella:"+cella+"</div>");
+system.out("<div>Ricodifica RTR:"+recRTR+"</div>");
+
+
+string intromod="";
+string introGiorno="";
+
+if (lingua==1)
+{
+if (cella==1){ intromod="nei Caraibi"; }
+if (cella==2){ intromod="nei Caraibi"; introGiorno="14";}
+if (cella==3){ intromod="nei Caraibi"; introGiorno="7";}
+}
+
+if (lingua==2)
+{
+if (cella==1){ intromod="en el Caribe"; }
+if (cella==2){ intromod="en el Caribe"; introGiorno="14";}
+if (cella==3){ intromod="en el Caribe"; introGiorno="7";}
+}
+
+if (lingua==3)
+{
+if (cella==1){ intromod="dans les Caraïbes"; }
+if (cella==2){ intromod="dans les Caraïbes"; introGiorno="14";}
+if (cella==3){ intromod="dans les Caraïbes"; introGiorno="7";}
+}
+
+if (lingua==4)
+{
+if (cella==1){ intromod="in der Karibik"; }
+if (cella==2){ intromod="in der Karibik"; introGiorno="14";}
+if (cella==3){ intromod="in der Karibik"; introGiorno="7";}
+}
+
+
+	// Q90: CONCEPT
+	qst = new question("concept", 91);
+	qst.setProperty("text", "Immagina di essere interessato a fare <span style='font-size:15px;font-weight: bold;'>una crociera di "+introGiorno+" giorni nel periodo invernale (dicembre- marzo) "+intromod+".</span><br> Abbiamo messo a punto alcune idee di itinerari che speriamo possano risultare interessanti e gradite dalle persone che vorranno concedersi una crociera. ");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "Imagina que estés interesado en hacer <span style='font-size:15px;font-weight: bold;'>un crucero de "+introGiorno+" días durante el periodo invernal (diciembre-marzo) "+intromod+".</span><br> Hemos desarrollado algunas ideas de itinerarios que esperamos puedan resultar interesantes y agradables para las personas que quieran concederse un crucero."); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Imaginez que vous soyez intéressé par <span style='font-size:15px;font-weight: bold;'>une croisière de "+introGiorno+" jours pendant la période hivernale (décembre-mars) "+intromod+".</span><br> Nous avons développé quelques idées d’itinéraires qui, nous l’espérons, pourront être intéressantes et appréciées par les personnes souhaitant s’offrir une croisière."); }
+	case 4:{ qst.setProperty("text", "Stell dir vor, du interessierst dich <span style='font-size:15px;font-weight: bold;'>für eine "+introGiorno+" tägige Kreuzfahrt in der Wintersaison (Dezember–März) "+intromod+".</span><br>Wir haben einige Reiserouten-Ideen entwickelt, von denen wir hoffen, dass sie für die Personen interessant und ansprechend sind, die sich eine Kreuzfahrt gönnen möchten."); }
+	}	
+	send qst;
+	
+	string imgIntro="<center><div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/INTRO.JPG' width='900px'></div></center>";
+	
+	// Q100: CONCEPT
+	qst = new question("concept", 100);
+	qst.setProperty("text", imgIntro);
+	send qst;
+
+
+
+
+
+
+int rotazioneIdee;
+int numeroIdee;
+
+if (cella==1){ numeroIdee=3; }
+if (cella==2){ numeroIdee=2; }
+if (cella==3){ numeroIdee=4; }
+
+
+system.setProperty("rotazioneIdee", "rand:"+numeroIdee);
+rotazioneIdee=(int)system.getProperty("rotazioneIdee");
+rotazioneIdee=rotazioneIdee+1;	
+
+
+
+int indiceImmagine;
+
+
+
+	
+	if (lingua==1)
+	{
+	label="<p><b>Ti mostreremo ora alcune idee di itinerario pensate per una crociera, guardale attentamente e rispondi alle domande seguenti.</b></p>";
+	}
+
+	if (lingua==2)
+	{
+	label="<p><b>Ahora te mostraremos algunas ideas de itinerarios pensadas para un crucero; obsérvalas atentamente y responde a las siguientes preguntas.</b></p>"; 
+	}	
+
+	if (lingua==3)
+	{
+	label="<p><b>Nous allons maintenant vous présenter quelques idées d’itinéraires conçues pour une croisière. Regardez-les attentivement et répondez aux questions suivantes.</b></p>";
+	}
+
+	if (lingua==4)
+	{
+	label="<p><b>Nun zeigen wir Ihnen einige für eine Kreuzfahrt konzipierte Routenideen. Sehen Sie sie sich aufmerksam an und beantworten Sie die folgenden Fragen.</b></p>";
+	}	
+
+
+	
+	qst = new question("concept", 40000);
+	qst.setProperty("text", label);
+	send qst;
+
+
+
+	for (int i=0, 3)
+	{
+	saltablocco=false;
+
+
+	if (cella==1 && rotazioneIdee>3){ saltablocco=true; }
+	if (cella==2 && rotazioneIdee>2){ saltablocco=true; }
+
+
+	if (cella==1 && rotazioneIdee==1){ indiceImmagine=1; }
+	if (cella==1 && rotazioneIdee==2){ indiceImmagine=6; }
+	if (cella==1 && rotazioneIdee==3){ indiceImmagine=9; }
+	
+	if (cella==2 && rotazioneIdee==1){ indiceImmagine=11; }
+	if (cella==2 && rotazioneIdee==2){ indiceImmagine=13; }
+
+	if (cella==3 && rotazioneIdee==1){ indiceImmagine=15; }
+	if (cella==3 && rotazioneIdee==2){ indiceImmagine=17; }
+	if (cella==3 && rotazioneIdee==3){ indiceImmagine=19; }
+	if (cella==3 && rotazioneIdee==4){ indiceImmagine=21; }
+
+
+	if (saltablocco==false)
+	{
+
+	idea="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+indiceImmagine+".JPG' width='900px'></div>";
+	ideaPiccola=scriptzoom+fogliostile+altroscript+"<p class='info'><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+indiceImmagine+".JPG'><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+indiceImmagine+".JPG'  width='450px' alt='' /></a><br>"+istruzioni+"</p>";
+
+
+
+	
+	if (lingua==1)
+	{
+	if (i==0){  label="<p><b>La prima idea di crociera è la seguente</b></p>"; } else { label="<p><b>Un’altra idea di crociera è la seguente</b></p>"; }
+	}
+
+	if (lingua==2)
+	{
+	if (i==0){  label="<p><b>La primera idea de crucero es la siguiente:</b></p>"; } else { label="<p><b>Otra idea de crucero es la siguiente:</b></p>"; }
+	}	
+
+	if (lingua==3)
+	{
+	if (i==0){  label="<p><b>La première idée de croisière est la suivante :</b></p>"; } else { label="<p><b>Une autre idée de croisière est la suivante :</b></p>"; }
+	}
+
+	if (lingua==4)
+	{
+	if (i==0){  label="<p><b>Die erste Kreuzfahrtidee ist die folgende:</b></p>"; } else { label="<p><b>Eine weitere Kreuzfahrtidee ist die folgende:</b></p>"; }
+	}			
+
+	// Q110: CONCEPT
+	qid=2000+rotazioneIdee*100;
+	qst = new question("concept", qid);
+	qst.setProperty("text", label+idea);
+	send qst;
+
+
+	// Q120: SCALE
+	qid=2000+rotazioneIdee*100+2;
+	qst = new question("scale", qid);
+	qst.setProperty("text", ideaPiccola+"Quanto questa idea <b>ti invoglia ad andare in crociera</b>? ");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", ideaPiccola+"¿En qué medida esta idea te anima a irte de crucero? "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", ideaPiccola+"Dans quelle mesure cette idée vous donne-t-elle envie de partir en croisière ? "); }
+	case 4:{ qst.setProperty("text", ideaPiccola+"Wie sehr macht Ihnen diese Idee Lust, auf Kreuzfahrt zu gehen?"); }
+	}	
+	qst.setProperty("code", "a1."+rotazioneIdee);
+	qst.setProperty("show_rand", false);
+	vector q2000_rows = new vector {
+		" "
+	};
+	qst.setProperty("rows", q2000_rows);
+	vector q2000_cols = new vector {
+		"Per niente<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Moltissimo<br>10"
+	};
+	vector q2000_cols_SPA = new vector {
+		"Para nada<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Muchísimo<br>10"
+	};	
+	vector q2000_cols_FRA = new vector {
+		"Pas du tout<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Beaucoup<br>10"
+	};		
+	vector q2000_cols_GER = new vector {
+		"Überhaupt nicht<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Sehr stark<br>10"
+	};		
+	qst.setProperty("cols", q2000_cols);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("cols", q2000_cols_SPA); }  //SPA
+	case 3:{ qst.setProperty("cols", q2000_cols_FRA); }  //FRA
+	case 4:{ qst.setProperty("cols", q2000_cols_GER); }  
+	}		
+	send qst;
+
+
+
+	}
+
+	
+	if (rotazioneIdee==4){ rotazioneIdee=1; }
+	else{ rotazioneIdee=rotazioneIdee+1; }
+	}
+
+
+
+
+	if (lingua==1){
+		textordering1="Quale tra queste idee di itinerario ti invoglia di più ad andare in crociera?";
+		textordering2="Perfetto! Ora scegli la tua n. {n}. preferita";
+		textordering3="Perfetto! Hai completato la classifica";
+		}
+
+if (lingua==2){
+    textordering1="¿Cuál de estas ideas de itinerario te anima más a ir de crucero?";
+    textordering2="¡Perfecto! Ahora elige tu n.º {n} preferido";
+    textordering3="¡Perfecto! Has completado la clasificación";
+}
+
+if (lingua==3){
+    textordering1="Laquelle de ces idées d’itinéraire vous donne le plus envie de partir en croisière ?";
+    textordering2="Parfait ! Choisissez maintenant votre n° {n} préféré";
+    textordering3="Parfait ! Vous avez complété le classement";
+}
+
+if (lingua==4){
+    textordering1="Welche dieser Routenvorschläge macht dir am meisten Lust auf eine Kreuzfahrt?";
+    textordering2="Perfekt! Wähle jetzt deine Nr. {n} bevorzugte Option";
+    textordering3="Perfekt! Du hast die Rangliste abgeschlossen";
+}
+
+
+
+OrderingModerno=" <script> $(window).load(function(){ rankSmartInit({ strict_selection: false, copy: { headline_first: \""+textordering1+"\", headline_next_template: \""+textordering2+"\", headline_done: \""+textordering3+"\" } }); }); </script>";
+
+	
+	qst = new question("ordering", 101);
+	qst.setProperty("text", OrderingModerno);	
+	qst.setProperty("code", "a2");
+	qst.setProperty("show_rand", true);
+	vector q101_opts = new vector {
+		"1#sh",
+		"2#sh",
+		"3#sh",
+		"4#sh"
+	};
+
+
+	if (cella==1)
+	{
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva1.JPG'  width='500px' alt='' /></div>";
+		q101_opts.set(0,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva6.JPG'  width='500px' alt='' /></div>";
+		q101_opts.set(1,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva9.JPG'  width='500px' alt='' /></div>";
+		q101_opts.set(2,cmd);
+	}
+
+	if (cella==2)
+	{
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva11.JPG'  width='500px' alt='' /></div>";
+		q101_opts.set(0,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva13.JPG'  width='500px' alt='' /></div>";
+		q101_opts.set(1,cmd);	
+	}
+
+	if (cella==3)
+	{
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva15.JPG'  width='500px' alt='' /></div>";
+		q101_opts.set(0,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva17.JPG'  width='500px' alt='' /></div>";
+		q101_opts.set(1,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva19.JPG'  width='500px' alt='' /></div>";
+		q101_opts.set(2,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva21.JPG'  width='500px' alt='' /></div>";
+		q101_opts.set(3,cmd);		
+	}	
+
+
+
+	qst.setProperty("options", q101_opts);
+	qst.setProperty("sel_count", 4);
+	
+	if (cella==1) { qst.setProperty("sel_count", 3); }
+	if (cella==2) { qst.setProperty("sel_count", 2); }
+
+	qst.setProperty("strict_selection", true);
+	send qst;
+
+
+
+
+
+	if (cella==3)
+	{
+	qst = new question("choice", 102);
+	qst.setProperty("text", ChoiceModerna+"<b>Considerando queste idee di itinerario, puoi dirci quale ti invoglia di più ad andare in Crociera?</b>");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", ChoiceModerna+"<b>Teniendo en cuenta estas ideas de itinerarios, ¿puedes decirnos cuál te anima más a irte de crucero?</b>"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", ChoiceModerna+"<b>En tenant compte de ces idées d’itinéraires, pouvez-vous nous dire laquelle vous donne le plus envie de partir en croisière ?</b>"); }
+	case 4:{ qst.setProperty("text", ChoiceModerna+"<b>Unter Berücksichtigung dieser Routenideen: Können Sie uns sagen, welche Ihnen am meisten Lust auf eine Kreuzfahrt macht?</b>"); }
+	}		
+	qst.setProperty("code", "a2a1");
+	qst.setProperty("show_rand", true);
+	vector q102_opts = new vector {
+		"1#sh",
+		"2#sh"
+	};
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva15.JPG'  width='500px' alt='' /></div>";
+		q102_opts.set(0,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva21.JPG'  width='500px' alt='' /></div>";
+		q102_opts.set(1,cmd);
+
+	
+
+
+	qst.setProperty("options", q102_opts);
+	send qst;
+
+
+
+	qst = new question("choice", 103);
+	qst.setProperty("text", ChoiceModerna+"<b>Considerando queste idee di itinerario, puoi dirci quale ti invoglia di più ad andare in Crociera?</b>");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", ChoiceModerna+"<b>Teniendo en cuenta estas ideas de itinerarios, ¿puedes decirnos cuál te anima más a irte de crucero?</b>"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", ChoiceModerna+"<b>En tenant compte de ces idées d’itinéraires, pouvez-vous nous dire laquelle vous donne le plus envie de partir en croisière ?</b>"); }
+	case 4:{ qst.setProperty("text", ChoiceModerna+"<b>Unter Berücksichtigung dieser Routenideen: Können Sie uns sagen, welche Ihnen am meisten Lust auf eine Kreuzfahrt macht?</b>"); }
+	}	
+	qst.setProperty("code", "a2a2");
+	qst.setProperty("show_rand", true);
+	vector q103_opts = new vector {
+		"1#sh",
+		"2#sh"
+	};
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva17.JPG'  width='500px' alt='' /></div>";
+		q103_opts.set(0,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva21.JPG'  width='500px' alt='' /></div>";
+		q103_opts.set(1,cmd);
+
+	
+
+
+	qst.setProperty("options", q103_opts);
+	send qst;
+
+
+
+	qst = new question("choice", 104);
+	qst.setProperty("text", ChoiceModerna+"<b>Considerando queste idee di itinerario, puoi dirci quale ti invoglia di più ad andare in Crociera?</b>");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", ChoiceModerna+"<b>Teniendo en cuenta estas ideas de itinerarios, ¿puedes decirnos cuál te anima más a irte de crucero?</b>"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", ChoiceModerna+"<b>En tenant compte de ces idées d’itinéraires, pouvez-vous nous dire laquelle vous donne le plus envie de partir en croisière ?</b>"); }
+	case 4:{ qst.setProperty("text", ChoiceModerna+"<b>Unter Berücksichtigung dieser Routenideen: Können Sie uns sagen, welche Ihnen am meisten Lust auf eine Kreuzfahrt macht?</b>"); }
+	}		
+	qst.setProperty("code", "a2a3");
+	qst.setProperty("show_rand", true);
+	vector q104_opts = new vector {
+		"1#sh",
+		"2#sh"
+	};
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva19.JPG'  width='500px' alt='' /></div>";
+		q104_opts.set(0,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva21.JPG'  width='500px' alt='' /></div>";
+		q104_opts.set(1,cmd);
+
+	
+
+
+	qst.setProperty("options", q104_opts);
+	send qst;
+	}	
+
+
+
+
+
+
+OrderingModerno=" <script> $(window).load(function(){ rankSmartInit({ strict_selection: false, copy: { headline_first: \"Quale tra questi itinerari ti invoglia di più ad andare in crociera?\", headline_next_template: \"Perfetto! Ora scegli la tua scelta n. {n} (puoi usare la lente per confrontare).\", headline_done: \"Perfetto! Hai completato la classifica\" } }); }); </script>";
+
+
+
+
+
+
+int numeroRotazioni;
+
+
+
+
+
+
+if (cella==1){ numeroRotazioni=6; }
+if (cella==2){ numeroRotazioni=5; }
+if (cella==3){ numeroRotazioni=6; }
+
+system.setProperty("rr", "rand:"+numeroRotazioni);
+int rotItinerari=(int)system.getProperty("rr");
+rotItinerari=rotItinerari+1;	
+
+
+
+	if (lingua==1)
+	{
+	label="<p><b>Ti mostreremo invece ora gli itinerari pensati per queste idee di crociera, guardale attentamente e rispondi alle domande seguenti.</b></p>";
+	}
+
+	if (lingua==2)
+	{
+	label="<p><b>Ahora te mostraremos los itinerarios pensados para estas ideas de crucero; obsérvalos atentamente y responde a las siguientes preguntas.</b></p>"; 
+	}	
+
+	if (lingua==3)
+	{
+	label="<p><b>Nous allons maintenant vous présenter les itinéraires conçus pour ces idées de croisière. Regardez-les attentivement et répondez aux questions suivantes.</b></p>";
+	}
+
+	if (lingua==4)
+	{
+	label="<p><b>Nun zeigen wir Ihnen die für diese Kreuzfahrtideen konzipierten Routen. Sehen Sie sie sich aufmerksam an und beantworten Sie die folgenden Fragen.</b></p>";
+	}	
+
+
+	
+	qst = new question("concept", 40001);
+	qst.setProperty("text", label);
+	send qst;
+
+
+
+
+
+
+int leg;
+
+if (cella==1)
+{
+system.setProperty("leg", "rand:10");
+leg=(int)system.getProperty("leg");
+leg=leg+1;
+
+
+
+
+system.out("<div>leg: "+leg+"</div>");
+system.setProperty("lg",cella);
+}	
+
+
+
+
+
+
+
+
+
+			vector selRan = new vector { "1#sh", "2#sh", "3#sh", "4#sh", "5#sh"};  
+			int contaestratti=0;
+			int limiteestratti;
+			int r;
+			int Nran;
+			string optB;
+			string Svar;
+			string saveVar0="99";
+			string saveVar1="99";
+			string saveVar2="99";
+			string saveVar3="99";
+			string saveVar4="99";
+			
+
+			if (cella==1){ limiteestratti=5; }
+			if (cella==2){ limiteestratti=2; }
+			if (cella==3){ limiteestratti=4; }
+
+
+			vector ele = new vector 
+			{
+			"8",
+			"10",				
+			"2",
+			"3",
+			"4",
+			"5",
+			"7",
+			"12",
+			"14",
+			"16",
+			"18",
+			"20",
+			"22"
+			}; 
+			
+            NranPrio=13;
+            Nran=0;
+			
+			
+			for (int i=0,12)
+			{   
+			sel=false;
+			if (NranPrio>0){system.setProperty("r"+i, "rand:"+NranPrio);}
+			else{system.setProperty("r"+i, "rand:"+Nran);}
+			r = (int)system.getProperty("r"+i); 
+			
+		
+			opt=ele.get(r);
+
+
+			if (cella==1)
+			{
+				if (leg==1){ if (opt=="8" || opt=="10" || opt=="2" || opt=="3" || opt=="4"){ sel=true; } }
+				if (leg==2){ if (opt=="8" || opt=="10" || opt=="2" || opt=="3" || opt=="5"){ sel=true; } }
+				if (leg==3){ if (opt=="8" || opt=="10" || opt=="2" || opt=="3" || opt=="7"){ sel=true; } }
+				if (leg==4){ if (opt=="8" || opt=="10" || opt=="2" || opt=="4" || opt=="5"){ sel=true; } }
+				if (leg==5){ if (opt=="8" || opt=="10" || opt=="2" || opt=="4" || opt=="7"){ sel=true; } }
+				if (leg==6){ if (opt=="8" || opt=="10" || opt=="2" || opt=="5" || opt=="7"){ sel=true; } }
+				if (leg==7){ if (opt=="8" || opt=="10" || opt=="3" || opt=="4" || opt=="5"){ sel=true; } }
+				if (leg==8){ if (opt=="8" || opt=="10" || opt=="3" || opt=="4" || opt=="7"){ sel=true; } }
+				if (leg==9){ if (opt=="8" || opt=="10" || opt=="3" || opt=="5" || opt=="7"){ sel=true; } }
+				if (leg==10){ if (opt=="8" || opt=="10" || opt=="4" || opt=="5" || opt=="7"){ sel=true; } }
+			}
+
+			
+			if (cella==2)
+			{
+			if (opt=="12" || opt=="14"){ sel=true; }
+			}
+
+			if (cella==3)
+			{
+			if (opt=="16" || opt=="18" || opt=="20" || opt=="22"){ sel=true; }
+			}			
+
+		
+			if (contaestratti<limiteestratti && sel==true)
+			{
+			//if (selb==true){fare16=true; selRan2.set(contaestratti,opt);}
+			selRan.set(contaestratti,opt);
+			system.setProperty("Svar"+contaestratti, opt);
+			
+			
+		
+			
+			contaestratti=contaestratti+1;
+			}
+			ele.remove(r);
+			if (NranPrio>0){NranPrio=NranPrio-1;}
+			else{Nran=Nran-1;}
+			}
+			
+			///FINE PRIMO GRUPPO
+			
+
+
+
+	string etichettaItinerario;
+	int indiceItinerario;
+
+	string lblp1;
+	string lblp2;
+	string lblp3;
+	string lblp4;
+
+
+
+vector q6ITA = new vector {
+"<span style='color:#eaa500;'>La Romana (Rep. Domenicana)</span>§<span style='color:#eaa500;'>Isola di Catalina (Rep. Domenicana)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§<span style='color:#eaa500;'>Santa Marta (Colombia)</span>§<span style='color:#eaa500;'>Cartagena (Colombia)</span>§<span style='color:#eaa500;'>Colon (Panama)</span>§<span style='color:#eaa500;'>Puerto Limon (Costa Rica)</span>§<span style='color:#eaa500;'>Port Royal (Jamaica)</span>§<span style='color:#eaa500;'>Cabo Rojo (Rep. Domenicana)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§#sh6§#sh7§<span style='color:blue;'>Catalina Bay, Sea party</span>§<span style='color:blue;'>Mare dei Caraibi darkest spot– sea of stars</span>§#sh8§<span style='color:blue;'>Kingston Bay</span>§#sh9§<span style='color:blue;'>In navigazione tra cielo e mare </span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Domenicana)</span>§<span style='color:#eaa500;'>Isola di Catalina (Rep. Domenicana)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cabo Rojo (Rep. Domenicana)</span>§<span style='color:#eaa500;'>St. Lucia (Castries)</span>§<span style='color:#eaa500;'>Barbados (Bridgetown)</span>§<span style='color:#eaa500;'>Guadalupe (Pointe-a-Pitre)</span>§<span style='color:#eaa500;'>St. Kitts (Basseterre)</span>§<span style='color:#eaa500;'>Tortola (Isole Vergini)</span>§#sh6§#sh7§#sh8§<span style='color:blue;'>Mare dei Caraibi darkest spot– sea of stars</span>§<span style='color:blue;'>Guadalupe Bay</span>§#sh9§#sh10§<span style='color:blue;'>In navigazione tra cielo e mare </span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Domenicana)</span>§<span style='color:#eaa500;'>Isola di Catalina (Rep. Domenicana)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§<span style='color:#eaa500;'>Santa Marta (Colombia)</span>§<span style='color:#eaa500;'>Cartagena (Colombia)</span>§#sh1§#sh2§#sh3§#sh5§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§<span style='color:blue;'>Catalina Bay, Sea party</span>§<span style='color:blue;'>Mare dei Caraibi darkest spot– sea of stars</span>§#sh13§#sh14§#sh15§<span style='color:blue;'>In navigazione tra cielo e mare </span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Domenicana)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cartagena (Colombia)</span>§<span style='color:#eaa500;'>Colon (Panama)</span>§<span style='color:#eaa500;'>Puerto Limon (Costa Rica)</span>§<span style='color:#eaa500;'>Port Royal (Jamaica)</span>§<span style='color:#eaa500;'>Cabo Rojo (Rep. Domenicana)</span>§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§#sh13§<span style='color:blue;'>Mare dei Caraibi darkest spot– sea of stars</span>§#sh14§<span style='color:blue;'>Kingston Bay</span>§#sh15§<span style='color:blue;'>In navigazione tra cielo e mare </span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Domenicana)</span>§<span style='color:#eaa500;'>Isola di Catalina (Rep. Domenicana)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cabo Rojo (Rep. Domenicana)</span>§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§#sh13§<span style='color:blue;'>Mare dei Caraibi darkest spot– sea of stars</span>§#sh14§#sh15§#sh16§<span style='color:blue;'>In navigazione tra cielo e mare </span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Domenicana)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§#sh6§#sh7§#sh8§#sh9§#sh10§<span style='color:#eaa500;'>St. Lucia (Castries)</span>§<span style='color:#eaa500;'>Barbados (Bridgetown)</span>§<span style='color:#eaa500;'>Guadalupe (Pointe-a-Pitre)</span>§<span style='color:#eaa500;'>St. Kitts (Basseterre)</span>§<span style='color:#eaa500;'>Tortola (Isole Vergini)</span>§#sh11§#sh12§#sh13§<span style='color:blue;'>Mare dei Caraibi darkest spot– sea of stars</span>§<span style='color:blue;'>Guadalupe Bay</span>§#sh14§#sh15§<span style='color:blue;'>In navigazione tra cielo e mare </span>"
+	};	
+
+
+vector q6FRA = new vector {
+"<span style='color:#eaa500;'>La Romana (Rép. dominicaine)</span>§<span style='color:#eaa500;'>Île de Catalina (Rép. dominicaine)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§<span style='color:#eaa500;'>Santa Marta (Colombie)</span>§<span style='color:#eaa500;'>Carthagène (Colombie)</span>§<span style='color:#eaa500;'>Colón (Panama)</span>§<span style='color:#eaa500;'>Puerto Limón (Costa Rica)</span>§<span style='color:#eaa500;'>Port Royal (Jamaïque)</span>§<span style='color:#eaa500;'>Cabo Rojo (Rép. dominicaine)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§#sh6§#sh7§<span style='color:blue;'>Baie de Catalina, Sea party</span>§<span style='color:blue;'>Mer des Caraïbes – Mer étoilée</span>§#sh8§<span style='color:blue;'>Baie de Kingston</span>§#sh9§<span style='color:blue;'>Navigation, entre ciel et mer</span>",
+"<span style='color:#eaa500;'>La Romana (Rép. dominicaine)</span>§<span style='color:#eaa500;'>Île de Catalina (Rép. dominicaine)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cabo Rojo (Rép. dominicaine)</span>§<span style='color:#eaa500;'>Sainte-Lucie (Castries)</span>§<span style='color:#eaa500;'>Barbade (Bridgetown)</span>§<span style='color:#eaa500;'>Guadeloupe (Pointe-à-Pitre)</span>§<span style='color:#eaa500;'>Saint-Christophe (Basseterre)</span>§<span style='color:#eaa500;'>Tortola (Îles Vierges)</span>§#sh6§#sh7§#sh8§<span style='color:blue;'>Mer des Caraïbes – Mer étoilée</span>§<span style='color:blue;'>Baie de la Guadeloupe</span>§#sh9§#sh10§<span style='color:blue;'>Navigation, entre ciel et mer</span>",
+"<span style='color:#eaa500;'>La Romana (Rép. dominicaine)</span>§<span style='color:#eaa500;'>Île de Catalina (Rép. dominicaine)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§<span style='color:#eaa500;'>Santa Marta (Colombia)</span>§<span style='color:#eaa500;'>Cartagena (Colombia)</span>§#sh1§#sh2§#sh3§#sh5§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§<span style='color:blue;'>Baie de Catalina, Sea party</span>§<span style='color:blue;'>Mer des Caraïbes – Mer étoilée</span>§#sh13§#sh14§#sh15§<span style='color:blue;'>Navigation, entre ciel et mer</span>",
+"<span style='color:#eaa500;'>La Romana (Rép. dominicaine)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cartagena (Colombia)</span>§<span style='color:#eaa500;'>Colón (Panama)</span>§<span style='color:#eaa500;'>Puerto Limón (Costa Rica)</span>§<span style='color:#eaa500;'>Port Royal (Jamaïque)</span>§<span style='color:#eaa500;'>Cabo Rojo (Rép. dominicaine)</span>§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§#sh13§<span style='color:blue;'>Mer des Caraïbes – Mer étoilée</span>§#sh14§<span style='color:blue;'>Baie de Kingston</span>§#sh15§<span style='color:blue;'>Navigation, entre ciel et mer</span>",
+"<span style='color:#eaa500;'>La Romana (Rép. dominicaine)</span>§<span style='color:#eaa500;'>Île de Catalina (Rép. dominicaine)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cabo Rojo (Rép. dominicaine)</span>§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§#sh13§<span style='color:blue;'>Mer des Caraïbes – Mer étoilée</span>§#sh14§#sh15§#sh16§<span style='color:blue;'>Navigation, entre ciel et mer</span>",
+"<span style='color:#eaa500;'>La Romana (Rép. dominicaine)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§#sh6§#sh7§#sh8§#sh9§#sh10§<span style='color:#eaa500;'>Sainte-Lucie (Castries)</span>§<span style='color:#eaa500;'>Barbade (Bridgetown)</span>§<span style='color:#eaa500;'>Guadeloupe (Pointe-à-Pitre)</span>§<span style='color:#eaa500;'>Saint-Christophe (Basseterre)</span>§<span style='color:#eaa500;'>Tortola (Îles Vierges)</span>§#sh11§#sh12§#sh13§<span style='color:blue;'>Mer des Caraïbes – Mer étoilée</span>§<span style='color:blue;'>Baie de la Guadeloupe</span>§#sh14§#sh15§<span style='color:blue;'>Navigation, entre ciel et mer</span>"
+	};	
+
+
+vector q6SPA = new vector {
+"<span style='color:#eaa500;'>La Romana (Rep. Dominicana)</span>§<span style='color:#eaa500;'>Isla de Catalina (Rep. Dominicana)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curazao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§<span style='color:#eaa500;'>Santa Marta (Colombia)</span>§<span style='color:#eaa500;'>Cartagena (Colombia)</span>§<span style='color:#eaa500;'>Colón (Panamá)</span>§<span style='color:#eaa500;'>Puerto Limón (Costa Rica)</span>§<span style='color:#eaa500;'>Port Royal (Jamaica)</span>§<span style='color:#eaa500;'>Cabo Rojo (Rep. Dominicana)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§#sh6§#sh7§<span style='color:blue;'>Bahía de Catalina, Sea party</span>§<span style='color:blue;'>Mar del Caribe – Mar de Estrellas</span>§#sh8§<span style='color:blue;'>Bahía de Kingston</span>§#sh9§<span style='color:blue;'>Navegando entre el cielo y el mar</span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Dominicana)</span>§<span style='color:#eaa500;'>Isla de Catalina (Rep. Dominicana)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curazao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cabo Rojo (Rep. Dominicana)</span>§<span style='color:#eaa500;'>St. Lucía (Castries)</span>§<span style='color:#eaa500;'>Barbados (Bridgetown)</span>§<span style='color:#eaa500;'>Guadalupe (Pointe-à-Pitre)</span>§<span style='color:#eaa500;'>San Cristóbal y Nieves (Basseterre)</span>§<span style='color:#eaa500;'>Tórtola (Islas Vírgenes)</span>§#sh6§#sh7§#sh8§<span style='color:blue;'>Mar del Caribe – Mar de Estrellas</span>§<span style='color:blue;'>Bahía de Guadalupe</span>§#sh9§#sh10§<span style='color:blue;'>Navegando entre el cielo y el mar</span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Dominicana)</span>§<span style='color:#eaa500;'>Isla de Catalina (Rep. Dominicana)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curazao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§<span style='color:#eaa500;'>Santa Marta (Colombia)</span>§<span style='color:#eaa500;'>Cartagena (Colombia)</span>§#sh1§#sh2§#sh3§#sh5§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§<span style='color:blue;'>Bahía de Catalina, Sea party</span>§<span style='color:blue;'>Mar del Caribe – Mar de Estrellas</span>§#sh13§#sh14§#sh15§<span style='color:blue;'>Navegando entre el cielo y el mar</span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Dominicana)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cartagena (Colombia)</span>§<span style='color:#eaa500;'>Colón (Panamá)</span>§<span style='color:#eaa500;'>Puerto Limón (Costa Rica)</span>§<span style='color:#eaa500;'>Port Royal (Jamaica)</span>§<span style='color:#eaa500;'>Cabo Rojo (Rep. Dominicana)</span>§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§#sh13§<span style='color:blue;'>Mar del Caribe – Mar de Estrellas</span>§#sh14§<span style='color:blue;'>Bahía de Kingston</span>§#sh15§<span style='color:blue;'>Navegando entre el cielo y el mar</span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Dominicana)</span>§<span style='color:#eaa500;'>Isla de Catalina (Rep. Dominicana)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curazao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cabo Rojo (Rep. Dominicana)</span>§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§#sh13§<span style='color:blue;'>Mar del Caribe – Mar de Estrellas</span>§#sh14§#sh15§#sh16§<span style='color:blue;'>Navegando entre el cielo y el mar</span>",
+"<span style='color:#eaa500;'>La Romana (Rep. Dominicana)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§#sh6§#sh7§#sh8§#sh9§#sh10§<span style='color:#eaa500;'>St. Lucía (Castries)</span>§<span style='color:#eaa500;'>Barbados (Bridgetown)</span>§<span style='color:#eaa500;'>Guadalupe (Pointe-à-Pitre)</span>§<span style='color:#eaa500;'>San Cristóbal y Nieves (Basseterre)</span>§<span style='color:#eaa500;'>Tórtola (Islas Vírgenes)</span>§#sh11§#sh12§#sh13§<span style='color:blue;'>Mar del Caribe – Mar de Estrellas</span>§<span style='color:blue;'>Bahía de Guadalupe</span>§#sh14§#sh15§<span style='color:blue;'>Navegando entre el cielo y el mar</span>"
+	};		
+
+vector q6GER = new vector {
+"<span style='color:#eaa500;'>La Romana (Dominikanische Republik)</span>§<span style='color:#eaa500;'>Isla Catalina (Dominikanische Republik)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§<span style='color:#eaa500;'>Santa Marta (Kolumbien)</span>§<span style='color:#eaa500;'>Cartagena (Kolumbien)</span>§<span style='color:#eaa500;'>Colón (Panama)</span>§<span style='color:#eaa500;'>Puerto Limón (Costa Rica)</span>§<span style='color:#eaa500;'>Port Royal (Jamaika)</span>§<span style='color:#eaa500;'>Cabo Rojo (Dominikanische Republik)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§#sh6§#sh7§<span style='color:blue;'>Bucht von Catalina, Sea party</span>§<span style='color:blue;'>Karibisches Meer – Meer der Sterne</span>§#sh8§<span style='color:blue;'>Bucht von Kingston</span>§#sh9§<span style='color:blue;'>Auf See zwischen Himmel und Meer</span>",
+"<span style='color:#eaa500;'>La Romana (Dominikanische Republik)</span>§<span style='color:#eaa500;'>Isla Catalina (Dominikanische Republik)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cabo Rojo (Dominikanische Republik)</span>§<span style='color:#eaa500;'>St. Lucia (Castries)</span>§<span style='color:#eaa500;'>Barbados (Bridgetown)</span>§<span style='color:#eaa500;'>Guadeloupe (Pointe-a-Pitre)</span>§<span style='color:#eaa500;'>St. Kitts (Basseterre)</span>§<span style='color:#eaa500;'>Tortola (Britische Jungferninseln)</span>§#sh6§#sh7§#sh8§<span style='color:blue;'>Karibisches Meer – Meer der Sterne</span>§<span style='color:blue;'>Bucht von Guadeloupe</span>§#sh9§#sh10§<span style='color:blue;'>Auf See zwischen Himmel und Meer</span>",
+"<span style='color:#eaa500;'>La Romana (Dominikanische Republik)</span>§<span style='color:#eaa500;'>Isla Catalina (Dominikanische Republik)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§<span style='color:#eaa500;'>Santa Marta (Kolumbien)</span>§<span style='color:#eaa500;'>Cartagena (Kolumbien)</span>§#sh1§#sh2§#sh3§#sh5§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§<span style='color:blue;'>Bucht von Catalina, Sea party</span>§<span style='color:blue;'>Karibisches Meer – Meer der Sterne</span>§#sh13§#sh14§#sh15§<span style='color:blue;'>Auf See zwischen Himmel und Meer</span>",
+"<span style='color:#eaa500;'>La Romana (Dominikanische Republik)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cartagena (Colombia)</span>§<span style='color:#eaa500;'>Colon (Panama)</span>§<span style='color:#eaa500;'>Puerto Limon (Costa Rica)</span>§<span style='color:#eaa500;'>Port Royal (Jamaica)</span>§<span style='color:#eaa500;'>Cabo Rojo (Rep. Domenicana)</span>§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§#sh13§<span style='color:blue;'>Karibisches Meer – Meer der Sterne</span>§#sh14§<span style='color:blue;'>Bucht von Kingston</span>§#sh15§<span style='color:blue;'>Auf See zwischen Himmel und Meer</span>",
+"<span style='color:#eaa500;'>La Romana (Dominikanische Republik)</span>§<span style='color:#eaa500;'>Isla Catalina (Dominikanische Republik)</span>§<span style='color:#eaa500;'>Kralendijk (Bonaire)</span>§<span style='color:#eaa500;'>Willemstad (Curaçao)</span>§<span style='color:#eaa500;'>Oranjestad (Aruba)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§<span style='color:#eaa500;'>Cabo Rojo (Rep. Domenicana)</span>§#sh6§#sh7§#sh8§#sh9§#sh10§#sh11§#sh12§#sh13§<span style='color:blue;'>Karibisches Meer – Meer der Sterne</span>§#sh14§#sh15§#sh16§<span style='color:blue;'>Auf See zwischen Himmel und Meer</span>",
+"<span style='color:#eaa500;'>La Romana (Dominikanische Republik)</span>§#sh1§#sh2§#sh3§#sh4§#sh5§#sh6§#sh7§#sh8§#sh9§#sh10§<span style='color:#eaa500;'>St. Lucia (Castries)</span>§<span style='color:#eaa500;'>Barbados (Bridgetown)</span>§<span style='color:#eaa500;'>Guadeloupe (Pointe-a-Pitre)</span>§<span style='color:#eaa500;'>St. Kitts (Basseterre)</span>§<span style='color:#eaa500;'>Tortola (Britische Jungferninseln)</span>§#sh11§#sh12§#sh13§<span style='color:blue;'>Karibisches Meer – Meer der Sterne</span>§<span style='color:blue;'>Bucht von Guadeloupe</span>§#sh14§#sh15§<span style='color:blue;'>Auf See zwischen Himmel und Meer</span>"
+	};	
+
+
+int indiceQ6;
+string stringaQ6;
+
+int contadestinazioni;
+int idexcontadestinazioni;
+vector destinazioneGiaEstratte = new vector {};
+
+
+
+string itinerario;
+string itinerarioPiccola;
+string ideaAssociata;
+string etichettaIdeaAssociata;
+
+string selranstringa = selRan.join(",");
+system.out("<div>selranstringa:"+selranstringa+"</div>");
+
+	for (int i=0, 4)
+	{
+	
+	
+
+
+	
+	etichettaItinerario=selRan.get(i);
+	selCheck=etichettaItinerario.contains("#sh");
+	
+
+	if (selCheck==false)
+	{
+
+	if (etichettaItinerario=="2"){etichettaIdeaAssociata="1";}
+	if (etichettaItinerario=="3"){etichettaIdeaAssociata="1";}
+	if (etichettaItinerario=="4"){etichettaIdeaAssociata="1";}
+	if (etichettaItinerario=="5"){etichettaIdeaAssociata="1";}
+	if (etichettaItinerario=="7"){etichettaIdeaAssociata="6";}
+	if (etichettaItinerario=="8"){etichettaIdeaAssociata="1";}
+	if (etichettaItinerario=="10"){etichettaIdeaAssociata="9";}
+	if (etichettaItinerario=="12"){etichettaIdeaAssociata="11";}
+	if (etichettaItinerario=="14"){etichettaIdeaAssociata="13";}
+	if (etichettaItinerario=="16"){etichettaIdeaAssociata="15";}
+	if (etichettaItinerario=="18"){etichettaIdeaAssociata="17";}
+	if (etichettaItinerario=="20"){etichettaIdeaAssociata="19";}
+	if (etichettaItinerario=="22"){etichettaIdeaAssociata="21";}
+
+	itinerario="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+etichettaItinerario+".JPG' width='900px'></div>";
+	itinerarioPiccola=scriptzoom+fogliostile+altroscript+"<p class='info'><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+etichettaItinerario+".JPG'><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+etichettaItinerario+".JPG'  width='450px' alt='' /></a><br>"+istruzioni+"</p>";
+	ideaAssociata=scriptzoom+fogliostile+altroscript+"<p class='info'><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+etichettaIdeaAssociata+".JPG'><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+etichettaIdeaAssociata+".JPG'  width='450px' alt='' /></a><br>"+istruzioni+"</p>";
+
+
+
+	if (lingua==1)
+	{
+	if (i==0){  label="<p><b>Il primo itinerario pensato per queste idee di Crociera è il seguente.</b></p>"; } else { label="<p><b>Un altro itinerario è il seguente.</b></p>"; }
+	}
+
+	if (lingua==2)
+	{
+	if (i==0){  label="<p><b>El primer itinerario pensado para estas ideas de crucero es el siguiente.</b></p>"; } else { label="<p><b>Otro itinerario es el siguiente</b></p>"; }
+	}	
+
+	if (lingua==3)
+	{
+	if (i==0){  label="<p><bLe premier itinéraire conçu pour ces idées de croisière est le suivant.</b></p>"; } else { label="<p><b>Voici un autre itinéraire possible</b></p>"; }
+	}
+
+	if (lingua==4)
+	{
+	if (i==0){  label="<p><b>Die erste für diese Kreuzfahrtideen konzipierte Route ist die folgende.</b></p>"; } else { label="<p><b>Ein weiterer Reiseplan sieht wie folgt aus</b></p>"; }
+	}			
+
+	// Q110: CONCEPT
+	qid=5000+i*100;
+	qst = new question("concept", qid);
+	qst.setProperty("text", label+itinerario+delay);
+	send qst;
+
+
+
+
+
+	// Q140: SCALE
+	qid=5000+i*100+6;
+	qst = new question("scale", qid);
+	qst.setProperty("text", itinerarioPiccola+"Quanto <b>ti invoglia ad andare in crociera</b> questo itinerario?");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", itinerarioPiccola+"¿En qué medida este itinerario te anima a irte de crucero? "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", itinerarioPiccola+"Dans quelle mesure cet itinéraire vous donne-t-il envie de partir en croisière ? "); }
+	case 4:{ qst.setProperty("text", itinerarioPiccola+"Wie sehr macht Ihnen diese Route Lust, auf Kreuzfahrt zu gehen? "); }
+	}
+	qst.setProperty("code", "q1."+i);
+	qst.setProperty("show_rand", false);
+	vector q140_rows = new vector {
+		" "
+	};
+	qst.setProperty("rows", q140_rows);
+	vector q140_cols = new vector {
+		"Per niente<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Moltissimo<br>10"
+	};
+
+	vector q140_cols_SPA = new vector {
+		"Para nada<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Muchísimo<br>10"
+	};	
+	vector q140_cols_FRA = new vector {
+		"Pas du tout<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Beaucoup<br>10"
+	};		
+	vector q140_cols_GER = new vector {
+		"Überhaupt nicht<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Sehr stark<br>10"
+	};	
+
+	qst.setProperty("cols", q140_cols);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("cols", q140_cols_SPA); }  //SPA
+	case 3:{ qst.setProperty("cols", q140_cols_FRA); }  //FRA
+	case 4:{ qst.setProperty("cols", q140_cols_GER); }  
+	}		
+	send qst;
+
+
+
+
+
+	// Q140: SCALE
+	qid=5000+i*100+7;
+	qst = new question("scale", qid);
+	qst.setProperty("text", ideaAssociata+"Quanto l'itinerario che hai appena visto è adatto a l'idea di crociera che vedi riportata qui sopra?");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", ideaAssociata+"¿En qué medida el itinerario que acabas de ver es adecuado para la idea de crucero que se muestra arriba?"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", ideaAssociata+"Dans quelle mesure l’itinéraire que vous venez de voir est-il adapté à l’idée de croisière présentée ci-dessus ?"); }
+	case 4:{ qst.setProperty("text", ideaAssociata+"Wie gut ist die Route, die Sie gerade gesehen haben, für die oben dargestellte Kreuzfahrtidee geeignet?"); }
+	}
+	qst.setProperty("code", "q2."+i);
+	qst.setProperty("show_rand", false);
+	vector q141_rows = new vector {
+		" "
+	};
+	qst.setProperty("rows", q141_rows);
+	vector q141_cols = new vector {
+		"Per niente<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Moltissimo<br>10"
+	};
+
+	vector q141_cols_SPA = new vector {
+		"Para nada<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Muchísimo<br>10"
+	};	
+	vector q141_cols_FRA = new vector {
+		"Pas du tout<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Beaucoup<br>10"
+	};		
+	vector q141_cols_GER = new vector {
+		"Überhaupt nicht<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Sehr stark<br>10"
+	};	
+
+	qst.setProperty("cols", q141_cols);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("cols", q141_cols_SPA); }  //SPA
+	case 3:{ qst.setProperty("cols", q141_cols_FRA); }  //FRA
+	case 4:{ qst.setProperty("cols", q141_cols_GER); }  
+	}		
+	send qst;
+
+
+	if (cella==1){
+		lblp1="1.481 €"; 
+		lblp2="1.416 €";
+		lblp3="1.352 €";
+		lblp4="1.288 €";
+
+		if (lingua==1){labelvolo="(volo e trasferimenti esclusi)";}
+		if (lingua==2){labelvolo="(vuelo y traslados excluidos)";}
+		if (lingua==3){labelvolo="(vol et transferts exclus)";}
+		if (lingua==4){labelvolo="(Flug und Transfers nicht inbegriffen)";}
+
+	}
+
+	if (cella==2){
+		lblp1="3.076 €"; 
+		lblp2="2.943 €";
+		lblp3="2.809 €";
+		lblp4="2.675 €";
+
+		if (lingua==1){labelvolo="(volo e trasferimenti esclusi - 1225€)";}
+		if (lingua==2){labelvolo="(vuelo y traslados excluidos - 1225€)";}
+		if (lingua==3){labelvolo="(vol et transferts exclus - 1225€)";}
+		if (lingua==4){labelvolo="(Flug und Transfers nicht inbegriffen - 1225€)";}
+	}
+
+	if (cella==3){
+		lblp1="1.538 €";
+		lblp2="1.471 €";
+		lblp3="1.404 €";
+		lblp4="1.338 €";
+
+		if (lingua==1){labelvolo="(volo e trasferimenti esclusi - 1.225€)";}
+		if (lingua==2){labelvolo="(vuelo y traslados excluidos - 1.225€)";}
+		if (lingua==3){labelvolo="(vol et transferts exclus - 1.225€)";}
+		if (lingua==4){labelvolo="(Flug und Transfers nicht inbegriffen - 1.225€)";}
+	}
+
+
+	if (etichettaItinerario!="10")
+	{
+	qid=5000+i*100+12;
+	// Q170: CHOICE
+	qst = new question("choice", qid);
+	qst.setProperty("text", itinerarioPiccola+"Considerando che il prezzo della cabina con balcone vista mare e tariffa All-Inclusive bevande incluse per il periodo estivo sia pari a <b>"+lblp1+"</b> €/persona "+labelvolo+" potresti indicarci ora la tua INTENZIONE A PRENOTARE questo itinerario …");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", itinerarioPiccola+"Considerando que el precio del camarote con balcón y vista al mar y Todo incluido, bebidas incluidas para la temporada de verano es de <b>"+lblp1+"</b> €/persona "+labelvolo+", ¿podrías indicarnos ahora tu INTENCIÓN DE RESERVAR este itinerario? "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", itinerarioPiccola+"Si l’on estime que le prix de la cabine avec balcon, vue sur la mer et tarif All inclusive et boissons incluses pour la période estivale est de <b>"+lblp1+"</b> €/personne "+labelvolo+", dans quelle mesure seriez-vous disposé(e) à l’idée de réserver cet itinéraire ? "); }
+	case 4:{ qst.setProperty("text", itinerarioPiccola+"Unter Berücksichtigung, dass der Preis für eine Kabine mit Meerblick-Balkon und All-Inclusive-Tarif mit Getränken für den Sommerzeitraum <b>"+lblp1+"</b> €/Person beträgt "+labelvolo+", könnten Sie uns nun bitte mitteilen, inwieweit Sie die Absicht hätten, diese Route zu buchen … "); }
+	}	
+	qst.setProperty("code", "q5a."+i);
+	qst.setProperty("show_rand", false);
+	vector q170_opts = new vector {
+		"Sicuramente lo prenoterei",
+		"Probabilmente lo prenoterei",
+		"Forse lo prenoterei",
+		"Probabilmente non lo prenoterei",
+		"Sicuramente non lo prenoterei"
+	};
+	vector q170_opts_SPA = new vector {
+"Seguramente lo reservaría",
+"Probablemente lo reservaría",
+"Quizás lo reservaría",
+"Probablemente no lo reservaría",
+"Seguramente no lo reservaría"
+	};
+	vector q170_opts_FRA = new vector {
+"Je le réserverais certainement",
+"Je le réserverais probablement",
+"Je le réserverais peut-être",
+"Je ne le réserverais probablement pas",
+"Je ne le réserverais certainement pas"
+	};
+	vector q170_opts_GER = new vector {
+"Ich würde sie bestimmt buchen",
+"Ich würde sie wahrscheinlich buchen",
+"Vielleicht würde ich sie buchen",
+"Ich würde sie vermutlich nicht buchen",
+"Ich würde sie bestimmt nicht buchen"
+	};	
+	qst.setProperty("options", q170_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q170_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q170_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q170_opts_GER); }  
+	}		
+	send qst;
+	selint=system.getProperty("ans"+qid);
+
+	if (selint>1)
+	{
+	// Q180: CHOICE
+	qid=5000+i*100+14;
+	qst = new question("choice", qid);
+	qst.setProperty("text", itinerarioPiccola+"Se invece il prezzo della cabina con balcone vista mare e tariffa All-Inclusive bevande incluse per il periodo estivo <b>"+lblp2+"</b> €/persona "+labelvolo+" potresti indicarci ora la tua INTENZIONE A PRENOTARE questo itinerario …");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", itinerarioPiccola+"Y si el precio del camarote con balcón y vista al mar y Todo incluido, bebidas incluidas para la temporada de verano es de <b>"+lblp2+"</b> €/persona "+labelvolo+", ¿podrías indicarnos ahora tu INTENCIÓN DE RESERVAR este itinerario? "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", itinerarioPiccola+"Si l’on estime en revanche que le prix de la cabine avec balcon, vue sur la mer et tarif All inclusive et boissons incluses pour la période estivale est de <b>"+lblp2+"</b> €/personne "+labelvolo+", dans quelle mesure seriez-vous disposé(e) à l’idée de réserver cet itinéraire ? "); }
+	case 4:{ qst.setProperty("text", itinerarioPiccola+"Und wenn der Preis für eine Kabine mit Meerblick-Balkon und All-Inclusive-Tarif mit Getränken für den Sommerzeitraum <b>"+lblp2+"</b> €/Person beträgt "+labelvolo+", könnten Sie uns nun bitte mitteilen, inwieweit Sie die Absicht hätten, diese Route zu buchen … "); }
+	}	
+	qst.setProperty("code", "q5b."+i);
+	qst.setProperty("show_rand", false);
+	vector q180_opts = new vector {
+		"Sicuramente lo prenoterei",
+		"Probabilmente lo prenoterei",
+		"Forse lo prenoterei",
+		"Probabilmente non lo prenoterei",
+		"Sicuramente non lo prenoterei"
+	};
+	vector q180_opts_SPA = new vector {
+"Seguramente lo reservaría",
+"Probablemente lo reservaría",
+"Quizás lo reservaría",
+"Probablemente no lo reservaría",
+"Seguramente no lo reservaría"
+	};
+	vector q180_opts_FRA = new vector {
+"Je le réserverais certainement",
+"Je le réserverais probablement",
+"Je le réserverais peut-être",
+"Je ne le réserverais probablement pas",
+"Je ne le réserverais certainement pas"
+	};
+	vector q180_opts_GER = new vector {
+"Ich würde sie bestimmt buchen",
+"Ich würde sie wahrscheinlich buchen",
+"Vielleicht würde ich sie buchen",
+"Ich würde sie vermutlich nicht buchen",
+"Ich würde sie bestimmt nicht buchen"
+	};	
+	qst.setProperty("options", q180_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q180_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q180_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q180_opts_GER); }  
+	}		
+	send qst;
+	selint=system.getProperty("ans"+qid);
+
+	if (selint>1)
+	{
+	// Q190: CHOICE
+	qid=5000+i*100+16;
+	qst = new question("choice", qid);
+	qst.setProperty("text", itinerarioPiccola+"E se il prezzo della cabina con balcone vista mare e tariffa All-Inclusive bevande incluse per il periodo estivo fosse <b>"+lblp3+"</b> €/persona "+labelvolo+" potresti indicarci ora la tua INTENZIONE A PRENOTARE questo itinerario …");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", itinerarioPiccola+"Y si el precio del camarote con balcón y vista al mar y Todo incluido, bebidas incluidas para la temporada de verano es de <b>"+lblp3+"</b> €/persona "+labelvolo+", ¿podrías indicarnos ahora tu INTENCIÓN DE RESERVAR este itinerario? "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", itinerarioPiccola+"Si le prix de la cabine avec balcon, vue sur la mer et tarif All inclusive et boissons incluses pour la période estivale est de <b>"+lblp3+"</b> €/personne "+labelvolo+", dans quelle mesure seriez-vous disposé(e) à l’idée de réserver cet itinéraire ? "); }
+	case 4:{ qst.setProperty("text", itinerarioPiccola+"Unter Berücksichtigung, dass der Preis für eine Kabine mit Meerblick-Balkon und All-Inclusive-Tarif mit Getränken für den Sommerzeitraum <b>"+lblp3+"</b> €/Person beträgt "+labelvolo+", könnten Sie uns nun bitte mitteilen, inwieweit Sie die Absicht hätten, diese Route zu buchen … "); }
+	}
+	qst.setProperty("code", "q5c."+i);
+	qst.setProperty("show_rand", false);
+	vector q190_opts = new vector {
+		"Sicuramente lo prenoterei",
+		"Probabilmente lo prenoterei",
+		"Forse lo prenoterei",
+		"Probabilmente non lo prenoterei",
+		"Sicuramente non lo prenoterei"
+	};
+	vector q190_opts_SPA = new vector {
+"Seguramente lo reservaría",
+"Probablemente lo reservaría",
+"Quizás lo reservaría",
+"Probablemente no lo reservaría",
+"Seguramente no lo reservaría"
+	};
+	vector q190_opts_FRA = new vector {
+"Je le réserverais certainement",
+"Je le réserverais probablement",
+"Je le réserverais peut-être",
+"Je ne le réserverais probablement pas",
+"Je ne le réserverais certainement pas"
+	};
+	vector q190_opts_GER = new vector {
+"Ich würde sie bestimmt buchen",
+"Ich würde sie wahrscheinlich buchen",
+"Vielleicht würde ich sie buchen",
+"Ich würde sie vermutlich nicht buchen",
+"Ich würde sie bestimmt nicht buchen"
+	};	
+	qst.setProperty("options", q190_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q190_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q190_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q190_opts_GER); }  
+	}		
+	send qst;
+	selint=system.getProperty("ans"+qid);
+
+	if (selint>1)
+	{
+	// Q200: CHOICE
+	qid=5000+i*100+18;
+	qst = new question("choice", qid);
+	qst.setProperty("text", itinerarioPiccola+"E se il prezzo della cabina con balcone vista mare e tariffa All-Inclusive bevande incluse per il periodo estivo fosse <b>"+lblp4+"</b> €/persona "+labelvolo+" potresti indicarci ora la tua INTENZIONE A PRENOTARE questo itinerario …");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", itinerarioPiccola+"Y si  el precio del camarote con balcón y vista al mar y Todo incluido, bebidas incluidas para la temporada de verano es de <b>"+lblp4+"</b> €/persona "+labelvolo+", ¿podrías indicarnos ahora tu INTENCIÓN DE RESERVAR este itinerario? "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", itinerarioPiccola+"Si le prix de la cabine avec balcon, vue sur la mer et tarif All inclusive et boissons incluses pour la période estivale est de <b>"+lblp4+"</b> €/personne "+labelvolo+", dans quelle mesure seriez-vous disposé(e) à l’idée de réserver cet itinéraire ? "); }
+	case 4:{ qst.setProperty("text", itinerarioPiccola+"Unter Berücksichtigung, dass der Preis für eine Kabine mit Meerblick-Balkon und All-Inclusive-Tarif mit Getränken für den Sommerzeitraum <b>"+lblp4+"</b> €/Person beträgt "+labelvolo+", könnten Sie uns nun bitte mitteilen, inwieweit Sie die Absicht hätten, diese Route zu buchen … "); }
+	}	
+	qst.setProperty("code", "q5d."+i);
+	qst.setProperty("show_rand", false);
+	vector q200_opts = new vector {
+		"Sicuramente lo prenoterei",
+		"Probabilmente lo prenoterei",
+		"Forse lo prenoterei",
+		"Probabilmente non lo prenoterei",
+		"Sicuramente non lo prenoterei"
+	};
+	vector q200_opts_SPA = new vector {
+"Seguramente lo reservaría",
+"Probablemente lo reservaría",
+"Quizás lo reservaría",
+"Probablemente no lo reservaría",
+"Seguramente no lo reservaría"
+	};
+	vector q200_opts_FRA = new vector {
+"Je le réserverais certainement",
+"Je le réserverais probablement",
+"Je le réserverais peut-être",
+"Je ne le réserverais probablement pas",
+"Je ne le réserverais certainement pas"
+	};
+	vector q200_opts_GER = new vector {
+"Ich würde sie bestimmt buchen",
+"Ich würde sie wahrscheinlich buchen",
+"Vielleicht würde ich sie buchen",
+"Ich würde sie vermutlich nicht buchen",
+"Ich würde sie bestimmt nicht buchen"
+	};	
+	qst.setProperty("options", q200_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q200_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q200_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q200_opts_GER); }  
+	}		
+	send qst;
+	}
+	}
+	}
+	}
+	
+
+	if (etichettaItinerario=="10")
+	{
+	// Q170: CHOICE
+	qid=5000+i*100+19;
+	qst = new question("choice", qid);
+	qst.setProperty("text", itinerarioPiccola+"Considerando che il prezzo della cabina con balcone vista mare e tariffa All-Inclusive bevande incluse per il periodo estivo sia pari a <b> 1.288 </b> €/persona "+labelvolo+" potresti indicarci ora la tua INTENZIONE A PRENOTARE questo itinerario …");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", itinerarioPiccola+"Considerando que el precio del camarote con balcón y vista al mar y Todo incluido, bebidas incluidas para la temporada de verano es de <b>1.288</b> €/persona "+labelvolo+", ¿podrías indicarnos ahora tu INTENCIÓN DE RESERVAR este itinerario? "); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", itinerarioPiccola+"Si l’on estime que le prix de la cabine avec balcon, vue sur la mer et tarif All inclusive et boissons incluses pour la période estivale est de <b>1.288</b> €/personne "+labelvolo+", dans quelle mesure seriez-vous disposé(e) à l’idée de réserver cet itinéraire ? "); }
+	case 4:{ qst.setProperty("text", itinerarioPiccola+"Unter Berücksichtigung, dass der Preis für eine Kabine mit Meerblick-Balkon und All-Inclusive-Tarif mit Getränken für den Sommerzeitraum <b>1.288</b> €/Person beträgt "+labelvolo+", könnten Sie uns nun bitte mitteilen, inwieweit Sie die Absicht hätten, diese Route zu buchen … "); }
+	}	
+	qst.setProperty("code", "q5e."+i);
+	qst.setProperty("show_rand", false);
+	vector q201_opts = new vector {
+		"Sicuramente lo prenoterei",
+		"Probabilmente lo prenoterei",
+		"Forse lo prenoterei",
+		"Probabilmente non lo prenoterei",
+		"Sicuramente non lo prenoterei"
+	};
+	vector q201_opts_SPA = new vector {
+"Seguramente lo reservaría",
+"Probablemente lo reservaría",
+"Quizás lo reservaría",
+"Probablemente no lo reservaría",
+"Seguramente no lo reservaría"
+	};
+	vector q201_opts_FRA = new vector {
+"Je le réserverais certainement",
+"Je le réserverais probablement",
+"Je le réserverais peut-être",
+"Je ne le réserverais probablement pas",
+"Je ne le réserverais certainement pas"
+	};
+	vector q201_opts_GER = new vector {
+"Ich würde sie bestimmt buchen",
+"Ich würde sie wahrscheinlich buchen",
+"Vielleicht würde ich sie buchen",
+"Ich würde sie vermutlich nicht buchen",
+"Ich würde sie bestimmt nicht buchen"
+	};	
+	qst.setProperty("options", q201_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q201_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q201_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q201_opts_GER); }  
+	}		
+	send qst;
+	}
+
+
+
+/*
+if (etichettaItinerario=="2"){ indiceQ6=0; }
+if (etichettaItinerario=="3"){ indiceQ6=1; }
+if (etichettaItinerario=="4"){ indiceQ6=2; }
+if (etichettaItinerario=="5"){ indiceQ6=3; }
+if (etichettaItinerario=="7"){ indiceQ6=4; }
+if (etichettaItinerario=="8"){ indiceQ6=5; }
+if (etichettaItinerario=="10"){ indiceQ6=6; }
+*/
+if (etichettaItinerario=="12"){ indiceQ6=0; }
+if (etichettaItinerario=="14"){ indiceQ6=1; }
+if (etichettaItinerario=="16"){ indiceQ6=2; }
+if (etichettaItinerario=="18"){ indiceQ6=3; }
+if (etichettaItinerario=="20"){ indiceQ6=4; }
+if (etichettaItinerario=="22"){ indiceQ6=5; }
+	
+if (lingua==1){stringaQ6=q6ITA.get(indiceQ6);}
+if (lingua==2){stringaQ6=q6SPA.get(indiceQ6);}
+if (lingua==3){stringaQ6=q6FRA.get(indiceQ6);}
+if (lingua==4){stringaQ6=q6GER.get(indiceQ6);}
+
+
+
+	vector q6destinazioni = new vector {};	
+	q6destinazioni = stringaQ6.split("§");
+
+
+
+	if (i>0){
+
+		//recupero la dimensione del vettore contenente gli indici delle destinazioni nascoste 
+		contadestinazioni = destinazioneGiaEstratte.getSize();
+		idexcontadestinazioni=contadestinazioni-1;
+
+		//ciclo sul vettore delle destinazioni già estratte per nasconderle dalle successive domande
+		for(int j=0, idexcontadestinazioni)
+		{
+			n = (int)destinazioneGiaEstratte.get(j);
+			label="#shnascosto"+n;
+			q6destinazioni.set(n,label);
+		}
+
+	}
+
+
+	//inserisco nel vettore delle destinazioni già estratte le destinazioni dell'itinerario corrente
+	conta=0;
+	for(int j=0, 23){
+		label=q6destinazioni.get(j);
+		selCheck=label.contains("#sh");
+		if (selCheck==false)
+		{
+			cmd=""+j+"";
+			destinazioneGiaEstratte.add(cmd);
+			conta=conta+1;
+		}
+	}
+
+
+	
+
+
+	if (conta>0)
+	{
+	// Q140: SCALE
+	qid=5000+i*100+20;
+	qst = new question("scale", qid);
+	qst.setProperty("text", itinerarioPiccola+"Considerando le destinazioni (di <span style='color:blue;'>mare</span> o di <span style='color:#eaa500;'>terra</span>) che ti offre questo itinerario, quanto ti piace/ti attira ognuna di queste destinazioni? ");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", itinerarioPiccola+"Teniendo en cuenta los destinos (de <span style='color:blue;'>mar</span> o de <span style='color:#eaa500;'>tierra</span>) que ofrece este itinerario, ¿cuánto te gusta / te atrae cada uno de estos destinos?"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", itinerarioPiccola+"En tenant compte des destinations (destinations <span style='color:blue;'>balnéaires</span> ou <span style='color:#eaa500;'>terrestres</span>) proposées par cet itinéraire, dans quelle mesure aimez-vous / êtes-vous attiré(e) par chacune de ces destinations ?"); }
+	case 4:{ qst.setProperty("text", itinerarioPiccola+"Unter Berücksichtigung der (<span style='color:blue;'>See-</span> oder <span style='color:#eaa500;'>Lande</span>)Destinationen, die diese Route bietet: Wie sehr gefallen Ihnen bzw. ziehen Sie die einzelnen Destinationen an?"); }
+	}
+	qst.setProperty("code", "q6."+i);
+	qst.setProperty("show_rand", true);
+	vector q201_rows = new vector {
+"Destinazione 1 ",
+"Destinazione 2",
+"Destinazione 3 ",
+"Destinazione 4",
+"Destinazione 5",
+"Destinazione 6",
+"Destinazione 7",
+"Destinazione 8",
+"Destinazione 9",
+"Destinazione 10",
+"Destinazione 11",
+"Destinazione 12",
+"Destinazione 13",
+"Destinazione 14",
+"Destinazione 15",
+"Destinazione 16",
+"Destinazione 17",
+"Destinazione 18",
+"Destinazione 19",
+"Destinazione 20",
+"Destinazione 21",
+"Destinazione 22",
+"Destinazione 23",
+"Destinazione 24"
+	};
+	qst.setProperty("rows", q201_rows);
+	
+	if (explode==1)
+	{
+	qst.setProperty("rows", q6destinazioni);
+	}
+
+	vector q201_cols = new vector {
+		"Non mi piace per niente<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Mi piace moltissimo<br>10"
+	};
+
+	vector q201_cols_SPA = new vector {
+		"No me gusta para nada<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Me gusta muchísimo<br>10"
+	};	
+	vector q201_cols_FRA = new vector {
+		"Je n’aime pas du tout<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"J’aime beaucoup<br>10"
+	};		
+	vector q201_cols_GER = new vector {
+		"Gefällt mir überhaupt nicht<br>1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+		"9",
+		"Gefällt mir sehr<br>10"
+	};	
+
+	qst.setProperty("cols", q201_cols);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("cols", q201_cols_SPA); }  //SPA
+	case 3:{ qst.setProperty("cols", q201_cols_FRA); }  //FRA
+	case 4:{ qst.setProperty("cols", q201_cols_GER); }  
+	}		
+	send qst;
+	}
+	}
+	}
+
+
+
+vector selRanNoCostaMsc = new vector {};	
+
+for (int i=0,4){
+	label=selRan.get(i);
+	if (label != "8" && label != "10"){
+		selRanNoCostaMsc.add(label);
+	}
+}
+
+
+	if (cella==1)
+	{
+	for (int i=0,2)
+	{
+	label=selRanNoCostaMsc.get(i);
+
+
+	if (lingua==1){
+		textordering1="Quale tra questi itinerari ti invoglia di più ad andare in crociera?";
+		textordering2="Perfetto! Ora scegli la tua n. {n}. preferita";
+		textordering3="Perfetto! Hai completato la classifica";
+		}
+
+if (lingua==2){
+    textordering1="¿Cuál de estos itinerarios te anima más a ir de crucero?";
+    textordering2="¡Perfecto! Ahora elige tu n.º {n} preferido";
+    textordering3="¡Perfecto! Has completado la clasificación";
+}
+
+if (lingua==3){
+    textordering1="Lequel de ces itinéraires vous donne le plus envie de partir en croisière ?";
+    textordering2="Parfait ! Choisissez maintenant votre n° {n} préféré";
+    textordering3="Parfait ! Vous avez complété le classement";
+}
+
+if (lingua==4){
+    textordering1="Welche dieser Reiserouten macht dir am meisten Lust auf eine Kreuzfahrt?";
+    textordering2="Perfekt! Wähle jetzt deine Nr. {n} bevorzugte Option";
+    textordering3="Perfekt! Du hast die Rangliste abgeschlossen";
+}
+
+
+
+
+OrderingModerno=" <script> $(window).load(function(){ rankSmartInit({ strict_selection: false, copy: { headline_first: \""+textordering1+"\", headline_next_template: \""+textordering2+"\", headline_done: \""+textordering3+"\" } }); }); </script>";
+
+
+
+	// Q250: CHOICE
+	qid=8000+i*100;
+	qst = new question("ordering", qid);
+	qst.setProperty("text", OrderingModerno);	
+	qst.setProperty("code", "r1A."+i);
+	qst.setProperty("show_rand", true);
+	vector q250_opts = new vector {
+		"Itinerario NEW",
+		"Itinerario BNC COSTA",
+		"Itinerario BNC MSC/COSTA"
+	};
+
+
+		
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+label+".JPG'  width='600px' alt='' /></div>";
+		q250_opts.set(0,cmd);
+
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva8.JPG'  width='600px' alt='' /></div>";
+		q250_opts.set(1,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva10.JPG'  width='600px' alt='' /></div>";
+		q250_opts.set(2,cmd);
+
+
+
+	qst.setProperty("options", q250_opts);
+	qst.setProperty("sel_count", 3);
+
+	qst.setProperty("strict_selection", true);
+	send qst;
+	}
+
+
+OrderingModerno=" <script> $(window).load(function(){ rankSmartInit({ strict_selection: false, copy: { headline_first: \""+textordering1+"\", headline_next_template: \""+textordering2+"\", headline_done: \""+textordering3+"\" } }); }); </script>";
+
+
+	// Q250: CHOICE
+	qst = new question("ordering", 9991);
+	qst.setProperty("text", OrderingModerno);	
+	qst.setProperty("code", "r2A");
+	qst.setProperty("show_rand", true);
+	vector q9991_opts = new vector {
+"NEW1",
+"NEW2",
+"NEW3",
+"BCK COSTA"
+	};
+
+	    label=selRanNoCostaMsc.get(0);
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+label+".JPG'  width='600px' alt='' /></div>";
+		q9991_opts.set(0,cmd);
+
+		label=selRanNoCostaMsc.get(1);
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+label+".JPG'  width='600px' alt='' /></div>";
+		q9991_opts.set(1,cmd);
+
+		label=selRanNoCostaMsc.get(2);
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+label+".JPG'  width='600px' alt='' /></div>";
+		q9991_opts.set(2,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva8.JPG'  width='600px' alt='' /></div>";
+		q9991_opts.set(3,cmd);
+
+
+
+	qst.setProperty("options", q9991_opts);
+	qst.setProperty("sel_count", 4);
+
+	qst.setProperty("strict_selection", true);
+	send qst;
+	selint=system.getProperty("ans9991_0");
+	label=q9991_opts.get(selint);
+
+
+qst = new question("open", 9992);
+qst.setProperty("text", label+"<br>Per quali motivi hai preferito questo itinerario?");
+switch(lingua)
+{
+//SPAGNOLO
+case 2:{ qst.setProperty("text", label+"<br>¿Por qué motivos has preferido este itinerario?"); }
+//FRANCESE
+case 3:{ qst.setProperty("text", label+"<br>Pour quelles raisons avez-vous préféré cet itinéraire ?"); }
+case 4:{ qst.setProperty("text", label+"<br>Aus welchen Gründen haben Sie diese Route bevorzugt?"); }
+}
+qst.setProperty("code", "r3A");
+send qst;
+
+
+qst = new question("choice", 9993);
+qst.setProperty("text", label+"E tra i seguenti, per quali motivi hai preferito questo itinerario? (Minimo 3, massimo 5)");
+switch(lingua)
+{
+//SPAGNOLO
+case 2:{ qst.setProperty("text", label+"Y entre los siguientes, ¿por qué motivos has preferido este itinerario? (Mínimo 3, máximo 5)"); }
+//FRANCESE
+case 3:{ qst.setProperty("text", label+"Et parmi les suivants, pour quelles raisons avez-vous préféré cet itinéraire ? (Minimum 3, maximum 5)"); }
+case 4:{ qst.setProperty("text", label+"Und aus den folgenden Gründen: Aus welchen haben Sie diese Route bevorzugt? (Mindestens 3, maximal 5)"); }
+}
+qst.setProperty("code", "r3bA");
+qst.setProperty("show_rand", true);
+vector q9993_opts = new vector {
+"Offre le destinazioni più belle",
+"Offre destinazioni interessanti, che non ho ancora visitato",
+"Offre destinazioni che mi incuriosiscono molto",
+"Offre destinazioni uniche, mai viste in altri itinerari",
+"E' più ricco, offre di più rispetto agli altri itinerari ",
+"Ha il giusto mix tra terra e mare",
+"Ha una durata adatta alle mie esigenze",
+"Mi dà la possibilità di visitare luoghi iconici",
+"E' nuovo, mai visto un itinerario del genere  ",
+"E' l'itinerario più adatto a me",
+"E' l'itinerario di maggior qualità",
+"E' quello che mi fa sognare di partire"
+};
+
+
+	vector q9993_opts_SPA = new vector {
+"Ofrece los destinos más bonitos",
+"Ofrece destinos interesantes que aún no he visitado",
+"Ofrece destinos que me generan mucha curiosidad",
+"Ofrece destinos únicos, nunca vistos en otros itinerarios",
+"Es más completo, ofrece más que los otros itinerarios",
+"Ofrece el equilibrio adecuado entre tierra y mar",
+"Tiene una duración adecuada a mis necesidades",
+"Me da la posibilidad de visitar lugares icónicos",
+"Es nuevo, nunca he visto un itinerario de este tipo",
+"Es el itinerario más adecuado para mí",
+"Es el itinerario de mayor calidad",
+"Es el que me hace soñar con partir"
+	};	
+	vector q9993_opts_FRA = new vector {
+"Offre les plus belles destinations",
+"Offre des destinations intéressantes que je n’ai pas encore visitées",
+"Offre des destinations qui m’intriguent beaucoup",
+"Offre des destinations uniques, jamais vues dans d’autres itinéraires",
+"Il est plus riche, il offre davantage que les autres itinéraires",
+"Il offre le juste équilibre entre terre et mer",
+"Elle a une durée adaptée à mes besoins",
+"Me donne la possibilité de visiter des lieux emblématiques",
+"Il est nouveau, je n’ai jamais vu un itinéraire de ce type",
+"C’est l’itinéraire le plus adapté à moi",
+"C’est l’itinéraire de la plus haute qualité",
+"C’est celui qui me fait rêver de partir"
+	};		
+	vector q9993_opts_GER = new vector {
+"Bietet die schönsten Reiseziele",
+"Bietet interessante Reiseziele, die ich noch nicht besucht habe",
+"Bietet Reiseziele, die mich sehr neugierig machen",
+"Bietet einzigartige Reiseziele, die in anderen Routen nie vorkamen",
+"Er ist umfangreicher und bietet mehr als die anderen Routen",
+"Bietet die richtige Balance zwischen Land und Meer",
+"Sie hat eine Dauer, die meinen Bedürfnissen entspricht",
+"Gibt mir die Möglichkeit, ikonische Orte zu besuchen",
+"Er ist neu, eine solche Route habe ich noch nie gesehen",
+"Es ist die für mich am besten geeignete Route",
+"Es ist die Route mit der höchsten Qualität",
+"Es ist die Route, die mich vom Aufbrechen träumen lässt"
+	};	
+
+qst.setProperty("options", q9993_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q9993_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q9993_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q9993_opts_GER); }  
+	}	
+
+qst.setProperty("selection", "multiple");
+qst.setProperty("extras", "{min:3, max:5}");
+send qst;
+
+
+	}
+
+
+if (cella==2){
+	// Q250: CHOICE
+	qst = new question("choice", 9994);
+	qst.setProperty("text", ChoiceModerna+"<b>E tra questi due specifici <b>itinerari</b>, puoi dirci quale preferisci?<div>Scorri tutte le immagini e rileggile attentamente prima di fare la tua scelta.</div></b>");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", ChoiceModerna+"<b>Y entre estos dos itinerarios específicos, ¿puedes decirnos cuál prefieres?</b>"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", ChoiceModerna+"<b>Et parmi ces deux itinéraires spécifiques, pouvez-vous nous dire lequel vous préférez ?</b>"); }
+	case 4:{ qst.setProperty("text", ChoiceModerna+"<b>Und unter diesen beiden spezifischen Routen: Können Sie uns sagen, welche Sie bevorzugen?</b>"); }
+	}		
+	qst.setProperty("code", "r1B");
+	qst.setProperty("show_rand", true);
+	vector q9994_opts = new vector {
+"Itinerario NEW ",
+"Itinerario BCK COSTA"
+	};
+
+	    
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva12.JPG'  width='600px' alt='' /></div>";
+		q9994_opts.set(0,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva14.JPG'  width='600px' alt='' /></div>";
+		q9994_opts.set(1,cmd);
+
+
+
+	qst.setProperty("options", q9994_opts);
+	
+
+	send qst;
+	selint=system.getProperty("ans9994");
+	label=q9994_opts.get(selint);	
+
+
+
+qst = new question("open", 9995);
+qst.setProperty("text", label+"<br>Per quali motivi hai preferito questo itinerario?");
+switch(lingua)
+{
+//SPAGNOLO
+case 2:{ qst.setProperty("text", label+"<br>¿Por qué motivos has preferido este itinerario?"); }
+//FRANCESE
+case 3:{ qst.setProperty("text", label+"<br>Pour quelles raisons avez-vous préféré cet itinéraire ?"); }
+case 4:{ qst.setProperty("text", label+"<br>Aus welchen Gründen haben Sie diese Route bevorzugt?"); }
+}
+qst.setProperty("code", "r3b");
+send qst;
+
+
+qst = new question("choice", 9996);
+qst.setProperty("text", label+"E tra i seguenti, per quali motivi hai preferito questo itinerario? (Minimo 3, massimo 5)");
+switch(lingua)
+{
+//SPAGNOLO
+case 2:{ qst.setProperty("text", label+"Y entre los siguientes, ¿por qué motivos has preferido este itinerario? (Mínimo 3, máximo 5)"); }
+//FRANCESE
+case 3:{ qst.setProperty("text", label+"Et parmi les suivants, pour quelles raisons avez-vous préféré cet itinéraire ? (Minimum 3, maximum 5)"); }
+case 4:{ qst.setProperty("text", label+"Und aus den folgenden Gründen: Aus welchen haben Sie diese Route bevorzugt? (Mindestens 3, maximal 5)"); }
+}
+qst.setProperty("code", "r3bb");
+qst.setProperty("show_rand", true);
+vector q9996_opts = new vector {
+"Offre le destinazioni più belle",
+"Offre destinazioni interessanti, che non ho ancora visitato",
+"Offre destinazioni che mi incuriosiscono molto",
+"Offre destinazioni uniche, mai viste in altri itinerari",
+"E' più ricco, offre di più rispetto agli altri itinerari ",
+"Ha il giusto mix tra terra e mare",
+"Ha una durata adatta alle mie esigenze",
+"Mi dà la possibilità di visitare luoghi iconici",
+"E' nuovo, mai visto un itinerario del genere  ",
+"E' l'itinerario più adatto a me",
+"E' l'itinerario di maggior qualità",
+"E' quello che mi fa sognare di partire"
+};
+
+
+	vector q9996_opts_SPA = new vector {
+"Ofrece los destinos más bonitos",
+"Ofrece destinos interesantes que aún no he visitado",
+"Ofrece destinos que me generan mucha curiosidad",
+"Ofrece destinos únicos, nunca vistos en otros itinerarios",
+"Es más completo, ofrece más que los otros itinerarios",
+"Ofrece el equilibrio adecuado entre tierra y mar",
+"Tiene una duración adecuada a mis necesidades",
+"Me da la posibilidad de visitar lugares icónicos",
+"Es nuevo, nunca he visto un itinerario de este tipo",
+"Es el itinerario más adecuado para mí",
+"Es el itinerario de mayor calidad",
+"Es el que me hace soñar con partir"
+	};	
+	vector q9996_opts_FRA = new vector {
+"Offre les plus belles destinations",
+"Offre des destinations intéressantes que je n’ai pas encore visitées",
+"Offre des destinations qui m’intriguent beaucoup",
+"Offre des destinations uniques, jamais vues dans d’autres itinéraires",
+"Il est plus riche, il offre davantage que les autres itinéraires",
+"Il offre le juste équilibre entre terre et mer",
+"Elle a une durée adaptée à mes besoins",
+"Me donne la possibilité de visiter des lieux emblématiques",
+"Il est nouveau, je n’ai jamais vu un itinéraire de ce type",
+"C’est l’itinéraire le plus adapté à moi",
+"C’est l’itinéraire de la plus haute qualité",
+"C’est celui qui me fait rêver de partir"
+	};		
+	vector q9996_opts_GER = new vector {
+"Bietet die schönsten Reiseziele",
+"Bietet interessante Reiseziele, die ich noch nicht besucht habe",
+"Bietet Reiseziele, die mich sehr neugierig machen",
+"Bietet einzigartige Reiseziele, die in anderen Routen nie vorkamen",
+"Er ist umfangreicher und bietet mehr als die anderen Routen",
+"Bietet die richtige Balance zwischen Land und Meer",
+"Sie hat eine Dauer, die meinen Bedürfnissen entspricht",
+"Gibt mir die Möglichkeit, ikonische Orte zu besuchen",
+"Er ist neu, eine solche Route habe ich noch nie gesehen",
+"Es ist die für mich am besten geeignete Route",
+"Es ist die Route mit der höchsten Qualität",
+"Es ist die Route, die mich vom Aufbrechen träumen lässt"
+	};	
+
+qst.setProperty("options", q9996_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q9996_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q9996_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q9996_opts_GER); }  
+	}	
+
+qst.setProperty("selection", "multiple");
+qst.setProperty("extras", "{min:3, max:5}");
+send qst;
+
+}
+
+
+
+
+
+if (cella==3){
+
+	for (int i=0,2)
+	{
+	if (i==0){ label="16"; }
+	if (i==1){ label="18"; }
+	if (i==2){ label="20"; }
+	qid=12000+i*100;
+	// Q250: CHOICE
+	qst = new question("choice", qid);
+	qst.setProperty("text", ChoiceModerna+"<b>E tra questi due specifici <b>itinerari</b>, puoi dirci quale preferisci?<div>Scorri tutte le immagini e rileggile attentamente prima di fare la tua scelta.</div></b>");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", ChoiceModerna+"<b>Y entre estos dos itinerarios específicos, ¿puedes decirnos cuál prefieres?</b>"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", ChoiceModerna+"<b>Et parmi ces deux itinéraires spécifiques, pouvez-vous nous dire lequel vous préférez ?</b>"); }
+	case 4:{ qst.setProperty("text", ChoiceModerna+"<b>Und unter diesen beiden spezifischen Routen: Können Sie uns sagen, welche Sie bevorzugen?</b>"); }
+	}	
+	qst.setProperty("code", "r1c."+i);
+	qst.setProperty("show_rand", true);
+	vector q12000_opts = new vector {
+"Itinerario NEW ",
+"Itinerario BCK COSTA"
+	};
+
+	    
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva"+label+".JPG'  width='600px' alt='' /></div>";
+		q12000_opts.set(0,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva22.JPG'  width='600px' alt='' /></div>";
+		q12000_opts.set(1,cmd);
+
+
+
+	qst.setProperty("options", q12000_opts);
+	
+
+	send qst;
+	}
+
+
+
+
+	if (lingua==1){
+		textordering1="Quale tra questi itinerari ti invoglia di più ad andare in crociera?";
+		textordering2="Perfetto! Ora scegli la tua n. {n}. preferita";
+		textordering3="Perfetto! Hai completato la classifica";
+		}
+
+if (lingua==2){
+    textordering1="¿Cuál de estos itinerarios te anima más a ir de crucero?";
+    textordering2="¡Perfecto! Ahora elige tu n.º {n} preferido";
+    textordering3="¡Perfecto! Has completado la clasificación";
+}
+
+if (lingua==3){
+    textordering1="Lequel de ces itinéraires vous donne le plus envie de partir en croisière ?";
+    textordering2="Parfait ! Choisissez maintenant votre n° {n} préféré";
+    textordering3="Parfait ! Vous avez complété le classement";
+}
+
+if (lingua==4){
+    textordering1="Welche dieser Reiserouten macht dir am meisten Lust auf eine Kreuzfahrt?";
+    textordering2="Perfekt! Wähle jetzt deine Nr. {n} bevorzugte Option";
+    textordering3="Perfekt! Du hast die Rangliste abgeschlossen";
+}
+
+
+
+
+OrderingModerno="<script> $(window).load(function(){ rankSmartInit({ strict_selection: false, copy: { headline_first: \""+textordering1+"\", headline_next_template: \""+textordering2+"\", headline_done: \""+textordering3+"\" } }); }); </script>";
+
+
+
+
+
+	// Q250: CHOICE
+	qst = new question("ordering", 13000);
+	qst.setProperty("text", OrderingModerno);	
+	qst.setProperty("code", "r2c");
+	qst.setProperty("show_rand", true);
+	vector q13000_opts = new vector {
+"NEW1",
+"NEW2",
+"NEW3",
+"BCK COSTA"
+	};
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva16.JPG'  width='600px' alt='' /></div>";
+		q13000_opts.set(0,cmd);
+
+		
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva18.JPG'  width='600px' alt='' /></div>";
+		q13000_opts.set(1,cmd);
+
+		
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva20.JPG'  width='600px' alt='' /></div>";
+		q13000_opts.set(2,cmd);
+
+		cmd="<div><img src='https://www.primisoft.com/fields/COS/R2602049/resources/"+folder+"/Diapositiva22.JPG'  width='600px' alt='' /></div>";
+		q13000_opts.set(3,cmd);
+
+
+
+	qst.setProperty("options", q13000_opts);
+	qst.setProperty("sel_count", 4);
+
+	qst.setProperty("strict_selection", true);
+	send qst;
+	selint=system.getProperty("ans13000_0");
+	label=q13000_opts.get(selint);
+
+
+
+qst = new question("open", 13001);
+qst.setProperty("text", label+"<br>Per quali motivi hai preferito questo itinerario?");
+switch(lingua)
+{
+//SPAGNOLO
+case 2:{ qst.setProperty("text", label+"<br>¿Por qué motivos has preferido este itinerario?"); }
+//FRANCESE
+case 3:{ qst.setProperty("text", label+"<br>Pour quelles raisons avez-vous préféré cet itinéraire ?"); }
+case 4:{ qst.setProperty("text", label+"<br>Aus welchen Gründen haben Sie diese Route bevorzugt?"); }
+}
+qst.setProperty("code", "R3c");
+send qst;
+
+
+qst = new question("choice", 13002);
+qst.setProperty("text", label+"E tra i seguenti, per quali motivi hai preferito questo itinerario? (Minimo 3, massimo 5)");
+switch(lingua)
+{
+//SPAGNOLO
+case 2:{ qst.setProperty("text", label+"Y entre los siguientes, ¿por qué motivos has preferido este itinerario? (Mínimo 3, máximo 5)"); }
+//FRANCESE
+case 3:{ qst.setProperty("text", label+"Et parmi les suivants, pour quelles raisons avez-vous préféré cet itinéraire ? (Minimum 3, maximum 5)"); }
+case 4:{ qst.setProperty("text", label+"Und aus den folgenden Gründen: Aus welchen haben Sie diese Route bevorzugt? (Mindestens 3, maximal 5)"); }
+}
+qst.setProperty("code", "r3cb");
+vector q13002_opts = new vector {
+"Offre le destinazioni più belle",
+"Offre destinazioni interessanti, che non ho ancora visitato",
+"Offre destinazioni che mi incuriosiscono molto",
+"Offre destinazioni uniche, mai viste in altri itinerari",
+"E' più ricco, offre di più rispetto agli altri itinerari ",
+"Ha il giusto mix tra terra e mare",
+"Ha una durata adatta alle mie esigenze",
+"Mi dà la possibilità di visitare luoghi iconici",
+"E' nuovo, mai visto un itinerario del genere  ",
+"E' l'itinerario più adatto a me",
+"E' l'itinerario di maggior qualità",
+"E' quello che mi fa sognare di partire"
+};
+
+
+	vector q13002_opts_SPA = new vector {
+"Ofrece los destinos más bonitos",
+"Ofrece destinos interesantes que aún no he visitado",
+"Ofrece destinos que me generan mucha curiosidad",
+"Ofrece destinos únicos, nunca vistos en otros itinerarios",
+"Es más completo, ofrece más que los otros itinerarios",
+"Ofrece el equilibrio adecuado entre tierra y mar",
+"Tiene una duración adecuada a mis necesidades",
+"Me da la posibilidad de visitar lugares icónicos",
+"Es nuevo, nunca he visto un itinerario de este tipo",
+"Es el itinerario más adecuado para mí",
+"Es el itinerario de mayor calidad",
+"Es el que me hace soñar con partir"
+	};	
+	vector q13002_opts_FRA = new vector {
+"Offre les plus belles destinations",
+"Offre des destinations intéressantes que je n’ai pas encore visitées",
+"Offre des destinations qui m’intriguent beaucoup",
+"Offre des destinations uniques, jamais vues dans d’autres itinéraires",
+"Il est plus riche, il offre davantage que les autres itinéraires",
+"Il offre le juste équilibre entre terre et mer",
+"Elle a une durée adaptée à mes besoins",
+"Me donne la possibilité de visiter des lieux emblématiques",
+"Il est nouveau, je n’ai jamais vu un itinéraire de ce type",
+"C’est l’itinéraire le plus adapté à moi",
+"C’est l’itinéraire de la plus haute qualité",
+"C’est celui qui me fait rêver de partir"
+	};		
+	vector q13002_opts_GER = new vector {
+"Bietet die schönsten Reiseziele",
+"Bietet interessante Reiseziele, die ich noch nicht besucht habe",
+"Bietet Reiseziele, die mich sehr neugierig machen",
+"Bietet einzigartige Reiseziele, die in anderen Routen nie vorkamen",
+"Er ist umfangreicher und bietet mehr als die anderen Routen",
+"Bietet die richtige Balance zwischen Land und Meer",
+"Sie hat eine Dauer, die meinen Bedürfnissen entspricht",
+"Gibt mir die Möglichkeit, ikonische Orte zu besuchen",
+"Er ist neu, eine solche Route habe ich noch nie gesehen",
+"Es ist die für mich am besten geeignete Route",
+"Es ist die Route mit der höchsten Qualität",
+"Es ist die Route, die mich vom Aufbrechen träumen lässt"
+	};	
+
+qst.setProperty("options", q13002_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q13002_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q13002_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q13002_opts_GER); }  
+	}	
+
+qst.setProperty("selection", "multiple");
+qst.setProperty("extras", "{min:3, max:5}");
+send qst;
+
+}
+
+
+
+qst = new question("concept", 18000);
+qst.setProperty("text", "Ti mostreremo ora un elenco di destinazioni per una crociera "+intromod+" sulle quali vorremmo avere la tua opinione.");
+switch(lingua)
+{
+//SPAGNOLO
+case 2:{ qst.setProperty("text", "Ahora te mostraremos una lista de destinos para un crucero por "+intromod+", sobre los cuales nos gustaría conocer tu opinión."); }
+//FRANCESE
+case 3:{ qst.setProperty("text", "Nous allons maintenant vous présenter une liste de destinations pour une croisière "+intromod+", sur lesquelles nous aimerions connaître votre opinion."); }
+case 4:{ qst.setProperty("text", "Nun zeigen wir Ihnen eine Liste von Reisezielen für eine Kreuzfahrt "+intromod+", zu denen wir gerne Ihre Meinung erfahren möchten."); }
+}
+send qst;
+
+	vector q7_ita_leg1 = new vector {
+"Savona - Ita ",
+"Marsiglia - Fra",
+"Barcelona  - Spa",
+"Palermo - Ita ",
+"Napoli - Ita ",
+"Roma-Civitavecchia - Ita ",
+"Palma di Maiorca - Spa",
+"Firenze-La Spezia - Ita ",
+"Costiera Amalfitana-Salerno - Ita ",
+"St. Tropez- La Seyne sur Mer - Fra",
+"Tunisi - La Goulette - Tun",
+"Messina-Taormina - Ita ",
+"Malta - La Valletta - Mal",
+"Portofino-Genova - Ita ",
+"#sh1",
+"#sh2",
+"In navigazione tra cielo e mare"
+	};
+
+	vector q7_ita_leg2 = new vector {
+"La Romana (Rep. Domenicana)",
+"Isola di Catalina (Rep. Domenicana)",
+"Kralendijk (Bonaire)",
+"Willemstad (Curaçao)",
+"Oranjestad (Aruba)",
+"Santa Marta (Colombia)",
+"Cartagena (Colombia)",
+"Colon (Panama)",
+"Puerto Limon (Costa Rica)",
+"Port Royal (Jamaica)",
+"Cabo Rojo (Rep. Domenicana)",
+"St. Lucia (Castries)",
+"Barbados (Bridgetown)",
+"Guadalupe (Pointe-a-Pitre)",
+"St. Kitts (Basseterre)",
+"Tortola (Isole Vergini)",
+"In navigazione tra cielo e mare"
+	};
+
+	vector q7_ita_leg3 = new vector {
+"La Romana (Rep. Domenicana)",
+"Isola di Catalina (Rep. Domenicana)",
+"Kralendijk (Bonaire)",
+"Willemstad (Curaçao)",
+"Oranjestad (Aruba)",
+"Santa Marta (Colombia)",
+"Cartagena (Colombia)",
+"Colon (Panama)",
+"Puerto Limon (Costa Rica)",
+"Port Royal (Jamaica)",
+"Cabo Rojo (Rep. Domenicana)",
+"St. Lucia (Castries)",
+"Barbados (Bridgetown)",
+"Guadalupe (Pointe-a-Pitre)",
+"St. Kitts (Basseterre)",
+"Tortola (Isole Vergini)",
+"In navigazione tra cielo e mare "
+	};	
+
+
+	vector q7_fra_leg1 = new vector {
+"Savone (Italie)",
+"Marseille ",
+"Barcelone (Espagne)",
+"Palerme (Italie)",
+"Naples (Italie)",
+"Rome-Civitavecchia (Italie)",
+"Palma de Majorque (Espagne)",
+"Florence (La Spezia)",
+"Côte amalfitaine (Salerne)",
+"Saint-Tropez (La Seyne-sur-Mer)",
+"Tunis (La Goulette)",
+"Taormine (Messine)",
+"Malte - La Valette",
+"Portofino (Gênes)",
+"#sh1",
+"#sh2",
+"Navigation entre ciel et mer"
+	};
+
+	vector q7_fra_leg2 = new vector {
+"La Romana (Rép. dominicaine)",
+"Île de Catalina (Rép. dominicaine)",
+"Kralendijk (Bonaire)",
+"Willemstad (Curaçao)",
+"Oranjestad (Aruba)",
+"Santa Marta (Colombie)",
+"Carthagène (Colombie)",
+"Colón (Panama)",
+"Puerto Limón (Costa Rica)",
+"Port Royal (Jamaïque)",
+"Cabo Rojo (Rép. dominicaine)",
+"Sainte-Lucie (Castries)",
+"Barbade (Bridgetown)",
+"Guadeloupe (Pointe-à-Pitre)",
+"Saint-Christophe (Basseterre)",
+"Tortola (Îles Vierges)",
+"Navigation, entre ciel et mer"
+	};
+
+	vector q7_fra_leg3 = new vector {
+"La Romana (Rép. dominicaine)",
+"Île de Catalina (Rép. dominicaine)",
+"Kralendijk (Bonaire)",
+"Willemstad (Curaçao)",
+"Oranjestad (Aruba)",
+"Santa Marta (Colombie)",
+"Carthagène (Colombie)",
+"Colón (Panama)",
+"Puerto Limón (Costa Rica)",
+"Port Royal (Jamaïque)",
+"Cabo Rojo (Rép. dominicaine)",
+"Sainte-Lucie (Castries)",
+"Barbade (Bridgetown)",
+"Guadeloupe (Pointe-à-Pitre)",
+"Saint-Christophe (Basseterre)",
+"Tortola (Îles Vierges)",
+"Navigation, entre ciel et mer"
+	};	
+
+
+
+	vector q7_spa_leg1 = new vector {
+"Savona (Italia)",
+"Marsella (Francia)",
+"Barcelona ",
+"Palermo (Italia)",
+"Nápoles (Italia)",
+"Roma-Civitavecchia (Italia)",
+"Palma de Mallorca",
+"Florencia (La Spezia)",
+"Costa Amalfitana (Salerno)",
+"St. Tropez (La Seyne sur Mer",
+"Túnez (La Goleta) ",
+"Taormina (Mesina)",
+"Malta - La Valeta",
+"Portofino (Génova)",
+"#sh1",
+"#sh2",
+"Navegando entre el cielo y el mar"
+	};
+
+	vector q7_spa_leg2 = new vector {
+"La Romana (Rep. Dominicana)",
+"Isla de Catalina (Rep. Dominicana)",
+"Kralendijk (Bonaire)",
+"Willemstad (Curazao)",
+"Oranjestad (Aruba)",
+"Santa Marta (Colombia)",
+"Cartagena (Colombia)",
+"Colón (Panamá)",
+"Puerto Limón (Costa Rica)",
+"Port Royal (Jamaica)",
+"Cabo Rojo (Rep. Dominicana)",
+"St. Lucía (Castries)",
+"Barbados (Bridgetown)",
+"Guadalupe (Pointe-à-Pitre)",
+"San Cristóbal y Nieves (Basseterre)",
+"Tórtola (Islas Vírgenes)",
+"Navegando entre el cielo y el mar"
+	};
+
+	vector q7_spa_leg3 = new vector {
+"La Romana (Rep. Dominicana)",
+"Isla de Catalina (Rep. Dominicana)",
+"Kralendijk (Bonaire)",
+"Willemstad (Curazao)",
+"Oranjestad (Aruba)",
+"Santa Marta (Colombia)",
+"Cartagena (Colombia)",
+"Colón (Panamá)",
+"Puerto Limón (Costa Rica)",
+"Port Royal (Jamaica)",
+"Cabo Rojo (Rep. Dominicana)",
+"St. Lucía (Castries)",
+"Barbados (Bridgetown)",
+"Guadalupe (Pointe-à-Pitre)",
+"San Cristóbal y Nieves (Basseterre)",
+"Tórtola (Islas Vírgenes)",
+"Navegando entre el cielo y el mar"
+	};	
+
+
+
+
+	vector q7_ger_leg1 = new vector {
+"Savona (Italien)",
+"Marseille (Frankreich)",
+"Barcelona (Spanien)",
+"Palermo (Italien)",
+"Neapel (Italien)",
+"Rom-Civitavecchia (Italien)",
+"Palma de Mallorca",
+"Florenz (La Spezia)",
+"Amalfiküste (Salerno)",
+"Saint-Tropez (La Seyne sur Mer)",
+"Tunis (La Goulette) ",
+"Taormina (Messina)",
+"Malta - Valletta",
+"Portofino (Genua)",
+"#sh1",
+"#sh2",
+"Auf See zwischen Himmel und Meer"
+	};
+
+	vector q7_ger_leg2 = new vector {
+"La Romana (Dominikanische Republik)",
+"Isla Catalina (Dominikanische Republik)",
+"Kralendijk (Bonaire)",
+"Willemstad (Curaçao)",
+"Oranjestad (Aruba)",
+"Santa Marta (Kolumbien)",
+"Cartagena (Kolumbien)",
+"Colón (Panama)",
+"Puerto Limón (Costa Rica)",
+"Port Royal (Jamaika)",
+"Cabo Rojo (Dominikanische Republik)",
+"St. Lucia (Castries)",
+"Barbados (Bridgetown)",
+"Guadeloupe (Pointe-a-Pitre)",
+"St. Kitts (Basseterre)",
+"Tortola (Britische Jungferninseln)",
+"Auf See zwischen Himmel und Meer"
+	};
+
+	vector q7_ger_leg3 = new vector {
+"La Romana (Dominikanische Republik)",
+"Isla Catalina (Dominikanische Republik)",
+"Kralendijk (Bonaire)",
+"Willemstad (Curaçao)",
+"Oranjestad (Aruba)",
+"Santa Marta (Kolumbien)",
+"Cartagena (Kolumbien)",
+"Colón (Panama)",
+"Puerto Limón (Costa Rica)",
+"Port Royal (Jamaika)",
+"Cabo Rojo (Dominikanische Republik)",
+"St. Lucia (Castries)",
+"Barbados (Bridgetown)",
+"Guadeloupe (Pointe-a-Pitre)",
+"St. Kitts (Basseterre)",
+"Tortola (Britische Jungferninseln)",
+"Auf See zwischen Himmel und Meer"
+	};	
+
+
+
+
+
+	if (lingua==1){
+		textordering1="Quale destinazione di terra ti piace di più?";
+		textordering2="Perfetto! Ora scegli la tua n. {n}. preferita";
+		textordering3="Perfetto! Hai completato la classifica";
+		}
+
+if (lingua==2){
+    textordering1="¿Qué destino de tierra te gusta más?";
+    textordering2="¡Perfecto! Ahora elige tu n.º {n} preferido";
+    textordering3="¡Perfecto! Has completado la clasificación";
+}
+
+if (lingua==3){
+    textordering1="Quelle destination terrestre préférez-vous ?";
+    textordering2="Parfait ! Choisissez maintenant votre n° {n} préféré";
+    textordering3="Parfait ! Vous avez complété le classement";
+}
+
+if (lingua==4){
+    textordering1="Welches Reiseziel an Land gefällt dir am besten?";
+    textordering2="Perfekt! Wähle jetzt deine Nr. {n} bevorzugte Option";
+    textordering3="Perfekt! Du hast die Rangliste abgeschlossen";
+}
+
+
+	OrderingModerno=" <script> $(window).load(function(){ rankSmartInit({ show_slots: false,columns: 3,text_density: \"compact\",strict_selection: false, copy: { headline_first: '"+textordering1+"', headline_next_template: '"+textordering2+"', headline_done: '"+textordering3+"' } }); }); </script>";
+
+
+	qst = new question("ordering", 15000);
+	qst.setProperty("text", OrderingModerno);	
+	qst.setProperty("code", "q7");
+	qst.setProperty("show_rand", true);
+	vector q15000_opts = new vector {
+"1",
+"2",
+"3",
+"4",
+"5",
+"6",
+"7",
+"8",
+"9",
+"10",
+"11",
+"12",
+"13",
+"14",
+"15",
+"16",
+"17"
+	};
+qst.setProperty("options", q15000_opts);
+if (lingua==1)
+{
+	if (cella==1){
+		qst.setProperty("options", q7_ita_leg1);
+	}
+	if (cella==2){
+		qst.setProperty("options", q7_ita_leg2);
+	}
+	if (cella==3){
+		qst.setProperty("options", q7_ita_leg3);
+	}
+}
+
+if (lingua==2)
+{
+	if (cella==1){
+		qst.setProperty("options", q7_spa_leg1);
+	}
+	if (cella==2){
+		qst.setProperty("options", q7_spa_leg2);
+	}
+	if (cella==3){
+		qst.setProperty("options", q7_spa_leg3);
+	}
+}
+
+
+if (lingua==3)
+{
+	if (cella==1){
+		qst.setProperty("options", q7_fra_leg1);
+	}
+	if (cella==2){
+		qst.setProperty("options", q7_fra_leg2);
+	}
+	if (cella==3){
+		qst.setProperty("options", q7_fra_leg3);
+	}
+}
+
+if (lingua==4)
+{
+	if (cella==1){
+		qst.setProperty("options", q7_ger_leg1);
+	}
+	if (cella==2){
+		qst.setProperty("options", q7_ger_leg2);
+	}
+	if (cella==3){
+		qst.setProperty("options", q7_ger_leg3);
+	}
+}
+
+	
+	qst.setProperty("sel_count", 5);
+	qst.setProperty("strict_selection", true);
+	send qst;
+
+
+
+
+
+
+
+
+
+
+
+	vector q8_ita_leg1 = new vector {
+"Mar Mediterraneo darkest spot–Sea of stars",
+"Palma bay, Jungle party",
+"Capri bay, Tramonto tra i Faraglioni",
+"Stromboli bay, La scìara del fuoco",
+"Tunis Gulf, tramonto sulla baia di Tunisi"
+	};
+
+	vector q8_ita_leg2 = new vector {
+"Catalina Bay, Sea party",
+"Mare dei Caraibi darkest spot– sea of stars",
+"Guadalupe Bay",
+"Kingston Bay",
+"#sh1"
+	};
+
+	vector q8_ita_leg3 = new vector {
+"Catalina Bay, Sea party",
+"Mare dei Caraibi darkest spot– sea of stars",
+"Guadalupe Bay",
+"Kingston Bay",
+"#sh1"
+	};	
+
+
+	vector q8_fra_leg1 = new vector {
+"Mer Méditerranée – Mer étoilée",
+"Baie de Palma, Jungle party",
+"Baie de Capri, coucher du soleil entre les Faraglioni",
+"Baie de Stromboli, La Scìara del Fuoco",
+"Golfe de Tunis, coucher de soleil sur la baie de Tunis"
+	};
+
+	vector q8_fra_leg2 = new vector {
+"Baie de Catalina, Sea party",
+"Mer des Caraïbes – Mer étoilée",
+"Baie de la Guadeloupe",
+"Baie de Kingston",
+"#sh1"
+	};
+
+	vector q8_fra_leg3 = new vector {
+"Baie de Catalina, Sea party",
+"Mer des Caraïbes – Mer étoilée",
+"Baie de la Guadeloupe",
+"Baie de Kingston",
+"#sh1"
+	};	
+
+
+
+	vector q8_spa_leg1 = new vector {
+"Mar Mediterráneo –Mar de Estrellas",
+"Bahía de Palma, Jungle Party",
+"Bahía de Capri, puesta de sol entre los Faraglioni",
+"Bahía de Stromboli, La scìara del fuoco",
+"Golfo de Túnez, puesta de sol sobre la bahía de Túnez"
+	};
+
+	vector q8_spa_leg2 = new vector {
+"Bahía de Catalina, Sea party",
+"Mar del Caribe – Mar de Estrellas",
+"Bahía de Guadalupe",
+"Bahía de Kingston",
+"#sh1"
+	};
+
+	vector q8_spa_leg3 = new vector {
+"Bahía de Catalina, Sea party",
+"Mar del Caribe – Mar de Estrellas",
+"Bahía de Guadalupe",
+"Bahía de Kingston",
+"#sh1"
+	};	
+
+
+
+
+	vector q8_ger_leg1 = new vector {
+"Mittelmeer –Meer der Sterne",
+"Bucht von Palma, Jungle Party",
+"Bucht von Capri, Sonnenuntergang über den Faraglioni",
+"Bucht von Stromboli, Der Sciara del Fuoco",
+"Golf von Tunis, Sonnenuntergang über der Bucht von Tunis"
+	};
+
+	vector q8_ger_leg2 = new vector {
+"Bucht von Catalina, Sea party",
+"Karibisches Meer – Meer der Sterne",
+"Bucht von Guadeloupe",
+"Bucht von Kingston",
+"#sh1"
+	};
+
+	vector q8_ger_leg3 = new vector {
+"Bucht von Catalina, Sea party",
+"Karibisches Meer – Meer der Sterne",
+"Bucht von Guadeloupe",
+"Bucht von Kingston",
+"#sh1"
+	};	
+
+
+
+
+
+
+
+
+	if (lingua==1){
+		textordering1="Quale destinazione di mare ti piace di più?";
+		textordering2="Perfetto! Ora scegli la tua n. {n}. preferita";
+		textordering3="Perfetto! Hai completato la classifica";
+		}
+
+if (lingua==2){
+    textordering1="¿Qué destino de mar te gusta más?";
+    textordering2="¡Perfecto! Ahora elige tu n.º {n} preferido";
+    textordering3="¡Perfecto! Has completado la clasificación";
+}
+
+if (lingua==3){
+    textordering1="Quelle destination de mer préférez-vous ?";
+    textordering2="Parfait ! Choisissez maintenant votre n° {n} préféré";
+    textordering3="Parfait ! Vous avez complété le classement";
+}
+
+if (lingua==4){
+    textordering1="Welches Reiseziel am Meer gefällt dir am besten?";
+    textordering2="Perfekt! Wähle jetzt deine Nr. {n} bevorzugte Option";
+    textordering3="Perfekt! Du hast die Rangliste abgeschlossen";
+}
+
+
+
+	OrderingModerno=" <script> $(window).load(function(){ rankSmartInit({ show_slots: false,columns: 3,text_density: \"compact\",strict_selection: false, copy: { headline_first: '"+textordering1+"', headline_next_template: '"+textordering2+"', headline_done: '"+textordering3+"' } }); }); </script>";
+
+
+
+
+	qst = new question("ordering", 15001);
+	qst.setProperty("text", OrderingModerno);
+	qst.setProperty("code", "q8");
+	qst.setProperty("show_rand", true);
+	vector q15001_opts = new vector {
+"1",
+"2",
+"3",
+"4",
+"5",
+"6",
+"7",
+"8",
+"9",
+"10",
+"11",
+"12",
+"13",
+"14",
+"15",
+"16",
+"17"
+	};
+qst.setProperty("options", q15001_opts);
+if (lingua==1)
+{
+	if (cella==1){
+		qst.setProperty("options", q8_ita_leg1);
+	}
+	if (cella==2){
+		qst.setProperty("options", q8_ita_leg2);
+	}
+	if (cella==3){
+		qst.setProperty("options", q8_ita_leg3);
+	}
+}
+
+if (lingua==2)
+{
+	if (cella==1){
+		qst.setProperty("options", q8_spa_leg1);
+	}
+	if (cella==2){
+		qst.setProperty("options", q8_spa_leg2);
+	}
+	if (cella==3){
+		qst.setProperty("options", q8_spa_leg3);
+	}
+}
+
+
+if (lingua==3)
+{
+	if (cella==1){
+		qst.setProperty("options", q8_fra_leg1);
+	}
+	if (cella==2){
+		qst.setProperty("options", q8_fra_leg2);
+	}
+	if (cella==3){
+		qst.setProperty("options", q8_fra_leg3);
+	}
+}
+
+if (lingua==4)
+{
+	if (cella==1){
+		qst.setProperty("options", q8_ger_leg1);
+	}
+	if (cella==2){
+		qst.setProperty("options", q8_ger_leg2);
+	}
+	if (cella==3){
+		qst.setProperty("options", q8_ger_leg3);
+	}
+}
+
+	
+	qst.setProperty("sel_count", 2);
+	qst.setProperty("strict_selection", true);
+	send qst;
+
+
+
+
+
+	// Q260: CHOICE
+	qst = new question("choice", 260);
+	qst.setProperty("text", "Quante persone ci sono in famiglia? (incluso te)");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "¿Cuántas personas componen su núcleo familiar? (incluyendo a usted mismo)"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "De combien de personnes se compose votre famille ? (y compris vous-même) "); }
+	case 4:{ qst.setProperty("text", "Wie viele Personen sind in Ihrer Familie? (Sie inbegriffen) "); }
+	}		
+	qst.setProperty("code", "dd1");
+	qst.setProperty("show_rand", false);
+	vector q260_opts = new vector {
+		"1 persona",
+		"2 persone",
+		"3 persone",
+		"4 persone",
+		"5 persone",
+		"6 persone",
+		"7 + persone"
+	};
+	vector q260_opts_SPA = new vector {
+"1 persona",
+"2 personas",
+"3 personas",
+"4 personas",
+"5 personas",
+"6 personas",
+"7 + personas"
+	};	
+	vector q260_opts_FRA = new vector {
+"1 personne",
+"2 personnes",
+"3 personnes",
+"4 personnes",
+"5 personnes",
+"6 personnes",
+"7 + personnes"
+	};	
+	vector q260_opts_GER = new vector {
+"1 Person",
+"2 Personen",
+"3 Personen",
+"4 Personen",
+"5 Personen",
+"6 Personen",
+"7 + Personen"
+	};		
+	qst.setProperty("options", q260_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q260_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q260_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q260_opts_GER); }  
+	}		
+	send qst;
+
+
+	// Q270: CHOICE
+	qst = new question("choice", 270);
+	qst.setProperty("text", "Hai figli minori di 18 anni?");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "¿Tiene hijos menores de 18 años?"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Avez-vous des enfants de moins de 18 ans ?  "); }
+	case 4:{ qst.setProperty("text", "Haben Sie Kinder unter 18 Jahren?"); }
+	}		
+	qst.setProperty("code", "dd2");
+	qst.setProperty("show_rand", false);
+	vector q270_opts = new vector {
+		"Si",
+		"No"
+	};
+	vector q270_opts_SPA = new vector {
+		"Si",
+		"No"
+	};	
+	vector q270_opts_FRA = new vector {
+		"Oui",
+		"Non"
+	};	
+	vector q270_opts_GER = new vector {
+		"Ja",
+		"Nein"
+	};	
+	qst.setProperty("options", q270_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q270_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q270_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q270_opts_GER); }  //FRA
+	}			
+	send qst;
+	selint=system.getProperty("ans270");
+
+	if (selint==0)
+	{
+	// Q280: CHOICE
+	qst = new question("choice", 280);
+	qst.setProperty("text", "E precisamente quanti figli di meno di 18 anni hai?");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "Y, precisamente, ¿cuántos hijos menores de 18 años tiene?"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Combien d’enfants de moins de 18 ans avez-vous exactement ? "); }
+	case 4:{ qst.setProperty("text", "Wie viele Kinder unter 18 Jahren haben Sie?"); }
+	}		
+	qst.setProperty("code", "dd2a");
+	qst.setProperty("show_rand", false);
+	vector q280_opts = new vector {
+		"Uno",
+		"Due",
+		"Tre",
+		"Quattro",
+		"Cinque",
+		"Sei",
+		"Più di sei"
+	};
+	vector q280_opts_SPA = new vector {
+"Uno",
+"Dos",
+"Tres",
+"Cuatro",
+"Cinco ",
+"Seis",
+"Más de seis"
+	};	
+	vector q280_opts_FRA = new vector {
+"Un",
+"Deux",
+"Trois",
+"Quatre",
+"Cinq ",
+"Six",
+"Plus de six"
+	};	
+	vector q280_opts_GER = new vector {
+"Eins",
+"Zwei",
+"Drei",
+"Vier",
+"Fünf",
+"Sechs",
+"Mehr als sechs"
+	};		
+	qst.setProperty("options", q280_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q280_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q280_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q280_opts_GER); }  
+	}			
+	send qst;
+	}
+
+
+	// Q290: CHOICE
+	qst = new question("choice", 290);
+	qst.setProperty("text", "Qual è il tuo titolo di studio?");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "¿Qué título de estudio posee?"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Quel est votre niveau d'études ?  "); }
+	case 4:{ qst.setProperty("text", "Welchen Bildungsabschluss haben Sie? "); }
+	}		
+	qst.setProperty("code", "dd3");
+	qst.setProperty("show_rand", false);
+	vector q290_opts = new vector {
+		"Nessun titolo/Licenza elementare",
+		"Licenza media inferiore",
+		"Licenza media superiore",
+		"Laurea",
+		"Master post laurea/dottorato"
+	};
+	vector q290_opts_SPA = new vector {
+"Ningún título/Graduado en educación primaria",
+"Graduado en educación secundaria obligatoria",
+"Graduado en educación secundaria postobligatoria",
+"Grado",
+"Máster de posgrado /doctorado"
+	};
+	vector q290_opts_FRA = new vector {
+"Aucun diplôme /Certificat d'études primaires",
+"BEPC, Brevet des collèges",
+"Baccalauréat",
+"Maîtrise",
+"Master / Doctorat"
+	};	
+	vector q290_opts_GER = new vector {
+"Keinen/Volksschule",
+"Realschule",
+"Höhere Schule",
+"Hochschulabschluss",
+"Postgradualer Masterstudiengang/Doktorat"
+	};		
+	qst.setProperty("options", q290_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q290_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q290_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q290_opts_GER); }  //FRA
+	}		
+	send qst;
+
+
+	// Q300: CHOICE
+	qst = new question("choice", 300);
+	qst.setProperty("text", "Qual è la tua attuale professione?");
+	switch(lingua)
+	{
+	//SPAGNOLO
+	case 2:{ qst.setProperty("text", "¿Cuál es su profesión actual?"); }
+	//FRANCESE
+	case 3:{ qst.setProperty("text", "Quelle est votre profession actuelle ?  "); }
+	case 4:{ qst.setProperty("text", "Welchen Beruf über Sie zurzeit aus?"); }
+	}		
+	qst.setProperty("code", "dd4");
+	qst.setProperty("show_rand", false);
+	vector q300_opts = new vector {
+		"Dirigente/Libero professionista/Imprenditore",
+		"Insegnante",
+		"Impiegato/Quadro",
+		"Operaio/Bracciante",
+		"Rappresentante/Commerciante/Negoziante",
+		"Artigiano/Lavoratore autonomo",
+		"Casalinga",
+		"Studente/ssa",
+		"In cerca di prima occupazione/Disoccupato/a",
+		"Pensionato/a"
+	};
+	vector q300_opts_SPA = new vector {
+"Directivo/Profesional/Empresario",
+"Profesor",
+"Empleado/Jefe de plantilla",
+"Obrero/Bracero",
+"Representante/Comerciante/Negociante",
+"Artesano/Trabajador autónomo",
+"Ama de casa",
+"Estudiante",
+"En busca de primer empleo/Desocupado/a",
+"Jubilado/a"
+	};	
+	vector q300_opts_FRA = new vector {
+"Dirigeant/Professionnel libéral/Entrepreneur",
+"Enseignant",
+"Employé/Cadre",
+"Ouvrier/Ouvrier agricole",
+"Représentant/Commerçant",
+"Artisan/Indépendant",
+"Femme au foyer",
+"Étudiant(e)",
+"À la recherche d'un premier emploi/Sans emploi",
+"Retraité(e)"
+	};	
+	vector q300_opts_GER = new vector {
+"Leitender Angestellter/Freiberufler/Unternehmer",
+"Lehrer",
+"Angestellter/Beamter",
+"Arbeiter/Tagelöhner",
+"Vertreter/Händler/Geschäftsbetreiber",
+"Handwerker/selbstständiger Unternehmer",
+"Hausfrau",
+"Student/in",
+"Auf der Suche nach der ersten Anstellung/Arbeitslos",
+"Rentner/in"
+	};		
+	qst.setProperty("options", q300_opts);
+	switch(lingua)
+	{
+	case 2:{ qst.setProperty("options", q300_opts_SPA); }  //SPA
+	case 3:{ qst.setProperty("options", q300_opts_FRA); }  //FRA
+	case 4:{ qst.setProperty("options", q300_opts_GER); }  //FRA
+	}		
+	send qst;
+
+
+
+}

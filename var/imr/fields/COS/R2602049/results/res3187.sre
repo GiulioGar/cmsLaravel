@@ -1,0 +1,37 @@
+2.0;COS;R2602049;3187;IDEXNOBLFXOAGDZKF60628;19/02/2026 14:23:36 CET;<unknown>;0;0;60;rtr=11;Svar1=14;sysSID=R2602049;Svar0=12;rtrLan=4;rotazioneIdee=1;sysUID=IDEXNOBLFXOAGDZKF60628;rr=0;lan=4;sysPRJ=COS;cella=1;r9=2;r8=4;r7=1;pan=4;r6=1;r5=4;r12=0;r4=3;r11=0;sysIID=3187;r3=9;r10=1;r2=4;r1=3;r0=12;cel=2;lang=de
+concept;10
+choice;20;2;0
+choice;28;4;3
+choice;30;2;1
+open;50;56
+choice;60;4;2
+choice;70;2;1
+choice;80;5;0
+choice;90;7;0000001;6
+concept;91
+concept;100
+ordering;101;4;0;1;-1;-1
+concept;2100
+scale;2102;1;10;9
+concept;2200
+scale;2202;1;10;9
+concept;5000
+scale;5006;1;10;9
+scale;5007;1;10;9
+choice;5012;5;1
+scale;5020;24;10;9;9;9;9;9;9;9;9;9;9;9;-1;-1;-1;-1;-1;-1;-1;9;9;-1;8;-1;9
+concept;5100
+scale;5106;1;10;9
+scale;5107;1;10;9
+choice;5112;5;1
+scale;5120;24;10;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;9;9;9;9;9;-1;-1;-1;-1;9;-1;-1;-1
+choice;9994;2;1
+open;9995;Der Strand und die Palmen
+choice;9996;12;100110100010;4
+ordering;15000;17;16;10;1;0;5;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1;-1
+ordering;15001;5;1;2;-1;-1;-1
+concept;18000
+concept;40000
+concept;40001
+choice;100001;16;7
+choice;100003;7;2

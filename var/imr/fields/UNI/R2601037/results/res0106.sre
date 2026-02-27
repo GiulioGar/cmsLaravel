@@ -1,0 +1,45 @@
+2.0;UNI;R2601037;106;GUEST;26/02/2026 15:45:50 CET;26/02/2026 16:09:35 CET;1425;3;440;debug=true;device=desktop;lang=it;sysIID=106;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=1;cella=0;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92015
+open;30;53
+choice;40;7;4
+choice;50;2;1
+choice;60;5;11000;0
+choice;70;5;00100;2
+choice;80;5;11000;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;1010110001110;9
+choice;130;13;0
+choice;160;10;7
+open;170;Ha una posizione strategica e un parcheggio molto ampio.
+open;180;Il centro è un po' dispersivo.
+choice;190;10;1111111110;0
+scale;200;10;10;7;8;9;7;8;8;7;7;8;-1
+scale;210;7;10;8;9;9;9;8;8;8
+scale;240;13;10;8;8;9;8;8;8;8;8;7;8;7;8;8
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;Un vero e proprio salone di bellezza.
+scale;290;12;5;0;1;1;0;0;1;0;1;0;0;0;0
+open;300;Aggiungerei delle piccole fontane o giochi d’acqua per creare punti di sosta piacevoli.
+scale;310;13;5;0;0;1;0;1;0;-1;1;0;0;1;0;0
+ordering;311;11;0;4;3;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;0;1;2;3
+open;371;Vorrei che ci fosse un centro estetico, un salone che comprende tanti servizi dove potersi prendere cura di se stessi.
+choice;381;5;1
+choice;390;6;110010;0
+choice;392;6;0
+choice;394;7;0110100;1
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;3
+choice;440;5;00100;2
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

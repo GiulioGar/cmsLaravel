@@ -1,0 +1,41 @@
+2.0;UNI;R2601037;178;IDEXNOEXGCTUKPUQE100;26/02/2026 23:03:48 CET;26/02/2026 23:28:16 CET;1468;3;430;device=desktop;lang=it;sysIID=178;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=3;cella=2;pan=4;sysUID=IDEXNOEXGCTUKPUQE100
+choice;7;107;0
+concept;10
+open;30;69
+choice;40;7;6
+choice;50;2;1
+choice;70;5;10000;0
+choice;80;5;10000;0
+choice;90;6;5
+choice;100;3;0
+choice;120;13;1111010001010;5
+choice;130;13;2
+choice;160;10;7
+open;170;l'ampio parcheggio  le luci accoglienti all'interno del centro dando un senso di allegria  la disposizione dei vari negozi che offrono una buon rapporto qualità-prezzo. e il vario assortimento e accoglienza dei bar
+open;180;niente, mi va bene così
+choice;190;10;1111000100;0
+scale;200;10;10;7;6;7;6;-1;-1;-1;6;-1;-1
+scale;210;7;10;6;6;6;7;7;7;6
+scale;240;13;10;6;6;7;6;7;5;5;7;8;7;5;7;6
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;parrucchiere ed estetista
+scale;290;12;5;1;1;1;0;0;3;1;1;2;0;2;1
+open;300;manca una sala per accogliere i bambini con la presenza di una baby setter per aiutare i genitori più liberi di girare ed acquistare
+scale;310;13;5;1;1;1;2;0;0;-1;0;2;1;1;1;1
+ordering;311;11;9;0;10;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;1;2;3;0
+open;373;i negozi vanno bene così, l'allegria viene offerta dall'arredamento e dalle piante di fiori colorati
+choice;381;5;2
+choice;390;6;100000;0
+choice;392;6;0
+choice;394;7;1000110;5
+choice;400;5;1
+choice;410;6;5
+choice;430;5;0
+scale;5100;1;5;4
+scale;5200;1;5;3
+scale;5300;1;5;4
+scale;5400;1;5;1

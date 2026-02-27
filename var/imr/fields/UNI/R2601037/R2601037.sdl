@@ -1,0 +1,1133 @@
+
+#export vars "cel"
+#export vars "Svar0"
+#export vars "Svar1"
+#export vars "Svar2"
+#export vars "Svar3"
+#export vars "Svar4"
+#export vars "Svar5"
+#export vars "Svar6"
+#export vars "Svar7"
+#export vars "Svar8"
+#export vars "Svar9"
+#export vars "Svar10"
+#export vars "Svar11"
+#export vars "Svar12"
+#export vars "Svar13"
+#export vars "Svar14"
+
+void main() {
+
+// variabili comuni
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+string labelCheck;
+int r1;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+boolean selCheck;
+string cpt;
+int preQid;
+int n;
+int nArr;
+int reCod;
+int selintCheck;
+string nascondi_item;
+int selint;
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "scripts:mod.js");
+string autotest=system.getProperty("test");
+
+int panel=(int)system.getProperty("pan");
+
+string resType="";
+
+if(panel==4) { resType="cawi";}
+else { resType="cati";}
+
+string uid = system.getProperty("sysUID");
+if (autotest=="1" || uid=="GUEST" || uid=="null") {
+system.setProperty("env", "debug:true");  system.setProperty("env", "browser:variables");}
+string err;
+int numArr;
+
+int selintq7=99;
+
+boolean ctest;	
+
+int leg;
+boolean conCC;
+
+if (autotest=="1") {system.setProperty("env", "scripts:modtest.js");}
+
+
+
+//variabile mobile
+string deviceType = system.getProperty("user_agent:deviceType");
+string ss1 = deviceType.trim();
+system.setProperty("device",ss1);
+boolean live=true;
+string version="v01";
+if (autotest=="1") {version="auotest";}
+system.setProperty("version",version);
+
+
+if(resType=="cawi") { qtext="Le saremmo grati se volesse partecipare a questa indagine, che richiederà circa 12 minuti del Suo tempo.";}
+else { qtext="Buongiorno. Il mio nome è  e sono un intervistatore/intervistatrice di Interactive, un istituto di ricerche di mercato. Stiamo conducendo un’indagine tra i consumatori e vorremmo rivolgerle qualche domanda. (Se rifiuta ringraziare e chiudere)";}
+
+// Q10: CONCEPT
+qst = new question("concept", 10);
+qst.setProperty("text", qtext);
+qst.setProperty("code", "q10");
+send qst; 
+
+if(resType=="cati")
+{
+qst = new question("choice", 12);
+qst.setProperty("text", "Intervista realizzata su telefono:  ");
+qst.setProperty("code", "disp");
+vector q12_opts = new vector {
+"FISSO",
+"MOBILE"
+};
+qst.setProperty("options", q12_opts);
+send qst;
+
+vector validCap = new vector { 
+"92100",
+"92014",
+"92026",
+"92021",
+"92015",
+"92020",
+"92010",
+"92010",
+"92035",
+"92020"
+ };
+
+numArr=validCap.getSize();
+numArr=numArr-1;
+
+// Q20: CONCEPT
+qst = new question("open", 20);
+qst.setProperty("text", "Mi potrebbe confermare il suo CAP di residenza (dove abita attualmente)?");
+qst.setProperty("code", "q20");
+qst.setProperty("view", "numeric");
+if(autotest !="1")
+{
+qst.setProperty("validation_rule", "^[0-9]{5}$");
+qst.setProperty("validation_error", "Indicare un numero di 5 cifre");
+}
+send qst; 
+
+n=(int)system.getProperty("ans20");
+
+count=0;
+boolean isValid;
+for(int i=0,numArr)
+{
+nArr=(int)validCap.get(i);
+
+if(nArr==n) { isValid=true;}
+}
+
+if(isValid==false && autotest !="1") { return 4; }
+
+}
+
+if(resType=="cawi")
+{
+
+qst = new question("choice", 7);
+qst.setProperty("text", "Mi potrebbe indicare la sua provincia di residenza? ");
+qst.setProperty("code", "q000");
+vector q7_opts = new vector { "Agrigento", "Alessandria", "Ancona", "Arezzo", "Ascoli Piceno", "Asti", "Avellino", "Bari", "Barletta-Andria-Trani", "Belluno", "Benevento", "Bergamo", "Biella", "Bologna", "Bolzano/Bozen", "Brescia", "Brindisi", "Cagliari", "Caltanissetta", "Campobasso", "Caserta", "Catania", "Catanzaro", "Chieti", "Como", "Cosenza", "Cremona", "Crotone", "Cuneo", "Enna", "Fermo", "Ferrara", "Firenze", "Foggia", "Forlì-Cesena", "Frosinone", "Genova", "Gorizia", "Grosseto", "Imperia", "Isernia", "La Spezia", "L'Aquila", "Latina", "Lecce", "Lecco", "Livorno", "Lodi", "Lucca", "Macerata", "Mantova", "Massa-Carrara", "Matera", "Messina", "Milano", "Modena", "Monza e della Brianza", "Napoli", "Novara", "Nuoro", "Oristano", "Padova", "Palermo", "Parma", "Pavia", "Perugia", "Pesaro e Urbino", "Pescara", "Piacenza", "Pisa", "Pistoia", "Pordenone", "Potenza", "Prato", "Ragusa", "Ravenna", "Reggio Calabria", "Reggio nell'Emilia", "Rieti", "Rimini", "Roma", "Rovigo", "Salerno", "Sassari", "Savona", "Siena", "Siracusa", "Sondrio", "Sud Sardegna", "Taranto", "Teramo", "Terni", "Torino", "Trapani", "Trento", "Treviso", "Trieste", "Udine", "Valle d'Aosta/Vallée d'Aoste", "Varese", "Venezia", "Verbano-Cusio-Ossola", "Vercelli", "Verona", "Vibo Valentia", "Vicenza", "Viterbo" }; 
+qst.setProperty("options", q7_opts); 
+qst.setProperty("view", "menu");
+send qst; 
+
+ansId=system.getProperty("ans7");
+if(ansId !=0) { return 4;}
+
+}
+
+// Q30: CONCEPT
+qst = new question("open", 30);
+qst.setProperty("text", "Può dirmi per cortesia la sua età?");
+qst.setProperty("code", "Q1");
+qst.setProperty("view", "numeric");
+qst.setProperty("validation_rule", "^[1-9]|[1-9][0-9]$");
+qst.setProperty("validation_error", "Indicare un numero compreso tra 1 e 99");
+send qst; 
+
+int eta=(int)system.getProperty("ans30");
+ 
+if(eta<18) { reCod=0; return 4;}
+if(eta>=18 && eta<=24) { reCod=1;}
+if(eta>=25 && eta<=34) { reCod=2;}
+if(eta>=35 && eta<=44) { reCod=3;}
+if(eta>=45 && eta<=54) { reCod=4;}
+if(eta>=55 && eta<=64) { reCod=5;}
+if(eta>=65) { reCod=6;}
+ 
+
+// Q40: CHOICE
+qst = new question("choice", 40);
+qst.setProperty("text", "Può dirmi per cortesia la sua età?");
+qst.setProperty("code", "Q1X");
+qst.setProperty("show_rand", false);
+vector q40_opts = new vector {
+"Meno di 18 anni",
+"18-24 anni",
+"25-34 anni",
+"35-44 anni",
+"45-54 anni",
+"55-64 anni",
+"65 e oltre"
+};
+qst.setProperty("options", q40_opts);
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+send qst; 
+
+// Q50: CHOICE
+qst = new question("choice", 50);
+qst.setProperty("text", "Registrare il genere:");
+qst.setProperty("code", "Q2");
+qst.setProperty("show_rand", false);
+vector q50_opts = new vector {
+"Uomo",
+"Donna"
+};
+qst.setProperty("options", q50_opts);
+send qst; 
+
+
+if(resType=="cati") 
+{
+
+// Q60: CHOICE
+qst = new question("choice", 60);
+qst.setProperty("text", "<p>Parliamo di Centri Commerciali presenti nella sua zona. </p>Quali le vengono in mente? <b><div class='info'>(Spontanea - NON LEGGERE)</div></b>");
+qst.setProperty("code", "Q3");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q60_opts = new vector {
+"Città dei Templi",
+"Le Vigne (Castrofilippo)",
+"San Giorgio (Licata)",
+"Altro (specificare)#sf#so",
+"Nessuno#se#sf"
+};
+qst.setProperty("options", q60_opts);
+send qst; 
+
+}
+
+
+vector q70_opts = new vector {
+"Città dei Templi",
+"Le Vigne (Castrofilippo)",
+"San Giorgio (Licata)",
+"Altro (specificare)#sf#so",
+"Nessuno#se#sf"
+};
+
+numArr=q70_opts.getSize();
+numArr=numArr-2;
+
+if(resType=="cati") 
+{
+
+	for(int i=0,numArr)
+	{
+	sel=system.getProperty("ans60_"+i);
+	if (sel==true)  {  opt ="#shopt"+i; q70_opts.set(i,opt); }
+	}
+
+}
+
+
+if (resType=="cawi") { label="Leggerà";}
+else { label="Le leggerò";}
+
+// Q70: CHOICE
+qst = new question("choice", 70);
+qst.setProperty("text", " "+label+" ora i nomi di alcuni Centri Commerciali della sua zona. <p>Mi dica quali conosce, anche solo per averli sentiti nominare.</p>");
+qst.setProperty("code", "Q4");
+qst.setProperty("selection", "multiple");
+qst.setProperty("show_rand", true);
+qst.setProperty("options", q70_opts);
+send qst; 
+
+vector q80_opts = new vector {
+"#shCittà dei Templi",
+"#shLe Vigne (Castrofilippo)",
+"#shSan Giorgio (Licata)",
+"#shAltro (specificare)",
+"Nessuno#se#sf"
+};
+
+count=0;
+for(int i=0,numArr)
+{
+
+	if (resType=="cati") 
+			{
+			sel=system.getProperty("ans60_"+i);
+					if (sel==true)  
+					{  
+						opt =q60_opts.get(i); q80_opts.set(i,opt); 
+						if(i==numArr) { comp=system.getProperty("ans60_"+numArr+"_comp");  q80_opts.set(i,comp);} 
+						count=count+1;
+						if(i==0) { conCC=true;}
+					}
+			}
+
+	sel=system.getProperty("ans70_"+i);
+	if (sel==true)  
+			{  
+				opt =q70_opts.get(i); 
+				q80_opts.set(i,opt); 
+				if (resType=="cawi") { if(i==numArr) { comp=system.getProperty("ans70_"+numArr+"_comp");  q80_opts.set(i,comp);} }
+				if (resType=="cati") { if(i==numArr) { comp=system.getProperty("ans60_"+numArr+"_comp");  q80_opts.set(i,comp);} }
+				count=count+1;
+				if(i==0) { conCC=true;}
+			}
+
+}
+
+if(conCC==false) { return 4;}
+
+// Q80: CONCEPT
+qst = new question("choice", 80);
+qst.setProperty("text", "E quali di questi CC ha frequentato almeno una volta negli ultimi 3 mesi?");
+qst.setProperty("code", "q5");
+qst.setProperty("selection", "multiple");
+qst.setProperty("options", q80_opts);
+qst.setProperty("show_rand", true);
+if(count==0) {
+	qst.setProperty("default_answer","{ 'selection': [4]}");
+	qst.setProperty("hidden", true);
+}
+send qst; 
+
+
+ctest=system.getProperty("ans80_0");
+
+
+
+if(ctest==true) {
+
+// Q90: CHOICE
+qst = new question("choice", 90);
+qst.setProperty("text", "Parliamo del CC Città dei Templi. <p>Quanto spesso lo frequenta?</p>");
+qst.setProperty("code", "Q6");
+qst.setProperty("show_rand", false);
+vector q90_opts = new vector {
+"Più volte a settimana",
+"1 volta alla settimana",
+"1 volta ogni due settimane",
+"1 volta al mese",
+"1 volta ogni 2/3 mesi",
+"Più raramente"
+};
+qst.setProperty("options", q90_opts);
+send qst; 
+
+// Q100: CHOICE
+qst = new question("choice", 100);
+qst.setProperty("text", "E Lei direbbe che il CC Città dei Templi...");
+qst.setProperty("code", "q7");
+qst.setProperty("show_rand", false);
+vector q100_opts = new vector {
+"È il suo CC di riferimento (quello che frequenta più spesso)",
+"È un CC che frequenta al pari di altri",
+"È un CC che frequenta meno rispetto ad altri"
+};
+qst.setProperty("options", q100_opts);
+send qst; 
+selintq7=system.getProperty("ans100");
+}
+
+else 
+{
+// Q110: CHOICE
+qst = new question("choice", 110);
+qst.setProperty("text", "<p>Parliamo del CC Città dei Templi.</p> Potrebbe dirmi se…");
+qst.setProperty("code", "q7b");
+qst.setProperty("show_rand", false);
+vector q110_opts = new vector {
+"Non lo ha mai frequentato",
+"Lo ha visitato una sola volta",
+"Lo frequentava in passato ma ora non più"
+};
+qst.setProperty("options", q110_opts);
+send qst; 
+}
+
+
+
+if ((ctest==false) || (selintq7==1 || selintq7==2)) {
+q80_opts.set(4,"Nessuno di questi#se#sf");
+
+qst = new question("choice", 111);
+qst.setProperty("text", "Qual è il suo CC principale di riferimento, quello che frequenta più spesso?");
+qst.setProperty("code", "q9");
+
+
+for(int i=0,numArr)
+{
+sel=system.getProperty("ans80_"+i);
+if (sel==false)  {  nascondi_item ="#shopt"+i; q80_opts.set(i,nascondi_item); }
+}
+
+
+qst.setProperty("options", q80_opts);
+send qst;
+
+}
+
+
+if(ctest==true)
+{
+
+if (resType=="cawi") { label="Leggerà";}
+else { label="Le leggerò";}
+
+// Q120: CHOICE
+qst = new question("choice", 120);
+qst.setProperty("text", "<p>"+label+" ora alcuni motivi di scelta di Città dei Templi che hanno indicato altri Clienti.</p> Quali di questi motivi la spingono a frequentare Città dei Templi?");
+qst.setProperty("code", "M1");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q120_opts = new vector {
+"I <b>negozi</b> presenti nel Centro",
+"È <b>conveniente</b>, ci sono offerte/sconti",
+"È un luogo piacevole dove <b>fare un giro</b> nel tempo libero e curiosare",
+"È un luogo di ritrovo, dove <b>incontrare gli amici</b>",
+"È <b>vicino, comodo</b> per lei",
+"Ha un <b>parcheggio</b> ampio, comodo",
+"Organizza <b>eventi</b> ed <b>attività interessanti</b>",
+"La gentilezza del personale",
+"È innovativo",
+"I <b>servizi</b> presenti nel Centro",
+"L’offerta di bar e ristoranti",
+"La presenza dell’ipermercato Conad",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q120_opts);
+send qst; 
+
+count=0;
+for(int i=0,12)
+{
+sel=system.getProperty("ans120_"+i);
+if (sel==true) { count=count+1; reCod=i;}
+}
+
+
+// Q130: CHOICE
+qst = new question("choice", 130);
+qst.setProperty("text", "E tra questi qual è il motivo principale?");
+qst.setProperty("code", "M2");
+qst.setProperty("show_rand", true);
+qst.setProperty("controller", 120);
+if(count==1)
+{
+	qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+	qst.setProperty("hidden", true);
+}
+send qst; 
+
+}
+
+else
+{
+
+// Q140: CHOICE
+qst = new question("choice", 140);
+qst.setProperty("text", "Quali sono le ragioni per cui non frequenta il CC Città dei Templi?");
+qst.setProperty("code", "M3");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q140_opts = new vector {
+"Per fare la <b>spesa</b> preferisce <b>negozi di prossimità</b> e supermercati più piccoli",
+"Per fare <b>shopping</b> preferisce andare in città <b>(negozi tradizionali)</b>",
+"Non frequenta la <b>Conad</b>, preferisce altre catene",
+"Non ci sono <b>negozi/marche</b> interessanti",
+"Ha <b>prezzi troppo alti</b>",
+"Non le piace <b>la clientela</b>, la gente che lo frequenta",
+"Non le piace <b>la zona</b> dove si trova",
+"Non le piacciono <b>i centri commerciali</b> in generale",
+"È <b>lontano, scomodo</b> per lei",
+"Ha un <b>parcheggio</b> scomodo, troppo piccolo",
+"Le sembra <b>spento, un po’ triste</b>",
+"<b>Non</b> lo trova <b>stimolante </b>",
+"<b>Non</b> organizza <b>eventi</b> ed <b>attività interessanti</b>",
+"Non è sicuro",
+"È obsoleto, vecchio",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q140_opts);
+send qst; 
+
+count=0;
+for(int i=0,15)
+{
+sel=system.getProperty("ans140_"+i);
+if (sel==true) { count=count+1; reCod=i;}
+}
+
+// Q150: CHOICE
+qst = new question("choice", 150);
+qst.setProperty("text", "E tra questi qual è il motivo principale?");
+qst.setProperty("code", "M4");
+qst.setProperty("show_rand", true);
+qst.setProperty("controller", 140);
+if(count==1)
+{
+	qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+	qst.setProperty("hidden", true);
+}
+send qst; 
+
+}
+
+if(ctest==true) 
+{
+
+// Q160: CHOICE
+qst = new question("choice", 160);
+qst.setProperty("text", "<p>Vorrei ora conoscere il suo livello di soddisfazione nei confronti del Centro Commerciale Città dei Templi.</p> In generale, quanto è soddisfatto/a? <p>Utilizzi una scala da 10 a 1, dove 10 significa &quot;molto soddisfatto&quot; e 1 &quot;per niente soddisfatto&quot; per esprimere il suo livello di soddisfazione. </p>");
+qst.setProperty("code", "S1");
+qst.setProperty("show_rand", false);
+vector q160_opts = new vector {
+"1",
+"2",
+"3",
+"4",
+"5",
+"6",
+"7",
+"8",
+"9",
+"10"
+};
+qst.setProperty("options", q160_opts);
+if(autotest!="1") { qst.setProperty("view", "row");}
+send qst; 
+
+// Q170: CONCEPT
+qst = new question("open", 170);
+qst.setProperty("text", "Quali sono le caratteristiche che la soddisfano maggiormente, i punti forza di Città dei Templi?");
+qst.setProperty("code", "S2a");
+send qst; 
+
+// Q180: CONCEPT
+qst = new question("open", 180);
+qst.setProperty("text", "Quali sono invece le caratteristiche che non la soddisfano, i punti deboli di Città dei Templi?");
+qst.setProperty("code", "S2b");
+send qst; 
+
+// Q190: CHOICE
+qst = new question("choice", 190);
+qst.setProperty("text", "Quali di questi negozi e servizi di Città dei Templi lei è solito frequentare?");
+qst.setProperty("code", "s3");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q190_opts = new vector {
+"Ipermercato Conad",
+"Negozi di abbigliamento e Calzature",
+"Arredo Casa",
+"Negozi di beni per la Persona e accessori",
+"Negozi per il divertimento e tempo libero (sala giochi/video game/libreria)",
+"Negozi di Elettronica e Telefonia",
+"Negozi di Intimo",
+"Ristorazione",
+"Servizi (parafarmacia/finanziamenti)",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q190_opts);
+send qst; 
+
+vector q200_rows = new vector {
+"Ipermercato Conad",
+"Negozi di abbigliamento e Calzature",
+"Arredo Casa",
+"Negozi di beni per la Persona e accessori",
+"Negozi per il divertimento e tempo libero (sala giochi/video game/libreria)",
+"Negozi di Elettronica e Telefonia",
+"Negozi di Intimo",
+"Ristorazione",
+"Servizi (parafarmacia/finanziamenti)",
+"Altro (specificare)#sf#so"
+};
+
+
+numArr=q200_rows.getSize();
+numArr=numArr-1;
+
+count=0;
+for(int i=0,numArr)
+{
+sel=system.getProperty("ans190_"+i);
+if (sel==false)  {  opt ="#shopt"+i; q200_rows.set(i,opt); }
+else {
+	 count=count+1; 
+	 if(i==numArr) { comp=system.getProperty("ans190_"+numArr+"_comp");  q200_rows.set(i,comp);}
+	 }
+}
+
+if(count>0)
+{
+// Q200: SCALE
+qst = new question("scale", 200);
+qst.setProperty("text", "<p>Vorrei ora conoscere il suo livello di soddisfazione nei confronti dei negozi e servizi del CC Città dei Templi di cui usufruisce.</p> Utilizzi sempre una scala da 10 a 1, dove 10 significa &quot;molto soddisfatto&quot; e 1 &quot;per niente soddisfatto&quot;.");
+qst.setProperty("code", "S4");
+qst.setProperty("show_rand", true);
+qst.setProperty("rows", q200_rows);
+vector q200_cols = new vector { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10" };
+qst.setProperty("cols", q200_cols);
+send qst; 
+}
+
+
+sel=system.getProperty("ans190_0");
+if(sel==true)
+{
+// Q210: SCALE
+qst = new question("scale", 210);
+qst.setProperty("text", "<p>Parliamo più in dettaglio della Conad di Città dei Templi. Come valuta i seguenti aspetti? <p>Utilizzi sempre una scala da 10 a 1, dove 10 significa 'molto soddisfatto' e 1 'per niente soddisfatto'.</p>");
+qst.setProperty("code", "S4c");
+qst.setProperty("show_rand", true);
+vector q210_rows = new vector {
+"La qualità dei prodotti",
+"L’assortimento di prodotti disponibili",
+"I prezzi rispetto ai Concorrenti",
+"La cortesia e professionalità del personale",
+"Il punto vendita in sé (spazi, allestimento, ordine e cura)",
+"I banchi serviti",
+"Le offerte"
+};
+qst.setProperty("rows", q210_rows);
+vector q210_cols = new vector {
+"1",
+"2",
+"3",
+"4",
+"5",
+"6",
+"7",
+"8",
+"9",
+"10"
+};
+qst.setProperty("cols", q210_cols);
+send qst; 
+
+}
+
+
+// Q240: SCALE
+qst = new question("scale", 240);
+qst.setProperty("text", "<p>Parliamo ora di alcuni aspetti generali del Centro Commerciale Città dei Templi.</p> Per ciascuno dia un voto da 10 a 1, dove 10 significa “molto positivo” e 1 “molto negativo”");
+qst.setProperty("code", "S5");
+qst.setProperty("show_rand", true);
+vector q240_rows = new vector {
+"Gli eventi e le animazioni ",
+"Gli orari di apertura",
+"Lo stile/l’aspetto del Centro Commerciale",
+"La pulizia del Centro Commerciale",
+"Il livello di sicurezza all’interno del Centro Commerciale",
+"La facilità di parcheggio ",
+"La sicurezza del parcheggio",
+"La varietà, l’offerta dell’area bar/ristorazione",
+"La varietà, l’offerta dei negozi",
+"La cortesia e professionalità del personale",
+"I bagni",
+"La sicurezza all’interno del Centro",
+"La varietà, l’offerta di servizi"
+};
+qst.setProperty("rows", q240_rows);
+vector q240_cols = new vector {
+"1",
+"2",
+"3",
+"4",
+"5",
+"6",
+"7",
+"8",
+"9",
+"10"
+};
+qst.setProperty("cols", q240_cols);
+send qst; 
+
+// Q250: CHOICE
+qst = new question("choice", 250);
+qst.setProperty("text", "Ha mai visitato il sito internet del CC Città dei Templi?");
+qst.setProperty("code", "S6");
+qst.setProperty("show_rand", false);
+vector q250_opts = new vector {
+"Sì, regolarmente",
+"Sì, qualche volta",
+"No"
+};
+qst.setProperty("options", q250_opts);
+send qst; 
+
+// Q260: CHOICE
+qst = new question("choice", 260);
+qst.setProperty("text", "Ha mai visitato la pagina Facebook o Instagram del CC Città dei Templi ?");
+qst.setProperty("code", "S7");
+qst.setProperty("show_rand", false);
+vector q260_opts = new vector {
+"Sì, regolarmente",
+"Sì, qualche volta",
+"No"
+};
+qst.setProperty("options", q260_opts);
+send qst; 
+
+}
+
+
+// Q270: CONCEPT
+qst = new question("concept", 270);
+qst.setProperty("text", "<P>Parliamo ora di come potrebbe evolvere il Centro Commerciale di Città dei Templi in futuro.</P> Le chiedo di fare uno sforzo di immaginazione e di descrivermi come lo vorrebbe, come dovrebbe essere per rispondere ai suoi bisogni e alle sue preferenze.");
+qst.setProperty("code", "q270");
+send qst; 
+
+// Q300: CONCEPT ora d1a
+qst = new question("open", 300);
+qst.setProperty("text", "Dal punto di vista estetico, come lo vorrebbe? <p>Che stile gli darebbe (colori, materiali, luci, piante…)?</p>");
+qst.setProperty("code", "d2b");
+send qst; 
+
+
+if (resType=="cawi") { label="Leggerà";}
+else { label="Le leggerò";}
+
+// Q310: SCALE ora d1b
+qst = new question("scale", 310);
+qst.setProperty("text", "<p>"+label+" ora alcune caratteristiche e sensazioni che si possono associare ad un Centro Commerciale.</p> Per ognuna mi dica quanto è importante per lei che il nuovo Città dei Templi riesca a trasmetterle: molto, abbastanza, così così, poco o per niente?   <div class='introd'>Il nuovo Città dei Templi dovrà trasmettere…</div>"+cod);
+qst.setProperty("code", "D3");
+qst.setProperty("show_rand", true);
+vector q310_rows = new vector {
+"Allegria",
+"Divertimento",
+"Serenità",
+"Tradizione",
+"Familiarità",
+"Innovazione",
+"Esclusività#sh",
+"Eleganza",
+"Naturalità",
+"Semplicità",
+"Unicità",
+"Tecnologia",
+"Benessere"
+};
+qst.setProperty("rows", q310_rows);
+vector q310_cols = new vector {
+"Molto",
+"Abbastanza",
+"Così così",
+"Poco",
+"Per niente"
+};
+qst.setProperty("cols", q310_cols);
+send qst; 
+
+if(ctest==true) 
+{
+
+qst = new question("ordering", 311);
+qst.setProperty("text", "Le proponiamo ora alcuni possibili interventi sul Centro Città dei Templi. <p>A quale darebbe priorità? E quale metterebbe al secondo posto? E infine al terzo?</p><p>Il nuovo centro dovrebbe investire su…</p>");
+qst.setProperty("sel_count", 3);
+qst.setProperty("code", "d1c");
+qst.setProperty("show_rand", true);
+vector q311_opts = new vector {
+"Creazione di isole verdi in galleria",
+"Postazioni coworking con ricarica cellulari (prese USB)",
+"Miglioramento del parcheggio",
+"Rinnovamento dell’illuminazione",
+"Rifacimento della pavimentazione",
+"Rinnovamento dei colori all’interno",
+"Rinnovamento dei bagni ",
+"Abbellimento delle facciate esterne",
+"Arredi esterni",
+"Area giochi esterna",
+"Zona relax esterna "
+};
+qst.setProperty("options", q311_opts);
+qst.setProperty("strict_selection", true);
+send qst;
+
+}
+
+// Q280: CONCEPT ora d2a
+qst = new question("open", 280);
+qst.setProperty("text", "Se lei potesse scegliere, quali servizi/negozi aggiungerebbe al Centro Commerciale Città dei Templi?");
+qst.setProperty("code", "D1A");
+send qst; 
+
+cod="<script type='text/javascript'> $(document).ready(function() { $('th:first-child').html( $('.introd') ); });</script>";
+
+
+if (resType=="cawi") { label="Leggerà";}
+else { label="Le leggerò";}
+
+// Q290: SCALE ora d2b
+qst = new question("scale", 290);
+qst.setProperty("text", "<p>"+label+" ora alcune proposte di negozi e servizi aggiuntivi per Città dei Templi.</p> Per ognuna mi dica quanto è importante per lei che il nuovo Città dei Templi investa su queste attività: molto, abbastanza, così così, poco o per niente?<div class='introd'>Il nuovo Città dei Templi dovrà puntare su…</div>"+cod);
+qst.setProperty("code", "D1b");
+qst.setProperty("show_rand", true);
+vector q290_rows = new vector {
+"Negozi di abbigliamento ",
+"Negozi di scarpe",
+"Negozi di arredo/casa",
+"Bar/ristoranti",
+"Negozi dedicati a bellezza e cura della persona ",
+"Ambulatori medici, centri diagnostici ",
+"Negozi di elettronica e telefonia",
+"Negozi di articoli sportivi",
+"Bowling, cinema e attività per il tempo libero",
+"Giochi bimbi",
+"Palestre/ attività sportive",
+"Servizi/negozi di vicinato (es. calzolaio, lavanderia, tabacchi, centro medico, …)"
+
+};
+qst.setProperty("rows", q290_rows);
+vector q290_cols = new vector {
+"Molto",
+"Abbastanza",
+"Così così",
+"Poco",
+"Per niente"
+};
+qst.setProperty("cols", q290_cols);
+send qst; 
+
+if (resType=="cawi") { label="Leggerà ora ….";}
+else { label="Ora le leggerò";}
+
+// Q320: CONCEPT
+qst = new question("concept", 320);
+qst.setProperty("text", "<p> "+label+" <b>alcune possibili evoluzioni di Città dei Templi</b>.</p> Ci piacerebbe avere il suo aiuto per capire <b>quale di queste direzioni è più in linea con le sue aspettative.</b> <p>Le chiediamo di dare una valutazione con un punteggio <b>da 1 a 5, dove uno è per nulla interessante e cinque è estremamente interessante.</b> </p>");
+qst.setProperty("code", "q320");
+send qst; 
+
+int cella;
+system.setProperty("cella", "rand:4");
+cella=(int)system.getProperty("cella");
+cella=cella+1;	
+
+/*controllo quote*/
+int c;
+boolean trovato;
+
+while (trovato==false) 
+{
+
+c=system.getProperty("quota:total_interviews_"+cella);
+if (c>=125) 
+	{ 
+		if (cella==4) { cella=1;}
+		else { cella=cella+1; }
+	}
+else { trovato=true;}
+}
+
+system.setProperty("cel",cella);
+system.out("<div>Quota: "+c+"</div>");
+
+
+vector claim = new vector {
+"<b>La città della Bellezza</b><br><br>Un centro dove lo shopping diventa un modo per valorizzarsi e sentirsi al meglio. La moda e la cura della persona sono le protagoniste, con proposte raffinate e di qualità. Il luogo giusto per scegliere marchi e dettagli che migliorano il tuo stile e la tua immagine, in un ambiente elegante e di tendenza.",
+"<p><b>La città dell’Allegria</b></p><p>Un centro giovane e vivace, dove lo shopping è leggero, divertente e adatto a tutta la famiglia. Moda, colori e atmosfera conviviale si uniscono a momenti di intrattenimento, per trasformare la visita in un’esperienza da vivere tutti insieme.",
+"<p><b>La città del Gusto</b></p><p>Un centro dove lo shopping incontra il piacere di fermarsi per una pausa golosa o un pasto veloce: si viene per fare acquisti e ci si lascia coccolare da un’offerta ricca e variegata di bar, ristoranti e specialità. Voglia di shopping ed esperienze di gusto in un’unica destinazione.</p>",
+"<p><b>La città al tuo servizio</b></p>Un centro pratico e risolutivo, dove la moda e lo shopping si integrano con proposte e servizi utili per la vita di tutti i giorni, dal calzolaio al Tabacchi, dalla lavanderia al centro medico<br/> La scelta ideale per chi vuole trovare tutto in poco tempo, con un’offerta di negozi ricca e completa in un centro organizzato e funzionale, per rispondere a tutte le necessità."
+};
+
+int idxcella;
+for (int i=0,3)
+{
+idxcella=cella-1;
+label=claim.get(idxcella);
+
+qid=5000+cella*100;
+qst = new question("scale", qid);
+qst.setProperty("text", label);
+qst.setProperty("code", "c1."+cella);
+vector q110_opts_rows = new vector {
+	" "
+};
+qst.setProperty("rows", q110_opts_rows);
+vector q110_opts_cols = new vector {
+	"1<br>Per nulla interessante",
+	"2",
+	"3",
+	"4",
+	"5<br>Estremamente interessante"
+};
+qst.setProperty("cols", q110_opts_cols);
+send qst;
+
+if (cella==4){
+	cella=1;
+}else {
+	cella=cella+1;
+
+}
+
+}
+
+
+string sortOrder;
+
+if (cella==1){ sortOrder="[0,1,2,3]";}
+if (cella==2){ sortOrder="[1,2,3,0]";}
+if (cella==3){ sortOrder="[2,3,0,1]";}
+if (cella==4){ sortOrder="[3,0,1,2]";}
+
+// Q370: CHOICE
+qst = new question("ordering", 370);
+qst.setProperty("text", "Tra le diverse proposte che ha valutato, quale le piace di più? E poi quale metterebbe al secondo posto? E al terzo?  E al quarto?");
+qst.setProperty("code", "c5");
+qst.setProperty("show_rand", false);
+vector q370_opts = new vector {
+"La città della Bellezza",
+"La città dell’Allegria",
+"La città del Gusto",
+"La città al tuo servizio"
+};
+qst.setProperty("options", q370_opts);
+qst.setProperty("sel_count", 4);
+qst.setProperty("strict_selection", true);
+qst.setProperty("sortorder", sortOrder);
+send qst; 
+selint=system.getProperty("ans370_0");
+
+if (selint==0)
+{
+qst = new question("open", 371);
+qst.setProperty("text", "Come descriverebbe la sua Città dei Templi – città della Bellezza ideale? Che negozi e attività vorrebbe trovare?  ");
+qst.setProperty("code", "c6a");
+send qst;
+}
+
+
+
+if (selint==1)
+{
+qst = new question("open", 373);
+qst.setProperty("text", "Come descriverebbe la sua Città dei Templi – città dell’Allegria ideale? Che negozi e attività vorrebbe trovare?  ");
+qst.setProperty("code", "c7a");
+send qst;
+
+}
+
+
+
+if (selint==2)
+{
+qst = new question("open", 375);
+qst.setProperty("text", "Come descriverebbe la sua Città dei Templi – città del Gusto ideale? Che negozi e attività vorrebbe trovare? ");
+qst.setProperty("code", "c8a");
+send qst;
+} 
+
+
+
+if (selint==3)
+{
+qst = new question("open", 377);
+qst.setProperty("text", "Come descriverebbe la sua Città dei Templi – città al tuo servizio ideale? Che negozi e attività vorrebbe trovare?  ");
+qst.setProperty("code", "c9a");
+send qst;
+
+}
+
+
+// Q390: CHOICE
+qst = new question("choice", 381);
+qst.setProperty("text", "Abbiamo terminato. Le chiedo solo qualche dato su di Lei e sulla sua famiglia, a fini statistici.</br> <p>Lei direbbe che il suo reddito familiare le consente di vivere...</p></p>");
+qst.setProperty("code", "qqq1");
+qst.setProperty("show_rand", false);
+vector q381_opts = new vector {
+"Agiatamente",
+"Con tranquillità",
+"Con qualche difficoltà (valutando attentamente come spendere)",
+"Con molte difficoltà (faticando ad arrivare a fine mese)",
+"(Preferisce non rispondere)"
+};
+qst.setProperty("options", q381_opts);
+send qst; 
+selint=system.getProperty("ans381");
+
+
+// Q390: CHOICE
+qst = new question("choice", 390);
+qst.setProperty("text", "<p>Parliamo  di social media e comunicazione digitale. <p>Lei ha un profilo sulle seguenti piattaforme Social?</p></p>");
+qst.setProperty("code", "QQ4");
+qst.setProperty("show_rand", true);
+qst.setProperty("selection", "multiple");
+vector q390_opts = new vector {
+"Facebook",
+"Instagram",
+"LinkedIn",
+"X (Twitter)",
+"TikTok",
+"No/nessuno di questi#se#sf"
+};
+qst.setProperty("options", q390_opts);
+send qst; 
+
+count=0;
+for(int i=0,4)
+{
+sel=system.getProperty("ans390_"+i);
+if (sel==true) { count=count+1; reCod=i;}
+}
+
+
+if (count >0)
+{
+    qst = new question("choice", 392);
+    qst.setProperty("text", "E qual è il suo principale Social network di riferimento, quello che preferisce? ");
+    qst.setProperty("code", "qq4b");
+    qst.setProperty("controller", 390);
+    if (count==1)
+    {
+    qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+    qst.setProperty("hidden", true);
+    }
+    send qst;
+}
+
+
+qst = new question("choice", 394);
+qst.setProperty("text", "Quando decide di acquistare un nuovo prodotto dove cerca ispirazione principalmente?<div class='info'>(max 3 risposte)</div> ");
+qst.setProperty("code", "q4c");
+qst.setProperty("selection", "multiple");
+qst.setProperty("show_rand", true);
+vector q394_opts = new vector {
+"Ricerche su Internet (Google etc.)",
+"Ricerche su social network (Facebook, Instagram, TikTok,…)",
+"Piattaforme di e-commerce (Amazon etc.)",
+"Consigli da parenti/amici",
+"Guardando vetrine e negozi (di persona)",
+"Sfogliando riviste",
+"Altro (specificare:)#so#sf"
+};
+qst.setProperty("options", q394_opts);
+qst.setProperty("extras", "{max:3}");
+send qst;
+
+// Q400: CHOICE
+qst = new question("choice", 400);
+qst.setProperty("text", "Qual è il suo ultimo titolo di studio conseguito?");
+qst.setProperty("code", "QQ5");
+qst.setProperty("show_rand", false);
+vector q400_opts = new vector {
+"Laurea/master",
+"Diploma di scuola media superiore",
+"Diploma professionale",
+"Scuola media inferiore",
+"Scuola elementare/nessun titolo"
+};
+qst.setProperty("options", q400_opts);
+send qst; 
+
+// Q410: CHOICE
+qst = new question("choice", 410);
+qst.setProperty("text", "Qual è la tua attuale occupazione?");
+qst.setProperty("code", "QQ6");
+qst.setProperty("show_rand", false);
+vector q410_opts = new vector {
+"Lavora a tempo pieno",
+"Lavora part time",
+"Studente",
+"Disoccupato",
+"Casalinga",
+"Pensionato/a"
+};
+qst.setProperty("options", q410_opts);
+send qst; 
+
+ansId=system.getProperty("ans410");
+if (ansId<2)
+{ 
+
+// Q420: CHOICE
+qst = new question("choice", 420);
+qst.setProperty("text", "E qual è la sua professione?");
+qst.setProperty("code", "QQ7");
+qst.setProperty("show_rand", false);
+vector q420_opts = new vector {
+"Dirigente/Libero professionista/Imprenditore",
+"Insegnante",
+"Impiegato/Quadro",
+"Operaio/Bracciante",
+"Rappresentante/Commerciante/Negoziante",
+"Artigiano/Lavoratore autonomo",
+"Altro (specificare)#sf#so"
+};
+qst.setProperty("options", q420_opts);
+send qst; 
+}
+
+
+// Q430: CHOICE
+qst = new question("choice", 430);
+qst.setProperty("text", "Quante persone ci sono in famiglia, Lei compreso/a");
+qst.setProperty("code", "QQ8");
+qst.setProperty("show_rand", false);
+vector q430_opts = new vector {
+"1 persona",
+"2 persone",
+"3 persone",
+"4 persone",
+"5 o più persone"
+};
+qst.setProperty("options", q430_opts);
+send qst; 
+
+ansId=system.getProperty("ans430");
+if (ansId!=0)
+{ 
+
+// Q440: CHOICE
+qst = new question("choice", 440);
+qst.setProperty("text", "Ci sono figli conviventi in queste fasce di età all'interno del Suo nucleo familiare?");
+qst.setProperty("code", "QQ9");
+qst.setProperty("show_rand", false);
+qst.setProperty("selection", "multiple");
+vector q440_opts = new vector {
+"Fino a 5 anni",
+"Da 6 a 12 anni",
+"Da 13 a 18 anni",
+"19 anni e oltre",
+"No, nessun figlio convivente#se#sf"
+};
+qst.setProperty("options", q440_opts);
+send qst; 
+}
+
+
+}

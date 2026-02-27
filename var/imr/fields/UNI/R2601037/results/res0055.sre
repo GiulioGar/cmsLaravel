@@ -1,0 +1,33 @@
+2.0;UNI;R2601037;55;GUEST;25/02/2026 15:31:38 CET;25/02/2026 15:47:53 CET;975;3;440;debug=true;device=desktop;lang=it;sysIID=55;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=2;cella=1;sysUID=GUEST
+concept;10
+choice;12;2;1
+open;20;92020
+open;30;76
+choice;40;7;6
+choice;50;2;0
+choice;60;5;01000;1
+choice;70;5;10100;0
+choice;80;5;00001;4
+choice;110;3;2
+choice;111;5;4
+choice;140;16;0000000100000000;7
+choice;150;16;7
+concept;270
+open;280;non saprei
+scale;290;12;5;1;1;2;2;2;3;2;2;3;2;2;3
+open;300;non saprei
+scale;310;13;5;2;2;2;2;1;2;-1;2;1;2;2;2;2
+concept;320
+ordering;370;4;2;1;3;0
+open;375;tanti ristoranti diversi ma anche bar o gelaterie
+choice;381;5;2
+choice;390;6;000001;5
+choice;394;7;0000100;4
+choice;400;5;1
+choice;410;6;5
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;2
+scale;5200;1;5;2
+scale;5300;1;5;2
+scale;5400;1;5;2

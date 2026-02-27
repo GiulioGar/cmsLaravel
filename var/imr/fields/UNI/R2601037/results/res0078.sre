@@ -1,0 +1,45 @@
+2.0;UNI;R2601037;78;GUEST;25/02/2026 17:20:23 CET;25/02/2026 17:49:26 CET;1743;3;440;debug=true;device=desktop;lang=it;sysIID=78;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=2;cella=1;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92026
+open;30;53
+choice;40;7;4
+choice;50;2;1
+choice;60;5;11000;0
+choice;70;5;00100;2
+choice;80;5;11100;2
+choice;90;6;2
+choice;100;3;1
+choice;111;5;0
+choice;120;13;0100110100100;1
+choice;130;13;1
+choice;160;10;8
+open;170;Il centro offre servizi utili come wi-fi gratuito e parcheggio
+open;180;può  migliorare l'offerta culinaria
+choice;190;10;1110110110;2
+scale;200;10;10;8;6;7;-1;7;6;-1;7;8;-1
+scale;210;7;10;8;6;7;7;7;7;7
+scale;240;13;10;7;8;5;8;6;6;7;6;7;7;6;7;7
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;aggiungerei negozi di elettronica
+scale;290;12;5;2;1;2;1;2;1;0;0;2;1;0;1
+open;300;più luce
+scale;310;13;5;1;1;1;0;2;0;-1;1;0;2;1;2;1
+concept;320
+ordering;370;4;2;3;0;1
+open;375;negozi di intimo
+choice;381;5;2
+choice;390;6;110000;0
+choice;392;6;0
+choice;394;7;0001000;3
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;2
+scale;5200;1;5;2
+scale;5300;1;5;3
+scale;5400;1;5;3

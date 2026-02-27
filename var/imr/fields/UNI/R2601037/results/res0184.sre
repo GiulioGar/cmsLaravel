@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;184;IDEXNOHGWADNRPCTZ265;26/02/2026 23:36:45 CET;26/02/2026 23:43:51 CET;426;3;440;device=mobile;lang=it;sysIID=184;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=4;cella=3;pan=4;sysUID=IDEXNOHGWADNRPCTZ265
+choice;7;107;0
+concept;10
+open;30;58
+choice;40;7;5
+choice;50;2;1
+choice;70;5;11100;0
+choice;80;5;10000;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;1111111011110;2
+choice;130;13;9
+choice;160;10;9
+open;170;I negozi 
+open;180;Mi piace molto 
+choice;190;10;1111010100;1
+scale;200;10;10;6;6;6;6;-1;6;-1;6;-1;-1
+scale;210;7;10;6;6;6;6;6;6;6
+scale;240;13;10;6;6;5;6;5;5;5;6;5;5;5;5;6
+choice;250;3;0
+choice;260;3;0
+concept;270
+open;280;Abbigliamento 
+scale;290;12;5;1;1;1;1;1;2;1;2;2;1;2;2
+open;300;Colori 
+scale;310;13;5;1;1;1;1;1;1;-1;1;1;1;1;1;1
+ordering;311;11;9;8;0;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;0;2;1;3
+open;371;Cultura 
+choice;381;5;3
+choice;390;6;010010;1
+choice;392;6;4
+choice;394;7;1010100;2
+choice;400;5;0
+choice;410;6;1
+choice;420;7;1
+choice;430;5;3
+choice;440;5;00010;3
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

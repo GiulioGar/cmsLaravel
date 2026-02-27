@@ -1,0 +1,22 @@
+2.0;COS;R2602049;5045;IDEXNOHEVBUJXHRED669;19/02/2026 19:50:43 CET;19/02/2026 19:55:36 CET;293;7;5006;rtr=2;Svar1=12;sysSID=R2602049;Svar0=14;rtrLan=1;rotazioneIdee=0;sysUID=IDEXNOHEVBUJXHRED669;rr=1;lan=1;sysPRJ=COS;cella=1;r9=2;r8=1;r7=1;pan=4;r6=2;r5=4;r12=0;r4=7;r11=1;sysIID=5045;r3=5;r10=2;r2=7;r1=11;r0=0;cel=2;lang=it
+choice;3;20;14
+choice;4;4;3
+concept;10
+choice;20;2;0
+choice;28;4;0
+choice;30;2;1
+open;50;75
+choice;60;4;2
+choice;70;2;1
+choice;80;5;0
+choice;90;7;0100000;1
+concept;91
+concept;100
+ordering;101;4;1;0;-1;-1
+concept;2100
+scale;2102;1;10;7
+concept;2200
+scale;2202;1;10;8
+concept;5000
+concept;40000
+concept;40001

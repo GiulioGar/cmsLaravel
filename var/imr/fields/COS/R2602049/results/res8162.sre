@@ -1,0 +1,10 @@
+2.0;COS;R2602049;8162;IDEXNOSSICTKYLMEN94279;23/02/2026 09:57:53 CET;23/02/2026 09:58:12 CET;19;4;70;sysSID=R2602049;lan=3;sysPRJ=COS;sysUID=IDEXNOSSICTKYLMEN94279;pan=4;sysIID=8162;lang=fr;rtrLan=3
+concept;10
+choice;20;2;0
+choice;28;4;2
+choice;30;2;1
+open;50;34
+choice;60;4;1
+choice;70;2;0
+choice;3004;25;5
+choice;4004;5;1

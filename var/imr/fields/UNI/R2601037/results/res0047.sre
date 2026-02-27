@@ -1,0 +1,44 @@
+2.0;UNI;R2601037;47;GUEST;25/02/2026 14:58:25 CET;25/02/2026 15:15:48 CET;1043;3;440;debug=true;device=desktop;lang=it;sysIID=47;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=1;cella=0;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92020
+open;30;44
+choice;40;7;3
+choice;50;2;1
+choice;60;5;11100;0
+choice;70;5;00001;4
+choice;80;5;11100;0
+choice;90;6;2
+choice;100;3;0
+choice;120;13;1000000000010;0
+choice;130;13;11
+choice;160;10;8
+open;170;ottimo il conad e ottimi tutti i negozi di vestiario e di make up
+open;180;nulla
+choice;190;10;1101001000;0
+scale;200;10;10;9;8;-1;9;-1;-1;8;-1;-1;-1
+scale;210;7;10;8;8;8;9;9;7;8
+scale;240;13;10;8;9;8;8;8;8;9;8;7;9;8;9;8
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;nessun negozio, c'è di tutto
+scale;290;12;5;1;2;1;1;1;2;1;2;1;1;1;1
+open;300;mi piacerebbe che fosse più colorato, con più piante, più verde
+scale;310;13;5;1;2;2;1;1;4;-1;1;0;2;4;4;4
+concept;320
+ordering;370;4;0;1;2;3
+open;371;mi piacerebbe che ci fossero ancor più negozi di abbigliamento ed accessori, sia per grandi che per piccini
+choice;381;5;1
+choice;390;6;110010;0
+choice;392;6;4
+choice;394;7;1110000;0
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;3
+choice;440;5;11000;1
+scale;5100;1;5;4
+scale;5200;1;5;2
+scale;5300;1;5;2
+scale;5400;1;5;2

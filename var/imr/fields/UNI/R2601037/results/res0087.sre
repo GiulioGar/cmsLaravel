@@ -1,0 +1,27 @@
+2.0;UNI;R2601037;87;GUEST;26/02/2026 14:18:45 CET;<unknown>;0;0;130;version=v01;debug=true;browser=variables;device=desktop;lang=it;sysIID=87;sysRST=1
+concept;10
+choice;12;2;0
+open;20;92100
+open;30;33
+choice;40;7;2
+choice;50;2;0
+choice;60;5;10000;0
+choice;70;5;01000;1
+choice;80;5;10000;0
+choice;90;6;0
+choice;100;3;0
+choice;120;13;1000000000000;0
+choice;130;13;0
+choice;160;10;0
+open;170;This is a test
+open;180;This is a test
+choice;190;10;1000000000;0
+scale;200;10;10;0;-1;-1;-1;-1;-1;-1;-1;-1;-1
+scale;210;7;10;0;0;0;0;0;0;0
+scale;240;13;10;0;0;0;0;0;0;0;0;0;0;0;0;0
+choice;250;3;0
+choice;260;3;0
+concept;270
+open;300;This is a test
+scale;310;13;5;0;0;0;0;0;0;-1;0;0;0;0;0;0
+ordering;311;11;8;9;5;-1;-1;-1;-1;-1;-1;-1;-1

@@ -1,0 +1,45 @@
+2.0;UNI;R2601037;92;GUEST;26/02/2026 15:25:04 CET;26/02/2026 15:45:30 CET;1226;3;440;debug=true;device=desktop;lang=it;sysIID=92;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=4;cella=3;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92015
+open;30;38
+choice;40;7;3
+choice;50;2;1
+choice;60;5;10000;0
+choice;70;5;01100;1
+choice;80;5;10100;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;1101110101110;1
+choice;130;13;4
+choice;160;10;8
+open;170;Il centro commerciale offre una ricca selezione di punti vendita.
+open;180;Scarsa varietà di opzioni di ristorazione.
+choice;190;10;1111111110;0
+scale;200;10;10;9;8;8;8;7;8;8;5;8;-1
+scale;210;7;10;9;8;8;9;9;7;8
+scale;240;13;10;9;9;8;8;9;8;8;5;9;9;8;9;8
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;Se potessi scegliere, aggiungerei al Centro Commerciale Città dei Templi ristoranti di cucina internazionale, come un sushi bar moderno o una pizzeria gourmet.
+scale;290;12;5;0;0;1;0;0;0;0;0;0;1;0;1
+open;300;Con palette cromatica naturale e calda.
+scale;310;13;5;1;1;0;1;1;0;-1;1;0;0;0;1;0
+ordering;311;11;10;6;5;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;2;0;1;3
+open;375;La mia Città dei Templi – Città del Gusto ideale sarebbe vivace e accogliente, con negozi di prodotti tipici e laboratori artigianali.
+choice;381;5;1
+choice;390;6;111110;1
+choice;392;6;1
+choice;394;7;1110000;0
+choice;400;5;1
+choice;410;6;1
+choice;420;7;2
+choice;430;5;2
+choice;440;5;01000;1
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

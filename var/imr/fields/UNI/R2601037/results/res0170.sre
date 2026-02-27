@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;170;IDEXNOYEBTOCFHUGI275;26/02/2026 20:28:30 CET;26/02/2026 20:39:34 CET;664;3;440;device=mobile;lang=it;sysIID=170;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=2;cella=1;pan=4;sysUID=IDEXNOYEBTOCFHUGI275
+choice;7;107;0
+concept;10
+open;30;24
+choice;40;7;1
+choice;50;2;1
+choice;70;5;10000;0
+choice;80;5;10000;0
+choice;90;6;3
+choice;100;3;1
+choice;111;5;0
+choice;120;13;1010110000000;2
+choice;130;13;2
+choice;160;10;7
+open;170;Negozi, zona cibo 
+open;180;Pulizia
+choice;190;10;0101110110;1
+scale;200;10;10;-1;2;-1;2;2;2;-1;2;2;-1
+scale;240;13;10;5;5;5;5;5;5;5;5;5;5;5;5;5
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;Game stop e simili 
+scale;290;12;5;1;1;1;1;1;1;1;1;1;1;1;1
+open;300;Va bene così com'è
+scale;310;13;5;1;1;1;1;1;2;-1;1;1;0;2;2;2
+ordering;311;11;10;1;2;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;0;2;1;3
+open;371;Idk
+choice;381;5;1
+choice;390;6;111110;4
+choice;392;6;1
+choice;394;7;1100100;0
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;3
+choice;440;5;00010;3
+scale;5100;1;5;3
+scale;5200;1;5;3
+scale;5300;1;5;3
+scale;5400;1;5;3

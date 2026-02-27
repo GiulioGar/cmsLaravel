@@ -1,0 +1,23 @@
+2.0;COS;R2602049;6032;IDEXNORAHBKXONFGJ30857;20/02/2026 09:42:43 CET;<unknown>;0;0;60;rtrLan=2;lang=es;sysIID=6032;sysPRJ=COS;sysSID=R2602049;rtr=6;rotazioneIdee=3;cel=3;cella=2;pan=4;sysUID=IDEXNORAHBKXONFGJ30857;lan=2
+concept;10
+choice;20;2;0
+choice;28;4;1
+choice;30;2;0
+open;50;51
+choice;60;4;2
+choice;70;2;1
+choice;80;5;1
+choice;90;7;0000001;6
+concept;91
+concept;100
+concept;2100
+scale;2102;1;10;9
+concept;2200
+scale;2202;1;10;9
+concept;2300
+scale;2302;1;10;8
+concept;2400
+scale;2402;1;10;8
+choice;3000;18;0
+choice;4000;4;3
+concept;40000

@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;177;IDEXNOPYXMXDRKEZQ267;26/02/2026 22:21:45 CET;26/02/2026 22:40:07 CET;1102;3;440;device=desktop;lang=it;sysIID=177;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=3;cella=2;pan=4;sysUID=IDEXNOPYXMXDRKEZQ267
+choice;7;107;0
+concept;10
+open;30;59
+choice;40;7;5
+choice;50;2;0
+choice;70;5;11100;0
+choice;80;5;11000;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;1111111010110;6
+choice;130;13;4
+choice;160;10;8
+open;170;pulizia e ben illuminato e condizinato
+open;180;manca il cinema
+choice;190;10;1000000100;0
+scale;200;10;10;8;-1;-1;-1;-1;-1;-1;8;-1;-1
+scale;210;7;10;7;7;7;6;7;7;6
+scale;240;13;10;8;7;8;8;8;8;8;7;8;7;8;8;7
+choice;250;3;1
+choice;260;3;1
+concept;270
+open;280;una multisala cinenema
+scale;290;12;5;2;2;2;2;2;2;2;2;0;2;2;1
+open;300;va bene lo stile attuale
+scale;310;13;5;1;1;1;1;1;1;-1;1;1;1;1;1;1
+ordering;311;11;6;0;10;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;2;0;3;1
+open;375;settimane a tema, tipo settimana cibo asiatico, street food, american style ecc
+choice;381;5;1
+choice;390;6;100000;0
+choice;392;6;0
+choice;394;7;1000100;0
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;3
+scale;5200;1;5;3
+scale;5300;1;5;3
+scale;5400;1;5;4

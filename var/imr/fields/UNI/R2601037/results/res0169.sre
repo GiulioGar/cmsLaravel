@@ -1,0 +1,31 @@
+2.0;UNI;R2601037;169;IDEXNOBCNVOAGHXPQ276;26/02/2026 20:03:20 CET;26/02/2026 20:07:20 CET;240;3;430;device=mobile;lang=en;sysIID=169;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=4;cella=3;pan=4;sysUID=IDEXNOBCNVOAGHXPQ276
+choice;7;107;0
+concept;10
+open;30;51
+choice;40;7;4
+choice;50;2;1
+choice;70;5;11000;1
+choice;80;5;01000;1
+choice;110;3;2
+choice;111;5;1
+choice;140;16;0000000010000000;8
+choice;150;16;8
+concept;270
+open;280;Aggiungerei un negozio di giocattoli per i loccoli
+scale;290;12;5;1;1;1;1;1;1;1;1;1;1;1;1
+open;300;Mi piacerebbe più colorato ed allegro
+scale;310;13;5;0;0;0;0;0;0;-1;0;0;0;0;0;0
+concept;320
+ordering;370;4;2;1;3;0
+open;375;Dei negozi di degustazione straniera 
+choice;381;5;2
+choice;390;6;010010;4
+choice;392;6;4
+choice;394;7;1110000;1
+choice;400;5;3
+choice;410;6;3
+choice;430;5;0
+scale;5100;1;5;3
+scale;5200;1;5;3
+scale;5300;1;5;3
+scale;5400;1;5;2

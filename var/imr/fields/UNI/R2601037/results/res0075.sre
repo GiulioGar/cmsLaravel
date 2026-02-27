@@ -1,0 +1,44 @@
+2.0;UNI;R2601037;75;GUEST;25/02/2026 17:17:37 CET;25/02/2026 17:35:31 CET;1074;3;440;debug=true;device=desktop;lang=it;sysIID=75;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=3;cella=2;sysUID=GUEST
+concept;10
+choice;12;2;1
+open;20;92014
+open;30;72
+choice;40;7;6
+choice;50;2;0
+choice;60;5;11100;0
+choice;70;5;00001;4
+choice;80;5;10000;0
+choice;90;6;4
+choice;100;3;2
+choice;111;5;0
+choice;120;13;0000000000010;11
+choice;130;13;11
+choice;160;10;8
+open;170;la conad
+open;180;troppo affollato
+choice;190;10;1001000000;0
+scale;200;10;10;8;-1;-1;8;-1;-1;-1;-1;-1;-1
+scale;210;7;10;7;8;8;7;8;7;7
+scale;240;13;10;8;8;7;8;7;8;7;8;8;8;7;7;8
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;un negozio della thun
+scale;290;12;5;0;0;1;0;1;0;1;0;1;0;1;1
+open;300;non saprei
+scale;310;13;5;1;1;0;1;0;1;-1;0;1;1;1;0;1
+concept;320
+ordering;370;4;2;3;1;0
+open;375;un ristorante tipico della nostra terra dove poter gustare i prodotti tipici locali
+choice;381;5;1
+choice;390;6;110000;0
+choice;392;6;0
+choice;394;7;0100010;5
+choice;400;5;1
+choice;410;6;5
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;0
+scale;5200;1;5;1
+scale;5300;1;5;3
+scale;5400;1;5;2

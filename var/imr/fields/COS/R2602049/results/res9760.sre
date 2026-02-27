@@ -1,0 +1,10 @@
+2.0;COS;R2602049;9760;IDEXNOTBACYZJALGJ93682;23/02/2026 10:33:14 CET;23/02/2026 10:33:50 CET;36;4;70;sysSID=R2602049;lan=3;sysPRJ=COS;sysUID=IDEXNOTBACYZJALGJ93682;pan=4;sysIID=9760;lang=fr;rtrLan=3
+concept;10
+choice;20;2;0
+choice;28;4;2
+choice;30;2;0
+open;50;68
+choice;60;4;2
+choice;70;2;0
+choice;3004;25;12
+choice;4004;5;2

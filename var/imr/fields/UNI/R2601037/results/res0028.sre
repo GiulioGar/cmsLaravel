@@ -1,0 +1,44 @@
+2.0;UNI;R2601037;28;GUEST;24/02/2026 16:21:43 CET;24/02/2026 16:46:56 CET;1513;3;440;debug=true;device=desktop;lang=it;sysIID=28;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=4;cella=3;sysUID=GUEST
+concept;10
+choice;12;2;1
+open;20;92020
+open;30;69
+choice;40;7;6
+choice;50;2;1
+choice;60;5;10000;0
+choice;70;5;01100;2
+choice;80;5;10000;0
+choice;90;6;3
+choice;100;3;1
+choice;111;5;0
+choice;120;13;0110000000010;2
+choice;130;13;11
+choice;160;10;9
+open;170;parcheggio comodo, varietà di negozi enorme
+open;180;non ho visto i carrelli per fare la spesa col cane
+choice;190;10;1100001100;0
+scale;200;10;10;8;8;-1;-1;-1;-1;8;8;-1;-1
+scale;210;7;10;7;7;8;7;8;8;8
+scale;240;13;10;7;7;7;8;8;8;8;8;8;7;7;8;8
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;nulla, c'è tutto
+scale;290;12;5;0;1;0;0;1;1;0;1;1;1;2;2
+open;300;lo farei meno anonimo, più variopinto
+scale;310;13;5;1;1;0;1;0;1;-1;1;1;1;1;3;0
+concept;320
+ordering;370;4;1;2;0;3
+open;373;molte attività da fare con i nipoti, intrattenimento per bambini
+choice;381;5;2
+choice;390;6;100000;0
+choice;392;6;0
+choice;394;7;0010100;4
+choice;400;5;1
+choice;410;6;5
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;3
+scale;5200;1;5;4
+scale;5300;1;5;3
+scale;5400;1;5;2

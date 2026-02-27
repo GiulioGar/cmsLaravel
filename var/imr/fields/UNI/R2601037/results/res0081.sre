@@ -1,0 +1,44 @@
+2.0;UNI;R2601037;81;GUEST;25/02/2026 17:26:35 CET;25/02/2026 17:43:36 CET;1021;3;440;debug=true;device=desktop;lang=it;sysIID=81;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=1;cella=0;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92015
+open;30;32
+choice;40;7;2
+choice;50;2;0
+choice;60;5;10000;0
+choice;70;5;01100;1
+choice;80;5;11100;2
+choice;90;6;1
+choice;100;3;0
+choice;120;13;1111111001110;1
+choice;130;13;4
+choice;160;10;9
+open;170;Mi piacciono sia i servizi che trovo all'interno sia i negozi di abbigliamento presenti.
+open;180;Manca un cinema, sarebbe bello fermarsi per un film dopo i vari servizi.
+choice;190;10;1111111110;8
+scale;200;10;10;8;9;9;8;9;9;9;9;9;-1
+scale;210;7;10;9;9;8;9;9;9;9
+scale;240;13;10;8;9;9;8;9;8;8;8;9;9;8;9;9
+choice;250;3;1
+choice;260;3;2
+concept;270
+open;280;Un cinema.
+scale;290;12;5;0;1;0;0;1;1;1;1;0;1;0;0
+open;300;Mi piace così com'è, magari aggiungerei più aree verdi.
+scale;310;13;5;0;0;0;0;1;0;-1;0;0;0;1;0;1
+concept;320
+ordering;370;4;1;2;0;3
+open;373;Qui vorrei trovare un cinema moderno multisala per proiezioni di film, rassegne culturali, anteprime e serate a tema, capace di diventare un punto di ritrovo per tutte le età.
+choice;381;5;1
+choice;390;6;111110;0
+choice;392;6;1
+choice;394;7;1110000;2
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;3
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

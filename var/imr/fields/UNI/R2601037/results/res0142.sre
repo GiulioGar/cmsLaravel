@@ -1,0 +1,42 @@
+2.0;UNI;R2601037;142;IDEXNOTJRMGXUOHKN22;26/02/2026 17:37:46 CET;26/02/2026 17:48:03 CET;617;3;440;device=mobile;lang=it;sysIID=142;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=1;cella=0;pan=4;sysUID=IDEXNOTJRMGXUOHKN22
+choice;7;107;0
+concept;10
+open;30;51
+choice;40;7;4
+choice;50;2;0
+choice;70;5;11100;0
+choice;80;5;10000;0
+choice;90;6;3
+choice;100;3;0
+choice;120;13;0000100000000;4
+choice;130;13;4
+choice;160;10;5
+open;170;A pochi metri da casa mia
+open;180;Sovraffollamento nel fine settimana con parcheggio molto difficile 
+choice;190;10;0101010000;1
+scale;200;10;10;-1;6;-1;6;-1;6;-1;-1;-1;-1
+scale;240;13;10;5;7;4;5;5;3;4;6;6;4;5;5;4
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;..
+scale;290;12;5;1;1;1;1;1;1;1;1;1;1;1;1
+open;300;..
+scale;310;13;5;1;2;1;2;1;1;-1;1;1;1;1;1;2
+ordering;311;11;7;2;8;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;3;2;0;1
+open;377;..
+choice;381;5;2
+choice;390;6;111100;0
+choice;392;6;0
+choice;394;7;1011000;2
+choice;400;5;1
+choice;410;6;0
+choice;420;7;5
+choice;430;5;2
+choice;440;5;00010;3
+scale;5100;1;5;2
+scale;5200;1;5;2
+scale;5300;1;5;2
+scale;5400;1;5;2

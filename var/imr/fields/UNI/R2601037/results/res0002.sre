@@ -1,0 +1,7 @@
+2.0;UNI;R2601037;2;GUEST;24/02/2026 09:21:46 CET;24/02/2026 09:22:14 CET;28;4;70;debug=true;device=desktop;lang=it;sysIID=2;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;pan=4;sysUID=GUEST
+choice;7;107;0
+concept;10
+open;30;44
+choice;40;7;3
+choice;50;2;1
+choice;70;5;01010;1;comp3:altro q4

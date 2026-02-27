@@ -1,0 +1,41 @@
+2.0;UNI;R2601037;117;IDEXNOFDYBCJVMPTH117;26/02/2026 16:53:49 CET;26/02/2026 16:59:25 CET;336;3;440;device=desktop;lang=it;sysIID=117;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=1;cella=0;pan=4;sysUID=IDEXNOFDYBCJVMPTH117
+choice;7;107;0
+concept;10
+open;30;45
+choice;40;7;4
+choice;50;2;1
+choice;70;5;11000;1
+choice;80;5;10000;0
+choice;90;6;3
+choice;100;3;0
+choice;120;13;1110100000000;1
+choice;130;13;0
+choice;160;10;7
+open;170;I negozi 
+open;180;Niente 
+choice;190;10;0100000100;7
+scale;200;10;10;-1;8;-1;-1;-1;-1;-1;6;-1;-1
+scale;240;13;10;5;8;7;7;8;7;7;5;8;8;5;7;8
+choice;250;3;1
+choice;260;3;1
+concept;270
+open;280;Più spazi per la ristorazione 
+scale;290;12;5;0;1;1;0;1;2;1;1;2;1;2;2
+open;300;Più spazi per la ristorazione 
+scale;310;13;5;1;1;1;2;1;1;-1;1;1;1;1;0;1
+ordering;311;11;6;3;1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;0;2;1;3
+open;371;Più negozi di abbigliamento e di calzature 
+choice;381;5;2
+choice;390;6;110000;0
+choice;392;6;1
+choice;394;7;1100100;0
+choice;400;5;0
+choice;410;6;3
+choice;430;5;2
+choice;440;5;00001;4
+scale;5100;1;5;4
+scale;5200;1;5;3
+scale;5300;1;5;4
+scale;5400;1;5;2

@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;165;IDEXNOJGMQQGHPXPO280;26/02/2026 19:50:49 CET;26/02/2026 20:04:27 CET;818;3;440;device=desktop;lang=en;sysIID=165;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=1;cella=0;pan=4;sysUID=IDEXNOJGMQQGHPXPO280
+choice;7;107;0
+concept;10
+open;30;23
+choice;40;7;1
+choice;50;2;1
+choice;70;5;11000;1
+choice;80;5;10000;0
+choice;90;6;2
+choice;100;3;0
+choice;120;13;0111010100010;1
+choice;130;13;3
+choice;160;10;7
+open;170;che po fare shopping piu la spesa
+open;180;la domenica ci vanno troppe persone
+choice;190;10;1100000000;1
+scale;200;10;10;9;5;-1;-1;-1;-1;-1;-1;-1;-1
+scale;210;7;10;6;6;8;7;7;7;6
+scale;240;13;10;7;6;7;7;7;6;7;7;8;6;8;8;8
+choice;250;3;0
+choice;260;3;0
+concept;270
+open;280;piu bagni
+scale;290;12;5;0;2;3;0;1;3;0;3;3;3;4;2
+open;300;piu grande che ci entrano i bici
+scale;310;13;5;1;0;2;2;2;1;-1;2;2;2;1;1;2
+ordering;311;11;6;10;8;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;1;0;2;3
+open;373;bowling  un cinema
+choice;381;5;1
+choice;390;6;111010;0
+choice;392;6;1
+choice;394;7;0000100;4
+choice;400;5;2
+choice;410;6;1
+choice;420;7;3
+choice;430;5;2
+choice;440;5;00001;4
+scale;5100;1;5;4
+scale;5200;1;5;3
+scale;5300;1;5;4
+scale;5400;1;5;3

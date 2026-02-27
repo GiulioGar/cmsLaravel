@@ -1,0 +1,77 @@
+{
+ "interview": {
+        "development": {},
+        "production" : {
+            "allow_go_back": false,
+            "redirections": [{
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 3,
+                    "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+				{
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 4,
+                   "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+                
+                {
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 5,
+                     "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+
+
+                {
+                    "parameter_name": "pan",
+                    "parameter_value": "4",
+                    "exit_code": 3,
+                    "redirect_to": "https://webs.norstatsurveys.com/z/Complete"
+                },
+				{
+                    "parameter_name": "pan",
+                    "parameter_value": "4",
+                    "exit_code": 4,
+                   "redirect_to": "https://webs.norstatsurveys.com/z/Screened"
+                },
+                
+                {
+                    "parameter_name": "pan",
+                    "parameter_value": "4",
+                    "exit_code": 5,
+                     "redirect_to": "https://webs.norstatsurveys.com/z/QuotaFull"
+                }               
+					
+			
+						
+			 ]
+    }
+          
+},
+
+"quota": {
+    "total_interviews": 6000,
+    "total_by_leg": {
+            "variable_name": "rtr",
+            "values": { 
+                        "1": 850,
+                        "2": 300,
+                        "3": 400,
+                        "4": 850,
+                        "5": 300,
+                        "6": 400,
+                        "7": 850,
+                        "8": 300,
+                        "9": 400,
+                        "10": 850,
+                        "11": 300,
+                        "12": 400
+                      }
+        }
+}
+
+}
+
+

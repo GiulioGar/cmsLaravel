@@ -1,0 +1,11 @@
+2.0;COS;R2602049;10225;IDEXNOWNPUCOSKCZY93476;23/02/2026 10:44:22 CET;23/02/2026 10:44:52 CET;30;4;80;sysSID=R2602049;lan=3;sysPRJ=COS;sysUID=IDEXNOWNPUCOSKCZY93476;pan=4;sysIID=10225;lang=fr;rtrLan=3
+concept;10
+choice;20;2;0
+choice;28;4;2
+choice;30;2;1
+open;50;29
+choice;60;4;1
+choice;70;2;1
+choice;80;5;4
+choice;3004;25;3
+choice;4004;5;1

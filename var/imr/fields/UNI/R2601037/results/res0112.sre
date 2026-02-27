@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;112;IDEXNOZTXDOWHMLTS83;26/02/2026 16:37:09 CET;26/02/2026 16:43:12 CET;363;3;440;device=mobile;lang=it;sysIID=112;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=2;cella=1;pan=4;sysUID=IDEXNOZTXDOWHMLTS83
+choice;7;107;0
+concept;10
+open;30;34
+choice;40;7;2
+choice;50;2;0
+choice;70;5;11110;2;comp3:Due fontane 
+choice;80;5;11110;2
+choice;90;6;2
+choice;100;3;0
+choice;120;13;1100100001000;9
+choice;130;13;1
+choice;160;10;8
+open;170;Completo, prezzi abbordabili, ottima area di ristoro
+open;180;Nessuno
+choice;190;10;1111111100;5
+scale;200;10;10;8;8;8;8;8;8;8;8;-1;-1
+scale;210;7;10;8;8;8;8;8;8;8
+scale;240;13;10;8;8;8;8;8;8;8;8;8;8;8;8;8
+choice;250;3;2
+choice;260;3;1
+concept;270
+open;280;Area relax, area prova peodotti innovativi
+scale;290;12;5;0;0;0;0;0;0;0;0;0;0;0;0
+open;300;Uno stile un po' più moderno
+scale;310;13;5;0;3;0;3;0;0;-1;0;0;0;0;0;0
+ordering;311;11;10;0;1;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;3;2;1;0
+open;377;Essendo appassionato di informatica, piuttosto che il solito negozio di beni informatici, un negozio di testing o coding
+choice;381;5;0
+choice;390;6;111010;1
+choice;392;6;1
+choice;394;7;1010000;2
+choice;400;5;0
+choice;410;6;0
+choice;420;7;2
+choice;430;5;2
+choice;440;5;00001;4
+scale;5100;1;5;2
+scale;5200;1;5;2
+scale;5300;1;5;2
+scale;5400;1;5;2

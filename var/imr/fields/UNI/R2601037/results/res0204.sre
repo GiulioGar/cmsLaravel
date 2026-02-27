@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;204;IDEXNODGJFCUJMECW248;27/02/2026 13:07:36 CET;27/02/2026 13:11:56 CET;260;3;440;device=mobile;lang=it;sysIID=204;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=1;cella=0;pan=4;sysUID=IDEXNODGJFCUJMECW248
+choice;7;107;0
+concept;10
+open;30;50
+choice;40;7;4
+choice;50;2;0
+choice;70;5;10000;0
+choice;80;5;10000;0
+choice;90;6;2
+choice;100;3;1
+choice;111;5;0
+choice;120;13;0000000011100;10
+choice;130;13;9
+choice;160;10;4
+open;170;La Spettacolarità dei monumenti
+open;180;Sporcizia
+choice;190;10;0110001000;1
+scale;200;10;10;-1;6;3;-1;-1;-1;2;-1;-1;-1
+scale;240;13;10;5;3;5;4;5;2;3;5;3;7;5;4;5
+choice;250;3;0
+choice;260;3;0
+concept;270
+open;280;Sporco
+scale;290;12;5;0;2;2;2;1;3;2;1;3;2;1;1
+open;300;Più pulito
+scale;310;13;5;2;1;3;3;1;2;-1;2;0;3;1;2;2
+ordering;311;11;0;6;7;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;0;1;3;2
+open;371;Suvenir
+choice;381;5;1
+choice;390;6;110010;0
+choice;392;6;1
+choice;394;7;0000110;4
+choice;400;5;0
+choice;410;6;0
+choice;420;7;0
+choice;430;5;3
+choice;440;5;10000;0
+scale;5100;1;5;2
+scale;5200;1;5;2
+scale;5300;1;5;2
+scale;5400;1;5;2

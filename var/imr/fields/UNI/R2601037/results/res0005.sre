@@ -1,0 +1,17 @@
+2.0;UNI;R2601037;5;GUEST;24/02/2026 09:28:24 CET;<unknown>;0;0;130;debug=true;device=desktop;lang=it;sysIID=5;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;pan=4;sysUID=GUEST
+choice;7;107;0
+concept;10
+open;30;44
+choice;40;7;3
+choice;50;2;1
+choice;70;5;11100;1
+choice;80;5;10000;0
+choice;90;6;0
+choice;100;3;0
+choice;120;13;0010000000000;2
+choice;130;13;2
+choice;160;10;0
+open;170;s
+open;180;s
+choice;190;10;1100110000;5
+scale;200;10;10;2;2;-1;-1;2;2;-1;-1;-1;-1

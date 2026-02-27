@@ -1,0 +1,33 @@
+2.0;UNI;R2601037;56;GUEST;25/02/2026 15:31:40 CET;25/02/2026 15:48:26 CET;1006;3;440;debug=true;device=desktop;lang=it;sysIID=56;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=1;cella=0;sysUID=GUEST
+concept;10
+choice;12;2;1
+open;20;92020
+open;30;78
+choice;40;7;6
+choice;50;2;1
+choice;60;5;01000;1
+choice;70;5;10100;2
+choice;80;5;00001;4
+choice;110;3;2
+choice;111;5;4
+choice;140;16;0000000100000000;7
+choice;150;16;7
+concept;270
+open;280;non saprei
+scale;290;12;5;1;3;3;2;3;2;2;2;2;2;2;3
+open;300;non saprei
+scale;310;13;5;2;2;2;0;0;2;-1;2;0;2;0;2;2
+concept;320
+ordering;370;4;0;1;2;3
+open;371;boutique di vari marchi
+choice;381;5;1
+choice;390;6;000001;5
+choice;394;7;0000100;4
+choice;400;5;1
+choice;410;6;5
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;3
+scale;5200;1;5;1
+scale;5300;1;5;1
+scale;5400;1;5;1

@@ -1,0 +1,42 @@
+2.0;UNI;R2601037;156;IDEXNOZTQFSEBRYCL288;26/02/2026 19:20:53 CET;26/02/2026 19:34:06 CET;793;3;440;device=desktop;lang=it;sysIID=156;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=4;cella=3;pan=4;sysUID=IDEXNOZTQFSEBRYCL288
+choice;7;107;0
+concept;10
+open;30;29
+choice;40;7;2
+choice;50;2;0
+choice;70;5;11100;0
+choice;80;5;11000;1
+choice;90;6;3
+choice;100;3;0
+choice;120;13;1010011000000;5
+choice;130;13;0
+choice;160;10;8
+open;170;Pulito , pieno di negozi suddivisi in 2 piani , fast food e catene di ristorazione presenti all'interno  
+open;180;Nessuno
+choice;190;10;0100111000;4
+scale;200;10;10;-1;6;-1;-1;8;7;7;-1;-1;-1
+scale;240;13;10;7;8;8;8;8;7;6;9;7;9;8;8;8
+choice;250;3;1
+choice;260;3;1
+concept;270
+open;280;Primark , Cinema ,  RoadHouse Grill
+scale;290;12;5;3;3;1;2;3;2;2;2;0;3;2;2
+open;300;Ha già uno stile che mi piace se proprio aggiungerei qualcosa sarebbero carini dei dipinti moderni di grandi dimensioni fatti direttamente nelle pareti vuote 
+scale;310;13;5;1;0;0;1;0;1;-1;1;1;1;1;2;1
+ordering;311;11;0;5;9;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;1;2;3;0
+open;373;Cinema , Bowling , sale giochi grandi
+choice;381;5;1
+choice;390;6;110010;4
+choice;392;6;1
+choice;394;7;1010100;4
+choice;400;5;1
+choice;410;6;1
+choice;420;7;2
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;3
+scale;5200;1;5;4
+scale;5300;1;5;3
+scale;5400;1;5;3

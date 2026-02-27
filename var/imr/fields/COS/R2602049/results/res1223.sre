@@ -1,0 +1,11 @@
+2.0;COS;R2602049;1223;IDEXNOWSVILNGJAUD31408;19/02/2026 11:01:29 CET;19/02/2026 11:02:16 CET;47;4;80;sysSID=R2602049;lan=2;sysPRJ=COS;sysUID=IDEXNOWSVILNGJAUD31408;pan=4;sysIID=1223;lang=es;rtrLan=2
+concept;10
+choice;20;2;0
+choice;28;4;1
+choice;30;2;1
+open;50;62
+choice;60;4;2
+choice;70;2;1
+choice;80;5;3
+choice;3000;18;8
+choice;4000;4;2

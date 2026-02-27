@@ -1,0 +1,33 @@
+2.0;UNI;R2601037;154;IDEXNOCPNLMSOJQRZ18;26/02/2026 19:06:27 CET;26/02/2026 19:13:41 CET;434;3;440;device=desktop;lang=it;sysIID=154;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=2;cella=1;pan=4;sysUID=IDEXNOCPNLMSOJQRZ18
+choice;7;107;0
+concept;10
+open;30;55
+choice;40;7;5
+choice;50;2;0
+choice;70;5;11100;1
+choice;80;5;00100;2
+choice;110;3;2
+choice;111;5;2
+choice;140;16;0000100010000001;8;comp15:Ci vado di tanto in tanto
+choice;150;16;15
+concept;270
+open;280;turistici 
+scale;290;12;5;1;2;3;1;1;0;2;2;0;0;2;2
+open;300;colori soffusi stile antico piante locali
+scale;310;13;5;0;0;0;0;0;1;-1;2;0;0;2;1;0
+concept;320
+ordering;370;4;1;2;3;0
+open;373;non so
+choice;381;5;2
+choice;390;6;100000;0
+choice;392;6;0
+choice;394;7;1000000;0
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;3
+choice;440;5;00010;3
+scale;5100;1;5;1
+scale;5200;1;5;2
+scale;5300;1;5;2
+scale;5400;1;5;2

@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;167;IDEXNOHGFRMUNBJYA278;26/02/2026 19:53:49 CET;26/02/2026 20:04:13 CET;624;3;440;device=mobile;lang=it;sysIID=167;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=1;cella=0;pan=4;sysUID=IDEXNOHGFRMUNBJYA278
+choice;7;107;0
+concept;10
+open;30;50
+choice;40;7;4
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;10000;0
+choice;90;6;4
+choice;100;3;1
+choice;111;5;0
+choice;120;13;1010000000000;0
+choice;130;13;0
+choice;160;10;6
+open;170;Tanti negozi 
+open;180;Nessuno 
+choice;190;10;0101000100;7
+scale;200;10;10;-1;6;-1;7;-1;-1;-1;7;-1;-1
+scale;240;13;10;6;6;6;6;6;6;6;6;6;6;5;6;6
+choice;250;3;2
+choice;260;3;0
+concept;270
+open;280;Un point spedizioni
+scale;290;12;5;1;2;1;0;1;1;1;2;2;0;2;0
+open;300;Mi piacerebbe che i negozi fossero più ricchi di luci, più verde attorno
+scale;310;13;5;1;2;1;1;1;0;-1;0;1;0;2;1;1
+ordering;311;11;10;1;0;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;3;2;0;1
+open;377;Vorrei trovare un po' di tutto, in modo da passare più tempo nella città e svolgere tutti i miei servizi 
+choice;381;5;2
+choice;390;6;111010;0
+choice;392;6;0
+choice;394;7;0100000;1
+choice;400;5;1
+choice;410;6;0
+choice;420;7;5
+choice;430;5;2
+choice;440;5;00010;3
+scale;5100;1;5;4
+scale;5200;1;5;2
+scale;5300;1;5;4
+scale;5400;1;5;4

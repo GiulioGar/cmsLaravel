@@ -1,0 +1,10 @@
+2.0;COS;R2602049;7854;IDEXNOPRTFKEONBLV4637;23/02/2026 09:51:30 CET;23/02/2026 09:51:51 CET;21;4;70;sysSID=R2602049;lan=1;sysPRJ=COS;sysUID=IDEXNOPRTFKEONBLV4637;pan=4;sysIID=7854;lang=it;rtrLan=1
+choice;3;20;6
+choice;4;4;2
+concept;10
+choice;20;2;0
+choice;28;4;0
+choice;30;2;0
+open;50;73
+choice;60;4;2
+choice;70;2;0

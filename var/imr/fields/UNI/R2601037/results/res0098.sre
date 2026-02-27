@@ -1,0 +1,33 @@
+2.0;UNI;R2601037;98;GUEST;26/02/2026 15:30:24 CET;26/02/2026 15:46:20 CET;956;3;440;debug=true;device=desktop;lang=it;sysIID=98;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=1;cella=0;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92020
+open;30;75
+choice;40;7;6
+choice;50;2;1
+choice;60;5;11000;1
+choice;70;5;00100;2
+choice;80;5;01000;1
+choice;110;3;2
+choice;111;5;1
+choice;140;16;0000000100000000;7
+choice;150;16;7
+concept;270
+open;280;non saprei, non ci vado mai
+scale;290;12;5;0;0;0;0;0;3;3;0;3;0;0;0
+open;300;nulla da suggerire
+scale;310;13;5;1;2;2;2;1;1;-1;2;2;0;2;2;1
+concept;320
+ordering;370;4;2;1;0;3
+open;375;un'area dedicata solo alla ristorazione, con ristoranti anche asiatici che piacciono moltissimo ai giovani.
+choice;381;5;2
+choice;390;6;000001;5
+choice;394;7;0000100;4
+choice;400;5;3
+choice;410;6;5
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;3
+scale;5200;1;5;3
+scale;5300;1;5;3
+scale;5400;1;5;2

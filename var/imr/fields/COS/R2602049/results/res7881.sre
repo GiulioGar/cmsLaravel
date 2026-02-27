@@ -1,0 +1,10 @@
+2.0;COS;R2602049;7881;IDEXNOMWOCEXKYHEA4624;23/02/2026 09:52:01 CET;23/02/2026 09:52:42 CET;41;4;70;sysSID=R2602049;lan=1;sysPRJ=COS;sysUID=IDEXNOMWOCEXKYHEA4624;pan=4;sysIID=7881;lang=it;rtrLan=1
+choice;3;20;19
+choice;4;4;1
+concept;10
+choice;20;2;0
+choice;28;4;0
+choice;30;2;0
+open;50;33
+choice;60;4;1
+choice;70;2;0

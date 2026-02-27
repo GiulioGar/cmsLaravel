@@ -1,0 +1,7 @@
+2.0;UNI;R2601037;190;IDEXNOWFLUKSIONCH259;27/02/2026 02:26:44 CET;27/02/2026 02:27:16 CET;32;4;70;version=v01;sysSID=R2601037;sysPRJ=UNI;sysUID=IDEXNOWFLUKSIONCH259;device=mobile;pan=4;sysIID=190;lang=it
+choice;7;107;0
+concept;10
+open;30;21
+choice;40;7;1
+choice;50;2;1
+choice;70;5;00001;4

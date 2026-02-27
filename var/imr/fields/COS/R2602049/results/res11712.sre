@@ -1,0 +1,11 @@
+2.0;COS;R2602049;11712;IDEXNOOPILPEXBBUO4009;23/02/2026 15:01:21 CET;23/02/2026 15:01:32 CET;11;4;80;sysSID=R2602049;lan=1;sysPRJ=COS;sysUID=IDEXNOOPILPEXBBUO4009;pan=4;sysIID=11712;lang=it;rtrLan=1
+choice;3;20;19
+choice;4;4;1
+concept;10
+choice;20;2;0
+choice;28;4;0
+choice;30;2;0
+open;50;31
+choice;60;4;1
+choice;70;2;1
+choice;80;5;2

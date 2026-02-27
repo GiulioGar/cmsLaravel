@@ -1,0 +1,42 @@
+2.0;UNI;R2601037;179;IDEXNOLWSIRMTLYIH266;26/02/2026 23:10:26 CET;26/02/2026 23:15:21 CET;295;3;440;device=mobile;lang=it;sysIID=179;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=3;cella=2;pan=4;sysUID=IDEXNOLWSIRMTLYIH266
+choice;7;107;0
+concept;10
+open;30;27
+choice;40;7;2
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;10000;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;0010001110000;7
+choice;130;13;7
+choice;160;10;9
+open;170;Ambiente accogliente
+open;180;Non ci sia nulla che non mk soddisfi
+choice;190;10;1111000000;1
+scale;200;10;10;7;7;8;7;-1;-1;-1;-1;-1;-1
+scale;210;7;10;7;7;7;7;7;7;7
+scale;240;13;10;6;7;6;7;7;7;6;6;7;7;7;6;6
+choice;250;3;0
+choice;260;3;0
+concept;270
+open;280;Zona giardino
+scale;290;12;5;1;1;1;1;1;1;1;1;1;1;1;1
+open;300;Va beme cosi come è
+scale;310;13;5;1;1;1;1;1;1;-1;1;1;1;1;1;1
+ordering;311;11;10;0;2;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;2;0;3;1
+open;375;Pittura
+choice;381;5;1
+choice;390;6;110010;1
+choice;392;6;1
+choice;394;7;1000100;4
+choice;400;5;1
+choice;410;6;2
+choice;430;5;3
+choice;440;5;00001;4
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

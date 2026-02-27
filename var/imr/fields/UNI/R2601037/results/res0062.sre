@@ -1,0 +1,44 @@
+2.0;UNI;R2601037;62;GUEST;25/02/2026 16:44:40 CET;25/02/2026 17:03:58 CET;1158;3;440;debug=true;device=desktop;lang=it;sysIID=62;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=2;cella=1;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92014
+open;30;55
+choice;40;7;5
+choice;50;2;1
+choice;60;5;11100;0
+choice;70;5;00001;4
+choice;80;5;11000;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;0010000000010;11
+choice;130;13;11
+choice;160;10;8
+open;170;la presenza del supermercato conad ha sempre prezzi scontati
+open;180;manca di qualche negozio di abbigliamento donna
+choice;190;10;1100001000;6
+scale;200;10;10;8;8;-1;-1;-1;-1;8;-1;-1;-1
+scale;210;7;10;7;7;7;8;8;8;7
+scale;240;13;10;8;8;8;7;8;8;7;8;8;8;7;7;8
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;un negozio di abbigliamento con marchi famosi
+scale;290;12;5;1;0;1;1;0;0;1;1;0;0;1;0
+open;300;renderlo piu' colorato piu' moderno
+scale;310;13;5;1;1;1;0;0;1;-1;0;0;1;1;1;1
+concept;320
+ordering;370;4;0;1;2;3
+open;371;un centro estetico dove rilassarsi 
+choice;381;5;1
+choice;390;6;110000;0
+choice;392;6;0
+choice;394;7;1100000;1
+choice;400;5;0
+choice;410;6;0
+choice;420;7;0
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;3
+scale;5200;1;5;2
+scale;5300;1;5;3
+scale;5400;1;5;1

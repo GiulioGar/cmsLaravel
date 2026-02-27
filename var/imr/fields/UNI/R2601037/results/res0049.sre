@@ -1,0 +1,44 @@
+2.0;UNI;R2601037;49;GUEST;25/02/2026 15:04:21 CET;25/02/2026 15:20:36 CET;975;3;440;debug=true;device=desktop;lang=it;sysIID=49;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=2;cella=1;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92021
+open;30;45
+choice;40;7;4
+choice;50;2;1
+choice;60;5;10000;0
+choice;70;5;01100;2
+choice;80;5;10000;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;0001010000000;5
+choice;130;13;3
+choice;160;10;7
+open;170;il negozio prima donna
+open;180;vorrei ci fosse il mc
+choice;190;10;1100001110;1
+scale;200;10;10;8;7;-1;-1;-1;-1;9;8;7;-1
+scale;210;7;10;6;6;7;9;8;8;7
+scale;240;13;10;7;7;8;6;9;7;8;9;6;8;9;8;8
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;aggiungerei yamamy
+scale;290;12;5;1;0;1;1;1;1;0;0;1;0;1;1
+open;300;aggiungerei più luci
+scale;310;13;5;1;0;1;1;0;1;-1;0;0;1;0;1;0
+concept;320
+ordering;370;4;0;3;1;2
+open;371;vorrei ci fosse idola
+choice;381;5;1
+choice;390;6;110000;0
+choice;392;6;1
+choice;394;7;0100000;1
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;4

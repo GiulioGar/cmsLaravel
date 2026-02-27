@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;186;IDEXNOLYMBNTIHDDW263;26/02/2026 23:43:34 CET;26/02/2026 23:54:35 CET;661;3;440;device=mobile;lang=it;sysIID=186;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=4;cella=3;pan=4;sysUID=IDEXNOLYMBNTIHDDW263
+choice;7;107;0
+concept;10
+open;30;52
+choice;40;7;4
+choice;50;2;1
+choice;70;5;11000;1
+choice;80;5;10000;0
+choice;90;6;2
+choice;100;3;0
+choice;120;13;0110010000100;1
+choice;130;13;2
+choice;160;10;8
+open;170;È vicino casa mia 
+open;180;A volte è troppo affollato 
+choice;190;10;1100010100;0
+scale;200;10;10;7;7;-1;-1;-1;7;-1;7;-1;-1
+scale;210;7;10;7;6;7;6;7;7;7
+scale;240;13;10;7;7;6;7;7;7;6;6;7;6;7;6;7
+choice;250;3;1
+choice;260;3;1
+concept;270
+open;280;Negozio di giocattoli e gadget 
+scale;290;12;5;1;0;1;1;0;1;1;1;1;2;2;1
+open;300;Con qualche divanetto in più 
+scale;310;13;5;1;1;0;1;0;1;-1;1;1;1;1;1;1
+ordering;311;11;6;1;2;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;2;3;0;1
+open;375;Ristorante cinese 
+choice;381;5;2
+choice;390;6;110000;1
+choice;392;6;0
+choice;394;7;1010000;0
+choice;400;5;1
+choice;410;6;1
+choice;420;7;2
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;4
+scale;5200;1;5;2
+scale;5300;1;5;4
+scale;5400;1;5;4

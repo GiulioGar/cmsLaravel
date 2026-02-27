@@ -1,0 +1,41 @@
+2.0;UNI;R2601037;182;IDEXNOSLOJBRTLYNX96;26/02/2026 23:33:53 CET;26/02/2026 23:36:28 CET;155;3;440;device=mobile;lang=it;sysIID=182;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=3;cella=2;pan=4;sysUID=IDEXNOSLOJBRTLYNX96
+choice;7;107;0
+concept;10
+open;30;48
+choice;40;7;4
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;10000;0
+choice;90;6;4
+choice;100;3;0
+choice;120;13;0100100000000;1
+choice;130;13;4
+choice;160;10;9
+open;170;Non so 
+open;180;Non so 
+choice;190;10;0101010000;5
+scale;200;10;10;-1;5;-1;5;-1;5;-1;-1;-1;-1
+scale;240;13;10;5;5;5;5;5;5;5;5;5;5;5;5;5
+choice;250;3;0
+choice;260;3;2
+concept;270
+open;280;Non so 
+scale;290;12;5;1;1;1;1;1;1;1;1;3;1;1;1
+open;300;Non so 
+scale;310;13;5;1;1;1;1;1;1;-1;1;1;1;1;1;1
+ordering;311;11;0;5;8;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;0;1;2;3
+open;371;Non so 
+choice;381;5;2
+choice;390;6;000001;5
+choice;394;7;0000100;4
+choice;400;5;0
+choice;410;6;0
+choice;420;7;2
+choice;430;5;2
+choice;440;5;00001;4
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;3
+scale;5400;1;5;0

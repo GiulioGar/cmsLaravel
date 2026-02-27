@@ -1,0 +1,75 @@
+{
+ "interview": {
+        "development": {},
+        "production" : {
+            "allow_go_back": false,
+            "redirections": [
+                {
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 3,
+                    "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+				{
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 4,
+                   "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+                
+                {
+                    "parameter_name": "test",
+                    "parameter_value": "1",
+                    "exit_code": 5,
+                     "redirect_to": "http://www.primisoft.com/primis/run.do?sid=$(miosid)&prj=$(mioprj)&uid=GUEST&rst=1&test=1&miosid=$(miosid)&mioprj=$(mioprj)"
+                },
+                {
+                    "parameter_name": "pan",
+                    "parameter_value": "4",
+                    "exit_code": 3,
+                    "redirect_to": "https://webs.norstatsurveys.com/z/Complete"
+                },
+				{
+                    "parameter_name": "pan",
+                    "parameter_value": "4",
+                    "exit_code": 4,
+                   "redirect_to": "https://webs.norstatsurveys.com/z/Screened"
+                },
+                
+                {
+                    "parameter_name": "pan",
+                    "parameter_value": "4",
+                    "exit_code": 5,
+                     "redirect_to": "https://webs.norstatsurveys.com/z/QuotaFull"
+                }
+					
+			
+						
+			 ]
+    }
+          
+},
+
+"quota": {
+    "total_interviews": 500,
+    "total_by_leg": {
+            "variable_name": "cel",
+            "values": { 
+                        "1": 250,
+                        "2": 250,
+                        "3": 250,
+                        "4": 250
+                      }
+        },
+    "targets": [
+            {
+                "name": "source_panel",
+                "description": "Norstat",
+                "parameter_name": "pan",
+                "parameter_value": "4",
+                "value":100
+            }
+        ]
+}
+
+}

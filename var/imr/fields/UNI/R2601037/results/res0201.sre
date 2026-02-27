@@ -1,0 +1,41 @@
+2.0;UNI;R2601037;201;IDEXNOWPBCUZDRLRX121;27/02/2026 11:13:34 CET;27/02/2026 11:20:21 CET;407;3;440;device=mobile;lang=it;sysIID=201;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=1;cella=0;pan=4;sysUID=IDEXNOWPBCUZDRLRX121
+choice;7;107;0
+concept;10
+open;30;45
+choice;40;7;4
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;10000;0
+choice;90;6;3
+choice;100;3;0
+choice;120;13;0010000000000;2
+choice;130;13;2
+choice;160;10;5
+open;170;I negozi 
+open;180;Pochi negozi 
+choice;190;10;0100000000;1
+scale;200;10;10;-1;4;-1;-1;-1;-1;-1;-1;-1;-1
+scale;240;13;10;1;5;4;5;3;5;5;4;4;4;2;4;5
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;Spazi giochi 
+scale;290;12;5;0;0;2;1;0;2;2;1;2;0;2;2
+open;300;Più giochi per bimbi
+scale;310;13;5;0;0;1;1;0;1;-1;0;1;1;0;2;1
+ordering;311;11;10;9;5;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;1;2;0;3
+open;373;Spazi giochi e animazione 
+choice;381;5;3
+choice;390;6;110000;0
+choice;392;6;0
+choice;394;7;0100000;1
+choice;400;5;1
+choice;410;6;3
+choice;430;5;3
+choice;440;5;10100;0
+scale;5100;1;5;4
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;2

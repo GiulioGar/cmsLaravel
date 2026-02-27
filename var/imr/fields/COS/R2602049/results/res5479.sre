@@ -1,0 +1,10 @@
+2.0;COS;R2602049;5479;IDEXNOBTWARAEPKLO30961;19/02/2026 22:55:14 CET;19/02/2026 22:55:52 CET;38;4;70;sysSID=R2602049;lan=2;sysPRJ=COS;sysUID=IDEXNOBTWARAEPKLO30961;pan=4;sysIID=5479;lang=es;rtrLan=2
+concept;10
+choice;20;2;0
+choice;28;4;1
+choice;30;2;1
+open;50;41
+choice;60;4;1
+choice;70;2;0
+choice;3000;18;14
+choice;4000;4;3

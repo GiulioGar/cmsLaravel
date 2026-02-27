@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;22;GUEST;24/02/2026 16:05:38 CET;24/02/2026 16:22:25 CET;1007;3;440;debug=true;device=desktop;lang=it;sysIID=22;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=1;cella=0;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92020
+open;30;73
+choice;40;7;6
+choice;50;2;1
+choice;60;5;00001;4
+choice;70;5;11100;1
+choice;80;5;11100;1
+choice;90;6;3
+choice;100;3;0
+choice;120;13;1000010000000;5
+choice;130;13;5
+choice;160;10;9
+open;170;c'è di tutto, mi trovo bene col conad
+open;180;nessun aspetto negativo
+choice;190;10;1111001100;3
+scale;200;10;10;8;7;8;8;-1;-1;7;7;-1;-1
+scale;210;7;10;7;7;7;6;7;6;7
+scale;240;13;10;9;7;8;7;8;9;7;9;7;7;8;8;7
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;nessun altro negozio
+scale;290;12;5;0;0;2;2;1;1;1;1;2;2;2;2
+open;300;lo renderei più colorato, metterei i colori giallo e rosso, i colori della sicilia
+scale;310;13;5;0;2;1;2;1;2;-1;0;1;2;1;2;1
+concept;320
+ordering;370;4;0;1;2;3
+open;371;bei negozi, con marchi da donna importanti e che siano accessibili a tutti
+choice;381;5;1
+choice;390;6;100000;0
+choice;392;6;0
+choice;394;7;0001100;3
+choice;400;5;3
+choice;410;6;4
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;4
+scale;5200;1;5;1
+scale;5300;1;5;1
+scale;5400;1;5;1

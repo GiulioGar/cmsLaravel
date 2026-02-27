@@ -1,0 +1,35 @@
+2.0;UNI;R2601037;16;GUEST;24/02/2026 15:38:13 CET;24/02/2026 16:05:34 CET;1641;3;440;debug=true;device=desktop;lang=it;sysIID=16;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=2;cella=1;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92020
+open;30;61
+choice;40;7;5
+choice;50;2;1
+choice;60;5;00001;4
+choice;70;5;11100;0
+choice;80;5;00100;2
+choice;110;3;2
+choice;111;5;2
+choice;140;16;0010000100000000;2
+choice;150;16;7
+concept;270
+open;280;è già ben fornito, non manca nulla
+scale;290;12;5;2;1;1;1;2;2;2;2;2;2;1;2
+open;300;mi piace molto che è tutto in vetro, esteticamente è bello
+scale;310;13;5;1;2;2;2;2;2;-1;2;1;2;2;2;1
+concept;320
+ordering;370;4;2;1;0;3
+open;375;ristoranti che mettano d'accordo giovani e adulti
+choice;381;5;2
+choice;390;6;100000;0
+choice;392;6;0
+choice;394;7;0011100;2
+choice;400;5;1
+choice;410;6;0
+choice;420;7;1
+choice;430;5;2
+choice;440;5;00010;3
+scale;5100;1;5;2
+scale;5200;1;5;4
+scale;5300;1;5;4
+scale;5400;1;5;1

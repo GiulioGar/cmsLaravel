@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;202;IDEXNOSVJMOCJPYYX192;27/02/2026 11:20:40 CET;27/02/2026 11:27:52 CET;432;3;440;device=mobile;lang=it;sysIID=202;sysPRJ=UNI;sysSID=R2601037;version=v01;cel=4;cella=3;pan=4;sysUID=IDEXNOSVJMOCJPYYX192
+choice;7;107;0
+concept;10
+open;30;34
+choice;40;7;2
+choice;50;2;1
+choice;70;5;11000;0
+choice;80;5;10000;0
+choice;90;6;5
+choice;100;3;1
+choice;111;5;4
+choice;120;13;0010000000000;2
+choice;130;13;2
+choice;160;10;7
+open;170;I negozi presenti e il fatto che non sia troppo affollato
+open;180;La distanza dal luogo in cui vivo
+choice;190;10;0110000000;2
+scale;200;10;10;-1;6;6;-1;-1;-1;-1;-1;-1;-1
+scale;240;13;10;4;7;6;6;5;8;2;4;4;7;7;5;5
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;Aggiungerei servizi estetici e di benessere
+scale;290;12;5;1;1;0;2;1;4;3;3;0;3;3;3
+open;300;Vorrei avesse uno stile più moderno e che ci fossero più aree verdi e di sosta
+scale;310;13;5;1;1;2;0;1;3;-1;3;2;0;4;2;3
+ordering;311;11;0;5;3;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;1;2;0;3
+open;373;Mi piacerebbe trovare più servizi di intrattenimento e benessere oltre ai semplici negozi
+choice;381;5;1
+choice;390;6;110000;1
+choice;392;6;1
+choice;394;7;1011000;0
+choice;400;5;0
+choice;410;6;0
+choice;420;7;0
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;1
+scale;5200;1;5;1
+scale;5300;1;5;1
+scale;5400;1;5;0

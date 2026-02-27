@@ -1,0 +1,45 @@
+2.0;UNI;R2601037;127;GUEST;26/02/2026 16:58:01 CET;26/02/2026 17:10:40 CET;759;3;440;debug=true;device=desktop;lang=it;sysIID=127;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=2;cella=1;sysUID=GUEST
+concept;10
+choice;12;2;0
+open;20;92014
+open;30;54
+choice;40;7;4
+choice;50;2;0
+choice;60;5;11100;0
+choice;70;5;00001;4
+choice;80;5;10000;0
+choice;90;6;0
+choice;100;3;0
+choice;120;13;0000010000010;11
+choice;130;13;11
+choice;160;10;8
+open;170;la conad
+open;180;i bagni sporchi
+choice;190;10;1001000100;0
+scale;200;10;10;6;-1;-1;6;-1;-1;-1;6;-1;-1
+scale;210;7;10;8;7;8;7;8;8;7
+scale;240;13;10;7;8;7;8;8;8;7;7;8;8;7;9;7
+choice;250;3;2
+choice;260;3;2
+concept;270
+open;280;un ristorante con cucina tipica locale
+scale;290;12;5;1;1;1;0;1;1;1;1;0;1;1;0
+open;300;moderno , ristrutturato
+scale;310;13;5;1;1;0;1;0;0;-1;0;1;1;1;1;1
+ordering;311;11;2;6;3;-1;-1;-1;-1;-1;-1;-1;-1
+concept;320
+ordering;370;4;2;1;3;0
+open;375;un ristorante tipico locale
+choice;381;5;1
+choice;390;6;110000;0
+choice;392;6;0
+choice;394;7;1000100;4
+choice;400;5;1
+choice;410;6;0
+choice;420;7;2
+choice;430;5;1
+choice;440;5;00001;4
+scale;5100;1;5;1
+scale;5200;1;5;1
+scale;5300;1;5;4
+scale;5400;1;5;1

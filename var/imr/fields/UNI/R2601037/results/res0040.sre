@@ -1,0 +1,43 @@
+2.0;UNI;R2601037;40;GUEST;24/02/2026 16:37:17 CET;24/02/2026 16:52:10 CET;893;3;440;debug=true;device=desktop;lang=it;sysIID=40;sysPRJ=UNI;sysSID=R2601037;browser=variables;version=v01;cel=4;cella=3;sysUID=GUEST
+concept;10
+choice;12;2;1
+open;20;92100
+open;30;48
+choice;40;7;4
+choice;50;2;1
+choice;60;5;10100;0
+choice;70;5;00001;4
+choice;80;5;10000;0
+choice;90;6;1
+choice;100;3;0
+choice;120;13;1000010000000;5
+choice;130;13;0
+choice;160;10;7
+open;170;ricco di negozi, di offerte
+open;180;nulla, è perfetto così
+choice;190;10;0101000000;1
+scale;200;10;10;-1;6;-1;7;-1;-1;-1;-1;-1;-1
+scale;240;13;10;7;7;8;6;6;6;7;7;6;7;6;5;7
+choice;250;3;0
+choice;260;3;0
+concept;270
+open;280;nulla
+scale;290;12;5;0;0;0;0;1;1;0;1;1;1;1;0
+open;300;lo arricchirei con colori forti, accesi
+scale;310;13;5;0;1;1;1;1;1;-1;2;2;0;1;0;2
+concept;320
+ordering;370;4;3;2;1;0
+open;377;mi piacerebbe fosse ricca di ogni tipo di servizio, un luogo pratico in cui realizzare ogni necessità
+choice;381;5;1
+choice;390;6;110000;0
+choice;392;6;0
+choice;394;7;0100100;4
+choice;400;5;1
+choice;410;6;0
+choice;420;7;4
+choice;430;5;2
+choice;440;5;00100;2
+scale;5100;1;5;2
+scale;5200;1;5;2
+scale;5300;1;5;2
+scale;5400;1;5;4
