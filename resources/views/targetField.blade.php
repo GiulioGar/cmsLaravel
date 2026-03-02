@@ -121,8 +121,8 @@ use Illuminate\Support\Str;
 <div class="modal fade" id="modalTarget" tabindex="-1" aria-labelledby="modalTargetLabel" aria-hidden="true">
     <div class="modal-dialog modal-md">
       <div class="modal-content" style="border-radius: 6px;">
-        <div class="modal-header" style="background-color: #222E3C; color: #fff;">
-          <h5 class="modal-title" id="modalTargetLabel">Target - Opzione selezionata</h5>
+        <div class="modal-header" style="background-color: #222E3C;">
+          <h5 style="color:aliceblue!important" class="modal-title" id="modalTargetLabel">Target - Opzione selezionata</h5>
           <button type="button" class="btn btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="modalTargetBody">

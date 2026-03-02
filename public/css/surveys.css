@@ -1,0 +1,393 @@
+ /* Esempio: ridurre l'altezza delle righe */
+table.dataTable tbody tr {
+    height: 40px;
+}
+
+/* Esempio: colorare header di sfondo */
+table.dataTable thead th {
+    background-color: #f8f9fa; /* grigio chiaro */
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Pallino stato "attivo" - pulse soft */
+.blinking-dot{
+  display:inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #ef4444; /* rosso più moderno */
+  position: relative;
+  top: -1px;
+  box-shadow: 0 0 0 1px rgba(239,68,68,.25);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+/* alone/pulse esterno */
+.blinking-dot::after{
+  content:"";
+  position:absolute;
+  inset:-6px;
+  border-radius: 999px;
+  background: rgba(239,68,68,.18);
+  transform: scale(.65);
+  opacity: 0;
+  animation: dotRing 1.4s ease-in-out infinite;
+}
+
+@keyframes dotPulse{
+  0%, 100% { transform: scale(1); opacity: .95; }
+  50%      { transform: scale(.85); opacity: .7; }
+}
+
+@keyframes dotRing{
+  0%   { transform: scale(.6); opacity: 0; }
+  45%  { opacity: .55; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .blinking-dot, .blinking-dot::after{ animation: none; }
+}
+
+/* Definizione dell'animazione */
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.link-sur-id:hover {
+    text-decoration: underline;
+    color: #007bff; /* ad es. blu */
+}
+
+
+/* ===== Surveys page ===== */
+.surveys-title{
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.surveys-cta{
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(16,24,40,.08);
+}
+
+.surveys-card{
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(16,24,40,.06);
+}
+
+/* Tabella più moderna */
+table.surveys-table thead th{
+  background: #f8f9fa;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: 800;
+  font-size: .78rem;
+  color: #0f172a;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+table.surveys-table tbody td{
+  text-align: center;
+  vertical-align: middle;
+  font-size: .78rem;
+  white-space: nowrap; /* evita righe alte */
+}
+
+table.surveys-table tbody tr{
+  height: 42px;
+}
+
+table.surveys-table tbody tr:hover{
+  background: rgba(37,99,235,.05);
+}
+
+
+
+@keyframes blink { 50% { opacity: 0; } }
+
+.link-sur-id{
+  font-weight: 800;
+  color: #0f172a;
+  text-decoration: none;
+}
+.link-sur-id:hover{
+  text-decoration: underline;
+  color: #2563eb;
+}
+
+/* Bottone edit pulito */
+.btn.btn-edit{
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.08);
+  background: #fff;
+  padding: .25rem .5rem;
+}
+.btn.btn-edit:hover{
+  background: rgba(15,23,42,.04);
+}
+
+/* ===== Surveys badges ===== */
+.sv-badge{
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .22rem .55rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: .74rem;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.9);
+  color: #0f172a;
+}
+
+.sv-badge--blue{  background: rgba(98, 212, 4, 0.1); border-color: rgba(37,99,235,.18); color:#474747; }
+.sv-badge--slate{ background: rgba(15,23,42,.06); border-color: rgba(15,23,42,.12); color:#0f172a; }
+.sv-badge--violet{background: rgba(124,58,237,.10); border-color: rgba(124,58,237,.18); color:#5b21b6; }
+
+.sv-ir{ font-variant-numeric: tabular-nums; }
+.sv-ir--good{  background: rgba(22,163,74,.12);  border-color: rgba(22,163,74,.22);  color:#166534; }
+.sv-ir--mid{   background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.24); color:#92400e; }
+.sv-ir--bad{   background: rgba(220,38,38,.12);  border-color: rgba(220,38,38,.22);  color:#991b1b; }
+.sv-ir--na{    background: rgba(148,163,184,.20); border-color: rgba(148,163,184,.30); color:#334155; }
+
+.sv-num{
+  font-weight: 900;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.sv-muted{
+  color: #64748b;
+  font-weight: 700;
+  font-size: .74rem;
+}
+
+/* ===== Surveys layout (STEP 3) ===== */
+.sv-page-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 14px;
+  background: rgba(255,255,255,.75);
+  box-shadow: 0 6px 18px rgba(16,24,40,.06);
+}
+
+.sv-title{
+  margin:0;
+  font-weight: 900;
+  color:#0f172a;
+  letter-spacing: -.01em;
+}
+
+.sv-subtitle{
+  margin-top: .2rem;
+  color:#64748b;
+  font-weight: 700;
+  font-size: .9rem;
+}
+
+.sv-btn{
+  border-radius: 12px;
+  padding: .55rem .85rem;
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(16,24,40,.08);
+}
+
+.sv-table-wrap{
+  margin-top: 1rem;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(16,24,40,.06);
+}
+
+/* header tabella */
+table.dataTable thead th{
+  background-color: #f8fafc !important;
+  color:#0f172a;
+  font-weight: 900;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(0,0,0,.06) !important;
+}
+
+/* righe più pulite */
+table.dataTable tbody td{
+  vertical-align: middle !important;
+  padding-top: .45rem !important;
+  padding-bottom: .45rem !important;
+}
+
+/* hover riga */
+table.dataTable tbody tr:hover{
+  background: rgba(15,23,42,.03) !important;
+}
+
+/* pulsante edit più “soft” */
+.btn-edit{
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.9);
+  border-radius: 10px;
+  padding: .25rem .5rem;
+  line-height: 1;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.btn-edit:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(16,24,40,.10);
+}
+
+/* riduci “fondo strisce” troppo forte */
+.table-striped>tbody>tr:nth-of-type(odd)>*{
+  --bs-table-bg-type: rgba(15,23,42,.015);
+}
+
+/* ===== DataTables search bar (UI only) ===== */
+.dataTables_wrapper .dataTables_filter{
+  margin-bottom: .75rem;
+}
+
+.dataTables_wrapper .dataTables_filter label{
+  font-weight: 800;
+  color:#0f172a;
+  font-size: .85rem;
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  justify-content:flex-end;
+}
+
+/* input */
+.dataTables_wrapper .dataTables_filter input{
+  width: 260px;
+  max-width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.10);
+  padding: .45rem .75rem;
+  font-size: .85rem;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 6px 16px rgba(16,24,40,.06);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus{
+  outline: none;
+  border-color: rgba(37,99,235,.45);
+  box-shadow: 0 10px 22px rgba(37,99,235,.10);
+}
+
+/* opzionale: rendi più “pulito” il selettore pageLength */
+.dataTables_wrapper .dataTables_length select{
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.10);
+  padding: .25rem .5rem;
+}
+
+.dataTables_wrapper .dataTables_filter label::before{
+  content:"\f002";
+  font-family:"Font Awesome 5 Free";
+  font-weight:900;
+  color:#64748b;
+  margin-right:.25rem;
+}
+
+/* ===== Fix layout "Mostra X elementi" ===== */
+.dataTables_wrapper .dataTables_length label{
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  white-space: nowrap;
+  margin-bottom: .5rem;
+}
+
+/* Select più compatta e senza “scatti” */
+.dataTables_wrapper .dataTables_length select{
+  width: auto !important;
+  min-width: 70px;
+  padding: .25rem .55rem;
+  line-height: 1.2;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.10);
+}
+
+/* Se Bootstrap mette un margin-left strano sull'input DataTables */
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_length .custom-select{
+  margin-left: 0 !important;
+}
+
+.dataTables_wrapper .dataTables_filter{
+  float: right;
+  text-align: right;
+}
+.dataTables_wrapper .dataTables_length{
+  float: left;
+}
+@media (max-width: 768px){
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_length{
+    float: none;
+    text-align: left;
+  }
+}
+
+/* ===== Paginazione DataTables modern ===== */
+.dataTables_wrapper .dataTables_paginate{
+  margin-top: .75rem;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button{
+  border-radius: 10px !important;
+  border: 1px solid rgba(0,0,0,.08) !important;
+  background: rgba(255,255,255,.9) !important;
+  padding: .35rem .65rem !important;
+  margin: 0 .15rem !important;
+  font-weight: 700;
+  font-size: .78rem;
+  color: #0f172a !important;
+  transition: all .15s ease;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover{
+  background: rgba(37,99,235,.08) !important;
+  border-color: rgba(37,99,235,.25) !important;
+  color: #1e40af !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current{
+  background: linear-gradient(90deg, #2563eb, #3b82f6) !important;
+  color: #fff !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 6px 14px rgba(37,99,235,.25);
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled{
+  opacity: .45;
+  cursor: not-allowed !important;
+  box-shadow: none;
+}
+
+
+/* ===== Riga ricerche in corso ===== */
+.sv-row-active td{
+  background: linear-gradient(
+    90deg,
+    rgba(37,99,235,.04),
+    rgba(37,99,235,.02)
+  ) !important;
+}
+
+/* hover leggermente più evidente */
+.sv-row-active:hover td{
+  background: rgba(37,99,235,.08) !important;
+}

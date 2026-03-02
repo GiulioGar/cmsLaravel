@@ -57,14 +57,93 @@ class SurveyController extends Controller
                 })
 
             // Se vuoi convertire i valori di "panel" in stringhe
-            ->editColumn('panel', function($row) {
-                switch ($row->panel) {
-                    case 1: return 'Interactive';
-                    case 0: return 'Esterno';
-                    case 2: return 'Lista';
-                    default: return $row->panel;
-                }
-            })
+                        ->editColumn('panel', function($row) {
+                            $label = 'N.D.';
+                            $class = 'sv-badge--slate';
+                            $icon  = 'fas fa-layer-group';
+
+                            switch ((int)$row->panel) {
+                                case 1:
+                                    $label = 'Interactive';
+                                    $class = 'sv-badge--blue';
+                                    $icon  = 'fas fa-user-friends';
+                                    break;
+                                case 0:
+                                    $label = 'Esterno';
+                                    $class = 'sv-badge--slate';
+                                    $icon  = 'fas fa-globe';
+                                    break;
+                                case 2:
+                                    $label = 'Lista';
+                                    $class = 'sv-badge--violet';
+                                    $icon  = 'fas fa-list';
+                                    break;
+                                default:
+                                    $label = e((string)$row->panel);
+                                    $class = 'sv-badge--slate';
+                                    $icon  = 'fas fa-question-circle';
+                                    break;
+                            }
+
+                            return "<span class=\"sv-badge {$class}\"><i class=\"{$icon}\"></i>{$label}</span>";
+                        })
+
+
+                ->editColumn('red_panel', function($row) {
+                    $val = is_numeric($row->red_panel) ? (float)$row->red_panel : null;
+
+                    if ($val === null) {
+                        return '<span class="sv-badge sv-ir sv-ir--na">N.D.</span>';
+                    }
+
+                    // soglie conservative (modificabili)
+                    $class = ($val >= 25) ? 'sv-ir--good' : (($val >= 12) ? 'sv-ir--mid' : 'sv-ir--bad');
+                    $txt = rtrim(rtrim(number_format($val, 2, '.', ''), '0'), '.');
+
+                    return "<span class=\"sv-badge sv-ir {$class}\">{$txt}%</span>";
+                })
+                ->editColumn('red_surv', function($row) {
+                    $val = is_numeric($row->red_surv) ? (float)$row->red_surv : null;
+
+                    if ($val === null) {
+                        return '<span class="sv-badge sv-ir sv-ir--na">N.D.</span>';
+                    }
+
+                    $class = ($val >= 25) ? 'sv-ir--good' : (($val >= 12) ? 'sv-ir--mid' : 'sv-ir--bad');
+                    $txt = rtrim(rtrim(number_format($val, 2, '.', ''), '0'), '.');
+
+                    return "<span class=\"sv-badge sv-ir {$class}\">{$txt}%</span>";
+                })
+                ->editColumn('complete', function($row) {
+                    $val = is_numeric($row->complete) ? (int)$row->complete : 0;
+                    return "<span class=\"sv-num\">{$val}</span>";
+                })
+                ->editColumn('Costo', function($row) {
+                    if ($row->Costo === null || $row->Costo === '') {
+                        return '<span class="sv-badge sv-ir sv-ir--na">N.D.</span>';
+                    }
+
+                    if (is_numeric($row->Costo)) {
+                        $txt = number_format((float)$row->Costo, 2, ',', '.');
+                        return "<span class=\"sv-num\">{$txt}</span><span class=\"sv-muted ms-1\">€</span>";
+                    }
+
+                    return e((string)$row->Costo);
+                })
+                ->editColumn('bytes', function($row) {
+                    if ($row->bytes === null || $row->bytes === '') {
+                        return '<span class="sv-badge sv-ir sv-ir--na">N.D.</span>';
+                    }
+
+                    if (is_numeric($row->bytes)) {
+                        $txt = number_format((float)$row->bytes, 0, ',', '.');
+                        return "<span class=\"sv-num\">{$txt}</span>";
+                    }
+
+                    return e((string)$row->bytes);
+                })
+
+
             // Pallino rosso lampeggiante accanto a sur_id se stato=0
             ->editColumn('sur_id', function($row) {
                 // 1) Ricaviamo il codice (sur_id) e lo “escapiamo” per sicurezza
@@ -134,14 +213,16 @@ class SurveyController extends Controller
                     : $row->Costo;
             })
             // Pulsante Modifica
-            ->addColumn('campo_edit', function($row) {
-                // Rimuovi l'anchor e metti un button
-                return '<button class="btn btn-edit" data-id="'.$row->id.'">
-                <i class="fas fa-edit"></i>
-                    </button>';
-            })
+                ->addColumn('campo_edit', function($row) {
+                    return '<button class="btn btn-edit" data-id="'.$row->id.'" title="Modifica">
+                                <i class="fas fa-pen"></i>
+                            </button>';
+                })
             // Ricordiamoci di abilitare i campi HTML
-            ->rawColumns(['sur_id', 'giorni_rimanenti', 'campo_edit'])
+            ->rawColumns(['sur_id', 'panel', 'complete', 'red_panel', 'red_surv', 'Costo', 'bytes', 'giorni_rimanenti', 'campo_edit'])
+            ->setRowClass(function ($row) {
+             return ((int)$row->stato === 0) ? 'sv-row-active' : '';
+                    })
             ->make(true);
     }
 

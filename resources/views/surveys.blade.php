@@ -2,72 +2,51 @@
 
 @section('content')
 
-<style type="text/css">
-    /* Esempio: ridurre l'altezza delle righe */
-table.dataTable tbody tr {
-    height: 40px;
-}
-
-/* Esempio: colorare header di sfondo */
-table.dataTable thead th {
-    background-color: #f8f9fa; /* grigio chiaro */
-    text-align: center;
-    vertical-align: middle;
-}
-
-/* Esempio di pallino rosso lampeggiante */
-.blinking-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    margin-right: 4px; /* un po' di spazio prima di sur_id */
-    border-radius: 50%;
-    background-color: red;
-    animation: blink 1s infinite;
-}
-
-/* Definizione dell'animazione */
-@keyframes blink {
-  50% { opacity: 0; }
-}
-
-.link-sur-id:hover {
-    text-decoration: underline;
-    color: #007bff; /* ad es. blu */
-}
-
-</style>
+<link rel="stylesheet" href="{{ asset('css/surveys.css') }}">
 
 <main class="content">
 
     <div class="container">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <h1 class="mb-0">Elenco Ricerche</h1>
-            <button class="btn btn-success" id="btnOpenCreateModal">Nuovo Progetto</button>
-        </div>
-        <hr>
-
-
-        <table id="surveys-table"
-        class="table table-striped table-bordered table-sm"
-        style="width:100%; font-size: 0.7rem; text-align: center;">
-     <thead>
-         <tr>
-             <th>Codice</th>
-             <th>Ricerca</th>
-             <th>Panel</th>
-             <th>Complete</th>
-             <th>IR_panel</th>
-             <th>IR_surv</th>
-             <th>Fine field</th>
-             <th>Giorni</th>
-             <th>Costo</th>
-             <th>Bytes</th>
-             <th></th>
-         </tr>
-     </thead>
- </table>
+<div class="sv-page-head">
+    <div>
+        <h1 class="sv-title">Elenco Ricerche</h1>
+        <div class="sv-subtitle">Gestione progetti, stato field e metriche principali</div>
     </div>
+
+    <button class="btn btn-success sv-btn" id="btnOpenCreateModal">
+        <i class="fas fa-plus me-2"></i> Nuovo Progetto
+    </button>
+</div>
+
+<br/>
+
+<div class="card surveys-card">
+    <div class="card-body p-2 p-md-3">
+
+
+        <table id="surveys-table" class="table table-sm align-middle surveys-table w-100">
+
+            <thead>
+                <tr>
+                    <th>Codice</th>
+                    <th>Ricerca</th>
+                    <th>Panel</th>
+                    <th>Complete</th>
+                    <th>IR_panel</th>
+                    <th>IR_surv</th>
+                    <th>Fine field</th>
+                    <th>Giorni</th>
+                    <th>Costo</th>
+                    <th>Bytes</th>
+                    <th></th>
+                </tr>
+            </thead>
+        </table>
+
+     </div>
+</div>
+
+</div>
 
 </main>
 
