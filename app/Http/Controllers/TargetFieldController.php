@@ -95,7 +95,12 @@ class TargetFieldController extends Controller
             }
 
             // 3) Leggiamo i file .sre e contiamo le risposte
-            $directory = base_path("var/imr/fields/$prj/$sid/results/");
+        $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+        if (!is_dir($directory)) {
+            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
+
             $files = glob($directory . "/*.sre");
 
             // nInterviews -> quante interviste totali hanno risposto a questa domanda
@@ -198,7 +203,11 @@ class TargetFieldController extends Controller
     }
 
     // Directory dei file .sre
-    $directory = base_path("var/imr/fields/$prj/$sid/results/");
+        $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+        if (!is_dir($directory)) {
+            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
     $files = glob($directory . "/*.sre");
 
     // Raccogliamo tutti i sysUID

@@ -759,7 +759,8 @@ h3 {font-size: 15px!important;}
     border-radius: 999px;
     transition: width .9s cubic-bezier(.2,.8,.2,1);
     /* colore neutro “pro” */
-    background: linear-gradient(90deg, rgba(37,99,235,1), rgba(14,165,233,1));
+    background: linear-gradient(90deg,     rgba(77, 235, 37, 0.822),
+    rgba(1, 153, 1, 0.75));
 }
 
 .kpi-split{
@@ -916,7 +917,8 @@ h3 {font-size: 15px!important;}
   border-radius: 999px;
   width: 0%;
   transition: width .9s cubic-bezier(.2,.8,.2,1);
-  background: linear-gradient(90deg, rgba(37,99,235,1), rgba(14,165,233,1));
+  background: linear-gradient(90deg,    rgba(77, 235, 37, 0.822),
+    rgba(1, 153, 1, 0.75));
 }
 
 .fc-kpi-progress-meta{
@@ -1029,6 +1031,7 @@ h3 {font-size: 15px!important;}
   padding: .5rem .6rem !important;
   font-weight: 800;
   font-size: .9rem;
+    padding-right: 1rem !important;
 }
 
 /* icons subtle */
@@ -1042,34 +1045,29 @@ h3 {font-size: 15px!important;}
   transform: translateY(-1px);
 }
 
-/* active state - professional */
+
+/* Active sidebar link - soft indicator on right */
 .fc-side-link.active{
-  background: rgba(37,99,235,.10) !important;
+  background: rgba(37,99,235,.08) !important;
   color: #0b2a6f !important;
   position: relative;
 }
 
+/* indicatore sottile a destra */
 .fc-side-link.active::before{
   content:"";
   position:absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 4px;
-  border-radius: 0 6px 6px 0;
-  background: linear-gradient(180deg, rgba(37,99,235,1), rgba(14,165,233,1));
-}
-
-/* active indicator bar */
-.fc-side-link.active::before{
-  content:"";
-  position:absolute;
-  left: 6px;
+  right: 6px;
   top: 10px;
   bottom: 10px;
-  width: 4px;
+  width: 3px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(77, 235, 37, 0.705), rgb(13, 116, 0));
+  background: linear-gradient(
+    180deg,
+    rgba(77, 235, 37, 0.822),
+    rgba(1, 153, 1, 0.75)
+  );
+  opacity: .85;
 }
 
 /* content area wrapper - keep consistent spacing */
@@ -1204,3 +1202,101 @@ h3 {font-size: 15px!important;}
 @media (max-width: 576px){
   .fc-chart-canvas{ height: 320px; }
 }
+
+
+
+/* ===== STEP 2: Empty states (scoped fc-) ===== */
+.fc-empty-card{
+  border: 1px dashed rgba(0,0,0,.14);
+  border-radius: 16px;
+  background: rgba(255,255,255,.55);
+  box-shadow: 0 10px 26px rgba(16,24,40,.06);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  min-height: 360px; /* occupa lo spazio del box grafico */
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap: .75rem;
+}
+
+.fc-empty-icon{
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(248,250,252,.9);
+  color: #0f172a;
+  font-size: 1.35rem;
+}
+
+.fc-empty-title{
+  font-weight: 950;
+  color:#0f172a;
+  font-size: 1.05rem;
+}
+
+.fc-empty-subtitle{
+  color:#64748b;
+  font-weight:700;
+  font-size: .92rem;
+  max-width: 420px;
+}
+
+/* inline empty (per tabella quote) */
+.fc-empty-inline{
+  display:flex;
+  align-items:center;
+  gap: .9rem;
+  padding: 1.25rem 1rem;
+}
+
+.fc-empty-icon.sm{
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  font-size: 1.05rem;
+}
+
+.fc-empty-title.sm{
+  font-size: .98rem;
+}
+
+.fc-empty-subtitle.sm{
+  font-size: .86rem;
+}
+
+/* STEP 3: dettaglio small dentro KPI mini */
+.kpi-mini-sub{
+  font-size: .78rem;
+  font-weight: 800;
+  color: #64748b;
+  margin-left: .35rem;
+  white-space: nowrap; /* evita andare a capo brutto */
+}
+.kpi-mini-sub{ display:block; margin-left:0; margin-top:.15rem; }
+
+
+/* STEP 4: Trend badges (▲ ▼ =) */
+.trend-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 .35rem;
+  margin-left: .35rem;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 900;
+  line-height: 1;
+  border: 1px solid rgba(0,0,0,.08);
+}
+
+.trend-up{    background: rgba(220,38,38,.12);  color: #dc2626; } /* su = rosso */
+.trend-down{  background: rgba(22,163,74,.12);  color: #16a34a; } /* giu = verde */
+.trend-eq{    background: rgba(245,158,11,.14); color: #b45309; } /* uguale = giallo */

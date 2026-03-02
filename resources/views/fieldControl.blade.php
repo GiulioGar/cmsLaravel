@@ -289,8 +289,14 @@
                             <div class="kpi-mini-val">{{ $redemption ?? 0 }}%</div>
                         </div>
                         <div class="kpi-mini">
-                            <div class="kpi-mini-key">Contatti</div>
-                            <div class="kpi-mini-val">{{ $counts['contatti'] ?? 0 }}</div>
+                            <div class="kpi-mini-key">Complete</div>
+
+                            <div class="kpi-mini-val">
+                                {{ $counts['complete'] ?? 0 }}
+                                @if(isset($panelData->complete_int) || isset($panelData->complete_ext))/ {{ $goal ?: 'N/A' }}
+
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -521,52 +527,69 @@
 <div class="col-md-6">
     <div class="custom-tab-container-modern fc-chart-wrap">
 
-        <!-- Tabs panel (stessi id/link) -->
-        <ul class="nav custom-nav-tabs-modern fc-chart-tabs" id="panel-nav">
-            @foreach ($panelCounts as $panelName => $panelData)
-                <li class="nav-item">
-                    <a class="nav-link modern-tab-link fc-chart-tab {{ $loop->first ? 'active' : '' }}"
-                       id="tab-panel-{{ $loop->index }}-nav"
-                       data-bs-toggle="pill"
-                       href="#tab-panel-{{ $loop->index }}">
-                        <i class="fas fa-chart-pie me-2"></i> {{ $panelName }}
-                    </a>
-                </li>
-            @endforeach
-        </ul>
+   @if($hasFiltrate)
 
-        <!-- Contenuto -->
-        <div class="tab-content custom-tab-content-modern fc-chart-content">
-            @foreach ($panelCounts as $panelName => $panelData)
-                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
-                     id="tab-panel-{{ $loop->index }}">
+            <!-- Tabs panel -->
+            <ul class="nav custom-nav-tabs-modern fc-chart-tabs" id="panel-nav">
+                @foreach ($panelCounts as $panelName => $panelData)
+                    <li class="nav-item">
+                        <a class="nav-link modern-tab-link fc-chart-tab {{ $loop->first ? 'active' : '' }}"
+                           id="tab-panel-{{ $loop->index }}-nav"
+                           data-bs-toggle="pill"
+                           href="#tab-panel-{{ $loop->index }}">
+                            <i class="fas fa-chart-pie me-2"></i> {{ $panelName }}
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
 
-                    <div class="fc-chart-card">
-                        <div class="fc-chart-head">
-                            <div>
-                                <div class="fc-chart-eyebrow">CHECK</div>
-                                <div class="fc-chart-title">Analisi filtrate</div>
-                                <div class="fc-chart-subtitle">
-                                    Panel: <b>{{ $panelName }}</b> — principali domande di screenout
+            <!-- Contenuto -->
+            <div class="tab-content custom-tab-content-modern fc-chart-content">
+                @foreach ($panelCounts as $panelName => $panelData)
+                    <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
+                         id="tab-panel-{{ $loop->index }}">
+
+                        <div class="fc-chart-card">
+                            <div class="fc-chart-head">
+                                <div>
+                                    <div class="fc-chart-eyebrow">Quality</div>
+                                    <div class="fc-chart-title">Analisi filtrate</div>
+                                    <div class="fc-chart-subtitle">
+                                        Panel: <b>{{ $panelName }}</b> — principali domande di screenout
+                                    </div>
+                                </div>
+
+                                <div class="fc-chart-badge">
+                                    <i class="fas fa-filter me-2"></i> Screenout
                                 </div>
                             </div>
 
-                            <div class="fc-chart-badge">
-                                <i class="fas fa-filter me-2"></i> Screenout
-                            </div>
-                        </div>
-
-                        <div class="fc-chart-body">
-                            <div class="fc-chart-canvas">
-                                <canvas id="chart-panel-{{ $loop->index }}"></canvas>
+                            <div class="fc-chart-body">
+                                <div class="fc-chart-canvas">
+                                    <canvas id="chart-panel-{{ $loop->index }}"></canvas>
+                                </div>
                             </div>
                         </div>
 
                     </div>
+                @endforeach
+            </div>
 
+        @else
+
+            <!-- EMPTY STATE (globale) -->
+            <div class="fc-empty-card">
+                <div class="fc-empty-icon">
+                    <i class="fas fa-filter"></i>
                 </div>
-            @endforeach
-        </div>
+                <div class="fc-empty-title">Nessuna intervista filtrata da analizzare</div>
+                <div class="fc-empty-subtitle">
+                    Quando ci saranno screenout, qui vedrai le domande che stanno filtrando maggiormente.
+                </div>
+            </div>
+
+        @endif
+
 
     </div>
 </div>
@@ -604,23 +627,46 @@
                                 </tr>
                             </thead>
                             <tbody>
+                            @if($quotaData->isEmpty())
+                                <tr>
+                                    <td colspan="4" class="p-0">
+                                        <div class="fc-empty-inline">
+                                            <div class="fc-empty-icon sm">
+                                                <i class="fas fa-layer-group"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fc-empty-title sm">Quote non impostate</div>
+                                                <div class="fc-empty-subtitle sm">
+                                                    Imposta le quote per visualizzare il controllo avanzamento.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @else
                                 @foreach ($quotaData as $quota)
                                     <tr class="align-middle">
                                         <td class="small">{{ $quota->quota }}</td>
                                         <td class="small fw-bold">{{ $quota->totale }}</td>
                                         <td class="small">
-                                            <span style="font-size: 12px" class="badge bg-success"><i class="fas fa-check-circle"></i> {{ $quota->entrate }}</span>
+                                            <span style="font-size: 12px" class="badge bg-success">
+                                                <i class="fas fa-check-circle"></i> {{ $quota->entrate }}
+                                            </span>
                                         </td>
                                         <td class="small">
                                             @if ($quota->missing > 0)
-                                                <span style="font-size: 12px" class="badge bg-danger"><i class="fas fa-exclamation-circle"></i> {{ $quota->missing }}</span>
+                                                <span style="font-size: 12px" class="badge bg-danger">
+                                                    <i class="fas fa-exclamation-circle"></i> {{ $quota->missing }}
+                                                </span>
                                             @else
-                                                <span style="font-size: 12px" class="badge bg-success"><i class="fas fa-check"></i> 0</span>
+                                                <span style="font-size: 12px" class="badge bg-success">
+                                                    <i class="fas fa-check"></i> 0
+                                                </span>
                                             @endif
                                         </td>
-
                                     </tr>
                                 @endforeach
+                            @endif
                             </tbody>
                         </table>
                     </div>
@@ -740,32 +786,93 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($summaryData as $date => $stats)
-                                            @php
-                                                // Calcolo IR
-                                                $sospese=$stats['contatti']-($stats['non_target']+$stats['quotafull']+$stats['complete']+ $stats['bloccate']);
-                                                $denominator = $stats['contatti'] -$sospese - $stats['quotafull']-$stats['bloccate'];
-                                                $ir = ($denominator > 0)
-                                                    ? round(($stats['complete'] / $denominator) * 100, 2)
-                                                    : 0;
+                                    @php
+                                        // Convertiamo in array con ordine già decrescente (tu fai krsort nel controller)
+                                        $rows = $summaryData;
+                                        $rowKeys = array_keys($rows);
+                                    @endphp
 
-                                                // Calcolo LOI (minuti)
-                                                $loi = (isset($stats['total_duration']) && $stats['complete'] > 0)
-                                                    ? round(($stats['total_duration'] / $stats['complete']) / 60, 1) . " min."
-                                                    : 'N/A';
-                                            @endphp
-                                            <tr>
-                                                <!-- Stampiamo la data già preparata nel Controller con chiave 'display_date' -->
-                                                <td><strong>{{ $stats['display_date'] }}</strong></td>
-                                                <td>{{ $stats['contatti'] }}</td>
-                                                <td class="text-success fw-bold">{{ $stats['complete'] }}</td>
-                                                <td class="text-warning fw-bold">{{ $stats['non_target'] }}</td>
-                                                <td class="text-danger fw-bold">{{ $stats['quotafull'] }}</td>
-                                                <td class="text-danger fw-bold">{{ $stats['bloccate'] }}</td>
-                                                <td class="text-primary fw-bold">{{ $ir }}%</td>
-                                                <td>{{ $loi }}</td>
-                                            </tr>
-                                        @endforeach
+                                    @foreach ($rowKeys as $i => $date)
+                                        @php
+                                            $stats = $rows[$date];
+
+                                            // ==== IR (come già fai) ====
+                                            $sospese = $stats['contatti'] - ($stats['non_target'] + $stats['quotafull'] + $stats['complete'] + $stats['bloccate']);
+                                            $denominator = $stats['contatti'] - $sospese - $stats['quotafull'] - $stats['bloccate'];
+                                            $ir = ($denominator > 0) ? round(($stats['complete'] / $denominator) * 100, 2) : 0;
+
+                                            // ==== LOI (minuti) ====
+                                            $loiValue = (isset($stats['total_duration']) && $stats['complete'] > 0)
+                                                ? round(($stats['total_duration'] / $stats['complete']) / 60, 1)
+                                                : null;
+
+                                            $loi = ($loiValue !== null) ? ($loiValue . " min.") : 'N/A';
+
+                                            // ==== Delta vs giorno precedente (solo se esiste riga successiva) ====
+                                            $showTrend = false;
+                                            $irTrendIcon = null;  $irTrendClass = null;
+                                            $loiTrendIcon = null; $loiTrendClass = null;
+
+                                            // Prendiamo "ieri" come la riga successiva (dato che siamo in ordine decrescente)
+                                            if (isset($rowKeys[$i + 1])) {
+                                                $prevDate = $rowKeys[$i + 1];
+                                                $prev = $rows[$prevDate];
+
+                                                // IR prev
+                                                $prevSospese = $prev['contatti'] - ($prev['non_target'] + $prev['quotafull'] + $prev['complete'] + $prev['bloccate']);
+                                                $prevDen = $prev['contatti'] - $prevSospese - $prev['quotafull'] - $prev['bloccate'];
+                                                $prevIr = ($prevDen > 0) ? round(($prev['complete'] / $prevDen) * 100, 2) : 0;
+
+                                                // LOI prev
+                                                $prevLoiValue = (isset($prev['total_duration']) && $prev['complete'] > 0)
+                                                    ? round(($prev['total_duration'] / $prev['complete']) / 60, 1)
+                                                    : null;
+
+                                                // Mostriamo trend solo se entrambi i giorni hanno valori "validi"
+                                                // (IR ha sempre valore numerico, LOI è valido solo se complete>0)
+                                                $showTrend = true;
+
+                                                // IR trend: su = rosso, giu = verde, uguale = giallo
+                                                if ($ir > $prevIr) { $irTrendIcon = '▲'; $irTrendClass = 'trend-up'; }
+                                                elseif ($ir < $prevIr) { $irTrendIcon = '▼'; $irTrendClass = 'trend-down'; }
+                                                else { $irTrendIcon = '='; $irTrendClass = 'trend-eq'; }
+
+                                                // LOI trend solo se LOI valido oggi e ieri
+                                                if ($loiValue !== null && $prevLoiValue !== null) {
+                                                    if ($loiValue > $prevLoiValue) { $loiTrendIcon = '▲'; $loiTrendClass = 'trend-up'; }
+                                                    elseif ($loiValue < $prevLoiValue) { $loiTrendIcon = '▼'; $loiTrendClass = 'trend-down'; }
+                                                    else { $loiTrendIcon = '='; $loiTrendClass = 'trend-eq'; }
+                                                } else {
+                                                    // se non abbiamo LOI valido, non mostriamo trend LOI
+                                                    $loiTrendIcon = null;
+                                                    $loiTrendClass = null;
+                                                }
+                                            }
+                                        @endphp
+
+                                        <tr>
+                                            <td><strong>{{ $stats['display_date'] }}</strong></td>
+                                            <td>{{ $stats['contatti'] }}</td>
+                                            <td class="text-success fw-bold">{{ $stats['complete'] }}</td>
+                                            <td class="text-warning fw-bold">{{ $stats['non_target'] }}</td>
+                                            <td class="text-danger fw-bold">{{ $stats['quotafull'] }}</td>
+                                            <td class="text-danger fw-bold">{{ $stats['bloccate'] }}</td>
+
+                                            <td class="text-primary fw-bold">
+                                                {{ $ir }}%
+                                                @if($showTrend && $irTrendIcon)
+                                                    <span class="trend-badge {{ $irTrendClass }}">{{ $irTrendIcon }}</span>
+                                                @endif
+                                            </td>
+
+                                            <td>
+                                                {{ $loi }}
+                                                @if($showTrend && $loiTrendIcon)
+                                                    <span class="trend-badge {{ $loiTrendClass }}">{{ $loiTrendIcon }}</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
                                     </tbody>
                                 </table>
                             </div>

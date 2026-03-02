@@ -201,6 +201,14 @@ class FieldControlController extends Controller
         //Conta filtrate per panel
         $filtrateCountsByPanel = $this->contaFiltrate($directory, $panelNames, $prj, $sid, $primis);
 
+        $hasFiltrate = false;
+            foreach ($filtrateCountsByPanel as $panel => $rows) {
+                if (!empty($rows) && array_sum($rows) > 0) {
+                    $hasFiltrate = true;
+                    break;
+                }
+            }
+
 
         //FUNZIONE LOG DATA
         $logData = $this->getLogData($directory, $primis, $prj, $sid);
@@ -217,7 +225,7 @@ class FieldControlController extends Controller
 
 
         return view('fieldControl', compact('prj', 'sid', 'panelData', 'counts', 'abilitati', 'redemption', 'panelCounts', 'utentiDisponibili',
-        'stimaInterviste', 'filtrateCountsByPanel', 'quotaData', 'logData', 'dataSummaryByPanel','ricercheInCorso' ));
+        'stimaInterviste', 'filtrateCountsByPanel', 'hasFiltrate','quotaData', 'logData', 'dataSummaryByPanel','ricercheInCorso' ));
     }
 
     private function updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes)

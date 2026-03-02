@@ -18,7 +18,11 @@ class FieldQualityController extends Controller
         $sid = $request->query('sid');
 
         // 2) Path file .sre
-        $directory = base_path("var/imr/fields/$prj/$sid/results/");
+        $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+        if (!is_dir($directory)) {
+            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
 
         // 3) Punteggio di partenza
         $defaultScore = 6.0;
