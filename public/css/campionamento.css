@@ -1,0 +1,456 @@
+  /* gradient header */
+  .card-header.bg-gradient-primary {
+    background: linear-gradient(45deg, #0069D9, #6610F2);
+    color: #fff;
+    padding: .5rem 1rem;
+  }
+  /* carte compatte */
+  .card { transition: transform .3s ease, box-shadow .3s ease; margin-bottom: .75rem; }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,.1); }
+  /* corpo carte più compatto */
+  .card-body { padding: .75rem 1rem; }
+  /* focus glow */
+  .form-control:focus { border-color: #6610F2 !important; box-shadow: 0 0 4px rgba(102,16,242,.5); }
+  /* bottone gradient compatto */
+  .btn-primary { background: linear-gradient(45deg, #0069D9, #6610F2); border: none; padding: .5rem 1rem; }
+  .btn-primary:hover { background: linear-gradient(45deg, #0053BA, #520DC2); }
+
+  /* Stile per i campioni nel riquadro destro */
+  .card-campione .card-body { border-left: 4px solid #6610F2; }
+  .card-campione .card-title { font-size: .9rem; color: #6610F2; }
+
+  /* =========================
+   SV Pro Layout (scoped)
+========================= */
+
+/* ===== SV UI (Ricerca + Demografia) ===== */
+
+.sv-card{
+  border:1px solid #DCECCB;
+  border-radius:14px;
+  background: linear-gradient(180deg, rgba(157,206,107,.22) 0%, #ffffff 62%);
+  box-shadow:0 10px 26px rgba(15,23,42,.06);
+  overflow:hidden;
+  margin-bottom: 16px;
+}
+
+/* header con grid coerente */
+.sv-card-header{
+  padding:12px 16px;
+  background: linear-gradient(90deg,#9DCE6B,#84C95A);
+  color:#fff;
+}
+
+.sv-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.sv-head-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.sv-title{
+  font-weight:800;
+  font-size:.95rem;
+  margin:0;
+  line-height:1.1;
+}
+
+.sv-body{
+  padding: 12px 16px 14px 16px;
+}
+
+/* ===== segmented (Standard/Follow-up) ===== */
+.sv-seg{
+  display:inline-flex;
+  align-items:center;
+  border:1px solid rgba(255,255,255,.45);
+  background: rgba(255,255,255,.18);
+  border-radius:999px;
+  padding:3px;
+  gap:3px;
+  flex:0 0 auto;
+}
+.sv-seg input{ display:none; }
+.sv-seg label{
+  height:30px;
+  padding:0 12px;
+  border-radius:999px;
+  margin:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:800;
+  font-size:.82rem;
+  color: rgba(255,255,255,.92);
+  cursor:pointer;
+  user-select:none;
+  white-space:nowrap;
+}
+.sv-seg input:checked + label{
+  background:#ffffff;
+  color: rgba(15,23,42,.85);
+  box-shadow: 0 6px 14px rgba(15,23,42,.12);
+}
+
+/* ===== Ricerca select (icon + chevron) ===== */
+.sv-select-wrap{
+  position:relative;
+}
+.sv-select-wrap select{
+  padding-left: 42px;
+  padding-right: 38px;
+}
+.sv-select-icon{
+  position:absolute;
+  left:12px;
+  top:50%;
+  transform:translateY(-50%);
+  color: rgba(15,23,42,.45);
+  pointer-events:none;
+}
+.sv-select-wrap:after{
+  content:'';
+  position:absolute;
+  right:14px;
+  top:50%;
+  width:8px;
+  height:8px;
+  border-right:2px solid rgba(15,23,42,.40);
+  border-bottom:2px solid rgba(15,23,42,.40);
+  transform:translateY(-60%) rotate(45deg);
+  pointer-events:none;
+}
+
+.sv-input{
+  height:42px;
+  border-radius:12px;
+  border:1px solid #DCECCB;
+  background:#fff;
+}
+.sv-input:focus{
+  border-color:#9DCE6B !important;
+  box-shadow:0 0 0 2px rgba(157,206,107,.25);
+}
+
+.sv-info{
+  margin-top:8px;
+  font-size:.8rem;
+  color:#6C7A5C;
+}
+
+/* ===== Demografia layout allineato ===== */
+.sv-demo{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+  align-items:end;
+}
+@media (max-width: 992px){
+  .sv-demo{ grid-template-columns: 1fr; }
+}
+
+/* sesso pills */
+.sv-sex{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.sv-sex input{ display:none; }
+
+.sv-sex label{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  height:42px;
+  padding:0 14px;
+  border-radius:999px;
+  border:1px solid rgba(15,23,42,.10);
+  background:#fff;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+  box-shadow: 0 6px 16px rgba(15,23,42,.06);
+}
+
+/* Uomo Azzurro */
+.sv-sex label.sv-male{ border-color: rgba(59,130,246,.25); }
+.sv-sex input#sUomo:checked + label.sv-male{
+  background: linear-gradient(90deg, rgba(59,130,246,.95), rgba(37,99,235,.95));
+  color:#fff;
+  border-color: rgba(37,99,235,.45);
+}
+
+/* Donna Rosa */
+.sv-sex label.sv-female{ border-color: rgba(236,72,153,.25); }
+.sv-sex input#sDonna:checked + label.sv-female{
+  background: linear-gradient(90deg, rgba(236,72,153,.95), rgba(219,39,119,.95));
+  color:#fff;
+  border-color: rgba(219,39,119,.45);
+}
+
+/* icone: dimensione coerente */
+.sv-sex label i,
+.sv-sex label svg{
+  width:16px;
+  height:16px;
+  opacity:.95;
+}
+
+/* età inline */
+.sv-age{
+  display:flex;
+  gap:10px;
+}
+.sv-age > div{ flex: 1 1 0; }
+
+/* piccoli fix allineamento form-check (se bootstrap mette margin) */
+.sv-head .form-check,
+.sv-head label{ margin-bottom:0; }
+
+.sv-ms{
+  position: relative;
+}
+
+.sv-ms-trigger{
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #DCECCB;
+  background: #fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 0 12px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.sv-ms-trigger .sv-ms-placeholder{
+  color: rgba(15,23,42,.55);
+  font-weight: 600;
+  font-size: .9rem;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.sv-ms-trigger .sv-ms-count{
+  font-size: .78rem;
+  font-weight: 800;
+  color: rgba(15,23,42,.55);
+  background: rgba(157,206,107,.18);
+  border: 1px solid rgba(157,206,107,.35);
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.sv-ms-trigger .sv-ms-caret{
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid rgba(15,23,42,.35);
+  border-bottom: 2px solid rgba(15,23,42,.35);
+  transform: rotate(45deg);
+  margin-left: 10px;
+}
+
+.sv-ms-panel{
+  position:absolute;
+  top: calc(42px + 8px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background:#fff;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(15,23,42,.12);
+  overflow:hidden;
+  display:none;
+    pointer-events: auto !important;
+}
+
+.sv-ms.open .sv-ms-panel{
+  display:block;
+}
+
+.sv-ms-panel-header{
+  padding: 10px 12px;
+  background: linear-gradient(180deg, rgba(157,206,107,.18), rgba(255,255,255,1));
+  border-bottom: 1px solid rgba(15,23,42,.06);
+}
+
+.sv-ms-search{
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,.10);
+  padding: 0 10px;
+  width: 100%;
+}
+
+.sv-ms-list{
+  max-height: 220px;
+  overflow:auto;
+  padding: 8px;
+}
+
+.sv-ms-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor:pointer;
+}
+.sv-ms-item:hover{
+  background: rgba(15,23,42,.04);
+}
+.sv-ms-item input{
+  margin-top: 0;
+}
+
+.sv-ms-footer{
+  padding: 10px 12px;
+  border-top: 1px solid rgba(15,23,42,.06);
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  background:#fff;
+}
+
+.sv-ms-btn{
+  border: 1px solid rgba(15,23,42,.12);
+  background:#fff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-weight: 800;
+  font-size: .8rem;
+  cursor:pointer;
+}
+.sv-ms-btn:hover{
+  background: rgba(15,23,42,.03);
+}
+
+.sv-ms-btn-primary{
+  border-color: rgba(157,206,107,.55);
+  background: rgba(157,206,107,.18);
+}
+.sv-ms-btn-primary:hover{
+  background: rgba(157,206,107,.28);
+}
+
+/* chips selezionati */
+.sv-chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+
+.sv-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(157,206,107,.40);
+  background: rgba(157,206,107,.18);
+  color: rgba(15,23,42,.75);
+  font-weight: 800;
+  font-size: .78rem;
+}
+
+.sv-chip button{
+  border:none;
+  background: rgba(15,23,42,.12);
+  color: rgba(15,23,42,.75);
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  line-height: 18px;
+  font-weight: 900;
+  cursor:pointer;
+  padding:0;
+}
+.sv-chip button:hover{
+  background: rgba(15,23,42,.18);
+}
+
+/* nascondo i select originali (ma restano nel DOM) */
+.sv-hidden-select{
+  position:absolute;
+  left:-9999px;
+  width:1px;
+  height:1px;
+  overflow:hidden;
+}
+
+/* IMPORTANT: permette al dropdown di uscire dalla card */
+.sv-card-no-clip{
+  overflow: visible !important;
+}
+
+/* contenitore multiselect deve creare un contesto per z-index */
+.sv-ms{
+  position: relative;
+  z-index: 20;
+}
+
+/* il pannello deve stare sopra davvero */
+.sv-ms-panel{
+  z-index: 9999 !important;
+}
+
+
+/* wrapper bottone */
+.sv-action{
+  width:100%;
+}
+
+/* bottone principale */
+.sv-btn-primary{
+  width:100%;
+  border:none;
+  border-radius:12px;
+  padding:14px 18px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+
+  font-weight:600;
+  font-size:15px;
+
+  color:#181818;
+
+  background:linear-gradient(90deg,#9DCE6B,#84C95A);
+  box-shadow:0 4px 14px rgba(0,0,0,.15);
+
+  transition:all .15s ease;
+}
+
+/* hover */
+.sv-btn-primary:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(0,0,0,.18);
+}
+
+/* active */
+.sv-btn-primary:active{
+  transform:translateY(0);
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+/* disabled */
+.sv-btn-primary:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+

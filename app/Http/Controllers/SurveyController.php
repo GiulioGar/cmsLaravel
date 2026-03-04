@@ -347,36 +347,61 @@ class SurveyController extends Controller
                 // 4. Valida l'input in base alle regole finali
                 $validated = $request->validate($rules);
 
-                // 5. Crea un nuovo record in t_panel_control
-                //    — Ricordati che i campi ir, loi, point, argomento NON esistono nel DB (quindi non li assegnamo).
-                $survey = new PanelControl();
-                $survey->sur_id      = $validated['sid'];        // "Codice SID Progetto"
-                $survey->prj  = $validated['prj'];        // se presente in DB
-                $survey->cliente     = $validated['cliente'];
-                $survey->tipologia   = $validated['tipologia'];
-                $survey->panel       = $validated['panel'];
 
-                // "goal" => nel DB la colonna si chiama "complete"
-                $survey->goal    = $validated['goal'];
+                DB::transaction(function () use ($validated) {
 
-                // end_field nel DB è un DATETIME
-                $survey->end_field   = $validated['end_date'] ?? null;
+                    // =========================
+                    // 1) Salvataggio t_panel_control
+                    // =========================
+                    $survey = new PanelControl();
+                    $survey->sur_id      = $validated['sid'];
+                    $survey->prj         = $validated['prj'];
+                    $survey->cliente     = $validated['cliente'];
+                    $survey->tipologia   = $validated['tipologia'];
+                    $survey->panel       = $validated['panel'];
 
-                $survey->description = $validated['descrizione'];
-                $survey->paese       = $validated['paese'];
-                $survey->sur_date = \Carbon\Carbon::now();
-                $survey->stato    = 0;
+                    $survey->goal        = $validated['goal'];
+                    $survey->end_field   = $validated['end_date'] ?? null;
 
-                // 6. Se hai campi come sex_target, age1_target, etc. nel DB, li assegni sempre
-                //    (o in modo condizionale se preferisci azzerarli in panel≠1)
-                $survey->sex_target  = $validated['sex_target'] ?? null;
-                $survey->age1_target = $validated['age1_target'] ?? null;
-                $survey->age2_target = $validated['age2_target'] ?? null;
+                    $survey->description = $validated['descrizione'];
+                    $survey->paese       = $validated['paese'];
+                    $survey->sur_date    = \Carbon\Carbon::now();
+                    $survey->stato       = 0;
 
-                // 7. Salva il record
-                $survey->save();
+                    $survey->sex_target  = $validated['sex_target'] ?? null;
+                    $survey->age1_target = $validated['age1_target'] ?? null;
+                    $survey->age2_target = $validated['age2_target'] ?? null;
 
-                // 8. Rispondi in JSON per AJAX
+                    $survey->save();
+
+                    // =========================
+                    // 2) Salvataggio t_surveys_env (solo panel==1)
+                    // =========================
+                    if ((string)$validated['panel'] === '1') {
+
+                        // Mappa: name => value
+                        $envRows = [
+                            'survey_object'       => $validated['argomento'],
+                            'prize_complete'      => $validated['point'],
+                            'length_of_interview' => $validated['loi'],
+                        ];
+
+                        foreach ($envRows as $name => $value) {
+                            DB::table('t_surveys_env')->updateOrInsert(
+                                [
+                                    'prj_name' => $validated['prj'],
+                                    'sid'      => $validated['sid'],
+                                    'name'     => $name,
+                                ],
+                                [
+                                    'value' => $value,
+                                    'store' => 0,
+                                ]
+                            );
+                        }
+                    }
+                });
+
                 return response()->json(['success' => true]);
             }
 

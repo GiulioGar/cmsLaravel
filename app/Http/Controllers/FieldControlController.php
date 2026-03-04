@@ -16,6 +16,8 @@ class FieldControlController extends Controller
 {
     public function index(Request $request, PrimisApiService $primis)
     {
+        ini_set('memory_limit', '256M');
+
         $prj = $request->query('prj');
         $sid = $request->query('sid');
 
