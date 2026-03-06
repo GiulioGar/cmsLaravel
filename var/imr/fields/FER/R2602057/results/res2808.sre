@@ -1,0 +1,12 @@
+2.0;FER;R2602057;2808;IDEXA8LTQVGZJRTHYS14594;06/03/2026 10:19:59 CET;<unknown>;0;0;52;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXA8LTQVGZJRTHYS14594;device=mobile;pan=8;sysIID=2808;transaction_id=0D3i38D8fY6mrxvshkCfhY;lang=de
+concept;10
+choice;20;2;0
+choice;30;2;1
+open;40;36
+choice;45;16;2
+choice;52;6;3
+choice;70;2;0
+choice;80;5;11010;1
+choice;90;2;0
+choice;95;5;0
+choice;100;7;1111110;0

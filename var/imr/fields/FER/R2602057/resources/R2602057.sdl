@@ -1,0 +1,1127 @@
+#export vars "leg"
+#export vars "cella"
+#export vars "device"
+
+void main() {
+
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+string labelCheck;
+int r1;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+boolean selCheck;
+string cpt;
+int preQid;
+int n;
+int reCod;
+int selintCheck;
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "scripts:mod.js");
+string autotest=system.getProperty("test");
+string panel=system.getProperty("pan");
+string uid = system.getProperty("sysUID");
+if (autotest=="1" ||  uid=="null" ||  uid=="GUEST") {
+system.setProperty("env", "debug:true");  system.setProperty("env", "browser:variables");}
+string err;
+string mozCode;
+int idex;
+int r3;
+int r4;
+int ra1;
+int ran1;
+int nPers;
+int iPers;
+int countValid=0;
+int cella;
+int r2;
+string movieCode;
+string time;
+string delay;
+string items;
+string itemsTest;
+int grandezzaVettore;
+boolean valid;
+int qpers;
+int idq;
+int indiceDomanda;
+int cPer;
+boolean parents;
+int countPers;
+int idx;
+int Nran;
+
+int target;
+
+			int contaestratti=0;
+			int r;
+			string optB;
+			string Svar;
+			int countTop2;
+
+boolean selRocher;
+boolean selRaf;
+
+if (autotest=="1") {system.setProperty("env", "scripts:modtest.js");}
+
+string scriptzoom="<script type='text/javascript' src='https://www.primisoft.com/fields/script/jquery.fancybox.js?v=2.1.5'></script><script type='text/javascript''> $(document).ready(function() { $('.fancybox').fancybox();});</script>";
+
+string all="<script type='text/javascript' src='https://www.primisoft.com/fields/script/all.js'></script>";
+string modCode="<script type='text/javascript'>$(window).load(function() {allinea(5,20,60);});</script>";
+string allinea=all+modCode;    
+
+
+//variabile mobile
+string deviceType = system.getProperty("user_agent:deviceType");
+string ss1 = deviceType.trim();
+system.setProperty("device",ss1);
+boolean live=true;
+int leg=99;
+
+vector q210_cols = new vector { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99", "100", "#sh101" }; 
+string codeDrag="<script>$(window).load(function() {limitDrag();});</script>";
+
+delay="<script src='https://www.primisoft.com/fields/ADA/ITA1907111/resources/jquery.countdown.min.js'></script>"+
+	"<script>$(window).load(function() {contorovescia(5000);});</script>";	
+
+
+if(uid !="null")
+{
+
+// Q10: CONCEPT
+qst = new question("concept", 10);
+qst.setProperty("text", "<p>Hallo! Heute möchten wir Ihre Meinung zu bestimmten Personen und Marken aus der Welt des abgepackten Speiseeises einholen, das Sie im Supermarkt finden können.</p>  Denken Sie daran, dass es keine richtigen oder falschen Antworten gibt und dass Ihre Meinung anonym behandelt und ausschließlich für diese Umfragezwecke verwendet wird.");
+send qst;
+
+// Q20: CHOICE
+qst = new question("choice", 20);
+qst.setProperty("code", "Q0");
+qst.setProperty("text", "Durch die Teilnahme an dieser Umfrage erhalten Sie Zugang zu vertraulichen Informationen im Zusammenhang mit der Entwicklung neuer Ideen und Vorschlägen. Wir bitten Sie, keine Informationen zu verwenden oder an andere weiterzugeben, von denen Sie Kenntnis erlangen. Kopieren, fotografieren, drucken oder laden Sie bitte keine Informationen herunter, zu denen Sie im Verlauf dieser Umfrage Zugang erhalten. Indem Sie unten auf „Akzeptieren“ klicken, erklären Sie, dass Sie diese Bedingungen gelesen, verstanden und akzeptiert haben.");
+vector q20_options = new vector {
+    "Akzeptieren",
+    "Ablehnen"
+};
+qst.setProperty("options", q20_options);
+send qst;
+
+	ansId = system.getProperty("ans20");
+	if (ansId==1) { return 4; }
+
+// Q30: CHOICE
+qst = new question("choice", 30);
+qst.setProperty("code", "Q1");
+qst.setProperty("text", "Sind Sie …?");
+vector q30_options = new vector {
+    "Männlich",
+    "Weiblich"
+};
+qst.setProperty("options", q30_options);
+send qst;
+
+ansId=system.getProperty("ans30");
+//if (ansId==0) { return 4; }
+
+// Q40: CONCEPT
+qst = new question("open", 40);
+qst.setProperty("text", "Wie alt sind Sie?");
+qst.setProperty("view", "numeric");
+qst.setProperty("code", "Q2");
+send qst;
+
+	int eta=(int)system.getProperty("ans40");
+	
+	 
+	if(eta<18) {return 4;}
+	if(eta>=18 && eta<=24) { reCod=0; }
+	if(eta>=25 && eta<=29) { reCod=1; }
+	if(eta>=30 && eta<=35) { reCod=2;}
+	if(eta>=36 && eta<=45) { reCod=3;}
+	if(eta>=46 && eta<=50) { reCod=4;}
+	if(eta>=51 && eta<=55) { reCod=5;}
+	if(eta>=56) {  return 4;}
+
+// Q50: CHOICE
+qst = new question("choice", 52);
+qst.setProperty("text", "[SCRIPT: Registrare età puntuale e ricodificare in fasce]");
+qst.setProperty("code", "q50");
+qst.setProperty("show_rand", false);
+vector q52_opts = new vector {
+"18 - 24 Jahre Ende",
+"25 – 29 Jahre Ende",
+"30 - 35 Jahre",
+"36 - 45 Jahre ",
+"46 - 50 Jahre ",
+"51 - 55 Jahre "
+};
+qst.setProperty("options", q52_opts);
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+qst = new question("choice", 45);
+	qst.setProperty("text", "Bitte geben Sie an, in welchem Gebiet Sie leben: ");
+	qst.setProperty("code", "reg");
+	vector q45_opts = new vector {
+"Bremen",
+"Hamburg",
+"Niedersachsen",
+"Schleswig-Holstein",
+"Nordrhein-Westfalen",
+"Hessen",
+"Rheinland-Pfalz",
+"Saarland",
+"Baden-Württemberg",
+"Bayern",
+"Berlin",
+"Brandenburg",
+"Mecklenburg-Vorpommern",
+"Sachsen-Anhalt",
+"Sachsen",
+"Thüringen"
+	};
+		qst.setProperty("options", q45_opts);
+		send qst;
+	
+
+
+// Q70: CHOICE
+qst = new question("choice", 70);
+qst.setProperty("text", "Bitte geben Sie an, ob Sie Kinder haben");
+qst.setProperty("code", "Q4");
+qst.setProperty("show_rand", false);
+vector q70_opts = new vector {
+    "Ja",
+    "Nein"
+};
+qst.setProperty("options", q70_opts);
+send qst;
+
+ansId=system.getProperty("ans70");
+
+if (ansId==0)
+{
+
+// Q80: CHOICE
+qst = new question("choice", 80);
+qst.setProperty("text", "Wie alt ist/sind er/sie?");
+qst.setProperty("code", "Q5");
+qst.setProperty("selection", "multiple");
+qst.setProperty("show_rand", false);
+vector q80_opts = new vector {
+    "Unter 3 Jahren",
+    "3 - 6 Jahre",
+    "7 - 12 Jahre",
+    "13 - 18 Jahre",
+    "Über 18 Jahre"
+};
+
+if (eta<=22){
+	q80_opts.set(2,"#sh opt2");
+	q80_opts.set(3,"#sh opt3");
+	q80_opts.set(4,"#sh opt4");
+}
+
+if (eta==23 || eta==24 || eta==25 || eta==26 || eta==27 || eta==28){
+	q80_opts.set(3,"#sh opt3");
+	q80_opts.set(4,"#sh opt4");
+}
+
+if (eta==29 || eta==30 || eta==31){
+	q80_opts.set(4,"#sh opt4");
+
+}
+
+
+if (eta>=16 && eta<=19)
+{
+qst.setProperty("default_answer","{ 'selection': [0]}");
+qst.setProperty("hidden", true);
+}
+qst.setProperty("options", q80_opts);
+send qst;
+
+// count=0;
+// sel=system.getProperty("ans80_1");
+// if (sel==true) {count=count+1;}
+// sel=system.getProperty("ans80_2");
+// if (sel==true) {count=count+1;}
+// sel=system.getProperty("ans80_0");
+// if (sel==true) {count=count+1;}
+// sel=system.getProperty("ans80_3");
+// if (sel==true) {count=count+1;}
+
+}
+
+
+
+// Q90: CHOICE
+qst = new question("choice", 90);
+qst.setProperty("text", "Verfügen Sie über ein persönliches Instagram-, Facebook-, YouTube- oder TikTok- -Konto? ");
+qst.setProperty("code", "Q6");
+qst.setProperty("show_rand", false);
+vector q90_options = new vector {
+    "Ja",
+    "Nein"
+};
+qst.setProperty("options", q90_options);
+send qst;
+
+ansId=system.getProperty("ans90");
+if (ansId==1)  { return 4;}
+
+qst = new question("choice", 95);
+qst.setProperty("text", "Wie oft nutzen Sie diese Social-Media-Plattformen? ");
+qst.setProperty("code", "q7");
+vector q95_opts = new vector {
+    "Mehrere Male am Tag",
+    "Einmal am Tag",
+    "3-4 Mal pro Woche",
+    "1-2 Mal pro Woche",
+    "Weniger häufig"
+};
+qst.setProperty("options", q95_opts);
+send qst;
+
+ansId=system.getProperty("ans95");
+if (ansId==4) { return 4;}
+
+} //chiusura uid!="null"
+
+qst = new question("choice", 100);
+qst.setProperty("text", "Denke nun allgemein an abgepacktes Speiseeis. Welche dieser Eis Marken kennst du, auch wenn nur dem Namen nach? ");
+qst.setProperty("code", "Q8");
+qst.setProperty("selection", "multiple");
+qst.setProperty("show_rand", true);
+vector q100_opts = new vector {
+"Ferrero Rocher Eis#sf",
+"Raffaello Eis #sf",
+"Magnum Eis ",
+"Nuii Eis ",
+"Kinder bueno Eis ",
+"Ben&Jerry’s Eis  ",
+"Sonstige Eis Marken#sf"
+};
+qst.setProperty("options", q100_opts);
+send qst;
+
+count=0;
+for(int i=0,1)
+{
+sel=system.getProperty("ans100_"+i);
+if (sel==true) { count=count+1; }
+}
+
+if (count==0) { return 4; }
+int countSel=count;
+
+
+sel=system.getProperty("ans100_0");
+if (sel==true) 
+{
+	selRocher=true;
+    // Q110: CHOICE
+    qst = new question("choice", 110);
+    qst.setProperty("text", "<p>Sie haben angegeben, die Marke <b>Ferrero Rocher Eis </b> zu kennen.</p> Bitte geben Sie an, ob Sie sie kürzlich konsumiert haben. <p>„Habe ich gegessen …“ </p>");
+    qst.setProperty("code", "Q9a");
+    qst.setProperty("show_rand", false);
+    vector q110_opts = new vector {
+    "In den letzten 3 Monaten",
+    "In den letzten 6 Monaten",
+    "In den letzten 12 Monaten",
+    "Vor mehr als 12 Monaten",
+    "Ich habe sie noch nie konsumiert, könnte es aber in Zukunft in Erwägung ziehen",
+    "Ich habe sie noch nie konsumiert und würde sie auch in Zukunft nicht in Erwägung ziehen"
+    };
+    qst.setProperty("options", q110_opts);
+    send qst;
+
+	ansId=system.getProperty("ans110");
+	if(ansId==5) { selRocher=false; }
+	if(countSel==1 && ansId==5) { return 4;  }
+
+}
+
+sel=system.getProperty("ans100_1");
+if (sel==true) 
+{
+	selRaf=true;
+    // Q110: CHOICE
+    qst = new question("choice", 115);
+    qst.setProperty("text", "<p>Sie haben angegeben, die Marke <b>Raffaello Eis </b> zu kennen.</p> Bitte geben Sie an, ob Sie sie kürzlich konsumiert haben. <p>„Habe ich gegessen …“ </p>");
+    qst.setProperty("code", "Q9b");
+    qst.setProperty("show_rand", false);
+    vector q115_opts = new vector {
+    "In den letzten 3 Monaten",
+    "In den letzten 6 Monaten",
+    "In den letzten 12 Monaten",
+    "Vor mehr als 12 Monaten",
+    "Ich habe sie noch nie konsumiert, könnte es aber in Zukunft in Erwägung ziehen",
+    "Ich habe sie noch nie konsumiert und würde sie auch in Zukunft nicht in Erwägung ziehen"
+    };
+    qst.setProperty("options", q115_opts);
+    send qst;
+
+	ansId=system.getProperty("ans115");
+	if(ansId==5) { selRaf=false; }
+	if(countSel==1 && ansId==5) { return 4; }
+
+}
+
+
+if(selRocher==false && selRaf==false) { return 4; }
+
+vector perSel = new vector {};
+
+vector q21_categories = new vector {
+"Amelie (@amelie_weissenberger) ",
+"Laura (@lauramichelleee) ",
+"Carina (@carinapranz)  ",
+"Justine (@justinschlue)",
+"Katrine (@katrinpalme) "
+    };
+
+    vector q21b_categories = new vector {
+"Amelie (@amelie_weissenberger) ",
+"Laura (@lauramichelleee) ",
+"Carina (@carinapranz)  ",
+"Justine (@justinschlue)",
+"Katrine (@katrinpalme) ",
+"Ich kenne ihn/sie nicht#se#sf"
+    };
+
+    vector q21_items = new vector {
+		"https://www.primisoft.com/fields/FER/R2602057/resources/i00.gif",
+		"https://www.primisoft.com/fields/FER/R2602057/resources/i01.gif",
+		"https://www.primisoft.com/fields/FER/R2602057/resources/i02.gif",
+		"https://www.primisoft.com/fields/FER/R2602057/resources/i03.gif",
+		"https://www.primisoft.com/fields/FER/R2602057/resources/i04.gif"
+    };
+
+    vector q21b_items = new vector {
+		"<img src='https://www.primisoft.com/fields/FER/R2602057/resources/i00.gif'/>",
+		"<img src='https://www.primisoft.com/fields/FER/R2602057/resources/i01.gif'/>",
+		"<img src='https://www.primisoft.com/fields/FER/R2602057/resources/i02.gif'/>",
+		"<img src='https://www.primisoft.com/fields/FER/R2602057/resources/i03.gif'/>",
+		"<img src='https://www.primisoft.com/fields/FER/R2602057/resources/i04.gif'/>"
+    };
+
+if (ss1=="mobile")
+{
+qst = new question("scale", 121);
+qst.setProperty("text", "Im Folgenden sehen Sie die Namen und Fotos einiger bekannter Personen. Ordnen Sie nur bei den Personen, die Sie kennen, den Namen und das Foto richtig zu "+scriptzoom);
+qst.setProperty("code", "q10mob");
+qst.setProperty("show_rand", true);
+qst.setProperty("rows", q21b_items);
+qst.setProperty("cols", q21b_categories);
+qst.setProperty("view", "dropdown");
+send qst;
+}
+
+
+else 
+{
+// mozCode="<script>$(window).load(function() {oscuraDrag('3,4');});</script>";
+// mozCode="";
+
+//DRAG & DROP//
+	qst = new question("classifier", 21);
+     qst.setProperty("text", "Im Folgenden sehen Sie die Namen und Fotos einiger bekannter Personen. Ordnen Sie nur bei den Personen, die Sie kennen, den Namen und das Foto richtig zu  <div style='font-size:15px'><b>ZIEHEN SIE DIE VERSCHIEDENEN ZEICHEN IN DAS FELD, DAS SIE FÜR RICHTIG HALTEN.</b></div>"+scriptzoom);
+    qst.setProperty("description", "");
+	qst.setProperty("code", "q10des");
+    qst.setProperty("items", q21_items);
+    qst.setProperty("show_rand", true);
+    qst.setProperty("categories", q21_categories);
+    qst.setProperty("view", "default2");
+    send qst;
+}
+
+
+countPers=0;
+countValid=0;
+for (int i=0,4)
+{ 
+
+if (ss1=="mobile"){ ansId=system.getProperty("ans121_"+i);}
+else {ansId=system.getProperty("ans21_"+i);}	
+
+	if (ansId==i)
+		{
+			if ((selRocher==true && i<2) || (selRaf==true && i>1))
+			{
+			countPers=countPers+1;
+			opt=""+i;
+			perSel.add(opt);
+			}
+		}
+
+}
+
+if (countPers==0) { return 4; }
+
+vector listaPersonaggi = new vector {
+"Amelie (@amelie_weissenberger) ",
+"Laura (@lauramichelleee) ",
+"Carina (@carinapranz)  ",
+"Justine (@justinschlue)",
+"Katrine (@katrinpalme) "
+};
+
+vector listaPersonaggi2 = new vector {
+"Amelie (@amelie_weissenberger) ",
+"Laura (@lauramichelleee) ",
+"Carina (@carinapranz)  ",
+"Justine (@justinschlue)",
+"Katrine (@katrinpalme) "
+};
+
+vector linkPersonaggi = new vector {
+    "<p>Amelie (@amelie_weissenberger)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602057/resources/i00.gif'><img src='https://www.primisoft.com/fields/FER/R2602057/resources/i00.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/amelie_weissenberger/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>",
+    "<p>Laura (@lauramichelleee)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602057/resources/i01.gif'><img src='https://www.primisoft.com/fields/FER/R2602057/resources/i01.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/lauramichelleee/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>",
+    "<p>Carina (@carinapranz)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602057/resources/i02.gif'><img src='https://www.primisoft.com/fields/FER/R2602057/resources/i02.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/carinapranz/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>",
+    "<p>Justine (@justinschlue)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602057/resources/i03.gif'><img src='https://www.primisoft.com/fields/FER/R2602057/resources/i03.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/justineschlue/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>",
+    "<p>Katrine (@katrinpalme)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602057/resources/i04.gif'><img src='https://www.primisoft.com/fields/FER/R2602057/resources/i04.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/katrinpalme/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>"
+};
+
+
+	vector pers = new vector { "#sha", "#shb" , "#shc" , "#shc" , "#shd" , "#she"};
+
+count=0;
+idx=countPers-1;
+
+for(int i=0,idx)
+{
+ idq=(int)perSel.get(i);
+ opt=linkPersonaggi.get(idq);
+ pers.set(idq,opt);
+}
+
+string codeother="<script type='text/javascript'>$(window).load(function() {"+
+ "$('#cmp3381,#cmp3382,#cmp3383,#cmp3384,#cmp3385,#cmp3386,#cmp3387,#cmp3388,#cmp3389,#cmp33810').hide();"+
+ "$('#q3381_ans,#q3382_ans,#q3383_ans,#q3384_ans,#q3385_ans,#q3386_ans,#q3387_ans,#q3388_ans,#q3389_ans,#q33810_ans').val('0');});"+
+ "function theFunction1 () { $('#q3381_ans').val('1');}"+
+ "function theFunction2 () { $('#q3382_ans').val('1');}"+
+ "function theFunction3 () { $('#q3383_ans').val('1');}"+
+ "function theFunction4 () { $('#q3384_ans').val('1');}"+
+ "function theFunction5 () { $('#q3385_ans').val('1');}"+
+ "function theFunction6 () { $('#q3386_ans').val('1');}"+
+ "function theFunction7 () { $('#q3387_ans').val('1');}"+
+ "function theFunction8 () { $('#q3388_ans').val('1');}"+
+ "function theFunction9 () { $('#q3389_ans').val('1');}"+
+ "function theFunction10 () { $('#q33810_ans').val('1');}"+
+ "</script>";
+ 
+
+// Q130: CHOICE
+qst = new question("scale", 130);
+qst.setProperty("text", "Im Folgenden finden Sie einen Link zum <img width='120px' src='https://www.primisoft.com/fields/FER/R2309132/resources/insta2.png'/> Profil  einer der Personen, die Sie kennen, wobei wir Ihnen empfehlen, sich das Profil einmal anzusehen."+
+"<p>Können Sie mir sagen, wie gut Sie diese Person kennen</p>"+scriptzoom+codeother);
+qst.setProperty("code", "Q11");
+qst.setProperty("show_rand", false);
+vector q130_opts = new vector {
+"Ich kenne ihn/sie sehr gut",
+"Ich kenne ihn/sie gut",
+"Ich kenne ihn/sie nur wenig",
+"Ich kenne ihn/sie nur dem Namen nach",
+"Ich kenne ihn/sie nicht / Ich dachte, er/sie sei eine andere Person"
+};
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q130_opts);
+qst.setProperty("view", "columns");
+//send qst;
+
+qst= new question("open", 3381);
+qst.setProperty("code", "reclick1");
+qst.setProperty("text", "reclick1");
+
+qst= new question("open", 3382);
+qst.setProperty("code", "reclick2");
+qst.setProperty("text", "reclick2");
+
+qst= new question("open", 3383);
+qst.setProperty("code", "reclick3");
+qst.setProperty("text", "reclick3");
+
+qst= new question("open", 3384);
+qst.setProperty("code", "reclick4");
+qst.setProperty("text", "reclick4");
+
+qst= new question("open", 3385);
+qst.setProperty("code", "reclick5");
+qst.setProperty("text", "reclick5");
+
+qst= new question("open", 3386);
+qst.setProperty("code", "reclick6");
+qst.setProperty("text", "reclick6");
+
+qst= new question("open", 3387);
+qst.setProperty("code", "reclick7");
+qst.setProperty("text", "reclick7");
+
+qst= new question("open", 3388);
+qst.setProperty("code", "reclick8");
+qst.setProperty("text", "reclick8");
+
+qst= new question("open", 3389);
+qst.setProperty("code", "reclick9");
+qst.setProperty("text", "reclick9");
+
+qst= new question("open", 33810);
+qst.setProperty("code", "reclick10");
+qst.setProperty("text", "reclick10");
+
+	qst = new question("composed", 33890);
+    vector q180_comps = new vector { "130", "3381", "3382", "3383", "3384", "3385", "3386", "3387", "3388", "3389", "33810"};
+    qst.setProperty("components", q180_comps);
+    send qst;
+
+for(int i=0,4)
+ {
+	ansId=system.getProperty("ans130_"+i);
+	label =pers.get(i);
+	if(ansId>2)
+	{
+	 opt="#sh opt"+label; pers.set(i,opt);
+	}	 
+ }
+
+
+vector per2Sel = new vector {};
+
+countPers=0;
+
+for(int i=0,4)
+{
+label =pers.get(i);
+valid=label.contains("#sh");
+ansId=system.getProperty("ans130_"+i);
+system.out("<div>label"+i+": "+label+"</div>");
+
+if (ansId<3 && valid==false) 
+	{
+		for(int j=0,idx)
+		{
+			idq=(int)perSel.get(j);	
+			if(i==idq) 
+				{ 
+				  opt=""+idq;
+				  per2Sel.add(opt);
+				  countPers=countPers+1;
+			 	}
+		}	
+	
+	 
+	}
+
+}
+
+
+if (countPers==0) { return 4; }
+
+int cq;
+string qIndici;
+string qConta;
+
+//creo stringa da inviare a domanda app con indici e numero quote//
+	        count=0;
+			int ncd;
+	        for(int i=0,4)
+	        {
+		    cq=system.getProperty("quota:pers_"+i); 
+		    //indici
+		    qIndici=qIndici+i+",";
+		    //quota
+		    qConta=qConta+cq+",";
+	        }
+
+
+            qst = new question("app",1999);
+            qst.setProperty("text", "test");
+            qst.setProperty("path", "quotaControl");
+            qst.setProperty("input", "ix:"+qIndici);
+            qst.setProperty("input", "cq:"+qConta);
+            qst.setProperty("output", "indOrder:string");
+            send qst;
+
+            cmd=system.getProperty("ans1999_indOrder");
+            label=cmd.trim();
+            system.out("<div>Indici estratti: "+label+"</div>"); 
+
+            vector priority = new vector { };
+            priority = label.split(",");
+
+count=0;
+idx=countPers-1;
+
+cmd=per2Sel.get(0);
+system.out("<div>Base: "+cmd+"</div>");
+
+for(int i=0,4)
+{
+qpers=(int)priority.get(i);
+cPer=system.getProperty("quota:pers_"+qpers); 
+
+if(cPer<151)
+	{
+
+		for(int j=0,idx)
+			{
+			idq=(int)per2Sel.get(j);
+			cmd=per2Sel.get(j);
+
+			if(qpers==idq && count==0)
+				{
+					cella=qpers;
+					count=count+1;
+
+				}
+
+
+			}
+	}
+
+}
+
+
+if(count==0) {return 5; }
+
+
+leg=cella+1;
+
+system.setProperty("leg", leg);
+system.setProperty("cella", cella);
+
+
+
+system.out("<div>Leg: "+leg+"</div>"); 
+nam=listaPersonaggi.get(cella);
+system.out("<div>Personaggio in test: "+nam+"</div>"); 
+
+qst = new question("choice", 135);
+qst.setProperty("text", "Selezionato");
+qst.setProperty("code", "persSelez");
+qst.setProperty("options", listaPersonaggi);
+qst.setProperty("default_answer","{ 'selection': ["+cella+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+// Q140: SCALE
+qst = new question("scale", 140);
+qst.setProperty("text", "Sie haben angegeben, diese Personen zu kennen. Geben Sie an, ob Sie ihnen in den sozialen Medien folgen und wie sehr Ihnen ihre Inhalte gefallen (Geschichten, Posts, Umfragen usw.)  "+scriptzoom);
+qst.setProperty("code", "Q12");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+vector q140_cols = new vector {
+"Ich folge ihr/ihm/ihnen in den sozialen Medien und mag fast alle Inhalte ",
+"Ich folge ihr/ihm/ihnen in den sozialen Medien und sehe mir gelegentlich die Inhalte an ",
+"Ich folge ihr/ihm/ihnen in den sozialen Medien, schaue mir die Inhalte aber nie an",
+"Ich kenne sie/ihn, folge ihr/ihm/ihnen in den sozialen Medien aber nicht "
+};
+qst.setProperty("cols", q140_cols);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+// Q150: CHOICE
+qst = new question("scale", 150);
+qst.setProperty("text", "Wie sehr fühlen Sie sich diesen Personen verbunden?  "+scriptzoom);
+qst.setProperty("code", "Q13");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+vector q150_opts = new vector {
+"Ich fühle mich ihr/ihm/ihnen sehr verbunden ",
+"Ich fühle mich ihr/ihm/ihnen verbunden ",
+"Weder noch ",
+"Ich fühle mich ihr/ihm/ihnen nicht verbunden ",
+"Ich fühle mich ihr/ihm/ihnen überhaupt nicht verbunden"
+};
+qst.setProperty("cols", q150_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+
+
+vector q160_opts = new vector {
+"Ich mag sie/ihn sehr",
+"Ich mag sie/ihn",
+"Weder mag ich sie/ihn noch mag ich sie/ihn nicht",
+"Ich mag sie/ihn nicht ",
+"Ich mag sie/ihn überhaupt nicht"
+};
+
+// Q160: CHOICE
+qst = new question("scale", 160);
+qst.setProperty("text", "Wie sehr mögen Sie diese Personen? "+scriptzoom);
+qst.setProperty("code", "Q14");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q160_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+
+vector q170_opts = new vector {
+"Sehr authentisch ",
+"Eher authentisch",
+"Weder authentisch noch unauthentisch",
+"Eher unauthentisch ",
+"Sehr unauthentisch "
+};
+
+// Q170: CHOICE
+qst = new question("scale", 170);
+qst.setProperty("text", "Für wie authentisch halten Sie diese Personen? "+scriptzoom);
+qst.setProperty("code", "Q15");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q170_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+
+vector q180_opts = new vector {
+"Sehr kompetent ",
+"Eher kompetent",
+"Weder kompetent noch inkompetent ",
+"Eher inkompetent",
+"Sehr inkompetent  "
+};
+
+// Q180: CHOICE
+qst = new question("scale", 180);
+qst.setProperty("text", "Für wie kompetent halten Sie diese Personen?  "+scriptzoom);
+qst.setProperty("code", "Q16");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q180_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+// Q190: CHOICE
+qst = new question("scale", 190);
+qst.setProperty("text", "Wie präsent und aktiv sind Ihrer Meinung nach diese Personen in den sozialen Medien?  "+scriptzoom);
+qst.setProperty("code", "Q17");
+qst.setProperty("show_rand", false);
+vector q190_opts = new vector {
+"Immer aktiv, man kann sie/ihn ständig sehen ",
+"Sehr aktiv",
+"Teils, teils",
+"Wenig aktiv ",
+"Gar nicht aktiv, fast nicht wahrnehmbar"
+};
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q190_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+// Q200: CHOICE
+qst = new question("scale", 200);
+qst.setProperty("text", "Wie sehr stimmen Sie der folgenden Aussage zu oder nicht zu: „Ich bin es leid, diese Personen zu sehen - Die Personen sind langweilig“  "+scriptzoom);
+qst.setProperty("code", "Q18");
+qst.setProperty("show_rand", false);
+vector q200_opts = new vector {
+"Ich stimme voll und ganz zu",
+"Ich stimme eher zu ",
+"Weder noch ",
+"Ich stimme eher nicht zu",
+"Ich stimme überhaupt nicht zu"
+};
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q200_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+mozCode="<script>$(window).load(function() {barColor(); });</script>";
+
+// slider ciclico
+	vector selRan = new vector { "1#sh", "2#sh", "3#sh", "4#sh", "5#sh", "6#sh", "7#sh", "8#sh", "9#sh", "10#sh", "11#sh", "12#sh", "13#sh", "14#sh", "15#sh", "16#sh", "17#sh", "18#sh", "19#sh", "20#sh", "21#sh", "22#sh", "23#sh", "24#sh", "25#sh", "26#sh", "27#sh", "28#sh", "29#sh", "30#sh"};  
+	vector ind = new vector { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23" , "24","25","26","27","28","29"};  
+			
+Nran=30;
+
+			for (int i=0,29)
+			{   
+			system.setProperty("r"+i, "rand:"+Nran);
+			r = (int)system.getProperty("r"+i); 
+			optB=ind.get(r);
+			selRan.set(contaestratti,optB);
+			system.setProperty("Svar"+contaestratti, optB);			
+			contaestratti=contaestratti+1;
+			ind.remove(r);
+			Nran=Nran-1;
+			}
+
+
+vector itemsb = new vector {
+"Vertrauenswürdig ",
+"Freundschaftlich",
+"Aufmerksam/verantwortungsbewusst",
+"Mutig ",
+"Authentisch/Ehrlich",
+"Fesselnd",
+"Real/greifbar",
+"Feinfühlig/freundlich",
+"Dynamisch/energetisch",
+"Witzig/Ironisch",
+"Elegant/prestigeträchtig ",
+"Erfahren /kompetent ",
+"Wie ein Familienmitglied",
+"Integrativ",
+"Locker/unbeschwert",
+"Modern/zeitgemäß ",
+"Ehrlich/transparent ",
+"Originell/innovativ",
+"Positiv/Optimistisch",
+"Ermutigend",
+"Macht glücklich/gut gelaunt  ",
+"Entspannend",
+"Einfach/echt",
+"Vermittelt positive Werte ",
+"Trendig ",
+"Verspielt",
+"Frisch",
+"Warmherzig",
+"Fröhlich / Lebensfroh",
+"Verträumt / Fantasievoll"
+};
+
+if(leg==1) { nam="Amelie (@amelie_weissenberger) ";  itemsTest="roc"; }
+if(leg==2) { nam="Laura (@lauramichelleee) ";  itemsTest="roc"; }
+if(leg==3) { nam="Carina (@carinapranz)";  itemsTest="raf"; }
+if(leg==4) { nam="Justine (@justinschlue)";  itemsTest="raf"; }
+if(leg==5) { nam="Katrine (@katrinpalme)";  itemsTest="raf"; }
+
+ran1=cella-1;
+
+//indici validi per wave
+vector validIndex = new vector { "0", "4", "6", "7", "10", "11", "14", "15", "17", "18", "19", "20", "23", "27", "28" };
+vector validIndex2 = new vector { "0", "4", "7", "10", "14", "15", "17", "18", "20", "21", "22", "23", "24", "28", "29" };
+
+//cambio selezione indici validi in base al personaggio
+if(leg>2) 
+{
+	for(int i=0,14)
+	{
+		opt=validIndex2.get(i);
+		validIndex.set(i,opt);
+	}
+
+}
+
+int vIdx;
+
+//valutazione personaggio
+for (int i=0,29)
+{
+valid=false;
+if(i==0) { qtext="Konzentrieren wir uns nun auf die Person <b> "+nam+"</b>."; }
+else { qtext="";}
+
+	indiceDomanda=(int)selRan.get(i);
+	cmd=itemsb.get(indiceDomanda);
+	qid=5000+indiceDomanda*100;
+
+    for(int j=0,14)
+    {
+        vIdx=(int)validIndex.get(j);
+        if(indiceDomanda==vIdx) {valid=true;}
+    }
+
+    if(valid==true)
+    {
+    
+	qst = new question("scale", qid);
+qst.setProperty("text", mozCode+"<p>"+qtext+"</p><table><tr><td width='80%'><p>Sie werden einige Adjektive sehen, die ihre/seine Persönlichkeitsmerkmale beschreiben können oder auch nicht.</p><br/><br/>Geben Sie an, inwieweit jedes Adjektiv Ihrer Meinung nach geeignet ist, diese Person(en) zu beschreiben, indem Sie eine Punktzahl zwischen 0 und 100 vergeben<br/> wobei 0 <span class='sad2 fa fa-frown-o fa-2x'></span> „überhaupt nicht geeignet“ und 100  <span class='happy2 fa fa-smile-o fa-2x'></span> „sehr geeignet“ bedeutet.<br/><br/><p>Klicken Sie auf einen Punkt auf der Leiste, um die Punktzahl zu vergeben, die Ihrer Meinung nach die Person am besten beschreibt. </p></td>"+
+    "<td width='20%'><img width='100px' src='https://www.primisoft.com/fields/FER/R2602057/resources/i0"+cella+".gif'/></td></tr></table><i class='happy fa fa-smile-o fa-2x' aria-hidden='true'></i><i class='sad fa fa-frown-o fa-2x' aria-hidden='true'></i>");
+	qst.setProperty("show_rand", true);
+	qst.setProperty("code", "q19br."+indiceDomanda);
+	vector q210_rows = new vector {
+		"item"
+	};
+	q210_rows.set(0,cmd);
+	qst.setProperty("rows", q210_rows);
+	qst.setProperty("cols", q210_cols);
+	qst.setProperty("view", "sliders");
+	send qst;
+    }
+
+	//inserito in maniera fittizia solo per l'explode del datafile, ma ad inizio ciclo viene ricavato l'indice della domanda da mostrare
+	if (indiceDomanda!=29){ indiceDomanda=indiceDomanda+1; }
+	else{ indiceDomanda=0; }
+
+}
+
+
+//  valutazione Prodotti
+for (int i=0,29)
+{ 
+
+if(leg <=2) { comp="Ferrero Rocher Eis"; }
+else { comp="Raffaello Eis"; }
+
+valid=false;
+if(i==0) { label="Sie haben angegeben, die Marke "+comp+" zu kennen. "; }
+else { label=""; }
+
+	indiceDomanda=(int)selRan.get(i);
+	cmd=itemsb.get(indiceDomanda);
+	qid=10000+indiceDomanda*100;
+
+    for(int j=0,14)
+    {
+    vIdx=(int)validIndex.get(j);
+    if(indiceDomanda==vIdx) {valid=true;}
+    }
+
+    if(valid==true)
+    {
+	qst = new question("scale", qid);
+    qst.setProperty("text", mozCode+"<table><tr><td width='80%'><p>Sie werden einige Adjektive sehen, die die Persönlichkeitsmerkmale der Marke beschreiben können oder auch nicht. <br/><br/>Geben Sie an, inwieweit jedes Adjektiv Ihrer Meinung nach geeignet ist, die Marke <b>"+comp+"</b> zu beschreiben, indem Sie eine Punktzahl zwischen 0 und 100 vergeben - wobei 0  <span class='sad2 fa fa-frown-o fa-2x'></span> „überhaupt nicht geeignet“ und 100 <span class='happy2 fa fa-smile-o fa-2x'></span> „sehr geeignet“ bedeutet.</td>"+
+    "<td width='20%'><img src='https://www.primisoft.com/fields/FER/R2602057/resources/"+itemsTest+".png' width='180px'  alt='' /></td></tr></table><p>Klicken Sie auf einen Punkt auf der Leiste, um die Punktzahl zu vergeben, die Ihrer Meinung nach die Marke am besten beschreibt. </p><i class='happy fa fa-smile-o fa-2x' aria-hidden='true'></i><i class='sad fa fa-frown-o fa-2x' aria-hidden='true'></i>");
+	qst.setProperty("show_rand", true);
+	qst.setProperty("code", "q20br."+indiceDomanda);
+	vector q230_rows = new vector {
+		"item"
+	};
+	q230_rows.set(0,cmd);
+	qst.setProperty("rows", q230_rows);
+	qst.setProperty("cols", q210_cols);
+	qst.setProperty("view", "sliders");
+	send qst;
+    }
+
+
+	//inserito in maniera fittizia solo per l'explode del datafile, ma ad inizio ciclo viene ricavato l'indice della domanda da mostrare
+	if (indiceDomanda!=29){ indiceDomanda=indiceDomanda+1; }
+	else{ indiceDomanda=0; }
+
+	}	
+
+
+
+	link="https://www.primisoft.com/fields/FER/R2602057/resources/c1_"+leg+".JPG";
+	img=scriptzoom+"<p><a class='fancybox' rel='group' href='"+link+"'><img src='"+link+"' width='450px'  alt='' /></a><div class='info'>Klicken Sie hier, um die Details anzuzeigen</div></p>";
+
+	qst = new question("concept", 19000);
+	qst.setProperty("text", delay+"WIR ZEIGEN IHNEN NUN EINE ZUSAMMENARBEIT ZWISCHEN DER MARKE <b>"+comp+"</b> UND DER PERSON <b>"+nam+"</b>. NEHMEN SIE SICH ZEIT, UM SICH DIE FOLGENDEN INFORMATIONEN ANZUSEHEN UND DURCHZULESEN.</p> <p><img src='"+link+"'/></p>");
+	send qst;
+
+    // Q250: CHOICE
+	qst = new question("choice", 19100);
+	qst.setProperty("text", img+"Wie gefällt es Ihnen im Allgemeinen, dass <b>"+nam+"</b> mit <b>"+comp+"</b> zusammenarbeitet "+scriptzoom);
+	qst.setProperty("code", "Q22");
+	qst.setProperty("show_rand", false);
+	vector q250_opts = new vector {
+    "Es gefällt mir sehr gut",
+    "Es gefällt mir gut",
+    "Weder gefällt es mir noch gefällt es mir nicht",
+    "Es gefällt mir nicht",
+    "Es gefällt mir überhaupt nicht"
+	};
+	qst.setProperty("options", q250_opts);
+	send qst;
+
+
+	mozCode="<script>$(window).load(function() {nonumeri3();});</script>";
+	cod="<script>$(window).load(function() {barMinus();});</script>";
+
+// Q260: CHOICE
+	qid=baseQid+100*idx+15;
+	qst = new question("scale", 19200);
+	qst.setProperty("text", img+"Wenn Sie an <b>"+nam+"</b> in Verbindung mit <b>"+comp+"</b>, denken, wie sehr hat diese Person Ihrer Meinung nach positive oder negative Auswirkungen auf die Marke? Bewerten Sie die positiven oder negativen Auswirkungen der Zusammenarbeit auf einer Skala von -10 bis +10: "+scriptzoom+cod);
+
+	qst.setProperty("code", "Q23");
+	qst.setProperty("show_rand", false);
+
+	opt="<table style='width:100%;'><tr><td style='width:33%; text-align:left'><b>"+comp+" verschlechtert sich </b></td><td style='width:33%; text-align:center'><b>"+comp+" bleibt gleich </b></td><td style='width:33%; text-align:right'><b>"+comp+" verbessert sich</b></td></tr></table>";
+	vector q233_rows = new vector {"opzione"};
+	q233_rows.set(0,opt);
+
+	qst.setProperty("rows", q233_rows);
+	vector q260_opts = new vector { "-10", "-9", "-8", "-7", "-6", "-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10","#sh101" }; 
+	qst.setProperty("cols", q260_opts);
+	qst.setProperty("view", "sliders");
+	send qst;
+
+
+
+// Q270: CHOICE
+	qid=baseQid+100*idx+25;
+	qst = new question("scale", 19300);
+	qst.setProperty("text", img+"Wie sehr glauben Sie, dass <b>"+nam+"</b>kohärent und geeignet ist, mit <b>"+comp+"</b> zusammenzuarbeiten? Bewerten Sie die Stimmigkeit der Zusammenarbeit auf einer Skala von -10 bis 10. "+scriptzoom+cod);
+	qst.setProperty("code", "Q24");
+	qst.setProperty("show_rand", false);
+	vector q233b_rows = new vector {"<table style='width:100%;'><tr><td style='width:33%; text-align:left'><b>überhaupt nicht kohärent</b></td><td style='width:33%; text-align:center'><b>Neutral          </b></td><td style='width:33%; text-align:right'><b>Sehr stimmig</b></td></tr></table>" };
+	qst.setProperty("rows", q233b_rows);
+	qst.setProperty("cols", q260_opts);
+	qst.setProperty("view", "sliders");
+	send qst;
+
+	// Q280: CHOICE
+	qst = new question("choice", 19400);
+	qst.setProperty("text", img+"Wenn Sie an die mögliche Zusammenarbeit zwischen <b>"+nam+"</b> und <b>"+comp+"</b>, denken, wie wahrscheinlich ist es, dass Sie dieses Produkt kaufen würden?  "+scriptzoom);
+	qst.setProperty("code", "Q26");
+	qst.setProperty("show_rand", false);
+	vector q280_opts = new vector {
+"Auf jeden Fall kaufen ",
+"Wahrscheinlich ",
+"Teils/teils ",
+"Unwahrscheinlich ",
+"Auf keinen Fall kaufen"
+	};
+	qst.setProperty("options", q280_opts);
+	send qst;
+
+
+	// Q290: CHOICE
+	qid=baseQid+100*idx+50;
+	qst = new question("choice", 19500);
+	qst.setProperty("text", img+"Und im Vergleich zu vor dieser Umfrage, glauben Sie, dass Sie <b>"+comp+"</b> kaufen werden? "+scriptzoom);
+	qst.setProperty("code", "Q27");
+	qst.setProperty("show_rand", false);
+	vector q290_opts = new vector {
+    "Mehr als bisher",
+    "Genauso wie bisher",
+    "Weniger als bisher"
+	};
+	qst.setProperty("options", q290_opts);
+	send qst;
+
+}

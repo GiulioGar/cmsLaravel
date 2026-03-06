@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\PanelControl;
 use App\Models\UserInfo;
+use Illuminate\Support\Facades\Log;
 
 class CampionamentoController extends Controller
 {
@@ -77,6 +78,11 @@ public function utentiDisponibili(Request $request)
         return $out;
     };
 
+    Log::info('campionamento.utentiDisponibili.start', [
+    'surId' => $surId,
+    'samples_count' => count($samples),
+        ]);
+
     // ========= Conteggi per sottocampione =========
     foreach ($samples as $i => $s) {
         $followup = isset($s['followup']) ? (bool)$s['followup'] : false;
@@ -127,19 +133,35 @@ public function utentiDisponibili(Request $request)
         if (!empty($aree)) $q->whereIn('u.area', (array)$aree);
         if (!empty($prov)) $q->whereIn('u.province_id', (array)$prov);
         if (!empty($targetId)) {
-            $q->whereExists(function ($sub) use ($targetId, $userKey) {
-                $sub->select(DB::raw(1))
+            $q->whereIn("u.$userKey", function ($sub) use ($targetId) {
+                $sub->select('ut.uid')
                     ->from('utenti_target as ut')
-                    ->whereColumn('ut.uid', "u.$userKey")
-                    ->where('ut.target_id', $targetId);
+                    ->where('ut.target_id', (int) $targetId)
+                    ->whereNotNull('ut.uid');
             });
         }
 
+        Log::info('campionamento.count.before', [
+            'index' => $i,
+            'sql' => $interpolateSql($q->toSql(), $q->getBindings()),
+        ]);
+
+        $q->select("u.$userKey");
         $count = (clone $q)->count();
+
+        Log::info('campionamento.count.after', [
+                'index' => $i,
+                'count' => $count,
+            ]);
+
         $row = ['index'=>$i,'count'=>$count];
         if ($debug) $row['sql_full'] = $interpolateSql($q->toSql(), $q->getBindings());
         $items[] = $row;
     }
+
+
+Log::info('campionamento.total.start');
+
 
     // ========= Totale unico corretto =========
     $uidUnici = collect();
@@ -189,19 +211,32 @@ public function utentiDisponibili(Request $request)
         if (!empty($aree)) $q->whereIn('u.area', $aree);
         if (!empty($prov)) $q->whereIn('u.province_id', $prov);
         if (!empty($targetId)) {
-            $q->whereExists(function ($sub) use ($targetId, $userKey) {
-                $sub->select(DB::raw(1))
+            $q->whereIn("u.$userKey", function ($sub) use ($targetId) {
+                $sub->select('ut.uid')
                     ->from('utenti_target as ut')
-                    ->whereColumn('ut.uid', "u.$userKey")
-                    ->where('ut.target_id', $targetId);
+                    ->where('ut.target_id', (int) $targetId)
+                    ->whereNotNull('ut.uid');
             });
         }
 
+Log::info('campionamento.total.sample.before_pluck', [
+    'sql' => $interpolateSql($q->toSql(), $q->getBindings()),
+]);
+
         $uids = $q->pluck("u.$userKey")->all();
+
+        Log::info('campionamento.total.sample.after_pluck', [
+            'uids_count' => count($uids),
+        ]);
+
         $uidUnici = $uidUnici->merge($uids);
     }
 
     $total = $uidUnici->unique()->count();
+
+    Log::info('campionamento.total.end', [
+    'total' => $total,
+]);
 
     return response()->json([
         'items' => $items,
@@ -379,4 +414,6 @@ public function utentiDisponibili(Request $request)
             'csv_base64'=>base64_encode($csv),
         ]);
     }
+
+
 }

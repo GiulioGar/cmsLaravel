@@ -454,3 +454,250 @@
   box-shadow:none;
 }
 
+/* =========================
+   RIGHT SIDE (coerenza layout)
+   ========================= */
+
+.sv-right-list { margin-bottom: 14px; }
+
+.sv-right-actions{
+  display:flex;
+  justify-content:flex-end;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,0,0,.06);
+}
+
+.sv-right-box{
+  /* stesso “ritmo” visivo delle card */
+}
+
+.sv-empty{
+  display:flex;
+  gap: 14px;
+  align-items:flex-start;
+  padding: 10px 2px;
+}
+
+.sv-empty-icon{
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(157,206,107,.18);
+  flex: 0 0 42px;
+}
+
+.sv-empty-icon svg{
+  width: 18px;
+  height: 18px;
+}
+
+.sv-empty-title{
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.sv-empty-sub{
+  color: rgba(0,0,0,.55);
+  line-height: 1.25rem;
+  font-size: .92rem;
+}
+
+/* =========================
+   Loading "conteggio in corso"
+   ========================= */
+/* RIGHT SIDE */
+.sv-right-list { margin-bottom: 14px; }
+.sv-right-actions{
+  display:flex;
+  justify-content:flex-end;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,0,0,.06);
+}
+
+/* Placeholder empty */
+.sv-empty{
+  display:flex;
+  gap: 14px;
+  align-items:flex-start;
+  padding: 10px 2px;
+}
+.sv-empty-icon{
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(157,206,107,.18);
+  flex: 0 0 42px;
+}
+.sv-empty-icon svg{ width: 18px; height: 18px; }
+.sv-empty-title{ font-weight: 700; margin-bottom: 2px; }
+.sv-empty-sub{ color: rgba(0,0,0,.55); line-height: 1.25rem; font-size: .92rem; }
+
+/* Loading conteggio */
+.sv-loading{ display:flex; gap: 12px; align-items:flex-start; }
+.sv-loading-title{ font-weight: 700; margin-bottom: 2px; }
+.sv-loading-sub{ color: rgba(0,0,0,.55); font-size: .92rem; }
+.sv-dots{
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(157,206,107,.18);
+  flex: 0 0 42px;
+  gap: 4px;
+}
+.sv-dots i{
+  display:block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.45);
+  animation: svDot 1s infinite ease-in-out;
+}
+.sv-dots i:nth-child(2){ animation-delay: .15s; }
+.sv-dots i:nth-child(3){ animation-delay: .30s; }
+@keyframes svDot{
+  0%, 80%, 100% { transform: translateY(0); opacity: .35; }
+  40% { transform: translateY(-3px); opacity: 1; }
+}
+@keyframes svDot{
+  0%, 80%, 100% { transform: translateY(0); opacity: .35; }
+  40% { transform: translateY(-3px); opacity: 1; }
+}
+
+.sv-total{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 6px 0;
+}
+.sv-total-number{
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* RIGHT: bottone "Crea Campioni" (colore diverso dal primary globale) */
+.sv-btn-create{
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 800;
+
+  color: rgba(15,23,42,.88);
+  background: linear-gradient(90deg, rgba(157,206,107,.28), rgba(255,255,255,.85));
+  box-shadow: 0 10px 22px rgba(15,23,42,.08);
+
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+.sv-btn-create:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(15,23,42,.10);
+  filter: brightness(1.02);
+}
+.sv-btn-create:active{
+  transform: translateY(0);
+  box-shadow: 0 8px 18px rgba(15,23,42,.08);
+}
+
+/* RIGHT: distinguo visivo leggero rispetto al lato sinistro */
+.sv-card-right{
+  border-color: rgba(102,16,242,.18); /* richiamo viola già presente */
+  box-shadow: 0 12px 30px rgba(15,23,42,.08);
+  position: relative;
+}
+
+/* mini-accent verticale a sinistra */
+.sv-card-right::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:4px;
+  background: linear-gradient(180deg, rgba(45, 44, 46, 0.55), rgba(197, 197, 197, 0.7));
+  opacity: .55;
+}
+
+/* header un filo diverso, senza rompere il tuo header SV */
+.sv-card-right .sv-card-header{
+  background: linear-gradient(90deg, rgba(197, 197, 197, 0.7), rgba(45, 44, 46, 0.55));
+}
+
+/* Loading "hero" (più curato) */
+.sv-loading-hero{
+  align-items: center;
+  padding: 4px 0;
+}
+
+.sv-loading-badge{
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background: linear-gradient(180deg, rgba(157,206,107,.28), rgba(255,255,255,.85));
+  border: 1px solid rgba(157,206,107,.35);
+  box-shadow: 0 10px 22px rgba(15,23,42,.08);
+
+  animation: svPulse 1.2s infinite ease-in-out;
+}
+
+.sv-loading-badge svg{
+  width: 18px;
+  height: 18px;
+  color: rgba(15,23,42,.70);
+}
+
+.sv-loading-content{ min-width: 0; }
+
+@keyframes svPulse{
+  0%, 100% { transform: translateY(0); filter: brightness(1); }
+  50% { transform: translateY(-1px); filter: brightness(1.03); }
+}
+
+/* piccolo upgrade dots: più morbidi */
+.sv-dots i{
+  background: rgba(102,16,242,.55); /* richiamo viola */
+}
+
+/* Totale disponibili - icona + look più "card" */
+.sv-total-card .sv-card-header{
+  display:flex;
+  align-items:center;
+}
+
+.sv-total-icon{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.30);
+}
+
+.sv-total-icon svg{
+  width: 18px;
+  height: 18px;
+  color: #fff; /* header è verde -> icona bianca */
+}
+
+/* animazione “pop” del numero quando arriva */
+.sv-pop{
+  animation: svPop .18s ease-out;
+}
+@keyframes svPop{
+  from { transform: scale(.96); opacity: .65; }
+  to   { transform: scale(1);   opacity: 1; }
+}

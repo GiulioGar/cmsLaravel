@@ -1,0 +1,4 @@
+2.0;FER;R2602057;220;GUEST;04/03/2026 10:58:26 CET;<unknown>;0;0;104;debug=true;browser=variables;device=desktop;lang=it;sysIID=220;sysRST=1
+choice;100;7;0010010;2
+choice;102;5;3
+choice;104;5;3

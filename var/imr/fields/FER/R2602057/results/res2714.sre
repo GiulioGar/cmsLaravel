@@ -1,0 +1,15 @@
+2.0;FER;R2602057;2714;IDEXNOKROPYLNWAGC4051;06/03/2026 09:26:49 CET;06/03/2026 09:28:47 CET;118;4;21;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOKROPYLNWAGC4051;device=desktop;lang=de;sysIID=2714;pan=4
+concept;10
+choice;20;2;0
+classifier;21;5;3;4;0;1;2
+choice;30;2;0
+open;40;50
+choice;45;16;2
+choice;52;6;4
+choice;70;2;0
+choice;80;5;00010;3
+choice;90;2;0
+choice;95;5;2
+choice;100;7;1111110;0
+choice;110;6;0
+choice;115;6;1

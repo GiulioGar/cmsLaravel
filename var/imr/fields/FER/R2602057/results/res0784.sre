@@ -1,0 +1,9 @@
+2.0;FER;R2602057;784;IDEXNOTTNDMRUAWOM4747;04/03/2026 16:56:23 CET;04/03/2026 16:56:40 CET;17;4;90;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOTTNDMRUAWOM4747;device=mobile;lang=de;sysIID=784;pan=4
+concept;10
+choice;20;2;0
+choice;30;2;0
+open;40;31
+choice;45;16;4
+choice;52;6;2
+choice;70;2;1
+choice;90;2;1

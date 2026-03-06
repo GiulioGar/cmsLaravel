@@ -14,10 +14,22 @@ class AbilitaUidController extends Controller
         $surveys = DB::table('t_surveys')
             ->select('sid', 'prj_name')
             ->where('status', 2)
+            ->orderByRaw("
+                CASE
+                    WHEN sid REGEXP '^R[0-9]+$' THEN 1
+                    ELSE 0
+                END DESC
+            ")
+            ->orderByRaw("
+                CASE
+                    WHEN sid REGEXP '^R[0-9]+$' THEN CAST(SUBSTRING(sid, 2) AS UNSIGNED)
+                    ELSE NULL
+                END DESC
+            ")
             ->orderBy('sid', 'desc')
             ->get();
 
-        $panels = DB::table('t_fornitoriPanel')
+        $panels = DB::table('t_fornitoripanel')
             ->select('id', 'panel_code', 'name', 'red_3', 'red_4', 'red_5', 'complete', 'spesa')
             ->orderBy('name', 'asc')
             ->get();
@@ -30,13 +42,13 @@ class AbilitaUidController extends Controller
         $request->validate([
             'sid' => 'required|string|exists:t_surveys,sid',
             'prj' => 'required|string',
-            'panel_code' => 'required|integer|exists:t_fornitoriPanel,panel_code',
+            'panel_code' => 'required|integer|exists:t_fornitoripanel,panel_code',
             'num_links' => 'required|integer|min:1|max:10000',
         ]);
 
         $sid = $request->sid;
         $prj = $request->prj;
-        $panel = DB::table('t_fornitoriPanel')->where('panel_code', $request->panel_code)->first();
+        $panel = DB::table('t_fornitoripanel')->where('panel_code', $request->panel_code)->first();
 
         if (!$panel) {
             return back()->withErrors(['panel_code' => 'Panel non trovato']);
@@ -74,7 +86,7 @@ class AbilitaUidController extends Controller
     public function storePanel(Request $request)
     {
         $request->validate([
-            'panel_code' => 'required|integer|unique:t_fornitoriPanel,panel_code',
+            'panel_code' => 'required|integer|unique:t_fornitoripanel,panel_code',
             'name' => 'required|string|max:100',
             'red_3' => 'nullable|url',
             'red_4' => 'nullable|url',
@@ -83,7 +95,7 @@ class AbilitaUidController extends Controller
             'spesa' => 'nullable|numeric',
         ]);
 
-        DB::table('t_fornitoriPanel')->insert([
+        DB::table('t_fornitoripanel')->insert([
             'panel_code' => $request->panel_code,
             'name' => $request->name,
             'red_3' => $request->red_3,
@@ -99,7 +111,7 @@ class AbilitaUidController extends Controller
     public function updatePanel(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer|exists:t_fornitoriPanel,id',
+            'id' => 'required|integer|exists:t_fornitoripanel,id',
             'name' => 'required|string|max:100',
             'red_3' => 'nullable|url',
             'red_4' => 'nullable|url',
@@ -108,7 +120,7 @@ class AbilitaUidController extends Controller
             'spesa' => 'nullable|numeric',
         ]);
 
-        DB::table('t_fornitoriPanel')->where('id', $request->id)->update([
+        DB::table('t_fornitoripanel')->where('id', $request->id)->update([
             'name' => $request->name,
             'red_3' => $request->red_3,
             'red_4' => $request->red_4,
@@ -122,7 +134,7 @@ class AbilitaUidController extends Controller
 
     public function deletePanel($id)
     {
-        DB::table('t_fornitoriPanel')->where('id', $id)->delete();
+        DB::table('t_fornitoripanel')->where('id', $id)->delete();
         return response()->json(['success' => true]);
     }
 
@@ -130,42 +142,98 @@ class AbilitaUidController extends Controller
     /**
      * AJAX: restituisce conteggi file .sre e status t_respint
      */
-    public function showRightPanelData(Request $request)
-    {
-        $sid = $request->input('sid');
-        $prj = $request->input('prj');
+public function showRightPanelData(Request $request)
+{
+    $sid = $request->input('sid');
+    $prj = $request->input('prj');
 
-        if (!$sid || !$prj) {
-            return response()->json(['success' => false, 'message' => 'Parametri mancanti.'], 400);
-        }
+    if (!$sid || !$prj) {
+        return response()->json(['success' => false, 'message' => 'Parametri mancanti.'], 400);
+    }
 
-        $directory = base_path("var/imr/fields/$prj/$sid/results/");
-        $totalFiles = 0;
-        $lastFile = '—';
+    $directory = base_path("var/imr/fields/$prj/$sid/results/");
+    $totalFiles = 0;
+    $lastFile = '—';
 
-        if (is_dir($directory)) {
-            $files = glob($directory . "/*.sre");
-            $totalFiles = count($files);
-            if ($totalFiles > 0) {
-                rsort($files);
+    // Status counts presi dai file .sre (status è in 8ª posizione -> index 7)
+    $statusCounts = []; // es: [0=>123, 1=>4, ...]
+    for ($i = 0; $i <= 7; $i++) $statusCounts[$i] = 0;
+
+    if (is_dir($directory)) {
+        $files = glob($directory . "/*.sre");
+        $totalFiles = is_array($files) ? count($files) : 0;
+
+        if ($totalFiles > 0) {
+
+            // ========= (A) ULTIMO FILE: per IID numerico nel nome res12345.sre =========
+            // Se tutti i nomi sono res{IID}.sre, prendiamo il max IID.
+            // Se qualche file non matcha, fallback su filemtime.
+            $bestByIid = null;     // ['iid'=>12345,'file'=>path]
+            $bestByMtime = null;   // ['mtime'=>...,'file'=>path]
+
+            foreach ($files as $f) {
+                $base = basename($f);
+
+                // match res12567.sre oppure res_12567.sre (se vuoi anche underscore)
+                if (preg_match('/^res_?(\d+)\.sre$/i', $base, $m)) {
+                    $iid = (int)$m[1];
+                    if (!$bestByIid || $iid > $bestByIid['iid']) {
+                        $bestByIid = ['iid' => $iid, 'file' => $f];
+                    }
+                } else {
+                    $mt = @filemtime($f) ?: 0;
+                    if (!$bestByMtime || $mt > $bestByMtime['mtime']) {
+                        $bestByMtime = ['mtime' => $mt, 'file' => $f];
+                    }
+                }
+
+                // ========= (B) STATUS: leggo SOLO la prima riga del file =========
+                $fh = @fopen($f, 'r');
+                if ($fh) {
+                    $line = fgets($fh); // prima riga
+                    fclose($fh);
+
+                    if ($line !== false) {
+                        $line = trim($line);
+                        if ($line !== '') {
+                            $parts = explode(';', $line);
+
+                        // 9ª posizione => index 8
+                        if (isset($parts[8])) {
+                            $st = trim($parts[8]);
+
+                                // conta solo 0..7, altrimenti ignoriamo
+                                if ($st !== '' && ctype_digit($st)) {
+                                    $stInt = (int)$st;
+                                    if ($stInt >= 0 && $stInt <= 7) {
+                                        $statusCounts[$stInt]++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // scegli ultimo file
+            if ($bestByIid) {
+                $lastFile = basename($bestByIid['file']);
+            } elseif ($bestByMtime) {
+                $lastFile = basename($bestByMtime['file']);
+            } else {
+                // fallback estremo: primo della lista
                 $lastFile = basename($files[0]);
             }
         }
-
-        // Conteggi per status nella tabella t_respint
-        $statusCounts = DB::table('t_respint')
-            ->select('status', DB::raw('COUNT(*) as totale'))
-            ->where('sid', $sid)
-            ->groupBy('status')
-            ->pluck('totale', 'status');
-
-        return response()->json([
-            'success' => true,
-            'totalFiles' => $totalFiles,
-            'lastFile' => $lastFile,
-            'statusCounts' => $statusCounts
-        ]);
     }
+
+    return response()->json([
+        'success' => true,
+        'totalFiles' => $totalFiles,
+        'lastFile' => $lastFile,
+        'statusCounts' => $statusCounts,
+    ]);
+}
 
     /**
      * Abilita una lista di UID (inserisce in t_respint)
@@ -220,7 +288,11 @@ public function resetIids(Request $request)
     }
 
     $iids = preg_split('/\r\n|\r|\n/', $iidsRaw);
-    $directory = base_path("var/imr/fields/$prj/$sid/results/");
+    $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+    if (!is_dir($directory)) {
+            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
     $updated = 0;
     $deleted = 0;
     $log = [];

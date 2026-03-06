@@ -1,0 +1,10 @@
+2.0;FER;R2602057;296;IDEXNOBCWSKDSLNXM3485;04/03/2026 13:31:45 CET;04/03/2026 13:32:07 CET;22;4;90;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOBCWSKDSLNXM3485;device=mobile;lang=de;sysIID=296;pan=4
+concept;10
+choice;20;2;0
+choice;30;2;1
+open;40;35
+choice;45;16;12
+choice;52;6;2
+choice;70;2;0
+choice;80;5;00100;2
+choice;90;2;1

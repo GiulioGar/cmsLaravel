@@ -1,0 +1,1126 @@
+
+#export vars "leg"
+#export vars "cella"
+#export vars "device"
+
+void main() 
+{
+
+string cod;
+int ansId;
+question qst;
+string cmd;
+string qtext;
+string opt;
+string label;
+string labelCheck;
+int r1;
+int qid;
+int baseQid;
+string img;
+string nam;
+int count;
+string comp;
+string link;
+boolean sel;
+boolean selCheck;
+string cpt;
+int preQid;
+int n;
+int reCod;
+int selintCheck;
+system.setProperty("env", "stylesheet:mod.css");
+system.setProperty("env", "scripts:mod.js");
+string autotest=system.getProperty("test");
+string panel=system.getProperty("pan");
+string uid = system.getProperty("sysUID");
+if (autotest=="1" ||  uid=="null") {
+system.setProperty("env", "debug:true");  system.setProperty("env", "browser:variables");}
+string err;
+string mozCode;
+int idex;
+int r3;
+int r4;
+int ra1;
+int ran1;
+int nPers;
+int iPers;
+int countValid=0;
+int cella;
+int r2;
+string movieCode;
+string time;
+string delay;
+string items;
+string itemsTest;
+int grandezzaVettore;
+boolean valid;
+int qpers;
+int idq;
+int indiceDomanda;
+int cPer;
+boolean parents;
+int countPers;
+int idx;
+int Nran;
+
+int contaestratti=0;
+int r;
+string optB;
+string Svar;
+int countTop2;
+
+if (autotest=="1") {system.setProperty("env", "scripts:modtest.js");}
+
+string scriptzoom="<script type='text/javascript' src='https://www.primisoft.com/fields/script/jquery.fancybox.js?v=2.1.5'></script><script type='text/javascript''> $(document).ready(function() { $('.fancybox').fancybox();});</script>";
+
+string all="<script type='text/javascript' src='https://www.primisoft.com/fields/script/all.js'></script>";
+string modCode="<script type='text/javascript'>$(window).load(function() {allinea(5,20,60);});</script>";
+string allinea=all+modCode;    
+
+
+//variabile mobile
+string deviceType = system.getProperty("user_agent:deviceType");
+string ss1 = deviceType.trim();
+system.setProperty("device",ss1);
+boolean live=true;
+int leg=99;
+
+vector q210_cols = new vector { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60", "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75", "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86", "87", "88", "89", "90", "91", "92", "93", "94", "95", "96", "97", "98", "99", "100", "#sh101" }; 
+string codeDrag="<script>$(window).load(function() {limitDrag();});</script>";
+
+if (uid !="null")
+{
+
+// Q10: CONCEPT
+qst = new question("concept", 10);
+qst.setProperty("text", "Ciao! Oggi vorremmo raccogliere la tua opinione su alcuni personaggi e alcune marche relative al mondo dei Biscotti secchi che trovi al supermercato. </br>Ricorda che non esistono risposte giuste o sbagliate e che le tue opinioni rimarranno anonime e non saranno utilizzate per altri scopi al di fuori di questa ricerca.");
+qst.setProperty("code", "q10");
+send qst;
+
+// Q20: CHOICE
+qst = new question("choice", 20);
+qst.setProperty("text", " Partecipando a questa ricerca avrai accesso a informazioni riservate legate allo sviluppo di nuove idee e proposte.</br>Ti chiediamo di non utilizzare o divulgare a nessuno le informazioni di cui verrai a conoscenza, non copiare, fotografare, stampare o scaricare alcuna informazione accessibile nel corso di questo studio.</br>Selezionando “Accetto” qui sotto, dichiara di aver letto, compreso e accettato questi termini.");
+qst.setProperty("code", "Q.0");
+qst.setProperty("show_rand", false);
+vector q20_opts = new vector {
+"Accetta",
+"Rifiuta"
+};
+qst.setProperty("options", q20_opts);
+send qst;
+
+	ansId = system.getProperty("ans20");
+	if (ansId==1) { return 4; }
+
+// Q30: CHOICE
+qst = new question("choice", 30);
+qst.setProperty("text", "Sei…?");
+qst.setProperty("code", "Q1");
+qst.setProperty("show_rand", false);
+vector q30_opts = new vector {
+"Maschio",
+"Femmina"
+};
+qst.setProperty("options", q30_opts);
+send qst;
+
+// Q40: CONCEPT
+qst = new question("open", 40);
+qst.setProperty("text", "Quanti anni hai?");
+qst.setProperty("view", "numeric");
+qst.setProperty("code", "Q2");
+send qst;
+
+	int eta=(int)system.getProperty("ans40");
+	 
+	if(eta<18) { reCod=0; return 4;}
+	if(eta>=18 && eta<=24) { reCod=1; return 4;}
+	if(eta>=25 && eta<=34) { reCod=2;}
+	if(eta>=35 && eta<=44) { reCod=3;}
+	if(eta>=45 && eta<=54) { reCod=4; }
+	if(eta>=55 && eta<=64)   { reCod=5;  }
+	if(eta>=65) { reCod=6; return 4;}
+
+// Q50: CHOICE
+qst = new question("choice", 52);
+qst.setProperty("text", "[SCRIPT: Registrare età puntuale e ricodificare in fasce]");
+qst.setProperty("code", "q50");
+qst.setProperty("show_rand", false);
+vector q52_opts = new vector {
+"Meno di 18 anni",
+"18 - 24 anni",
+"25 – 34 anni",
+"35 - 44 anni",
+"45 - 54 anni",
+"55 – 64 anni",
+"Più di 64 anni"
+};
+qst.setProperty("options", q52_opts);
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+qst = new question("choice", 45);
+	qst.setProperty("text", "In quale regione vivi?");
+	qst.setProperty("code", "reg");
+	vector q45_opts = new vector {
+	"ABRUZZO",
+	"BASILICATA",
+	"CALABRIA",
+	"CAMPANIA",
+	"EMILIA-ROMAGNA",
+	"FRIULI-VENEZIA GIULIA",
+	"LAZIO",
+	"LIGURIA",
+	"LOMBARDIA",
+	"MARCHE",
+	"MOLISE",
+	"PIEMONTE",
+	"PUGLIA",
+	"SARDEGNA",
+	"SICILIA",
+	"TOSCANA",
+	"TRENTINO-ALTO ADIGE",
+	"UMBRIA",
+	"VALLE D'AOSTA",
+	"VENETO"
+	};
+		qst.setProperty("options", q45_opts);
+		send qst;
+	
+	int regione=system.getProperty("ans45");
+	////// RICODIFICA REGIONE IN AREA ///////
+	
+	reCod=3;
+	switch(regione)
+			{
+			case 7,8,11,18:{reCod=0;}
+			case 4,5,16,19:{reCod=1;}
+			case 6,9,15,17:{reCod=2;}
+			}	
+	
+	
+		qst = new question("choice", 50);
+		qst.setProperty("text", "In quale regione vive?");
+		qst.setProperty("code", "q40rec");
+		vector q50_opts = new vector {
+		"Nord-Ovest (Piemonte, Valle D'Aosta, Liguria, Lombardia)",
+		"Nord-Est (Trentino Alto-Adige, Veneto, Friuli Venezia-Giulia, Emilia-Romagna)",
+		"Centro (Marche, Toscana, Umbria, Lazio)",
+		"Sud e Isole (Campania, Abruzzo, Molise, Puglia, Basilicata, Calabria, Sicilia, Sardegna)"
+		};
+		qst.setProperty("options", q50_opts);
+		qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+		qst.setProperty("hidden", true);
+		send qst;	
+
+
+// Q70: CHOICE
+qst = new question("choice", 70);
+qst.setProperty("text", "Per favore, indica se hai figli");
+qst.setProperty("code", "Q4");
+qst.setProperty("show_rand", false);
+vector q70_opts = new vector {
+"Sì",
+"No"
+};
+qst.setProperty("options", q70_opts);
+send qst;
+
+ansId=system.getProperty("ans70");
+
+if (ansId==0)
+{
+
+// Q80: CHOICE
+qst = new question("choice", 80);
+qst.setProperty("text", "Quanti anni ha/hanno?");
+qst.setProperty("code", "Q5");
+qst.setProperty("selection", "multiple");
+qst.setProperty("show_rand", false);
+vector q80_opts = new vector {
+"Meno di 3 anni",
+"3-6 anni",
+"7-12 anni",
+"13-18 anni",
+"Più di 18 anni"
+};
+qst.setProperty("options", q80_opts);
+send qst;
+
+// count=0;
+// sel=system.getProperty("ans80_1");
+// if (sel==true) {count=count+1;}
+// sel=system.getProperty("ans80_2");
+// if (sel==true) {count=count+1;}
+// sel=system.getProperty("ans80_0");
+// if (sel==true) {count=count+1;}
+// sel=system.getProperty("ans80_3");
+// if (sel==true) {count=count+1;}
+
+}
+
+
+
+// Q90: CHOICE
+qst = new question("choice", 90);
+qst.setProperty("text", "Hai un profilo Instagram personale?");
+qst.setProperty("code", "Q6");
+qst.setProperty("show_rand", false);
+vector q90_opts = new vector {
+"Sì",
+"No"
+};
+qst.setProperty("options", q90_opts);
+send qst;
+
+ansId=system.getProperty("ans90");
+if (ansId==1)  { return 4;}
+
+qst = new question("choice", 95);
+qst.setProperty("text", "Con che frequenza ti connetti a Instagram?");
+qst.setProperty("code", "q7");
+vector q95_opts = new vector {
+"Più volte al giorno",
+"Una volta al giorno",
+"3-4 volte la settimana",
+"1-2 volte la settimana",
+"Meno spesso"
+};
+qst.setProperty("options", q95_opts);
+send qst;
+
+ansId=system.getProperty("ans95");
+//if (ansId==4) { return 4;}
+
+// Q100: CHOICE
+qst = new question("choice", 100);
+qst.setProperty("text", "Adesso pensa ai biscotti secchi in generale, quali di queste marche conosci anche solo per sentito nominare?  ");
+qst.setProperty("code", "Q8");
+qst.setProperty("selection", "multiple");
+qst.setProperty("show_rand", true);
+vector q100_opts = new vector {
+"Paterson’s	#sf",
+"McVities",
+"Galbusera Turco",
+"Galbusera Buoni Cosi",
+"Galbusera Cereal G",
+"Misura",
+"Grancereale",
+"Mulino bianco Molinetti",
+"Mulino bianco Biscottoni",
+"Mulino bianco Campagnole",
+"Campiello",
+"Nessuno di questi#se#sf"
+};
+qst.setProperty("options", q100_opts);
+send qst;
+
+boolean paterson=system.getProperty("ans100_0");
+reCod=99;
+
+if(paterson==true)
+
+    {
+
+    // Q110: CHOICE
+    qst = new question("choice", 110);
+    qst.setProperty("text", "Hai detto di conoscere la marca <b>Paterson’s</b>. Indica se l’hai consumata negli ultimi tempi.</br></br>“L’ho consumato…”");
+    qst.setProperty("code", "Q9");
+    qst.setProperty("show_rand", false);
+    vector q110_opts = new vector {
+    "Negli ultimi 3 mesi",
+    "Negli ultimi 6 mesi",
+    "Negli ultimi 12 mesi",
+    "Più di 12 mesi fa",
+    "Non l’ho mai consumato ma potrei pensare di consumarla in futuro",
+    "Non l’ho mai consumato e non lo consumerei mai"
+    };
+    qst.setProperty("options", q110_opts);
+    send qst;
+
+    ansId=system.getProperty("ans110");
+    if (ansId<=2) { reCod=0; }
+    if (ansId==3) { reCod=1; }
+    if (ansId==4) { reCod=2; }
+    if (ansId==5) { return 4;}
+
+    }
+
+    else
+    {
+
+    link="https://www.primisoft.com/fields/FER/R2602058/resources/linea.JPG";
+    img=scriptzoom+"<p><a class='fancybox' rel='group' href='"+link+"'><img src='"+link+"' width='450px'  alt='' /></a><div class='info'>Clicca per visualizzare i dettagli</div></p>";
+
+    qst = new question("concept", 111);
+    qst.setProperty("text", "<p>Ti mostriamo ora un nuovo prodotto:</p><img src='"+link+"'/>");
+    send qst;
+    
+     qst = new question("choice", 115);
+     qst.setProperty("text", "Qual è la tua intenzione a consumare questo prodotto nel prossimo futuro?");
+     qst.setProperty("code", "q9bis");
+     vector q115_opts = new vector {
+        "Lo consumerei certamente ",
+        "Lo consumerei probabilmente ",
+        "Forse lo consumerei  ",
+        "Probabilmente non lo consumerei  ",
+        "Non lo consumerei mai "
+     };
+     qst.setProperty("options", q115_opts);
+     send qst;
+
+     ansId=system.getProperty("ans115");
+      if (ansId==4) { return 4;}
+      else { reCod=2;}
+
+    }
+
+
+qst = new question("choice", 118);
+qst.setProperty("text", "Target");
+qst.setProperty("code", "targ");
+vector q118_opts = new vector {
+"User",
+"No User",
+"Prospect"
+};
+qst.setProperty("options", q118_opts);
+qst.setProperty("default_answer","{ 'selection': ["+reCod+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+cmd=q118_opts.get(reCod);
+system.out("<div>Target: "+cmd+"</div>"); 
+
+vector perSel = new vector {};
+
+vector q21_categories = new vector {
+"Valentina Tozza (@la_cucina_che_vale)",
+"Valeria Ansuini (@valeriaansuini)",
+"Luisa Ambrosini - Tacchi e Pentole (@luisa_ambrosini)",
+"Tasso Culinario (@tassoculinario)",
+"Matilde Prestinari (@matildeprestinari)",
+"Goffredo Cerza (@kingcerz)"
+    };
+
+    vector q21b_categories = new vector {
+"Valentina Tozza (@la_cucina_che_vale)",
+"Valeria Ansuini (@valeriaansuini)",
+"Luisa Ambrosini - Tacchi e Pentole (@luisa_ambrosini)",
+"Tasso Culinario (@tassoculinario)",
+"Matilde Prestinari (@matildeprestinari)",
+"Goffredo Cerza (@kingcerz)",
+"Non lo conosco#se#f"
+    };
+
+    vector q21_items = new vector {
+		"https://www.primisoft.com/fields/FER/R2602058/resources/i00.gif",
+		"https://www.primisoft.com/fields/FER/R2602058/resources/i01.gif",
+		"https://www.primisoft.com/fields/FER/R2602058/resources/i02.gif",
+		"https://www.primisoft.com/fields/FER/R2602058/resources/i03.gif",
+		"https://www.primisoft.com/fields/FER/R2602058/resources/i04.gif",
+		"https://www.primisoft.com/fields/FER/R2602058/resources/i05.gif"
+
+    };
+
+    vector q21b_items = new vector {
+		"<img src='https://www.primisoft.com/fields/FER/R2602058/resources/i00.gif'/>",
+		"<img src='https://www.primisoft.com/fields/FER/R2602058/resources/i01.gif'/>",
+		"<img src='https://www.primisoft.com/fields/FER/R2602058/resources/i02.gif'/>",
+		"<img src='https://www.primisoft.com/fields/FER/R2602058/resources/i03.gif'/>",
+		"<img src='https://www.primisoft.com/fields/FER/R2602058/resources/i04.gif'/>",
+		"<img src='https://www.primisoft.com/fields/FER/R2602058/resources/i05.gif'/>"
+    };
+
+
+if (ss1=="mobile")
+{
+qst = new question("scale", 121);
+qst.setProperty("text", "Di seguito trovi nomi e foto di <b>alcuni personaggi.</b> Solo per i personaggi che conosci associa correttamente il nome con la sua foto."+scriptzoom);
+qst.setProperty("code", "q10mob");
+qst.setProperty("show_rand", true);
+qst.setProperty("rows", q21b_items);
+qst.setProperty("cols", q21b_categories);
+qst.setProperty("view", "dropdown");
+send qst;
+}
+
+
+else 
+{
+//mozCode="<script>$(window).load(function() {oscuraDrag('3');});</script>";
+
+//DRAG & DROP//
+	qst = new question("classifier", 21);
+    qst.setProperty("text", "Di seguito trovi nomi e foto di <b>alcuni personaggi.</b> Solo per i personaggi che conosci associa correttamente il nome con la sua foto <div style='font-size:15px'><b>TRASCINA I VARI PERSONAGGI NEL BOX CHE PIÙ RITIENI OPPORTUNO.</b></div>"+scriptzoom);
+    qst.setProperty("description", "");
+	qst.setProperty("code", "q10des");
+    qst.setProperty("items", q21_items);
+    qst.setProperty("show_rand", true);
+    qst.setProperty("categories", q21_categories);
+    qst.setProperty("view", "default2");
+    send qst;
+}
+
+countPers=0;
+
+for (int i=0,4)
+{ 
+
+if (ss1=="mobile"){ ansId=system.getProperty("ans121_"+i);}
+else {ansId=system.getProperty("ans21_"+i);}	
+
+	if (ansId==i)
+		{
+			countPers=countPers+1;
+			opt=""+i;
+			perSel.add(opt);
+		}
+
+}
+
+if (countPers==0) { return 4; }
+
+vector listaPersonaggi = new vector {
+"Valentina Tozza (@la_cucina_che_vale)",
+"Valeria Ansuini (@valeriaansuini)",
+"Luisa Ambrosini - Tacchi e Pentole (@luisa_ambrosini)",
+"Tasso Culinario (@tassoculinario)",
+"Matilde Prestinari (@matildeprestinari)"
+};
+
+vector listaPersonaggi2 = new vector {
+"Valentina Tozza (@la_cucina_che_vale)",
+"Valeria Ansuini (@valeriaansuini)",
+"Luisa Ambrosini - Tacchi e Pentole (@luisa_ambrosini)",
+"Tasso Culinario (@tassoculinario)",
+"Matilde Prestinari (@matildeprestinari)"
+};
+
+vector linkPersonaggi = new vector {
+"<p>Valentina Tozza (@la_cucina_che_vale)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602058/resources/i00.gif'><img src='https://www.primisoft.com/fields/FER/R2602058/resources/i00.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/la_cucina_che_vale/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>",
+"<p>Valeria Ansuini (@valeriaansuini)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602058/resources/i01.gif'><img src='https://www.primisoft.com/fields/FER/R2602058/resources/i01.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/valeriaansuini/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>",
+"<p>Luisa Ambrosini - Tacchi e Pentole (@luisa_ambrosini)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602058/resources/i02.gif'><img src='https://www.primisoft.com/fields/FER/R2602058/resources/i02.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/luisa_ambrosini/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>",
+"<p>Tasso Culinario (@tassoculinario)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602058/resources/i03.gif'><img src='https://www.primisoft.com/fields/FER/R2602058/resources/i03.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/tassoculinario/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>",
+"<p>Matilde Prestinari (@matildeprestinari)</p><a class='fancybox' rel='group' href='https://www.primisoft.com/fields/FER/R2602058/resources/i04.gif'><img src='https://www.primisoft.com/fields/FER/R2602058/resources/i04.gif' width='100px' alt=''/></a><p><a target='_blank' href='https://www.instagram.com/matildeprestinari/'><img width='120px' src='https://www.primisoft.com/fields/FER/R2209133/resources/insta.png'/></a></p>"
+};
+
+vector pers = new vector { "#sha", "#shb", "#shc", "#shd", "#she" };
+
+count=0;
+idx=countPers-1;
+
+for(int i=0,idx)
+{
+ idq=(int)perSel.get(i);
+ opt=linkPersonaggi.get(idq);
+ pers.set(idq,opt);
+}
+
+string codeother="<script type='text/javascript'>$(window).load(function() {"+
+ "$('#cmp3381,#cmp3382,#cmp3383,#cmp3384,#cmp3385,#cmp3386,#cmp3387,#cmp3388,#cmp3389,#cmp33810').hide();"+
+ "$('#q3381_ans,#q3382_ans,#q3383_ans,#q3384_ans,#q3385_ans,#q3386_ans,#q3387_ans,#q3388_ans,#q3389_ans,#q33810_ans').val('0');});"+
+ "function theFunction1 () { $('#q3381_ans').val('1');}"+
+ "function theFunction2 () { $('#q3382_ans').val('1');}"+
+ "function theFunction3 () { $('#q3383_ans').val('1');}"+
+ "function theFunction4 () { $('#q3384_ans').val('1');}"+
+ "function theFunction5 () { $('#q3385_ans').val('1');}"+
+ "function theFunction6 () { $('#q3386_ans').val('1');}"+
+ "function theFunction7 () { $('#q3387_ans').val('1');}"+
+ "function theFunction8 () { $('#q3388_ans').val('1');}"+
+ "</script>";
+ 
+
+// Q130: CHOICE
+qst = new question("scale", 130);
+qst.setProperty("text", "Qui di seguito trovi il link per il profilo <img width='120px' src='https://www.primisoft.com/fields/FER/R2602058/resources/insta2.png'/> dei personaggi che hai detto di conoscere e che le suggeriamo di visionare."+
+"<p>Mi puoi dire qual è il tuo livello di conoscenza per ciascun personaggio?</p>"+scriptzoom+codeother);
+qst.setProperty("code", "Q11");
+qst.setProperty("show_rand", false);
+vector q130_opts = new vector {
+"Lo conosco molto bene",
+"Lo conosco abbastanza bene",
+"Lo conosco un po’",
+"Lo conosco solo di nome",
+"Non l’ho mai sentito nominare, pensavo fosse un altro/a"
+};
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q130_opts);
+qst.setProperty("view", "columns");
+//send qst;
+
+qst= new question("open", 3381);
+qst.setProperty("code", "reclick1");
+qst.setProperty("text", "reclick1");
+
+qst= new question("open", 3382);
+qst.setProperty("code", "reclick2");
+qst.setProperty("text", "reclick2");
+
+qst= new question("open", 3383);
+qst.setProperty("code", "reclick3");
+qst.setProperty("text", "reclick3");
+
+qst= new question("open", 3384);
+qst.setProperty("code", "reclick4");
+qst.setProperty("text", "reclick4");
+
+qst= new question("open", 3385);
+qst.setProperty("code", "reclick5");
+qst.setProperty("text", "reclick5");
+
+qst= new question("open", 3386);
+qst.setProperty("code", "reclick6");
+qst.setProperty("text", "reclick6");
+
+qst= new question("open", 3387);
+qst.setProperty("code", "reclick7");
+qst.setProperty("text", "reclick7");
+
+qst= new question("open", 3388);
+qst.setProperty("code", "reclick8");
+qst.setProperty("text", "reclick8");
+
+qst= new question("open", 3389);
+qst.setProperty("code", "reclick9");
+qst.setProperty("text", "reclick9");
+
+qst= new question("open", 33810);
+qst.setProperty("code", "reclick10");
+qst.setProperty("text", "reclick10");
+
+
+	qst = new question("composed", 33890);
+    vector q180_comps = new vector { "130", "3381", "3382", "3383", "3384", "3385", "3386", "3387", "3388", "3389", "33810"};
+    qst.setProperty("components", q180_comps);
+    send qst;
+
+for(int i=0,4)
+ {
+	ansId=system.getProperty("ans130_"+i);
+	label =pers.get(i);
+	if(ansId>2)
+	{
+	 opt="#sh opt"+label; pers.set(i,opt);
+	}	 
+ }
+
+
+vector per2Sel = new vector {};
+
+countPers=0;
+
+for(int i=0,4)
+{
+label =pers.get(i);
+valid=label.contains("#sh");
+ansId=system.getProperty("ans130_"+i);
+//system.out("<div>label"+i+": "+label+"</div>");
+
+if (ansId<3 && valid==false) 
+	{
+		for(int j=0,idx)
+		{
+			idq=(int)perSel.get(j);	
+			if(i==idq) 
+				{ 
+				  opt=""+idq;
+				  per2Sel.add(opt);
+				  countPers=countPers+1;
+			 	}
+		}	
+	
+	 
+	}
+
+}
+
+
+if (countPers==0) { return 4; }
+
+
+
+int cq;
+string qIndici;
+string qConta;
+
+//creo stringa da inviare a domanda app con indici e numero quote//
+	        count=0;
+			int ncd;
+	        for(int i=0,4)
+	        {
+		    cq=system.getProperty("quota:pers_"+i); 
+		    //indici
+		    qIndici=qIndici+i+",";
+		    //quota
+		    qConta=qConta+cq+",";
+	        }
+
+
+            qst = new question("app",1999);
+            qst.setProperty("text", "test");
+            qst.setProperty("path", "quotaControl");
+            qst.setProperty("input", "ix:"+qIndici);
+            qst.setProperty("input", "cq:"+qConta);
+            qst.setProperty("output", "indOrder:string");
+            send qst;
+
+            cmd=system.getProperty("ans1999_indOrder");
+            label=cmd.trim();
+            system.out("<div>Indici estratti: "+label+"</div>"); 
+
+            vector priority = new vector { };
+            priority = label.split(",");
+
+count=0;
+idx=countPers-1;
+
+cmd=per2Sel.get(0);
+system.out("<div>Base: "+cmd+"</div>");
+
+for(int i=0,4)
+{
+qpers=(int)priority.get(i);
+cPer=system.getProperty("quota:pers_"+qpers); 
+
+if(cPer<151)
+	{
+
+		for(int j=0,idx)
+			{
+			idq=(int)per2Sel.get(j);
+			cmd=per2Sel.get(j);
+
+			if(qpers==idq && count==0)
+				{
+					cella=qpers;
+					count=count+1;
+
+				}
+
+
+			}
+	}
+
+}
+
+
+if(count==0) {return 5; }
+
+
+leg=cella+1;
+
+system.setProperty("leg", leg);
+system.setProperty("cella", cella);
+
+
+system.out("<div>Leg: "+leg+"</div>"); 
+nam=listaPersonaggi.get(cella);
+system.out("<div>Personaggio in test: "+nam+"</div>"); 
+
+qst = new question("choice", 135);
+qst.setProperty("text", "Selezionato");
+qst.setProperty("code", "persSelez");
+qst.setProperty("options", listaPersonaggi);
+qst.setProperty("default_answer","{ 'selection': ["+cella+"]}");
+qst.setProperty("hidden", true);
+send qst;
+
+// Q140: SCALE
+qst = new question("scale", 140);
+qst.setProperty("text", "Hai detto di conoscere questi personaggi. Indica se li segui sui social media e in che modo fruisci dei loro contenuti (storie, post, sondaggi, ecc.)  "+scriptzoom);
+qst.setProperty("code", "Q12");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+vector q140_cols = new vector {
+"Seguo sui social e fruisco spesso di quasi tutti i contenuti",
+"Seguo sui social e vedo occasionalmente i suoi contenuti",
+"Seguo sui social ma non vedo mai i suoi contenuti ",
+"Conosco ma non lo seguo sui social"
+};
+qst.setProperty("cols", q140_cols);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+// Q150: CHOICE
+qst = new question("scale", 150);
+qst.setProperty("text", "Quanto ti senti vicino a questi personaggi? "+scriptzoom);
+qst.setProperty("code", "Q13");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+vector q150_opts = new vector {
+"Molto vicino",
+"Abbastanza  vicino",
+"Né vicino né distante",
+"Poco vicino",
+"Per niente vicino"
+};
+qst.setProperty("cols", q150_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+
+
+vector q160_opts = new vector {
+"Mi piace molto",
+"Mi piace abbastanza",
+"Né mi piace né non mi piace",
+"Non mi piace tanto",
+"Non mi piace per niente"
+};
+
+// Q160: CHOICE
+qst = new question("scale", 160);
+qst.setProperty("text", "Quanto ti piacciono questi personaggi? "+scriptzoom);
+qst.setProperty("code", "Q14");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q160_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+
+vector q170_opts = new vector {
+"Molto autentico",
+"Abbastanza autentico",
+"Né autentico né falso",
+"Poco autentico",
+"Per niente autentico"
+};
+
+// Q170: CHOICE
+qst = new question("scale", 170);
+qst.setProperty("text", "Quanto ritieni autentici questi personaggi?"+scriptzoom);
+qst.setProperty("code", "Q15");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q170_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+
+vector q180_opts = new vector {
+"Molto competente",
+"Abbastanza competente",
+"Né competente né incompetente",
+"Poco competente",
+"Per niente competente"
+};
+
+// Q180: CHOICE
+qst = new question("scale", 180);
+qst.setProperty("text", "Quanto ritieni competenti questi personaggi in quello che fanno?"+scriptzoom);
+qst.setProperty("code", "Q16");
+qst.setProperty("show_rand", false);
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q180_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+// Q190: CHOICE
+qst = new question("scale", 190);
+qst.setProperty("text", "Quanto secondo te questi personaggi sono presenti e attivi sui Social media? "+scriptzoom);
+qst.setProperty("code", "Q17");
+qst.setProperty("show_rand", false);
+vector q190_opts = new vector {
+"Sempre presente, si vede in continuazione",
+"Molto presente",
+"Così così",
+"Poco presente",
+"Veramente poco presente, quasi non c’è"
+};
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q190_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+// Q200: CHOICE
+qst = new question("scale", 200);
+qst.setProperty("text", "Quanto sei d’accordo o in disaccordo con la seguente affermazione “questi personaggi hanno stancato”? "+scriptzoom);
+qst.setProperty("code", "Q18");
+qst.setProperty("show_rand", false);
+vector q200_opts = new vector {
+"Molto d’accordo",
+"Abbastanza d’accordo",
+"Nè d’accordo né in disaccordo",
+"Poco d’accordo",
+"Per niente d’accordo"
+};
+qst.setProperty("rows", pers);
+qst.setProperty("cols", q200_opts);
+qst.setProperty("view", "columns");
+if (ss1=="mobile")
+{
+qst.setProperty("view", "dropdown");
+}
+send qst;
+
+} // fine blocco questionario per test
+
+mozCode="<script>$(window).load(function() {barColor(); });</script>";
+
+// slider ciclico
+	vector selRan = new vector { "1#sh", "2#sh", "3#sh", "4#sh", "5#sh", "6#sh", "7#sh", "8#sh", "9#sh", "10#sh", "11#sh", "12#sh", "13#sh", "14#sh", "15#sh", "16#sh", "17#sh", "18#sh", "19#sh", "20#sh", "21#sh", "22#sh", "23#sh", "24#sh", "25#sh", "26#sh", "27#sh", "28#sh", "29#sh", "30#sh"};  
+	vector ind = new vector { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23" , "24","25","26","27","28","29" };  
+			
+Nran=30;
+
+			for (int i=0,29)
+			{   
+			system.setProperty("r"+i, "rand:"+Nran);
+			r = (int)system.getProperty("r"+i); 
+			optB=ind.get(r);
+			selRan.set(contaestratti,optB);
+			system.setProperty("Svar"+contaestratti, optB);			
+			contaestratti=contaestratti+1;
+			ind.remove(r);
+			Nran=Nran-1;
+			}
+
+
+vector itemsb = new vector {
+"Affidabile",
+"Amichevole",
+"Attento/responsabile",
+"Audace/coraggioso",
+"Autentico/vero",
+"Coinvolgente",
+"Concreto",
+"Delicato/gentile",
+"Dinamico/energico",
+"Divertente/Ironico",
+"Elegante/prestigioso",
+"Esperto/competente",
+"Familiare",
+"Inclusivo",
+"Leggero/spensierato",
+"Moderno/contemporaneo",
+"Onesto/trasparente",
+"Positivo/ottimista",
+"Rassicurante",
+"Rende felici/ di buon umore",
+"Semplice/genuino",
+"Trasmette valori positivi",
+"Originale/innovativo",
+"Rilassante",
+"Trendy",
+"Giocoso",
+"Fresco/vivace",
+"Di buon cuore",
+"Allegro/Gioioso",
+"Sognatore/fantasioso"
+};
+
+ran1=cella-1;
+
+
+//indici validi per wave
+vector validIndex = new vector { "0", "2", "3", "4", "6", "11", "12", "15", "16", "17", "18", "20", "24", "27", "28" };
+
+int vIdx;
+
+//valutazione personaggio
+for (int i=0,29)
+{
+valid=false;
+
+if(i==0) { qtext="Concentriamoci ora su  <b> "+nam+"</b>."; }
+else { qtext="";}
+
+	indiceDomanda=(int)selRan.get(i);
+	cmd=itemsb.get(indiceDomanda);
+	qid=5000+indiceDomanda*100;
+
+    for(int j=0,14)
+    {
+        vIdx=(int)validIndex.get(j);
+        if(indiceDomanda==vIdx) 
+            {
+            system.out("<div>indiceDomanda "+i+": "+indiceDomanda+"</div>"); 
+            system.out("<div>vIdx: "+j+" "+vIdx+"</div>"); 
+            valid=true;
+            }
+    }
+
+    if(valid==true)
+    {
+    
+	qst = new question("scale", qid);
+	qst.setProperty("text", mozCode+"<p>"+qtext+"</p><table><tr><td width='80%'><p>Ti mostriamo vari aggettivi che possono descrivere o meno la sua personalità.</p><br/><br/>Indica quanto ritieni adatto ciascun aggettivo adatto a descrivere <b>"+cpt+"</b> utilizzando un punteggio da 0 a 100 <br/> dove 0 <span class='sad2 fa fa-frown-o fa-2x'></span> significa “per niente” adatto e 100 <span class='happy2 fa fa-smile-o fa-2x'></span> significa “moltissimo adatto”.<br/><br/><p>Clicca in un punto della barra per attribuire il punteggio che ritieni più adatto a descrivere il personaggio. </p></td><td width='20%'><img width='100px' src='https://www.primisoft.com/fields/FER/R2602058/resources/i0"+cella+".gif'/></td></tr></table><i class='happy fa fa-smile-o fa-2x' aria-hidden='true'></i><i class='sad fa fa-frown-o fa-2x' aria-hidden='true'></i>");
+	qst.setProperty("show_rand", true);
+	qst.setProperty("code", "q19br."+indiceDomanda);
+	vector q210_rows = new vector {
+		"item"
+	};
+	q210_rows.set(0,cmd);
+	qst.setProperty("rows", q210_rows);
+	qst.setProperty("cols", q210_cols);
+	qst.setProperty("view", "sliders");
+	send qst;
+    
+    }
+
+	//inserito in maniera fittizia solo per l'explode del datafile, ma ad inizio ciclo viene ricavato l'indice della domanda da mostrare
+	if (indiceDomanda!=29){ indiceDomanda=indiceDomanda+1; }
+	else{ indiceDomanda=0; }
+
+}
+
+
+
+
+//  valutazione Prodotti
+for (int i=0,29)
+{ 
+
+valid=false;
+
+if(i==0) { label="<p>Concentriamoci ora sulla marca <b>Paterson’s</b>.</p>"; }
+else { label=""; }
+
+
+	indiceDomanda=(int)selRan.get(i);
+	cmd=itemsb.get(indiceDomanda);
+	qid=10000+indiceDomanda*100;
+
+    for(int j=0,14)
+    {
+    vIdx=(int)validIndex.get(j);
+    if(indiceDomanda==vIdx) {valid=true;}
+    }
+
+    if(valid==true)
+    {
+	qst = new question("scale", qid);
+	qst.setProperty("text", mozCode+label+"<table><tr><td width='80%'><p>Ti mostriamo vari aggettivi che possono descrivere o meno la personalità di <b>Paterson’s.</b>.  <br/><br/>Indica quanto ritieni adatto ciascun aggettivo adatto a descrivere <b>Paterson’s</b> utilizzando un punteggio da 0 a 100  dove 0 <span class='sad2 fa fa-frown-o fa-2x'></span> significa “per niente” adatto e 100 <span class='happy2 fa fa-smile-o fa-2x'></span> significa “moltissimo adatto”.</td>"+
+    "<td width='20%'><img src='https://www.primisoft.com/fields/FER/R2602058/resources/pater.jpg' width='180px'  alt='' /></td></tr></table><p>Clicca in un punto della barra per attribuire il punteggio che ritieni più adatto a descrivere la marca. </p><i class='happy fa fa-smile-o fa-2x' aria-hidden='true'></i><i class='sad fa fa-frown-o fa-2x' aria-hidden='true'></i>");
+	qst.setProperty("show_rand", true);
+	qst.setProperty("code", "q20br."+indiceDomanda);
+	vector q230_rows = new vector {
+		"item"
+	};
+	q230_rows.set(0,cmd);
+	qst.setProperty("rows", q230_rows);
+	qst.setProperty("cols", q210_cols);
+	qst.setProperty("view", "sliders");
+	send qst;
+    }
+
+
+	//inserito in maniera fittizia solo per l'explode del datafile, ma ad inizio ciclo viene ricavato l'indice della domanda da mostrare
+	if (indiceDomanda!=29){ indiceDomanda=indiceDomanda+1; }
+	else{ indiceDomanda=0; }
+
+	}	
+
+link="https://www.primisoft.com/fields/FER/R2602058/resources/c1_"+leg+".JPG";
+	img=scriptzoom+"<p><a class='fancybox' rel='group' href='"+link+"'><img src='"+link+"' width='450px'  alt='' /></a><div class='info'>Clicchi per visualizzare i dettagli</div></p>";
+
+	string contoRovescia="<script src='https://www.primisoft.com/fields/ADA/ITA1907111/resources/jquery.countdown.min.js'></script>"+
+	"<script>$(window).load(function() {contorovescia(10000);});</script>";
+
+	qst = new question("concept", 19000);
+	qst.setProperty("text", "ORA TI MOSTRIAMO UN’ATTIVITÀ DI COLLABORAZIONE TRA LA MARCA <b>PATERSON’S </b> E IL PERSONAGGIO <b>"+nam+"</b>.<p> PRENDI IL TUO TEMPO PER VALUTARE ATTENTAMENTE QUESTA PROPOSTA</p> <p><img src='"+link+"'/></p>"+contoRovescia);
+	send qst;
+
+    	// Q250: CHOICE
+	qst = new question("choice", 19100);
+	qst.setProperty("text", img+"In generale, quanto ti piace questa collaborazione tra <b>PATERSON’S </b> e <b>"+nam+"</b>?"+scriptzoom);
+	qst.setProperty("code", "Q21");
+	qst.setProperty("show_rand", false);
+	vector q250_opts = new vector {
+	"Molto",
+	"Abbastanza",
+	"Così così",
+	"Poco",
+	"Per nulla"
+	};
+	qst.setProperty("options", q250_opts);
+	send qst;
+
+    mozCode="<script>$(window).load(function() {nonumeri3();});</script>";
+	cod="<script>$(window).load(function() {barMinus();});</script>";
+
+	// Q260: CHOICE
+	qid=baseQid+100*idx+15;
+	qst = new question("scale", 19200);
+	qst.setProperty("text", img+"Pensando al personaggio <b>"+nam+"</b> abbinato a <b>PATERSON’S </b>, quanto ritieni che questo personaggio abbia un impatto positivo o negativo sulla marca stessa?  Valuta impatto positivo o negativo della collaborazione su una scala da -10 a +10: "+scriptzoom+cod);
+	qst.setProperty("code", "Q22");
+	qst.setProperty("show_rand", false);
+	vector q233_rows = new vector {"<table style='width:100%;'><tr><td style='width:33%; text-align:left'><b>PATERSON’S  peggiora</b></td><td style='width:33%; text-align:center'><b>PATERSON’S  rimane uguale </b></td><td style='width:33%; text-align:right'><b>PATERSON’S  ne guadagna</b></td></tr></table>" };
+	qst.setProperty("rows", q233_rows);
+	vector q260_opts = new vector { "-10", "-9", "-8", "-7", "-6", "-5", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10","#sh101" }; 
+	qst.setProperty("cols", q260_opts);
+	qst.setProperty("view", "sliders");
+	send qst;
+
+// Q270: CHOICE
+	qid=baseQid+100*idx+25;
+	qst = new question("scale", 19300);
+	qst.setProperty("text", img+"Quanto ritieni adatta e coerente la scelta di <b>"+nam+"</b> per una collaborazione con <b>PATERSON’S </b>? Valuta la coerenza della collaborazione su una scala da -10 a 10: "+scriptzoom+cod);
+	qst.setProperty("code", "Q24");
+	qst.setProperty("show_rand", false);
+	vector q233b_rows = new vector {"<table style='width:100%;'><tr><td style='width:33%; text-align:left'><b>Per niente coerente</b></td><td style='width:33%; text-align:center'><b>neutro </b></td><td style='width:33%; text-align:right'><b>Molto Coerente</b></td></tr></table>" };
+	qst.setProperty("rows", q233b_rows);
+	qst.setProperty("cols", q260_opts);
+	qst.setProperty("view", "sliders");
+	send qst;
+
+	// Q280: CHOICE
+	qid=baseQid+100*idx+35;
+	qst = new question("choice", 19400);
+	qst.setProperty("text", img+"Pensando a questa possibile collaborazione tra <b>"+nam+"</b> e <b>PATERSON’S </b>, con che probabilità prenderai in considerazione l’acquisto di un prodotto <b>PATERSON’S </b> in futuro? "+scriptzoom);
+	qst.setProperty("code", "Q25");
+	qst.setProperty("show_rand", false);
+	vector q280_opts = new vector {
+	"Sicuramente sì",
+	"Probabilmente sì",
+	"Non so",
+	"Probabilmente no",
+	"Sicuramente no"
+	};
+	qst.setProperty("options", q280_opts);
+	send qst;
+
+	// Q290: CHOICE
+	qid=baseQid+100*idx+50;
+	qst = new question("choice", 19500);
+	qst.setProperty("text", img+"E rispetto a prima, pensi che acquisterai un prodotto <b>PATERSON’S </b> …"+scriptzoom);
+	qst.setProperty("code", "Q26");
+	qst.setProperty("show_rand", false);
+	vector q290_opts = new vector {
+	"Di più",
+	"Di meno",
+	"Uguale a prima"
+	};
+	qst.setProperty("options", q290_opts);
+	send qst;
+
+
+}

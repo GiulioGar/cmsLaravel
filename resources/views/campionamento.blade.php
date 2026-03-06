@@ -640,30 +640,65 @@
       </form>
     </div>
 
-    {{-- LATO DESTRO (campioni) --}}
-    <div class="col-lg-6">
-      <div id="campione-card" class="card shadow-sm" style="display:none;">
-        <div class="card-header bg-gradient-primary text-white">
-          <i data-feather="layers" class="mr-1"></i><strong>Campione</strong>
-        </div>
-        <div class="card-body py-2">
-          {{-- qui mettiamo i sottocampioni --}}
-          <div id="sottocampioni-list" class="mb-3"></div>
+{{-- LATO DESTRO (campioni) --}}
+<div class="col-lg-6">
 
-          {{-- bottoni globali --}}
-          <div id="campione-actions" class="text-right">
-            <button id="btn-crea-campione" class="btn btn-sm btn-primary">
-              Crea Campioni
-            </button>
+  {{-- PLACEHOLDER (default) --}}
+  <div id="right-placeholder" class="sv-card sv-card-right">
+    <div class="sv-card-header">
+      <div class="sv-head">
+        <div class="sv-head-left">
+          <i data-feather="info"></i>
+          <h6 class="sv-title">Campionamento</h6>
+        </div>
+      </div>
+    </div>
+
+    <div class="sv-body">
+      <div class="sv-empty">
+        <div class="sv-empty-icon">
+          <i data-feather="sliders"></i>
+        </div>
+        <div class="sv-empty-text">
+          <div class="sv-empty-title">Nessun sottocampione ancora</div>
+          <div class="sv-empty-sub">
+            Seleziona i filtri a sinistra e premi <strong>“Aggiungi Campione”</strong>.
+            Qui vedrai l’elenco dei sottocampioni e il totale utenti disponibili.
           </div>
         </div>
       </div>
-
-      {{-- SOLO TOTALE --}}
-      <div id="disponibili-results" class="mt-3" style="display:none;"></div>
-      <div id="crea-campione-results" class="mt-3" style="display:none;"></div>
-
     </div>
+  </div>
+
+  {{-- CARD CAMPIONE (quando ci sono sottocampioni) --}}
+  <div id="campione-card" class="sv-card sv-card-right" style="display:none;">
+    <div class="sv-card-header">
+      <div class="sv-head">
+        <div class="sv-head-left">
+          <i data-feather="layers"></i>
+          <h6 class="sv-title">Campione</h6>
+        </div>
+      </div>
+    </div>
+
+    <div class="sv-body">
+      <div id="sottocampioni-list" class="sv-right-list"></div>
+
+      <div id="campione-actions" class="sv-right-actions">
+        <button id="btn-crea-campione" class="btn btn-sm sv-btn-create">
+          <i data-feather="play" class="me-1"></i>
+          Crea Campioni
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="disponibili-results" class="sv-right-box mt-3" style="display:none;"></div>
+  <div id="crea-campione-results" class="sv-right-box mt-3" style="display:none;"></div>
+
+</div>
+
+{{-- FINE LATO DESTRO (campioni) --}}
   </div>
 </div>
 @endsection
@@ -777,7 +812,11 @@ async function applyPanelDefaultsByRicerca(surId) {
 
   // === Render lista sottocampioni (sempre visibile se presenti) ===
   function renderCampione() {
+  const rightPlaceholder = document.getElementById('right-placeholder');
+
     if (!window.sottocampioni.length) {
+    if (rightPlaceholder) rightPlaceholder.style.display = 'block';
+
       if (campioneCard) campioneCard.style.display = 'none';
       listEl.innerHTML = '';
       clearDisponibili();
@@ -785,7 +824,7 @@ async function applyPanelDefaultsByRicerca(surId) {
       return;
     }
     if (campioneCard) campioneCard.style.display = 'block';
-
+    if (rightPlaceholder) rightPlaceholder.style.display = 'none';
     listEl.innerHTML = '';
     window.sottocampioni.forEach((sc, i) => {
       const wrap = document.createElement('div');
@@ -806,27 +845,38 @@ async function applyPanelDefaultsByRicerca(surId) {
         </div>
 
         <!-- Inviti -->
-        <div class="mt-2">
-          <label class="small mb-1">Inviti</label>
-          <div class="input-group input-group-sm" data-index="${i}">
-            <div class="input-group-prepend">
-              <span class="input-group-text"><i data-feather="mail"></i></span>
+            <div class="mt-2">
+            <label class="small mb-1">Inviti</label>
+
+            <div class="input-group input-group-sm" data-index="${i}">
+                <span class="input-group-text">
+                <i data-feather="mail"></i>
+                </span>
+
+                <input
+                type="number"
+                class="form-control sc-invite"
+                min="1"
+                ${Number.isFinite(sc.count) ? `max="${sc.count}"` : ``}
+                value="${Number.isFinite(sc.invite) ? sc.invite : 1}"
+                ${Number.isFinite(sc.count) && !CAMPIONE_FINAL ? `` : `disabled`}
+                inputmode="numeric"
+                >
+
+                <button
+                type="button"
+                class="btn btn-outline-secondary btn-max-invite"
+                ${Number.isFinite(sc.count) && !CAMPIONE_FINAL ? `` : `disabled`}
+                title="Imposta al massimo disponibile"
+                >
+                MAX
+                </button>
+
+                <span class="input-group-text">/ ${Number.isFinite(sc.count) ? sc.count : '—'}</span>
             </div>
-            <input
-              type="number"
-              class="form-control sc-invite"
-              min="1"
-              ${Number.isFinite(sc.count) ? `max="${sc.count}"` : ``}
-              value="${Number.isFinite(sc.invite) ? sc.invite : 1}"
-              ${Number.isFinite(sc.count) && !CAMPIONE_FINAL ? `` : `disabled`}
-              inputmode="numeric"
-            >
-            <div class="input-group-append">
-              <span class="input-group-text">/ ${Number.isFinite(sc.count) ? sc.count : '—'}</span>
+
+            <small class="text-muted">Seleziona da 1 al massimo disponibile.</small>
             </div>
-          </div>
-          <small class="text-muted">Seleziona da 1 al massimo disponibile.</small>
-        </div>
 
         <ul class="small mb-2 mt-2" style="list-style:none;padding-left:0;">
           ${Object.entries(sc)
@@ -879,12 +929,60 @@ async function applyPanelDefaultsByRicerca(surId) {
         sc.invite = v;
       });
     });
+
+    // binding: MAX button → imposta inviti al massimo disponibile
+    listEl.querySelectorAll('.btn-max-invite').forEach(btn => {
+    const idx = parseInt(btn.closest('.input-group').dataset.index, 10);
+    btn.addEventListener('click', () => {
+        const sc = window.sottocampioni[idx];
+        const max = Number.isFinite(sc.count) ? sc.count : 1;
+        sc.invite = max;
+
+        const inp = btn.closest('.input-group').querySelector('.sc-invite');
+        if (inp) inp.value = max;
+    });
+    });
+
   }
+
+
+function showCountingLoading() {
+  if (!resultsBox) return;
+  resultsBox.style.display = 'block';
+resultsBox.innerHTML = `
+  <div class="sv-card sv-card-right">
+    <div class="sv-body">
+      <div class="sv-loading sv-loading-hero">
+        <div class="sv-loading-badge">
+          <i data-feather="activity"></i>
+        </div>
+
+        <div class="sv-loading-content">
+          <div class="sv-loading-title">
+            Conteggio utenti disponibili in corso
+            <span class="sv-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          </div>
+          <div class="sv-loading-sub">
+            Sto calcolando il totale e i conteggi per sottocampione.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+  if (window.feather) feather.replace();
+}
+
+function hideCountingLoadingIfAny() {
+  // non serve “svuotare” qui: verrà sostituito da renderTotale
+}
+
 
   // === Calcolo conteggi e totale (auto) ===
   async function fetchCountsAndRender() {
     if (!selRicerca || !selRicerca.value) { clearDisponibili(); return; }
     if (!window.sottocampioni.length)     { clearDisponibili(); return; }
+      showCountingLoading();
 
 const samples = window.sottocampioni.map(sc => ({
   sesso: (sc.sesso || '').split('/').filter(Boolean),
@@ -942,23 +1040,39 @@ const samples = window.sottocampioni.map(sc => ({
   }
 
   // === Render SOLO totale nel box risultati ===
-  function renderTotale(total) {
-    if (!resultsBox) return;
-    if (typeof total !== 'number') { clearDisponibili(); return; }
-    const totalCard = `
-      <div class="row">
-        <div class="col-12 mb-2">
-          <div class="card border-0 shadow" style="background:linear-gradient(45deg,#0069D9,#6610F2);">
-            <div class="card-body text-center text-white">
-              <div class="small text-white-50">Totale disponibili</div>
-              <div class="display-4 font-weight-bold">${total}</div>
-            </div>
+function renderTotale(total) {
+  if (!resultsBox) return;
+
+  // se non ho un numero, nascondo
+  if (typeof total !== 'number') { clearDisponibili(); return; }
+
+  const html = `
+    <div class="sv-card sv-card-right sv-total-card">
+      <div class="sv-card-header">
+        <div class="sv-head">
+          <div class="sv-head-left">
+            <span class="sv-total-icon">
+              <i data-feather="users"></i>
+            </span>
+            <h6 class="sv-title">Totale disponibili</h6>
           </div>
         </div>
-      </div>`;
-    resultsBox.innerHTML = totalCard;
-    resultsBox.style.display = 'block';
-  }
+      </div>
+
+      <div class="sv-body">
+        <div class="sv-total">
+          <div class="sv-total-number sv-pop">${total}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  resultsBox.innerHTML = html;
+  resultsBox.style.display = 'block';
+
+  // IMPORTANTISSIMO: feather va chiamato DOPO l'html dinamico
+  if (window.feather) feather.replace();
+}
 
   // === CLICK: Aggiungi Campione ===
   if (btnAdd) {

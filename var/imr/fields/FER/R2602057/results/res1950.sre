@@ -1,0 +1,12 @@
+2.0;FER;R2602057;1950;IDEXNODWTHCPZFKVM5560;05/03/2026 17:44:08 CET;<unknown>;0;0;52;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNODWTHCPZFKVM5560;device=desktop;lang=en;sysIID=1950;pan=4
+concept;10
+choice;20;2;0
+choice;30;2;1
+open;40;54
+choice;45;16;8
+choice;52;6;5
+choice;70;2;1
+choice;90;2;0
+choice;95;5;1
+choice;100;7;0110010;1
+choice;115;6;4

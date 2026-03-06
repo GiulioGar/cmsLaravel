@@ -1,0 +1,15 @@
+2.0;FER;R2602057;2048;IDEXNOVQGLBJFSNZI5588;05/03/2026 18:25:54 CET;05/03/2026 18:27:16 CET;82;4;121;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOVQGLBJFSNZI5588;device=mobile;lang=de;sysIID=2048;pan=4
+concept;10
+choice;20;2;0
+choice;30;2;1
+open;40;41
+choice;45;16;4
+choice;52;6;3
+choice;70;2;0
+choice;80;5;00011;3
+choice;90;2;0
+choice;95;5;0
+choice;100;7;1111111;0
+choice;110;6;0
+choice;115;6;0
+scale;121;5;6;5;5;5;5;5

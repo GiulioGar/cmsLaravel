@@ -1,0 +1,15 @@
+2.0;FER;R2602057;2036;IDEXNOTSBALCPIQAD5584;05/03/2026 18:08:42 CET;05/03/2026 18:09:30 CET;48;4;21;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOTSBALCPIQAD5584;device=desktop;lang=ru;sysIID=2036;pan=4
+concept;10
+choice;20;2;0
+classifier;21;5;-1;-1;-1;0;-1
+choice;30;2;0
+open;40;38
+choice;45;16;8
+choice;52;6;3
+choice;70;2;0
+choice;80;5;01000;1
+choice;90;2;0
+choice;95;5;1
+choice;100;7;0010000;2
+choice;102;5;2
+choice;104;5;1
