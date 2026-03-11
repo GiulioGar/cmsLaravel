@@ -1,0 +1,9 @@
+2.0;FER;R2602057;3366;IDEXNOFIUTMKFDXHK7531;06/03/2026 17:07:21 CET;06/03/2026 17:07:50 CET;29;4;90;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOFIUTMKFDXHK7531;device=desktop;lang=de;sysIID=3366;pan=4
+concept;10
+choice;20;2;0
+choice;30;2;0
+open;40;45
+choice;45;16;9
+choice;52;6;3
+choice;70;2;1
+choice;90;2;1

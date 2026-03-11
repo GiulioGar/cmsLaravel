@@ -519,10 +519,29 @@ function setResultsLoading(isLoading){
   }
 }
 
+function setButtonLoading(buttonId, isLoading, loadingHtml = null) {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return;
+
+  if (!btn.dataset.originalHtml) {
+    btn.dataset.originalHtml = btn.innerHTML;
+  }
+
+  if (isLoading) {
+    btn.disabled = true;
+    btn.innerHTML = loadingHtml || '<span class="spinner-border spinner-border-sm me-2"></span>Caricamento...';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.originalHtml;
+  }
+}
+
 // === AGGIORNA FINESTRA RISULTATI ===
 function refreshResults() {
   const sid = document.getElementById('sidRight').value;
   const prj = document.getElementById('prjRight').value;
+setButtonLoading('btn-refresh-results', true, '<span class="spinner-border spinner-border-sm me-2"></span>Aggiornamento...');
+
   if (!sid || !prj) {
     Swal.fire({ icon: 'warning', title: 'Attenzione', text: 'Seleziona prima SID e PRJ.' });
     return;
@@ -541,6 +560,7 @@ function refreshResults() {
   .then(res => res.json())
   .then(data => {
     setResultsLoading(false);
+    setButtonLoading('btn-refresh-results', false);
 
     if (!data.success) {
       Swal.fire({ icon: 'error', title: 'Errore', text: data.message });
@@ -583,6 +603,7 @@ function refreshResults() {
   })
   .catch(() => {
     setResultsLoading(false);
+    setButtonLoading('btn-refresh-results', false);
     Swal.fire({ icon: 'error', title: 'Errore di rete' });
   });
 }
@@ -592,6 +613,7 @@ function enableUids() {
   const sid = document.getElementById('sidRight').value;
   const prj = document.getElementById('prjRight').value;
   const uids = document.getElementById('uidInput').value.trim();
+    setButtonLoading('btn-enable-uids', true, '<span class="spinner-border spinner-border-sm me-2"></span>Abilitazione...');
 
   if (!sid || !prj || !uids) {
     Swal.fire({ icon: 'warning', title: 'Attenzione', text: 'Seleziona SID/PRJ e inserisci almeno un UID.' });
@@ -608,6 +630,7 @@ function enableUids() {
   })
   .then(res => res.json())
   .then(data => {
+    setButtonLoading('btn-enable-uids', false);
     if (data.success) {
       Swal.fire({ icon: 'success', title: 'UID abilitati', text: `${data.count} UID inseriti.` });
       updateLog(data.actions);
@@ -616,7 +639,10 @@ function enableUids() {
       Swal.fire({ icon: 'error', title: 'Errore', text: data.message });
     }
   })
-  .catch(() => Swal.fire({ icon: 'error', title: 'Errore di rete' }));
+    .catch(() => {
+    setButtonLoading('btn-enable-uids', false);
+    Swal.fire({ icon: 'error', title: 'Errore di rete' });
+  });
 }
 
 // === RESET IID (con log dinamico e gestione errori) ===
@@ -624,6 +650,7 @@ function resetIids() {
   const sid = document.getElementById('sidRight').value;
   const prj = document.getElementById('prjRight').value;
   const iids = document.getElementById('uidInput').value.trim();
+  setButtonLoading('btn-reset-iids', true, '<span class="spinner-border spinner-border-sm me-2"></span>Reset...');
 
   if (!sid || !prj || !iids) {
     Swal.fire({ icon: 'warning', title: 'Attenzione', text: 'Seleziona SID/PRJ e inserisci almeno un IID.' });
@@ -650,6 +677,7 @@ function resetIids() {
     })
     .then(res => res.json())
     .then(data => {
+    setButtonLoading('btn-reset-iids', false);
       if (data.success) {
         Swal.fire({
           icon: 'success',
@@ -662,7 +690,10 @@ function resetIids() {
         Swal.fire({ icon: 'error', title: 'Errore', text: data.message });
       }
     })
-    .catch(() => Swal.fire({ icon: 'error', title: 'Errore di rete' }));
+        .catch(() => {
+            setButtonLoading('btn-reset-iids', false);
+            Swal.fire({ icon: 'error', title: 'Errore di rete' });
+        });
   });
 }
 

@@ -1,6 +1,7 @@
 #export vars "leg"
 #export vars "cella"
 #export vars "device"
+#export vars "transaction_id"
 
 void main() {
 

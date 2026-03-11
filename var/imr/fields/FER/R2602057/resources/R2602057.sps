@@ -1,5 +1,5 @@
 DATA LIST FILE 'R2602057.txt' LIST(";") /
-IID (F4) UID (A25) STIME (A25) ETIME (A25) LENGTH (F4) ECODE (A25) LASTVIEW (A25) leg (A25)cella (A25)device (A25) Q0 (F4) Q1 (F4) Q2 (A256) q50 (F4) reg (F4) Q4 (F4) Q5_0 (F4) Q5_1 (F4) Q5_2 (F4) Q5_3 (F4) 
+IID (F4) UID (A25) STIME (A25) ETIME (A25) LENGTH (F4) ECODE (A25) LASTVIEW (A25) leg (A25)cella (A25)device (A25)transaction_id (A25) Q0 (F4) Q1 (F4) Q2 (A256) q50 (F4) reg (F4) Q4 (F4) Q5_0 (F4) Q5_1 (F4) Q5_2 (F4) Q5_3 (F4) 
 Q5_4 (F4) Q5tom (F4) Q6 (F4) q7 (F4) Q8_0 (F4) Q8_1 (F4) Q8_2 (F4) Q8_3 (F4) Q8_4 (F4) Q8_5 (F4) 
 Q8_6 (F4) Q8tom (F4) q9aa (F4) q9bb (F4) Q9a (F4) Q9b (F4) q10des_0 (F4) q10des_1 (F4) q10des_2 (F4) q10des_3 (F4) 
 q10des_4 (F4) q10mob_0 (F4) q10mob_1 (F4) q10mob_2 (F4) q10mob_3 (F4) q10mob_4 (F4) Q11_0 (F4) Q11_1 (F4) Q11_2 (F4) Q11_3 (F4) 
@@ -28,6 +28,7 @@ VARIABLE LABELS
 	leg "leg"
 	cella "cella"
 	device "device"
+	transaction_id "transaction_id"
 	Q0 "Q0: Durch die Teilnahme an dieser Umfrage erhalten Sie Zugang zu vertraulichen Informationen im Zusammenhang mit der Entwicklung neuer Ideen und Vorschlägen. Wir bitten Sie, keine Informationen zu verwenden oder an andere weiterzugeben, von denen Sie Kenntnis erlangen. Kopieren, fotografieren, drucken oder laden Sie bitte keine Informationen herunter, zu denen Sie im Verlauf dieser Umfrage Zugang erhalten. Indem Sie unten auf „Akzeptieren“ klicken, erklären Sie, dass Sie diese Bedingungen gelesen, verstanden und akzeptiert haben."
 	Q1 "Q1: Sind Sie …?"
 	Q2 "Q2: Wie alt sind Sie?"

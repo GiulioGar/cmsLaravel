@@ -238,41 +238,69 @@ public function showRightPanelData(Request $request)
     /**
      * Abilita una lista di UID (inserisce in t_respint)
      */
-    public function enableUids(Request $request)
+public function enableUids(Request $request)
 {
     $sid = $request->input('sid');
     $prj = $request->input('prj');
-    $uidsRaw = trim($request->input('uids'));
+    $uidsRaw = trim((string) $request->input('uids'));
 
     if (!$sid || !$prj || !$uidsRaw) {
-        return response()->json(['success' => false, 'message' => 'Parametri mancanti.'], 400);
+        return response()->json([
+            'success' => false,
+            'message' => 'Parametri mancanti.'
+        ], 400);
     }
 
+    // 1. split, trim, rimozione vuoti, deduplica
     $uids = preg_split('/\r\n|\r|\n/', $uidsRaw);
-    $inserted = 0;
+    $uids = array_map('trim', $uids);
+    $uids = array_filter($uids, fn($v) => $v !== '');
+    $uids = array_values(array_unique($uids));
+
+    if (empty($uids)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Nessun UID valido da abilitare.'
+        ], 400);
+    }
+
+    // 2. leggo in una query gli UID già esistenti per quel SID
+    $existing = DB::table('t_respint')
+        ->where('sid', $sid)
+        ->whereIn('uid', $uids)
+        ->pluck('uid')
+        ->all();
+
+    $existingMap = array_flip($existing);
+
+    // 3. preparo i nuovi record
+    $toInsert = [];
     $log = [];
 
     foreach ($uids as $uid) {
-        $uid = trim($uid);
-        if ($uid === '') continue;
+        if (isset($existingMap[$uid])) {
+            continue;
+        }
 
-        $exists = DB::table('t_respint')->where('sid', $sid)->where('uid', $uid)->exists();
-        if ($exists) continue;
-
-        DB::table('t_respint')->insert([
+        $toInsert[] = [
             'sid' => $sid,
             'uid' => $uid,
             'status' => 0,
             'iid' => -1,
             'prj_name' => $prj,
-        ]);
-        $inserted++;
+        ];
+
         $log[] = "UID {$uid} abilitato";
+    }
+
+    // 4. insert unica
+    if (!empty($toInsert)) {
+        DB::table('t_respint')->insert($toInsert);
     }
 
     return response()->json([
         'success' => true,
-        'count' => $inserted,
+        'count' => count($toInsert),
         'actions' => array_slice($log, -5)
     ]);
 }
@@ -281,38 +309,55 @@ public function resetIids(Request $request)
 {
     $sid = $request->input('sid');
     $prj = $request->input('prj');
-    $iidsRaw = trim($request->input('iids'));
+    $iidsRaw = trim((string) $request->input('iids'));
 
     if (!$sid || !$prj || !$iidsRaw) {
-        return response()->json(['success' => false, 'message' => 'Parametri mancanti.'], 400);
+        return response()->json([
+            'success' => false,
+            'message' => 'Parametri mancanti.'
+        ], 400);
     }
 
+    // 1. split, trim, solo numerici, deduplica
     $iids = preg_split('/\r\n|\r|\n/', $iidsRaw);
-    $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+    $iids = array_map('trim', $iids);
+    $iids = array_filter($iids, fn($v) => $v !== '' && ctype_digit($v));
+    $iids = array_values(array_unique($iids));
 
+    if (empty($iids)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Nessun IID numerico valido da resettare.'
+        ], 400);
+    }
+
+    $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
     if (!is_dir($directory)) {
-            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
-        }
+        $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+    }
+
     $updated = 0;
     $deleted = 0;
     $log = [];
 
+    // 2. update unico su DB
+    $updated = DB::table('t_respint')
+        ->where('sid', $sid)
+        ->whereIn('iid', $iids)
+        ->update([
+            'status' => 0,
+            'iid' => -1
+        ]);
+
     foreach ($iids as $iid) {
-        $iid = trim($iid);
-        if ($iid === '') continue;
+        $log[] = "IID {$iid} resettato";
+    }
 
-        $affected = DB::table('t_respint')
-            ->where('sid', $sid)
-            ->where('iid', $iid)
-            ->update(['status' => 0, 'iid' => -1]);
+    // 3. cancellazione file come prima
+    if (is_dir($directory)) {
+        foreach ($iids as $iid) {
+            $pattern = $directory . "/*" . $iid . "*.sre";
 
-        if ($affected > 0) {
-            $updated += $affected;
-            $log[] = "IID {$iid} resettato";
-        }
-
-        if (is_dir($directory)) {
-            $pattern = "$directory/*$iid*.sre";
             foreach (glob($pattern) as $file) {
                 if (File::exists($file)) {
                     File::delete($file);

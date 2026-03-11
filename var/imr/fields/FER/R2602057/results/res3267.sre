@@ -1,0 +1,26 @@
+2.0;FER;R2602057;3267;IDEXNOSYDMZCMADPP7454;06/03/2026 16:20:37 CET;06/03/2026 16:21:32 CET;55;4;33890;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOSYDMZCMADPP7454;device=desktop;lang=hr;sysIID=3267;pan=4
+concept;10
+choice;20;2;0
+classifier;21;5;3;1;0;4;2
+choice;30;2;1
+open;40;38
+choice;45;16;8
+choice;52;6;3
+choice;70;2;1
+choice;90;2;0
+choice;95;5;0
+choice;100;7;1111111;0
+choice;110;6;0
+choice;115;6;0
+composed;33890
+scale;130;6;5;-1;3;-1;-1;-1;-1
+open;3381;0
+open;3382;0
+open;3383;0
+open;3384;0
+open;3385;0
+open;3386;0
+open;3387;0
+open;3388;0
+open;3389;0
+open;33810;0

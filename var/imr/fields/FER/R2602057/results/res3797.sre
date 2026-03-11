@@ -1,0 +1,26 @@
+2.0;FER;R2602057;3797;IDEXNOXSXEZLVPKDC840;07/03/2026 02:26:55 CET;07/03/2026 02:28:27 CET;92;4;33890;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOXSXEZLVPKDC840;device=mobile;lang=de;sysIID=3797;pan=4
+concept;10
+choice;20;2;0
+choice;30;2;0
+open;40;29
+choice;45;16;4
+choice;52;6;1
+choice;70;2;0
+choice;80;5;01000;1
+choice;90;2;0
+choice;95;5;0
+choice;100;7;0111110;3
+choice;115;6;0
+scale;121;5;6;1;2;5;3;5
+composed;33890
+scale;130;6;5;-1;-1;-1;4;-1;-1
+open;3381;0
+open;3382;0
+open;3383;0
+open;3384;0
+open;3385;0
+open;3386;0
+open;3387;0
+open;3388;0
+open;3389;0
+open;33810;0

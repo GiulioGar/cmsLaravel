@@ -90,21 +90,51 @@
     </div>
 
 
- <!-- jQuery prima di DataTables -->
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- DataTables + Bootstrap 5 JS -->
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@latest"></script>
 
-    <!-- Carica il file JS dalla cartella public -->
-    <script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ asset('js/app.js') }}"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof bootstrap === 'undefined') return;
 
-        <!-- IMPORTANTISSIMO: Sezione per gli scripts aggiuntivi -->
-        @yield('scripts')
+    const userTrigger = document.getElementById('userDropdown');
+    const userTriggerMobile = document.getElementById('userDropdownMobile');
+    const alertsTrigger = document.getElementById('alertsDropdown');
+
+    if (userTrigger) {
+        const userDropdown = bootstrap.Dropdown.getOrCreateInstance(userTrigger);
+        userTrigger.addEventListener('click', function (e) {
+            e.preventDefault();
+            userDropdown.toggle();
+        });
+    }
+
+    if (userTriggerMobile) {
+        const userDropdownMobile = bootstrap.Dropdown.getOrCreateInstance(userTriggerMobile);
+        userTriggerMobile.addEventListener('click', function (e) {
+            e.preventDefault();
+            userDropdownMobile.toggle();
+        });
+    }
+
+    if (alertsTrigger) {
+        const alertsDropdown = bootstrap.Dropdown.getOrCreateInstance(alertsTrigger);
+        alertsTrigger.addEventListener('click', function (e) {
+            e.preventDefault();
+            alertsDropdown.toggle();
+        });
+    }
+});
+</script>
+
+@yield('scripts')
+
 </body>
 </html>

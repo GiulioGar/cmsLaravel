@@ -1,4 +1,4 @@
-2.0;FER;R2602057;2795;IDEXA8LTFEIWVDXIBQ14601;06/03/2026 10:16:22 CET;06/03/2026 10:27:51 CET;689;3;19500;sysUID=IDEXA8LTFEIWVDXIBQ14601;lang=de;r9=19;r8=1;r19=8;pan=8;r7=12;r18=2;r6=4;r17=9;r5=6;r16=6;r4=15;r15=10;Svar29=26;r3=7;r14=9;Svar28=2;r2=13;r13=11;Svar27=9;r1=19;r12=17;Svar26=19;r0=7;r11=6;Svar25=15;sysSID=R2602057;r10=14;Svar24=10;Svar23=0;Svar22=27;Svar21=5;Svar20=13;leg=4;sysIID=2795;Svar19=25;Svar18=3;Svar17=24;cella=3;Svar16=12;Svar15=22;Svar14=16;Svar13=21;sysPRJ=FER;Svar12=29;Svar11=11;Svar10=23;Svar9=28;Svar8=1;Svar7=17;transaction_id=79EWY7ui3Usa3T78vhkacX;Svar6=4;Svar5=6;Svar4=18;Svar3=8;Svar2=14;Svar1=20;Svar0=7;r29=0;device=desktop;r28=0;r27=1;r26=2;r25=2;r24=2;r23=0;r22=7;r21=2;r20=5
+2.0;FER;R2602057;2795;IDEXA8LTFEIWVDXIBQ14601;06/03/2026 10:16:22 CET;06/03/2026 10:33:49 CET;1047;3;19500;sysUID=IDEXA8LTFEIWVDXIBQ14601;lang=de;r9=19;r8=1;r19=8;pan=8;r7=12;r18=2;r6=4;r17=9;r5=6;r16=6;r4=15;r15=10;Svar29=26;r3=7;r14=9;Svar28=2;r2=13;r13=11;Svar27=9;r1=19;r12=17;Svar26=19;r0=7;r11=6;Svar25=15;sysSID=R2602057;r10=14;Svar24=10;Svar23=0;Svar22=27;Svar21=5;Svar20=13;leg=4;sysIID=2795;Svar19=25;Svar18=3;Svar17=24;cella=3;Svar16=12;Svar15=22;Svar14=16;Svar13=21;sysPRJ=FER;Svar12=29;Svar11=11;Svar10=23;Svar9=28;Svar8=1;Svar7=17;transaction_id=79EWY7ui3Usa3T78vhkacX;Svar6=4;Svar5=6;Svar4=18;Svar3=8;Svar2=14;Svar1=20;Svar0=7;r29=0;device=desktop;r28=0;r27=1;r26=2;r25=2;r24=2;r23=0;r22=7;r21=2;r20=5
 concept;10
 choice;20;2;0
 classifier;21;5;1;0;4;3;2
@@ -57,16 +57,5 @@ choice;19100;5;0
 scale;19200;1;22;20
 scale;19300;1;22;20
 choice;19400;5;0
-choice;19500;3;0
+choice;19500;3;1
 composed;33890
-scale;130;6;5;-1;-1;-1;2;-1;-1
-open;3381;0
-open;3382;0
-open;3383;0
-open;3384;0
-open;3385;0
-open;3386;0
-open;3387;0
-open;3388;0
-open;3389;0
-open;33810;0

@@ -1,0 +1,14 @@
+2.0;FER;R2602057;5688;IDEXA8LTSZLGDUSLIM12531;09/03/2026 09:47:30 CET;09/03/2026 09:49:12 CET;102;4;21;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXA8LTSZLGDUSLIM12531;device=desktop;pan=8;sysIID=5688;transaction_id=71Wn9YYR8FJ2XVaTUPyqhU;lang=de
+concept;10
+choice;20;2;0
+classifier;21;5;2;0;3;4;1
+choice;30;2;0
+open;40;40
+choice;45;16;14
+choice;52;6;3
+choice;70;2;1
+choice;90;2;0
+choice;95;5;2
+choice;100;7;1111111;0
+choice;110;6;4
+choice;115;6;5

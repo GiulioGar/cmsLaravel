@@ -566,7 +566,7 @@
 
                             <div class="fc-chart-body">
                                 <div class="fc-chart-canvas">
-                                    <canvas id="chart-panel-{{ $loop->index }}"></canvas>
+                                    <canvas id="chart-panel-{{ \Illuminate\Support\Str::slug($panelName, '-') }}"></canvas>
                                 </div>
                             </div>
                         </div>
@@ -970,16 +970,20 @@
                 Object.entries(chartsData[panelName]).forEach(([question, count]) => {
                     let parts = question.split(" - ");
                     // console.log("📊 Dati ricevuti per i panel:", parts);
-                    let questionCode = parts[0]; // Codice della domanda
-                    let questionText = parts[1] ?? "Testo non disponibile"; // Tooltip con testo domanda
+                        let questionCode = parts[0] ?? "N/A";
+                        let questionText = parts.slice(1).join(" - ") || "Testo non disponibile";
 
-                    labels.push(questionCode);
-                    values.push(count);
-                    tooltips.push(questionText);
+                        labels.push(questionCode);
+                        values.push(count);
+                        tooltips.push({
+                            code: questionCode,
+                            text: questionText
+                        });
                 });
 
                 // Tutti i canvas seguono il pattern "chart-panel-X"
-                let canvasID = `chart-panel-${index}`;
+                let panelSlug = panelName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                let canvasID = `chart-panel-${panelSlug}`;
                 let canvas = document.getElementById(canvasID);
 
                 if (canvas) {

@@ -1,0 +1,14 @@
+2.0;FER;R2602057;5072;IDEXA8LVTINLUBRNGC13037;07/03/2026 21:49:29 CET;07/03/2026 21:51:25 CET;116;4;21;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXA8LVTINLUBRNGC13037;device=desktop;pan=8;sysIID=5072;transaction_id=2h329psGZFMmlEHdi0cLvu;lang=de
+concept;10
+choice;20;2;0
+classifier;21;5;2;-1;-1;-1;-1
+choice;30;2;1
+open;40;48
+choice;45;16;9
+choice;52;6;4
+choice;70;2;1
+choice;90;2;0
+choice;95;5;0
+choice;100;7;0010110;2
+choice;102;5;2
+choice;104;5;2

@@ -1,0 +1,9 @@
+2.0;FER;R2602057;4733;IDEXA8LVSFBROSCPOT13303;07/03/2026 13:58:32 CET;07/03/2026 13:59:26 CET;54;4;90;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXA8LVSFBROSCPOT13303;device=desktop;pan=8;sysIID=4733;transaction_id=49SPOSzLH9ylb4DYhRiAGl;lang=de
+concept;10
+choice;20;2;0
+choice;30;2;1
+open;40;37
+choice;45;16;3
+choice;52;6;3
+choice;70;2;1
+choice;90;2;1
