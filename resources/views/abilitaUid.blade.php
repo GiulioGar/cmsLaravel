@@ -151,7 +151,7 @@
       </div>
 
       {{-- CARD 2: INSERIMENTO UID/IID --}}
-      <div class="au-card">
+        <div class="au-card" id="uidIidCard" style="display:none;">
         <div class="au-card-header" style="background:linear-gradient(90deg,#0dcaf0,#0aa2c0);">
           <div class="au-title">
             <i class="fa-solid fa-key"></i>
@@ -168,15 +168,15 @@
             <button id="btn-enable-uids" class="btn btn-success" onclick="enableUids()">
               <i class="fa-solid fa-check"></i> Abilita UID
             </button>
-            <button id="btn-reset-iids" class="btn btn-danger" onclick="resetIids()">
-              <i class="fa-solid fa-trash"></i> Elimina File + Reset IID
+            <button id="btn-reset-iids" class="btn btn-danger" onclick="resetIids()" disabled>
+            <i class="fa-solid fa-trash"></i> Elimina File + Reset IID
             </button>
           </div>
         </div>
       </div>
 
-      {{-- CARD 3: RISULTATI --}}
-      <div class="au-card">
+            {{-- CARD 3: RISULTATI --}}
+      <div class="au-card" id="resultsCard" style="display:none;">
         <div class="au-card-header au-card-header--muted">
           <div class="au-title">
             <i class="fa-solid fa-chart-column"></i>
@@ -213,6 +213,50 @@
           </div>
 
           <div id="resultsContent" style="display:none;">
+            <div class="mb-3">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0">Ricerca UID / IID</h6>
+                <span class="text-muted small"><i class="fa-solid fa-magnifying-glass"></i></span>
+              </div>
+
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="searchUidIid"
+                  class="form-control"
+                  placeholder="Inserisci UID o IID specifico"
+                  autocomplete="off"
+                >
+                <button type="button" id="btn-search-record" class="btn btn-outline-primary" onclick="searchUidIidRecord()">
+                  <i class="fa-solid fa-search"></i> Cerca
+                </button>
+              </div>
+
+              <div class="form-text">
+                Se il valore è numerico cerco per IID, altrimenti per UID.
+              </div>
+
+              <div class="table-responsive mt-3">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="text-start">IID</th>
+                      <th class="text-start">UID</th>
+                      <th class="text-start">Status</th>
+                      <th class="text-start">PRJ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="searchResultsTable">
+                    <tr>
+                      <td colspan="4" class="text-center text-muted">Nessuna ricerca eseguita</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <hr class="my-3">
+
             <div class="row g-3">
               <div class="col-6">
                 <div class="p-3 rounded-3 border" style="background:rgba(13,110,253,.06);">
@@ -265,6 +309,30 @@
             <hr class="my-3">
 
             <div class="d-flex align-items-center justify-content-between">
+              <h6 class="mb-2">Dettaglio record</h6>
+              <span class="text-muted small"><i class="fa-solid fa-table-list"></i></span>
+            </div>
+
+            <div class="table-responsive mb-3">
+              <table class="table table-sm table-bordered align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-start">IID</th>
+                    <th class="text-start">UID</th>
+                    <th class="text-start">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="detailTable">
+                  <tr>
+                    <td colspan="3" class="text-center text-muted">Nessun dato disponibile</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <hr class="my-3">
+
+            <div class="d-flex align-items-center justify-content-between">
               <h6 class="mb-2">Ultime modifiche</h6>
               <span class="text-muted small"><i class="fa-solid fa-list-check"></i></span>
             </div>
@@ -272,6 +340,7 @@
             <ul id="lastActions" class="list-group small au-actions">
               <li class="list-group-item text-muted">Nessuna operazione recente</li>
             </ul>
+
           </div>
 
         </div>
@@ -501,7 +570,105 @@ function deletePanel(id) {
 const surveyDataRight = @json($surveys);
 function updatePrjRight(selectedSid) {
   const s = surveyDataRight.find(item => item.sid === selectedSid);
-  document.getElementById('prjRight').value = s ? s.prj_name : '';
+
+  const prjInput = document.getElementById('prjRight');
+  const uidIidCard = document.getElementById('uidIidCard');
+  const resultsCard = document.getElementById('resultsCard');
+  const resultsHint = document.getElementById('resultsHint');
+  const resultsLoading = document.getElementById('resultsLoading');
+  const resultsContent = document.getElementById('resultsContent');
+
+  prjInput.value = s ? s.prj_name : '';
+
+  const hasSid = !!selectedSid;
+
+  if (uidIidCard) {
+    uidIidCard.style.display = hasSid ? '' : 'none';
+  }
+
+  if (resultsCard) {
+    resultsCard.style.display = hasSid ? '' : 'none';
+  }
+
+  if (!hasSid) {
+
+    // reset visuale risultati
+    if (resultsHint) resultsHint.style.display = 'flex';
+    if (resultsLoading) resultsLoading.style.display = 'none';
+    if (resultsContent) resultsContent.style.display = 'none';
+
+    const totalFiles = document.getElementById('totalFiles');
+    const lastFile = document.getElementById('lastFile');
+    const statusTable = document.getElementById('statusTable');
+    const lastActions = document.getElementById('lastActions');
+    const uidInput = document.getElementById('uidInput');
+    const detailTable = document.getElementById('detailTable');
+    const searchInput = document.getElementById('searchUidIid');
+
+    if (totalFiles) totalFiles.innerText = '0';
+    if (lastFile) lastFile.innerText = '—';
+
+    if (statusTable) {
+      statusTable.innerHTML = `
+        <tr>
+          <td class="text-start">
+            <span class="au-pill au-pill--muted">
+              <i class="fa-solid fa-minus"></i> —
+            </span>
+          </td>
+          <td class="text-end text-muted">—</td>
+        </tr>
+      `;
+    }
+
+        if (detailTable) {
+      detailTable.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center text-muted">Nessun dato disponibile</td>
+        </tr>
+      `;
+    }
+
+    if (lastActions) {
+      lastActions.innerHTML = '<li class="list-group-item text-muted">Nessuna operazione recente</li>';
+    }
+
+    if (uidInput) {
+      uidInput.value = '';
+    }
+     updateResetButtonState();
+
+         if (searchInput) {
+      searchInput.value = '';
+    }
+    resetSearchResultsTable('Nessuna ricerca eseguita');
+
+  }
+}
+
+
+function parseUidIidInputLines() {
+  const input = document.getElementById('uidInput');
+  if (!input) return [];
+
+  return input.value
+    .split(/\r\n|\r|\n/)
+    .map(v => v.trim())
+    .filter(v => v !== '');
+}
+
+function isNumericOnlyLines(lines) {
+  if (!lines.length) return false;
+  return lines.every(v => /^\d+$/.test(v));
+}
+
+function updateResetButtonState() {
+  const btnReset = document.getElementById('btn-reset-iids');
+  const lines = parseUidIidInputLines();
+
+  if (!btnReset) return;
+
+  btnReset.disabled = !isNumericOnlyLines(lines);
 }
 
 // ====== UI HELPERS (solo grafica) ======
@@ -534,6 +701,17 @@ function setButtonLoading(buttonId, isLoading, loadingHtml = null) {
     btn.disabled = false;
     btn.innerHTML = btn.dataset.originalHtml;
   }
+}
+
+function resetSearchResultsTable(message = 'Nessuna ricerca eseguita') {
+  const tbody = document.getElementById('searchResultsTable');
+  if (!tbody) return;
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="4" class="text-center text-muted">${message}</td>
+    </tr>
+  `;
 }
 
 // === AGGIORNA FINESTRA RISULTATI ===
@@ -600,10 +778,107 @@ setButtonLoading('btn-refresh-results', true, '<span class="spinner-border spinn
                 </tr>
             `;
             });
+
+        const detailTable = document.getElementById('detailTable');
+        if (detailTable) {
+        detailTable.innerHTML = '';
+
+        const rows = Array.isArray(data.detailRows) ? data.detailRows : [];
+
+        if (!rows.length) {
+            detailTable.innerHTML = `
+            <tr>
+                <td colspan="3" class="text-center text-muted">Nessun dato disponibile</td>
+            </tr>
+            `;
+        } else {
+            rows.forEach(row => {
+            detailTable.innerHTML += `
+                <tr>
+                <td class="text-start">${row.iid ?? '—'}</td>
+                <td class="text-start">${row.uid ?? '—'}</td>
+                <td class="text-start">${row.status ?? '—'}</td>
+                </tr>
+            `;
+            });
+        }
+        }
   })
   .catch(() => {
     setResultsLoading(false);
     setButtonLoading('btn-refresh-results', false);
+    Swal.fire({ icon: 'error', title: 'Errore di rete' });
+  });
+}
+
+function searchUidIidRecord() {
+  const sid = document.getElementById('sidRight').value;
+  const term = document.getElementById('searchUidIid').value.trim();
+
+  if (!sid) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Attenzione',
+      text: 'Seleziona prima un SID.'
+    });
+    return;
+  }
+
+  if (!term) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Attenzione',
+      text: 'Inserisci un UID o un IID da cercare.'
+    });
+    return;
+  }
+
+  setButtonLoading('btn-search-record', true, '<span class="spinner-border spinner-border-sm me-2"></span>Ricerca...');
+
+  fetch('{{ url("/abilita-uid/search-records") }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({ sid, term })
+  })
+  .then(res => res.json())
+  .then(data => {
+    setButtonLoading('btn-search-record', false);
+
+    const tbody = document.getElementById('searchResultsTable');
+    if (!tbody) return;
+
+    if (!data.success) {
+      Swal.fire({ icon: 'error', title: 'Errore', text: data.message || 'Errore durante la ricerca.' });
+      resetSearchResultsTable('Errore durante la ricerca');
+      return;
+    }
+
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+
+    if (!rows.length) {
+      resetSearchResultsTable('Nessun record trovato');
+      return;
+    }
+
+    tbody.innerHTML = '';
+
+    rows.forEach(row => {
+      tbody.innerHTML += `
+        <tr>
+          <td class="text-start">${row.iid ?? '—'}</td>
+          <td class="text-start">${row.uid ?? '—'}</td>
+          <td class="text-start">${row.status ?? '—'}</td>
+          <td class="text-start">${row.prj_name ?? '—'}</td>
+        </tr>
+      `;
+    });
+  })
+  .catch(() => {
+    setButtonLoading('btn-search-record', false);
+    resetSearchResultsTable('Errore di rete');
     Swal.fire({ icon: 'error', title: 'Errore di rete' });
   });
 }
@@ -650,50 +925,116 @@ function resetIids() {
   const sid = document.getElementById('sidRight').value;
   const prj = document.getElementById('prjRight').value;
   const iids = document.getElementById('uidInput').value.trim();
-  setButtonLoading('btn-reset-iids', true, '<span class="spinner-border spinner-border-sm me-2"></span>Reset...');
 
   if (!sid || !prj || !iids) {
-    Swal.fire({ icon: 'warning', title: 'Attenzione', text: 'Seleziona SID/PRJ e inserisci almeno un IID.' });
+    Swal.fire({
+      icon: 'warning',
+      title: 'Attenzione',
+      text: 'Seleziona SID/PRJ e inserisci almeno un IID.'
+    });
     return;
   }
 
-  Swal.fire({
-    icon: 'warning',
-    title: 'Conferma azione',
-    text: 'Vuoi davvero eliminare i file .sre e resettare questi IID?',
-    showCancelButton: true,
-    confirmButtonText: 'Sì, procedi',
-    cancelButtonText: 'Annulla'
-  }).then(result => {
-    if (!result.isConfirmed) return;
+  setButtonLoading('btn-reset-iids', true, '<span class="spinner-border spinner-border-sm me-2"></span>Verifica file...');
 
-    fetch('{{ url("/abilita-uid/reset-iids") }}', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-      },
-      body: JSON.stringify({ sid, prj, iids })
-    })
-    .then(res => res.json())
-    .then(data => {
+  fetch('{{ url("/abilita-uid/preview-reset-iids") }}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({ sid, prj, iids })
+  })
+  .then(res => res.json())
+  .then(data => {
     setButtonLoading('btn-reset-iids', false);
-      if (data.success) {
-        Swal.fire({
-          icon: 'success',
-          title: 'Reset completato',
-          html: `Aggiornati <b>${data.updated}</b> record<br>Cancellati <b>${data.deleted}</b> file`
-        });
-        updateLog(data.actions);
-        refreshResults();
-      } else {
-        Swal.fire({ icon: 'error', title: 'Errore', text: data.message });
-      }
-    })
-        .catch(() => {
-            setButtonLoading('btn-reset-iids', false);
-            Swal.fire({ icon: 'error', title: 'Errore di rete' });
-        });
+
+    if (!data.success) {
+      Swal.fire({ icon: 'error', title: 'Errore', text: data.message });
+      return;
+    }
+
+    const files = Array.isArray(data.files) ? data.files : [];
+    const maxPreview = 12;
+
+    let filesHtml = '';
+    if (files.length > 0) {
+      const previewList = files.slice(0, maxPreview)
+        .map(f => `<li style="text-align:left;">${f}</li>`)
+        .join('');
+
+      const extra = files.length > maxPreview
+        ? `<div class="text-muted mt-2">...e altri ${files.length - maxPreview} file</div>`
+        : '';
+
+      filesHtml = `
+        <div class="mt-3 text-start">
+          <div><strong>Stai per eliminare questi file:</strong></div>
+          <ul class="mt-2 mb-1" style="max-height:220px; overflow:auto; padding-left:18px;">
+            ${previewList}
+          </ul>
+          ${extra}
+        </div>
+      `;
+    } else {
+      filesHtml = `
+        <div class="mt-3 text-start text-muted">
+          Nessun file .sre trovato per gli IID inseriti. Verrà eseguito solo il reset nel database.
+        </div>
+      `;
+    }
+
+    Swal.fire({
+      icon: 'warning',
+      title: 'Conferma eliminazione',
+      html: `
+        <div>
+          <div>Stai per resettare gli IID selezionati.</div>
+          ${filesHtml}
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'Sì, procedi',
+      cancelButtonText: 'Annulla',
+      width: 700
+    }).then(result => {
+      if (!result.isConfirmed) return;
+
+      setButtonLoading('btn-reset-iids', true, '<span class="spinner-border spinner-border-sm me-2"></span>Reset...');
+
+      fetch('{{ url("/abilita-uid/reset-iids") }}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ sid, prj, iids })
+      })
+      .then(res => res.json())
+      .then(data => {
+        setButtonLoading('btn-reset-iids', false);
+
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Reset completato',
+            html: `Aggiornati <b>${data.updated}</b> record<br>Cancellati <b>${data.deleted}</b> file`
+          });
+          updateLog(data.actions);
+          refreshResults();
+        } else {
+          Swal.fire({ icon: 'error', title: 'Errore', text: data.message });
+        }
+      })
+      .catch(() => {
+        setButtonLoading('btn-reset-iids', false);
+        Swal.fire({ icon: 'error', title: 'Errore di rete' });
+      });
+    });
+  })
+  .catch(() => {
+    setButtonLoading('btn-reset-iids', false);
+    Swal.fire({ icon: 'error', title: 'Errore di rete' });
   });
 }
 
@@ -710,5 +1051,31 @@ function updateLog(actions) {
     list.innerHTML += `<li class="list-group-item list-group-item-light">${a}</li>`;
   });
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+  const sidRight = document.getElementById('sidRight');
+  if (sidRight) {
+    updatePrjRight(sidRight.value);
+  }
+
+  const searchInput = document.getElementById('searchUidIid');
+  if (searchInput) {
+    searchInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        searchUidIidRecord();
+      }
+    });
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  const uidInput = document.getElementById('uidInput');
+  if (uidInput) {
+    uidInput.addEventListener('input', updateResetButtonState);
+    updateResetButtonState();
+  }
+});
+
 </script>
 @endsection

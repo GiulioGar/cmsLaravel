@@ -1,9 +1,0 @@
-2.0;FER;R2602057;1123;IDEXNOHHSGPBCORTE3502;04/03/2026 20:53:08 CET;04/03/2026 20:53:41 CET;33;4;90;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOHHSGPBCORTE3502;device=mobile;lang=de;sysIID=1123;pan=4
-concept;10
-choice;20;2;0
-choice;30;2;1
-open;40;33
-choice;45;16;10
-choice;52;6;2
-choice;70;2;1
-choice;90;2;1

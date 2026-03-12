@@ -1,9 +1,0 @@
-2.0;FER;R2602057;421;IDEXNOVDICGTVMMSF2197;04/03/2026 15:20:05 CET;04/03/2026 15:20:24 CET;19;4;90;sysSID=R2602057;sysPRJ=FER;sysUID=IDEXNOVDICGTVMMSF2197;device=desktop;lang=de;sysIID=421;pan=4
-concept;10
-choice;20;2;0
-choice;30;2;0
-open;40;30
-choice;45;16;5
-choice;52;6;2
-choice;70;2;1
-choice;90;2;1

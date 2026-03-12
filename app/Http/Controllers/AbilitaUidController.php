@@ -227,11 +227,19 @@ public function showRightPanelData(Request $request)
         }
     }
 
+    $detailRows = DB::table('t_respint')
+        ->select('iid', 'uid', 'status')
+        ->where('sid', $sid)
+        ->orderBy('iid', 'desc')
+        ->limit(100)
+        ->get();
+
     return response()->json([
         'success' => true,
         'totalFiles' => $totalFiles,
         'lastFile' => $lastFile,
         'statusCounts' => $statusCounts,
+        'detailRows' => $detailRows,
     ]);
 }
 
@@ -305,6 +313,59 @@ public function enableUids(Request $request)
     ]);
 }
 
+public function previewResetIids(Request $request)
+{
+    $sid = $request->input('sid');
+    $prj = $request->input('prj');
+    $iidsRaw = trim((string) $request->input('iids'));
+
+    if (!$sid || !$prj || !$iidsRaw) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Parametri mancanti.'
+        ], 400);
+    }
+
+    $iids = preg_split('/\r\n|\r|\n/', $iidsRaw);
+    $iids = array_map('trim', $iids);
+    $iids = array_filter($iids, fn($v) => $v !== '' && ctype_digit($v));
+    $iids = array_values(array_unique($iids));
+
+    if (empty($iids)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Nessun IID numerico valido.'
+        ], 400);
+    }
+
+    $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+    if (!is_dir($directory)) {
+        $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+    }
+
+    $files = [];
+
+if (is_dir($directory)) {
+    foreach ($iids as $iid) {
+        $matchedFiles = $this->findSreFilesByIid($directory, (string) $iid);
+
+        foreach ($matchedFiles as $file) {
+            $files[] = basename($file);
+        }
+    }
+}
+
+    $files = array_values(array_unique($files));
+    sort($files);
+
+    return response()->json([
+        'success' => true,
+        'iids' => $iids,
+        'files' => $files,
+        'files_count' => count($files),
+    ]);
+}
+
 public function resetIids(Request $request)
 {
     $sid = $request->input('sid');
@@ -354,19 +415,19 @@ public function resetIids(Request $request)
     }
 
     // 3. cancellazione file come prima
-    if (is_dir($directory)) {
-        foreach ($iids as $iid) {
-            $pattern = $directory . "/*" . $iid . "*.sre";
+if (is_dir($directory)) {
+    foreach ($iids as $iid) {
+        $matchedFiles = $this->findSreFilesByIid($directory, (string) $iid);
 
-            foreach (glob($pattern) as $file) {
-                if (File::exists($file)) {
-                    File::delete($file);
-                    $deleted++;
-                    $log[] = "File eliminato: " . basename($file);
-                }
+        foreach ($matchedFiles as $file) {
+            if (File::exists($file)) {
+                File::delete($file);
+                $deleted++;
+                $log[] = "File eliminato: " . basename($file);
             }
         }
     }
+}
 
     return response()->json([
         'success' => true,
@@ -376,6 +437,68 @@ public function resetIids(Request $request)
     ]);
 }
 
+private function findSreFilesByIid(string $directory, string $iid): array
+{
+    if (!is_dir($directory) || $iid === '' || !ctype_digit($iid)) {
+        return [];
+    }
 
+    $matches = [];
+    $files = glob($directory . '/res*.sre');
+
+    if (!is_array($files)) {
+        return [];
+    }
+
+    foreach ($files as $file) {
+        $base = basename($file);
+
+        // Match esatto:
+        // iid=4  => res4.sre oppure res0004.sre
+        // iid=44 => res44.sre oppure res0044.sre
+        // ma iid=4 NON deve matchare res0044.sre
+        if (preg_match('/^res0*' . preg_quote($iid, '/') . '\.sre$/i', $base)) {
+            $matches[] = $file;
+        }
+    }
+
+    return array_values(array_unique($matches));
+}
+
+
+public function searchRespintRecords(Request $request)
+{
+    $sid = trim((string) $request->input('sid'));
+    $term = trim((string) $request->input('term'));
+
+    if ($sid === '' || $term === '') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Parametri mancanti.'
+        ], 400);
+    }
+
+    $q = DB::table('t_respint')
+        ->select('iid', 'uid', 'status', 'prj_name')
+        ->where('sid', $sid);
+
+    if (ctype_digit($term)) {
+        $q->where('iid', (int) $term);
+    } else {
+        $q->where('uid', $term);
+    }
+
+    $rows = $q
+        ->orderBy('iid', 'desc')
+        ->limit(50)
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'rows' => $rows,
+        'count' => $rows->count(),
+        'search_type' => ctype_digit($term) ? 'iid' : 'uid',
+    ]);
+}
 
 }

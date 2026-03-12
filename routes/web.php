@@ -90,6 +90,9 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/abilita-uid/show-data', [AbilitaUidController::class, 'showRightPanelData']);
     Route::post('/abilita-uid/enable-uids', [AbilitaUidController::class, 'enableUids']);
     Route::post('/abilita-uid/reset-iids', [AbilitaUidController::class, 'resetIids']);
+    Route::post('/abilita-uid/preview-reset-iids', [AbilitaUidController::class, 'previewResetIids']);
+    Route::post('/abilita-uid/search-records', [AbilitaUidController::class, 'searchRespintRecords'])
+    ->name('abilita.uid.search-records');
 
     // ============================================
     // AUTOTEST
