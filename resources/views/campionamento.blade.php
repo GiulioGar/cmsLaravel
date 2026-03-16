@@ -39,7 +39,9 @@
       <select id="ricerca" name="sur_id" class="form-control sv-input">
         <option value="">Seleziona ricerca</option>
         @foreach($ricerche as $r)
-          <option value="{{ $r->sur_id }}">{{ $r->description ?: 'ID '.$r->sur_id }}</option>
+          <option value="{{ $r->sur_id }}">
+        {{ ($r->description ?: 'ID '.$r->sur_id) . ' (' . $r->sur_id . ' - ' . $r->prj . ')' }}
+        </option>
         @endforeach
       </select>
     </div>

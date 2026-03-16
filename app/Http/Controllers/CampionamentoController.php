@@ -13,10 +13,10 @@ class CampionamentoController extends Controller
     public function index()
     {
         // 1) Ricerche con panel=1, stato=0
-        $ricerche = PanelControl::select('sur_id', 'description')
+        $ricerche = PanelControl::select('sur_id', 'description', 'prj')
             ->where('panel', 1)
             ->where('stato', 0)
-            ->groupBy('sur_id', 'description')
+            ->groupBy('sur_id', 'description', 'prj')
             ->get();
 
         // 2) Target da elencotag in ordine alfabetico
@@ -317,6 +317,7 @@ Log::info('campionamento.total.start');
 // ============================
 public function creaCampioni(Request $request)
 {
+
     $surId   = (string)$request->input('sur_id');
     $samples = $request->input('samples', []);
 
@@ -495,7 +496,7 @@ public function creaCampioni(Request $request)
                 'u.token'
             ])
             ->distinct()
-            ->orderBy('u.'.$userKey)
+            ->inRandomOrder()
             ->limit($invite)
             ->get();
 
@@ -529,22 +530,32 @@ public function creaCampioni(Request $request)
     |--------------------------------------------------------------------------
     */
 
-    if ($righeSelezionate->isNotEmpty()) {
+if ($righeSelezionate->isNotEmpty()) {
 
-        $toInsert = $righeSelezionate
-            ->filter(fn($r) => !in_array($r['uid'],$giaSelezionatiFollowup))
-            ->map(fn($r)=>[
-                'sid'=>$surId,
-                'uid'=>$r['uid'],
-                'status'=>0,
-                'iid'=>-1,
-                'prj_name'=>$prj,
-            ])->all();
+    $toInsert = $righeSelezionate
+        ->filter(fn($r) => !in_array($r['uid'], $giaSelezionatiFollowup))
+        ->map(fn($r) => [
+            'sid' => $surId,
+            'uid' => $r['uid'],
+            'status' => 0,
+            'iid' => -1,
+            'prj_name' => $prj,
+        ])->all();
 
-        if (!empty($toInsert)) {
+    if (!empty($toInsert)) {
+        DB::transaction(function () use ($toInsert) {
             DB::table('t_respint')->insertOrIgnore($toInsert);
-        }
+
+            $uids = collect($toInsert)
+                ->pluck('uid')
+                ->unique()
+                ->values()
+                ->all();
+
+            $this->aggiornaInvitiUtenti($uids);
+        });
     }
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -591,5 +602,36 @@ public function creaCampioni(Request $request)
     ]);
 }
 
+
+private function aggiornaInvitiUtenti(array $uids): void
+{
+    $uids = array_values(array_unique(array_filter($uids)));
+
+    if (empty($uids)) {
+        return;
+    }
+
+    $now = now()->toDateTimeString();
+
+    $values = [];
+    $bindings = [];
+
+    foreach ($uids as $uid) {
+        $values[] = '(?, 1, ?, ?)';
+        $bindings[] = $uid;
+        $bindings[] = $now;
+        $bindings[] = $now;
+    }
+
+    $sql = "
+        INSERT INTO t_user_invites (user_id, invites, created_at, updated_at)
+        VALUES " . implode(', ', $values) . "
+        ON DUPLICATE KEY UPDATE
+            invites = invites + 1,
+            updated_at = VALUES(updated_at)
+    ";
+
+    DB::statement($sql, $bindings);
+}
 
 }

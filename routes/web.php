@@ -12,7 +12,7 @@ use App\Http\Controllers\CampionamentoController;
 use App\Http\Controllers\AbilitaUidController;
 use App\Http\Controllers\AutotestController;
 use App\Http\Controllers\ConceptToolController;
-use App\Http\Controllers\PanelController;
+use App\Http\Controllers\PanelUsersController;
 use App\Http\Controllers\UserProfileController;
 
 /*
@@ -111,16 +111,11 @@ Route::middleware(['auth.custom'])->group(function () {
     // ============================================
     // PANEL - Gestione Utenti
     // ============================================
-    Route::get('/panel/users', [PanelController::class, 'index'])->name('panel.users');
-    Route::get('/panel/users/data', [PanelController::class, 'getData'])->name('panel.users.data');
-    Route::get('/panel/info-annuale/{anno}', [PanelController::class, 'getAnnualPanelInfo'])->name('panel.info.annuale');
-    Route::post('/panel/users/export', [PanelController::class, 'exportUsers'])->name('panel.users.export');
-    Route::get('/panel/user/{uid}', [UserProfileController::class, 'show'])->name('panel.user.show');
 
-    Route::get('/panel/update-activity', [PanelController::class, 'updateUserActivity'])->name('panel.users.update.activity');
-    Route::get('/panel/users/update-actions', [PanelController::class, 'updateUserActions'])->name('panel.users.update.actions');
-    Route::get('/panel/users/inactive-3y', [PanelController::class, 'getInactiveUsersOver3Years'])->name('panel.users.inactive.3y');
-    Route::get('/panel/users/inactive-3y/list', [PanelController::class, 'listInactiveUsersOver3Years'])->name('panel.users.inactive.3y.list');
+
+
+        Route::get('/panelUsers', [PanelUsersController::class, 'index'])->name('panelUsers.index');
+        Route::get('/panelUsers/data', [PanelUsersController::class, 'getData'])->name('panelUsers.data');
 
     // ============================================
     // USER actions

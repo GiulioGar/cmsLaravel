@@ -19,9 +19,9 @@
         </div>
 
         <div class="au-card-body">
-          @if(session('success'))
-            <div class="alert alert-success mb-3">{{ session('success') }}</div>
-          @endif
+            @if(!empty($successMessage))
+            <div class="alert alert-success mb-3">{{ $successMessage }}</div>
+            @endif
 
           <form action="{{ route('abilita.uid.genera') }}" method="POST" class="row g-3">
             @csrf
@@ -71,13 +71,13 @@
 
             <div class="col-md-4">
               <label class="form-label">Numero di Link</label>
-              <input type="number" name="num_links" min="1" max="10000" class="form-control" required>
+              <input type="number" name="num_links" min="1" max="100000" class="form-control" required>
             </div>
 
             <div class="col-12 text-end mt-2">
-              <button type="submit" class="btn btn-primary">
-                <i class="fa-solid fa-bolt"></i> Genera Links
-              </button>
+<button type="submit" id="btn-genera-links" class="btn btn-primary">
+  <i class="fa-solid fa-bolt"></i> Genera Links
+</button>
             </div>
           </form>
         </div>
@@ -93,7 +93,7 @@
         </div>
 
         <div class="au-card-body">
-          @if(session('links'))
+          @if(!empty($generatedLinks))
             <div class="au-toolbar">
               <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyLinks()">
                 <i class="fa-regular fa-copy"></i> Copia Tutti
@@ -103,7 +103,7 @@
               </button>
             </div>
 
-            <textarea id="generatedLinks" class="form-control au-textarea" rows="10" readonly>@foreach(session('links') as $l){{ $l['link'] }}&#10;@endforeach</textarea>
+            <textarea id="generatedLinks" class="form-control au-textarea" rows="10" readonly>@foreach($generatedLinks as $l){{ $l['link'] }}&#10;@endforeach</textarea>
           @else
             <p class="text-muted m-0">Nessun link generato ancora.</p>
           @endif
@@ -1077,5 +1077,22 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
+
+
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('form[action="{{ route('abilita.uid.genera') }}"]');
+  const btn = document.getElementById('btn-genera-links');
+
+  if (!form || !btn) return;
+
+  form.addEventListener('submit', function () {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generazione...';
+  });
+});
+</script>
+
 @endsection

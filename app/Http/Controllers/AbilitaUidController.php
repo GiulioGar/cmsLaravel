@@ -31,55 +31,94 @@ class AbilitaUidController extends Controller
 
         $panels = DB::table('t_fornitoripanel')
             ->select('id', 'panel_code', 'name', 'red_3', 'red_4', 'red_5', 'complete', 'spesa')
-            ->orderBy('name', 'asc')
+            ->orderBy('id', 'asc')
             ->get();
 
-        return view('abilitaUid', compact('surveys', 'panels'));
+        return view('abilitaUid', [
+                    'surveys' => $surveys,
+                    'panels' => $panels,
+                    'generatedLinks' => [],
+                    'successMessage' => null,
+                ]);
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'sid' => 'required|string|exists:t_surveys,sid',
-            'prj' => 'required|string',
-            'panel_code' => 'required|integer|exists:t_fornitoripanel,panel_code',
-            'num_links' => 'required|integer|min:1|max:10000',
-        ]);
+{
+    $request->validate([
+        'sid' => 'required|string|exists:t_surveys,sid',
+        'prj' => 'required|string',
+        'panel_code' => 'required|integer|exists:t_fornitoripanel,panel_code',
+        'num_links' => 'required|integer|min:1|max:100000',
+    ]);
 
-        $sid = $request->sid;
-        $prj = $request->prj;
-        $panel = DB::table('t_fornitoripanel')->where('panel_code', $request->panel_code)->first();
+    $sid = $request->sid;
+    $prj = strtoupper(trim($request->prj));
 
-        if (!$panel) {
-            return back()->withErrors(['panel_code' => 'Panel non trovato']);
-        }
+    $panel = DB::table('t_fornitoripanel')
+        ->where('panel_code', $request->panel_code)
+        ->first();
 
-        $generator = new UidGeneratorService();
-        $uids = $generator->generateBatch($panel->name, $request->num_links);
-
-        $links = [];
-        foreach ($uids as $uid) {
-            $links[] = [
-                'link' => "https://www.primisoft.com/primis/run.do?sid={$sid}&prj={$prj}&uid={$uid}&pan={$panel->panel_code}",
-                'uid' => $uid,
-            ];
-        }
-
-        foreach ($uids as $uid) {
-            DB::table('t_respint')->insert([
-                'sid' => $sid,
-                'uid' => $uid,
-                'status' => 0,
-                'iid' => -1,
-                'prj_name' => $prj,
-            ]);
-        }
-
-        return redirect()->back()->with([
-            'links' => $links,
-            'success' => count($uids) . ' UID generati e salvati correttamente.'
-        ]);
+    if (!$panel) {
+        return back()->withErrors(['panel_code' => 'Panel non trovato']);
     }
+
+    $generator = new UidGeneratorService();
+    $uids = $generator->generateBatch($panel->name, (int) $request->num_links);
+
+    $links = [];
+    $rowsToInsert = [];
+
+    foreach ($uids as $uid) {
+        $links[] = [
+            'link' => "https://www.primisoft.com/primis/run.do?sid={$sid}&prj={$prj}&uid={$uid}&pan={$panel->panel_code}",
+            'uid' => $uid,
+        ];
+
+        $rowsToInsert[] = [
+            'sid' => $sid,
+            'uid' => $uid,
+            'status' => 0,
+            'iid' => -1,
+            'prj_name' => $prj,
+        ];
+    }
+
+    // Insert a blocchi per evitare migliaia di query singole
+    foreach (array_chunk($rowsToInsert, 1000) as $chunk) {
+        DB::table('t_respint')->insert($chunk);
+    }
+
+    // Ricarico i dati della pagina direttamente, senza usare la sessione
+    $surveys = DB::table('t_surveys')
+        ->select('sid', 'prj_name')
+        ->where('status', 2)
+        ->orderByRaw("
+            CASE
+                WHEN sid REGEXP '^R[0-9]+$' THEN 1
+                ELSE 0
+            END DESC
+        ")
+        ->orderByRaw("
+            CASE
+                WHEN sid REGEXP '^R[0-9]+$' THEN CAST(SUBSTRING(sid, 2) AS UNSIGNED)
+                ELSE NULL
+            END DESC
+        ")
+        ->orderBy('sid', 'desc')
+        ->get();
+
+    $panels = DB::table('t_fornitoripanel')
+        ->select('id', 'panel_code', 'name', 'red_3', 'red_4', 'red_5', 'complete', 'spesa')
+        ->orderBy('name', 'asc')
+        ->get();
+
+    return view('abilitaUid', [
+        'surveys' => $surveys,
+        'panels' => $panels,
+        'generatedLinks' => $links,
+        'successMessage' => count($uids) . ' UID generati e salvati correttamente.',
+    ]);
+}
 
     // === GESTIONE PANEL (AJAX) ===
 

@@ -3,25 +3,25 @@
 namespace App\Services;
 
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 
 class UidGeneratorService
 {
     public function generateBatch(string $panelName, int $count): array
     {
         $uids = [];
+
         $prefix = 'IDEX' . strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $panelName), 0, 3));
 
-        for ($i = 1; $i <= $count; $i++) {
-            do {
-                $random = strtoupper(Str::random(5));
-                $uid = $prefix . $random . $i;
-                $exists = DB::table('t_respint')->where('uid', $uid)->exists();
-            } while ($exists);
+        while (count($uids) < $count) {
+            $random = strtoupper(Str::random(8));
+            $uid = $prefix . $random;
 
-            $uids[] = $uid;
+            // evita duplicati nello stesso batch, senza query DB
+            if (!isset($uids[$uid])) {
+                $uids[$uid] = $uid;
+            }
         }
 
-        return $uids;
+        return array_values($uids);
     }
 }
