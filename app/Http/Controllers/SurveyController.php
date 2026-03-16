@@ -422,7 +422,19 @@ class SurveyController extends Controller
                     ->select('sid')
                     ->where('status', 2)
                     ->whereNotIn('sid', $usedSurIds)
-                    ->orderBy('sid', 'desc')  // Decrescente
+                     ->orderByRaw("
+                CASE
+                    WHEN sid REGEXP '^R[0-9]+$' THEN 1
+                    ELSE 0
+                END DESC
+            ")
+            ->orderByRaw("
+                CASE
+                    WHEN sid REGEXP '^R[0-9]+$' THEN CAST(SUBSTRING(sid, 2) AS UNSIGNED)
+                    ELSE NULL
+                END DESC
+            ")
+            ->orderBy('sid', 'desc')
                     ->get();
 
                 return response()->json($available);

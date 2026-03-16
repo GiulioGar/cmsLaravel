@@ -151,7 +151,14 @@ public function showRightPanelData(Request $request)
         return response()->json(['success' => false, 'message' => 'Parametri mancanti.'], 400);
     }
 
-    $directory = base_path("var/imr/fields/$prj/$sid/results/");
+        // Percorso della directory dei file .sre
+        $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+        if (!is_dir($directory)) {
+            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
+
+
     $totalFiles = 0;
     $lastFile = '—';
 
@@ -338,10 +345,12 @@ public function previewResetIids(Request $request)
         ], 400);
     }
 
-    $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
-    if (!is_dir($directory)) {
-        $directory = "/var/imr/fields/{$prj}/{$sid}/results";
-    }
+        // Percorso della directory dei file .sre
+        $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+        if (!is_dir($directory)) {
+            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
 
     $files = [];
 
@@ -391,6 +400,7 @@ public function resetIids(Request $request)
             'message' => 'Nessun IID numerico valido da resettare.'
         ], 400);
     }
+
 
     $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
     if (!is_dir($directory)) {

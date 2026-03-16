@@ -13,6 +13,18 @@ class AutotestController extends Controller
         $surveys = DB::table('t_surveys')
             ->select('sid', 'prj_name')
             ->where('status', 2)
+            ->orderByRaw("
+                CASE
+                    WHEN sid REGEXP '^R[0-9]+$' THEN 1
+                    ELSE 0
+                END DESC
+            ")
+            ->orderByRaw("
+                CASE
+                    WHEN sid REGEXP '^R[0-9]+$' THEN CAST(SUBSTRING(sid, 2) AS UNSIGNED)
+                    ELSE NULL
+                END DESC
+            ")
             ->orderBy('sid', 'desc')
             ->get();
 
@@ -25,7 +37,13 @@ class AutotestController extends Controller
         $prj = strtoupper(trim($request->prj));
         $num = (int) $request->num;
 
-        $dir = base_path("var/imr/fields/$prj/$sid/results");
+        // Percorso della directory dei file .sre
+        $dir = base_path("var/imr/fields/{$prj}/{$sid}/results");
+
+        if (!is_dir($dir)) {
+            $dir = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
+
         $initialCount = (is_dir($dir)) ? count(glob($dir . "/*.sre")) : 0;
 
         // salviamo stato iniziale in storage/app/autotest/...
