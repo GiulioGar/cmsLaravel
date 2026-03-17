@@ -18,9 +18,16 @@ class UserProfileController extends Controller
         // ===============================
         // 1️⃣ DATI BASE (t_user_info)
         // ===============================
-        $user = DB::table('t_user_info')
-            ->where('user_id', $uid)
-            ->first();
+            $user = DB::table('t_user_info')
+                ->where('user_id', $uid)
+                ->first();
+
+            if (!$user) {
+                abort(404, 'Utente non trovato');
+            }
+
+            $provinceMap = $this->getProvinceMap();
+            $user->province_name = $provinceMap[$user->province_id] ?? '-';
 
         if (!$user) {
             abort(404, 'Utente non trovato');
@@ -100,96 +107,7 @@ class UserProfileController extends Controller
 // 4️⃣ STORICO ATTIVITÀ
 // ===============================
 $showAll = $request->query('full', 0);
-
-$storicoQuery = DB::table('t_user_history')
-    ->where('user_id', $uid)
-    ->orderByDesc('event_date');
-
-if (!$showAll) {
-    $storicoQuery->limit(30);
-}
-
-$storico = $storicoQuery->get()->map(function ($item) {
-$diff = (int)(($item->new_level ?? 0) - ($item->prev_level ?? 0));
-$item->bytes = $diff;
-
-$type = strtoupper(trim($item->event_type ?? ''));
-
-    // Divide info solo se contiene virgole
-    $info = [];
-    if (!empty($item->event_info) && str_contains($item->event_info, ',')) {
-        $info = explode(',', $item->event_info);
-    } elseif (!empty($item->event_info) && str_contains($item->event_info, '|')) {
-        $info = explode('|', $item->event_info);
-    }
-
-$item->iid = trim(str_replace(['(',')'], '', $info[0] ?? '-'));
-$item->sid = trim($info[1] ?? '-');
-$item->prj = trim(str_replace(['(',')'], '', $info[2] ?? '-'));
-
-    $item->tipologia = '-';
-    $item->evento_label = '-';
-    $item->evento_color = 'secondary';
-    $item->evento_icon = 'bi-question-circle';
-
-    switch ($item->event_type) {
-        case 'interview_screenout':
-            $item->evento_label = 'SCREENOUT';
-            $item->evento_color = 'danger';
-            $item->evento_icon = 'bi-emoji-frown';
-            $item->tipologia = 'Sondaggio Interactive';
-            break;
-
-        case 'interview_complete':
-            $item->evento_label = 'COMPLETATA';
-            $item->evento_color = 'success'; // verde standard
-            $item->evento_icon = 'bi-emoji-smile';
-            $item->tipologia = 'Sondaggio Interactive';
-            break;
-
-        case 'interview_quotafull':
-            $item->evento_label = 'QUOTAFULL';
-            $item->evento_color = 'warning';
-            $item->evento_icon = 'bi-emoji-neutral';
-            $item->tipologia = 'Sondaggio Interactive';
-            break;
-
-        case 'interview_complete_cint':
-            $item->evento_label = 'COMPLETATA';
-            $item->evento_color = 'success-dark'; // verde più scuro per CINT
-            $item->evento_icon = 'bi-emoji-laughing';
-            $item->tipologia = 'Sondaggio CINT';
-            break;
-
-        case 'withdraw':
-            $item->evento_label = 'PREMIO';
-            $item->evento_color = 'info-light'; // azzurro più chiaro
-            $item->evento_icon = 'bi-gift';
-            $item->tipologia = $item->event_info ?? 'Premio';
-            break;
-
-    case 'Bonus':
-        // 👉 BONUS deve risultare sempre positivo a video
-        $item->bytes = abs($diff);
-        $item->evento_label = 'BONUS';
-        $item->evento_color = 'primary';
-        $item->evento_icon  = 'bi-plus-circle';
-        $item->tipologia    = $item->event_info ?? 'Bonus';
-        break;
-
-    case 'Malus':
-        // 👉 MALUS deve risultare sempre negativo a video
-        $item->bytes = -abs($diff);
-        $item->evento_label = 'MALUS';
-        $item->evento_color = 'orange';
-        $item->evento_icon  = 'bi-emoji-angry';
-        $item->tipologia    = $item->event_info ?? 'Malus';
-        break;
-
-    }
-
-    return $item;
-});
+$storico = $this->buildStorico($uid, $showAll ? null : 30);
 
 
         // ===============================
@@ -339,10 +257,14 @@ public function assignBonusMalus(Request $request, $user_id)
             'new_level'  => $new,
         ]);
 
+        $storico = $this->buildStorico($user_id, 30);
+        $storicoHtml = view('partials.userProfileStoricoRows', compact('storico'))->render();
+
         return response()->json([
             'success' => true,
             'message' => $type . ' assegnato correttamente.',
             'points'  => $new,
+            'storico_html' => $storicoHtml,
         ]);
 
     } catch (\Exception $e) {
@@ -351,6 +273,116 @@ public function assignBonusMalus(Request $request, $user_id)
     }
 }
 
+private function buildStorico($user_id, $limit = 30)
+{
+    $storicoQuery = DB::table('t_user_history')
+        ->where('user_id', $user_id)
+        ->orderByDesc('event_date');
+
+    if (!is_null($limit)) {
+        $storicoQuery->limit($limit);
+    }
+
+    return $storicoQuery->get()->map(function ($item) {
+        $diff = (int)(($item->new_level ?? 0) - ($item->prev_level ?? 0));
+        $item->bytes = $diff;
+
+        // Divide info solo se contiene virgole o pipe
+        $info = [];
+        if (!empty($item->event_info) && str_contains($item->event_info, ',')) {
+            $info = explode(',', $item->event_info);
+        } elseif (!empty($item->event_info) && str_contains($item->event_info, '|')) {
+            $info = explode('|', $item->event_info);
+        }
+
+        $item->iid = trim(str_replace(['(', ')'], '', $info[0] ?? '-'));
+        $item->sid = trim($info[1] ?? '-');
+        $item->prj = trim(str_replace(['(', ')'], '', $info[2] ?? '-'));
+
+        $item->tipologia = '-';
+        $item->evento_label = '-';
+        $item->evento_color = 'secondary';
+        $item->evento_icon = 'bi-question-circle';
+
+        switch ($item->event_type) {
+            case 'interview_screenout':
+                $item->evento_label = 'SCREENOUT';
+                $item->evento_color = 'danger';
+                $item->evento_icon = 'bi-emoji-frown';
+                $item->tipologia = 'Sondaggio Interactive';
+                break;
+
+            case 'interview_complete':
+                $item->evento_label = 'COMPLETATA';
+                $item->evento_color = 'success';
+                $item->evento_icon = 'bi-emoji-smile';
+                $item->tipologia = 'Sondaggio Interactive';
+                break;
+
+            case 'interview_quotafull':
+                $item->evento_label = 'QUOTAFULL';
+                $item->evento_color = 'warning';
+                $item->evento_icon = 'bi-emoji-neutral';
+                $item->tipologia = 'Sondaggio Interactive';
+                break;
+
+            case 'interview_complete_cint':
+                $item->evento_label = 'COMPLETATA';
+                $item->evento_color = 'success-dark';
+                $item->evento_icon = 'bi-emoji-laughing';
+                $item->tipologia = 'Sondaggio CINT';
+                break;
+
+            case 'withdraw':
+                $item->evento_label = 'PREMIO';
+                $item->evento_color = 'info-light';
+                $item->evento_icon = 'bi-gift';
+                $item->tipologia = $item->event_info ?? 'Premio';
+                break;
+
+            case 'Bonus':
+                $item->bytes = abs($diff);
+                $item->evento_label = 'BONUS';
+                $item->evento_color = 'primary';
+                $item->evento_icon = 'bi-plus-circle';
+                $item->tipologia = $item->event_info ?? 'Bonus';
+                break;
+
+            case 'Malus':
+                $item->bytes = -abs($diff);
+                $item->evento_label = 'MALUS';
+                $item->evento_color = 'orange';
+                $item->evento_icon = 'bi-emoji-angry';
+                $item->tipologia = $item->event_info ?? 'Malus';
+                break;
+        }
+
+        return $item;
+    });
+}
+
+private function getProvinceMap()
+{
+    return [
+        1 => 'Alessandria', 2 => 'Crotone', 3 => 'Aosta', 4 => 'Arezzo', 5 => 'Ascoli Piceno', 6 => 'Piceno',
+        7 => 'Asti', 8 => 'Avellino', 9 => 'Bari', 10 => 'Belluno', 11 => 'Benevento', 12 => 'Bergamo',
+        13 => 'Biella', 14 => 'Bologna', 15 => 'Bolzano', 16 => 'Brescia', 17 => 'Brindisi', 18 => 'Cagliari',
+        19 => 'Caltanissetta', 20 => 'Campobasso', 21 => 'Caserta', 22 => 'Catania', 23 => 'Catanzaro', 24 => 'Chieti',
+        25 => 'Como', 26 => 'Cosenza', 27 => 'Cremona', 29 => 'Cuneo', 30 => 'Enna', 31 => 'Ferrara', 32 => 'Firenze',
+        33 => 'Foggia', 34 => 'Forlì', 35 => 'Frosinone', 36 => 'Genova', 37 => 'Gorizia', 38 => 'Grosseto',
+        39 => 'Imperia Isernia', 40 => "L'Aquila", 41 => 'La Spezia', 42 => 'Latina', 43 => 'Lecce', 44 => 'Lecco',
+        45 => 'Livorno', 46 => 'Lodi', 47 => 'Lucca', 48 => 'Macerata', 49 => 'Mantova', 50 => 'Massa Carrara',
+        51 => 'Matera', 52 => 'Messina', 53 => 'Milano', 54 => 'Modena', 55 => 'Napoli', 56 => 'Novara',
+        57 => 'Nuoro', 58 => 'Oristano', 59 => 'Padova', 60 => 'Palermo', 61 => 'Parma', 62 => 'Pavia', 63 => 'Perugia',
+        64 => 'Pesaro e Urbino', 65 => 'Pescara', 66 => 'Piacenza', 67 => 'Pisa', 68 => 'Pistoia', 69 => 'Pordenone',
+        70 => 'Potenza', 71 => 'Prato', 72 => 'Ragusa', 73 => 'Ravenna', 74 => 'Reggio Calabria', 75 => 'Reggio Emilia',
+        76 => 'Rieti', 77 => 'Rimini', 78 => 'Roma', 79 => 'Rovigo', 80 => 'Salerno', 81 => 'Sassari', 82 => 'Savona',
+        83 => 'Siena', 84 => 'Siracusa', 85 => 'Sondrio', 86 => 'Taranto', 87 => 'Teramo', 88 => 'Terni',
+        89 => 'Torino', 90 => 'Trapani', 91 => 'Trento', 92 => 'Treviso', 93 => 'Trieste', 94 => 'Udine',
+        95 => 'Varese', 96 => 'Venezia', 97 => 'Verbano-Cusio-Ossola', 98 => 'Vercelli', 99 => 'Verona',
+        100 => 'Vibo Valentia', 101 => 'Vicenza', 102 => 'Viterbo', 103 => 'Altro', 104 => 'Fermo', 105 => 'Barletta-Andria-Trani'
+    ];
+}
 
 
 }

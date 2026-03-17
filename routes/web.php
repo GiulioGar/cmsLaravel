@@ -112,19 +112,27 @@ Route::middleware(['auth.custom'])->group(function () {
     // PANEL - Gestione Utenti
     // ============================================
 
-
-
         Route::get('/panelUsers', [PanelUsersController::class, 'index'])->name('panelUsers.index');
         Route::get('/panelUsers/data', [PanelUsersController::class, 'getData'])->name('panelUsers.data');
+        Route::get('/panelUsers/panel-stats', [PanelUsersController::class, 'getPanelStats'])->name('panelUsers.panelStats');
+        Route::post('/panelUsers/search-preview', [PanelUsersController::class, 'searchPreview'])->name('panelUsers.searchPreview');
+        Route::post('/panelUsers/search-download', [PanelUsersController::class, 'searchDownload'])->name('panelUsers.searchDownload');
+        Route::get('/panelUsers/inactive-summary', [PanelUsersController::class, 'getInactiveSummary'])->name('panelUsers.inactiveSummary');
+        Route::get('/panelUsers/inactive-list', [PanelUsersController::class, 'getInactiveList'])->name('panelUsers.inactiveList');
+        Route::get('/panelUsers/inactive-download', [PanelUsersController::class, 'downloadInactiveList'])->name('panelUsers.downloadInactiveList');
+        Route::post('/panelUsers/inactive-disable', [PanelUsersController::class, 'disableInactiveUsers'])->name('panelUsers.disableInactiveUsers');
 
     // ============================================
     // USER actions
     // ============================================
+    Route::get('/user/{user_id}', [UserProfileController::class, 'show'])->name('user.profile');
+
     Route::post('/user/{user_id}/deactivate', [UserProfileController::class, 'deactivate'])->name('user.deactivate');
     Route::post('/user/{user_id}/delete', [UserProfileController::class, 'delete'])->name('user.delete');
     Route::post('/user/{user_id}/activate', [UserProfileController::class, 'activate'])->name('user.activate');
     Route::post('/user/{user_id}/update-info', [UserProfileController::class, 'updateAnagrafica'])->name('user.update.info');
     Route::post('/user/{user_id}/bonus-malus', [UserProfileController::class, 'assignBonusMalus'])->name('user.bonus.malus');
+
 
     // ============================================
     // TARGET FIELD

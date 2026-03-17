@@ -235,3 +235,277 @@
     color: #0f172a;
     letter-spacing: .02em;
 }
+
+/* ===== Right side stats ===== */
+
+.panel-stats-card .card-header{
+    background: #fff;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+    padding: 1rem 1.25rem;
+}
+
+.panel-stats-card .card-header h4{
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.panel-stats-card .card-header small{
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* card principale */
+.pu-stat-hero{
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(248,250,252,.85));
+    box-shadow: 0 8px 22px rgba(16,24,40,.05);
+    padding: 1rem 1rem;
+}
+
+.pu-stat-hero-top{
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.pu-stat-label{
+    font-size: .78rem;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.pu-stat-main{
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-top: .35rem;
+}
+
+.pu-stat-main-sub{
+    font-size: .95rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-left: .3rem;
+}
+
+.pu-stat-percent{
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #1d4ed8;
+    white-space: nowrap;
+}
+
+/* progress */
+.pu-progress-wrap{
+    width: 100%;
+}
+
+.pu-progress-track{
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(15,23,42,.08);
+    overflow: hidden;
+}
+
+.pu-progress-fill{
+    height: 100%;
+    border-radius: 999px;
+    transition: width .6s ease;
+}
+
+.pu-progress-fill-total{
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+}
+
+.pu-progress-fill-male{
+    background: linear-gradient(90deg, #1d4ed8, #60a5fa);
+}
+
+.pu-progress-fill-female{
+    background: linear-gradient(90deg, #9333ea, #ec4899);
+}
+
+/* mini card */
+.pu-mini-stat{
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(16,24,40,.04);
+    padding: .95rem .95rem;
+    height: 100%;
+}
+
+.pu-mini-stat-male{
+    background: linear-gradient(180deg, rgba(239,246,255,.9), rgba(255,255,255,1));
+}
+
+.pu-mini-stat-female{
+    background: linear-gradient(180deg, rgba(253,242,248,.9), rgba(255,255,255,1));
+}
+
+.pu-mini-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.pu-mini-title{
+    font-size: .82rem;
+    font-weight: 800;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.pu-mini-percent{
+    font-size: .95rem;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+.pu-mini-value{
+    margin-top: .45rem;
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.1;
+}
+
+.pu-mini-sub{
+    font-size: .85rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-left: .25rem;
+}
+
+/* tabella statistiche panel */
+.panel-stats-table thead th{
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    font-weight: 800;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+}
+
+.panel-stats-table tbody tr{
+    transition: background .15s ease;
+}
+
+.panel-stats-table tbody tr:hover{
+    background: rgba(37,99,235,.04);
+}
+
+.panel-stats-table td{
+    vertical-align: middle;
+    font-size: .9rem;
+}
+
+#searchPreviewTable th{
+    background: #f8fafc;
+    font-size: .75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+#searchPreviewTable td{
+    font-size: .8rem;
+    white-space: nowrap;
+}
+
+/* ===== Ricerca utenti compatta ===== */
+.search-values-box{
+    min-height: 96px;
+    resize: vertical;
+}
+
+.search-fields-grid{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .35rem .75rem;
+    padding: .2rem 0;
+}
+
+.search-fields-grid .form-check{
+    margin-bottom: 0;
+}
+
+.search-fields-grid .form-check-label{
+    font-size: .84rem;
+    color: #334155;
+    font-weight: 600;
+}
+
+#searchPreviewWrapper{
+    border-top: 1px solid rgba(0,0,0,.06);
+    padding-top: 1rem;
+}
+
+#searchPreviewTable th{
+    background: #f8fafc;
+    font-size: .74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+#searchPreviewTable td{
+    font-size: .8rem;
+}
+
+@media (max-width: 767px){
+    .search-fields-grid{
+        grid-template-columns: 1fr;
+    }
+}
+
+#inactiveUsersTable thead th{
+    background: #f8fafc;
+    font-size: .75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+#inactiveUsersTable td{
+    font-size: .82rem;
+    vertical-align: middle;
+}
+
+#inactiveUsersTableResponsive{
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+#inactiveUsersTable thead th{
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8fafc;
+}
+
+#inactiveUsersTable td:nth-child(1){
+    font-weight: 800;
+    color: #0f172a;
+}
+
+#inactiveUsersTable td:nth-child(3),
+#inactiveUsersTable td:nth-child(4){
+    text-align: center;
+    font-weight: 700;
+}
+
+#inactiveUsersTable td:nth-child(5){
+    white-space: nowrap;
+}

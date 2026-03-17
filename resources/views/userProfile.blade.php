@@ -1,165 +1,9 @@
 @extends('layouts.main')
 
+
 @section('content')
 
-<style>
-    body { background: #f5f6fa; }
-
-    .card {
-        border: none;
-        border-radius: 14px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        background: #fff;
-        transition: all 0.3s ease-in-out;
-    }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
-
-    .card-header {
-        border: none;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.8rem 1rem;
-    }
-
-    .header-anagrafica { background: linear-gradient(90deg, #007bff, #00bfff); color: #fff; }
-    .header-attivita { background: linear-gradient(90deg, #28a745, #58d68d); color: #fff; }
-    .header-premi { background: linear-gradient(90deg, #ffc107, #ffcd39); color: #000; }
-    .header-storico { background: linear-gradient(90deg, #6c757d, #adb5bd); color: #fff; }
-
-    .profile-info {
-        background: #f1f8ff;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        text-align: center;
-    }
-    .profile-name { font-size: 1.6rem; font-weight: 700; color: #333; }
-    .profile-meta { font-size: 0.9rem; color: #555; }
-
-    .table-anagrafica th {
-        width: 35%;
-        background: #f8f9fa;
-        color: #555;
-        font-weight: 600;
-    }
-    .table-anagrafica td { color: #333; }
-
-    /* KPI layout */
-    .kpi-box {
-        display: flex;
-        align-items: center;
-        justify-content: start;
-        gap: 0.75rem;
-        padding: 0.6rem 0.8rem;
-        border-radius: 10px;
-        background: #f8f9fa;
-        transition: 0.3s;
-    }
-    .kpi-box:hover { background: #e9f5ff; }
-    .kpi-icon { font-size: 1.4rem; width: 28px; text-align: center; }
-    .kpi-value { font-size: 1.2rem; font-weight: 700; }
-    .kpi-label { font-size: 0.75rem; color: #666; margin-top: -2px; }
-
-    .badge-status {
-        font-size: 0.9rem;
-        border-radius: 8px;
-        padding: 5px 10px;
-        font-weight: 600;
-    }
-
-    .text-green { color: #28a745; font-weight: 600; }
-    .text-red { color: #dc3545; font-weight: 600; }
-
-    .copy-btn {
-        border: none;
-        background: none;
-        color: #007bff;
-        cursor: pointer;
-        padding: 0;
-    }
-    .copy-btn:hover { color: #0056b3; }
-
-    .premi-stats small { display: block; font-weight: 500; }
-    .btn-show-all {
-        border-radius: 20px;
-        font-weight: 500;
-    }
-
-.kpi-box {
-    min-height: 150px;
-    transition: all 0.2s ease-in-out;
-}
-.kpi-box:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-}
-.kpi-value {
-    line-height: 1.1;
-}
-.kpi-label {
-    margin-top: 2px;
-}
-
-.badge.bg-success-dark {
-    background-color: #0c713d !important;
-}
-.badge.bg-orange {
-    background-color: #ff8c00 !important;
-}
-
-.header-storico {
-    background: linear-gradient(90deg, #e68c26, #e6ab0b);
-    color: #fff;
-    padding: 0.75rem 1rem;
-    border-bottom: none;
-    border-radius: 6px 6px 0 0;
-}
-.badge.bg-success-dark {
-    background-color: #0d5c36 !important;
-}
-.badge.bg-info-light {
-    background-color: #5bc0de !important; /* azzurro più chiaro rispetto a verde */
-    color: #fff !important;
-}
-.badge.bg-orange {
-    background-color: #ff8c00 !important;
-    color: #fff !important;
-}
-.table thead th {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    color: #6c757d;
-}
-.table td {
-    vertical-align: middle;
-}
-
-.badge[role="button"] {
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    transition: all .2s;
-}
-.badge[role="button"]:hover {
-    transform: scale(1.05);
-    opacity: .9;
-}
-
-.btn-outline-primary.position-absolute {
-    background-color: #fff;
-    border-color: #0d6efd;
-    color: #0d6efd;
-    transition: all 0.2s ease;
-}
-.btn-outline-primary.position-absolute:hover {
-    background-color: #0d6efd;
-    color: #fff;
-}
-
-
-</style>
+<link rel="stylesheet" href="{{ asset('css/userProfile.css') }}">
 
 <div class="container-fluid mt-4">
 
@@ -167,9 +11,17 @@
         {{-- ===== 1) ANAGRAFICA ===== --}}
         <div class="col-lg-6">
             <div class="card">
-                <div class="card-header header-anagrafica">
-                    <h6><i class="bi bi-person-lines-fill me-1"></i> Anagrafica</h6>
+            <div class="card-header section-header header-anagrafica">
+                <div class="section-header-left">
+                    <div class="section-icon">
+                        <i class="bi bi-person-lines-fill"></i>
+                    </div>
+                    <div>
+                        <h5 class="section-title mb-0">Anagrafica</h5>
+                        <div class="section-subtitle">Dati personali e informazioni di contatto</div>
+                    </div>
                 </div>
+            </div>
                 <div class="card-body">
 
                         {{-- 🔹 CARD PROFILO UTENTE --}}
@@ -247,7 +99,7 @@
                         <tr><th>Istruzione:</th><td>{{ $user->instr_level_id ?? '-' }}</td></tr>
                         <tr><th>Lavoro:</th><td>{{ $user->work_id ?? '-' }}</td></tr>
                         <tr><th>Stato civile:</th><td>{{ $user->mar_status_id ?? '-' }}</td></tr>
-                        <tr><th>Provincia:</th><td>{{ $user->province_id ?? '-' }}</td></tr>
+                        <tr><th>Provincia:</th><td>{{ $user->province_name ?? '-' }} @if(!empty($user->province_id)) <small class="text-muted">(#{{ $user->province_id }})</small> @endif</td></tr>
                         <tr><th>CAP:</th><td>{{ $user->code ?? '-' }}</td></tr>
                         <tr><th>Indirizzo:</th><td>{{ $user->address ?? '-' }}</td></tr>
                         <tr><th>Telefono:</th><td>{{ $user->home_phone ?? '-' }}</td></tr>
@@ -262,9 +114,17 @@
 
             <div class="card">
 
-                <div class="card-header header-attivita">
-                    <h6><i class="bi bi-activity me-1"></i> Attività</h6>
-                </div>
+<div class="card-header section-header header-attivita">
+    <div class="section-header-left">
+        <div class="section-icon">
+            <i class="bi bi-activity"></i>
+        </div>
+        <div>
+            <h5 class="section-title mb-0">Attività</h5>
+            <div class="section-subtitle">Metriche di partecipazione e performance utente</div>
+        </div>
+    </div>
+</div>
 
                 <div class="card-body p-3">
 
@@ -370,14 +230,34 @@
         {{-- ===== 3) PREMI ===== --}}
         <div class="col-12">
             <div class="card">
-                <div class="card-header header-premi">
-                    <h6><i class="bi bi-gift"></i> Premi</h6>
-                    <div class="premi-stats text-end small">
-                        <small><strong>Pagati:</strong> {{ $premi['pagati'] }}</small>
-                        <small><strong>Da pagare:</strong> {{ $premi['da_pagare'] }}</small>
-                        <small><strong>Totali:</strong> {{ $premi['totali'] }}</small>
+            <div class="card-header section-header header-premi">
+                <div class="section-header-left">
+                    <div class="section-icon">
+                        <i class="bi bi-gift"></i>
+                    </div>
+                    <div>
+                        <h5 class="section-title mb-0">Premi</h5>
+                        <div class="section-subtitle">Storico richieste premio e stato dei pagamenti</div>
                     </div>
                 </div>
+
+                <div class="header-stats">
+                    <div class="header-stat-card stat-success">
+                        <span class="header-stat-label">Pagati</span>
+                        <span class="header-stat-value">{{ $premi['pagati'] }}</span>
+                    </div>
+
+                    <div class="header-stat-card stat-warning">
+                        <span class="header-stat-label">Da pagare</span>
+                        <span class="header-stat-value">{{ $premi['da_pagare'] }}</span>
+                    </div>
+
+                    <div class="header-stat-card stat-neutral">
+                        <span class="header-stat-label">Totali</span>
+                        <span class="header-stat-value">{{ $premi['totali'] }}</span>
+                    </div>
+                </div>
+            </div>
                 <div class="card-body">
                     <table class="table table-sm table-striped text-center align-middle">
                         <thead><tr><th>Premio</th><th>Codice</th><th>Richiesto</th><th>Giorni</th><th>Pagato</th><th>Status</th><th>IP</th></tr></thead>
@@ -393,13 +273,19 @@
                                     <td>
                                         <span class="badge bg-light text-dark">{{ $p->codice2 ?? '-' }}</span>
                                         @if($p->codice2)
-                                            <button class="copy-btn ms-1" onclick="navigator.clipboard.writeText('{{ $p->codice2 }}')"><i class="bi bi-clipboard"></i></button>
+                                           <button class="copy-btn ms-1 copy-code-btn" data-code="{{ trim($p->codice2) }}"> <i class="bi bi-clipboard"></i> </button>
                                         @endif
                                     </td>
                                     <td>{{ \Carbon\Carbon::parse($p->event_date)->format('d/m/Y') }}</td>
                                     <td>{{ $giorni }}</td>
                                     <td>{{ $p->giorno_paga ? \Carbon\Carbon::parse($p->giorno_paga)->format('d/m/Y') : '-' }}</td>
-                                    <td>@if($p->pagato == 1)<span class="badge bg-success">Pagato</span>@else<span class="badge bg-warning text-dark">Da pagare</span>@endif</td>
+                                    <td>
+                                        @if($p->pagato == 1)
+                                            <span class="badge badge-soft-success">Pagato</span>
+                                        @else
+                                            <span class="badge badge-soft-warning">Da pagare</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $p->ip ?? '-' }}</td>
                                 </tr>
                             @empty
@@ -414,9 +300,17 @@
 {{-- ===== 4) STORICO ===== --}}
 <div class="col-12">
     <div class="card">
-        <div class="card-header header-storico">
-            <h6><i class="bi bi-clock-history"></i> Storico Attività</h6>
+<div class="card-header section-header header-storico">
+    <div class="section-header-left">
+        <div class="section-icon">
+            <i class="bi bi-clock-history"></i>
         </div>
+        <div>
+            <h5 class="section-title mb-0">Storico Attività</h5>
+            <div class="section-subtitle">Eventi recenti, movimenti punti e premi</div>
+        </div>
+    </div>
+</div>
         <div class="card-body">
             <table class="table table-sm table-striped text-center align-middle">
                 <thead>
@@ -430,40 +324,11 @@
                         <th>Bytes</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse($storico as $s)
-                        <tr>
-                            <td>{{ \Carbon\Carbon::parse($s->event_date)->format('d/m/Y H:i') }}</td>
-                            <td>
-                                <span class="badge bg-{{ $s->evento_color }} d-inline-flex align-items-center px-2 py-1">
-                                    <i class="bi {{ $s->evento_icon }} me-1"></i>{{ $s->evento_label }}
-                                </span>
-                            </td>
-                            <td class="text-muted small">{{ $s->tipologia }}</td>
-                            <td>{{ $s->iid }}</td>
-                            <td>{{ $s->sid }}</td>
-                            <td>{{ $s->prj }}</td>
-<td>
-    @if($s->bytes > 0)
-        <span class="text-success fw-semibold">
-            +{{ $s->bytes }}
-            <small class="text-muted">({{ $s->new_level }} - {{ $s->prev_level }})</small>
-        </span>
-    @elseif($s->bytes < 0)
-        <span class="text-danger fw-semibold">
-            {{ $s->bytes }}
-            <small class="text-muted">({{ $s->new_level }} - {{ $s->prev_level }})</small>
-        </span>
-    @else
-        <span class="text-muted">0</span>
-    @endif
-</td>
 
-                        </tr>
-                    @empty
-                        <tr><td colspan="7" class="text-muted">Nessun evento registrato</td></tr>
-                    @endforelse
-                </tbody>
+            <tbody id="storicoTableBody">
+                @include('partials.userProfileStoricoRows', ['storico' => $storico])
+            </tbody>
+
             </table>
 
             @if($storico->count() >= 20)
@@ -641,22 +506,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===========================
     // 🔹 GESTIONE STATO UTENTE
     // ===========================
-
-    // Disattivazione
     document.getElementById('btnDeactivate')?.addEventListener('click', () => {
         if (confirm('Confermi la disattivazione dell’utente?')) {
             sendUserAction(`/user/${userId}/deactivate`, 'modalUserActive');
         }
     });
 
-    // Eliminazione
     document.getElementById('btnDelete')?.addEventListener('click', () => {
         if (confirm('Confermi l’eliminazione definitiva dell’utente?')) {
             sendUserAction(`/user/${userId}/delete`, 'modalUserActive');
         }
     });
 
-    // Riattivazione
     document.getElementById('btnActivate')?.addEventListener('click', () => {
         if (confirm('Confermi la riattivazione dell’utente?')) {
             sendUserAction(`/user/${userId}/activate`, 'modalUserInactive');
@@ -674,14 +535,12 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Chiudi la modale associata
                 const modalEl = document.getElementById(modalId);
                 const modalInstance = bootstrap.Modal.getInstance(modalEl);
                 modalInstance?.hide();
 
-                // Mostra messaggio e ricarica pagina
                 setTimeout(() => {
-                   showToast(data.message, 'success');
+                    showToast(data.message, 'success');
                     location.reload();
                 }, 300);
             } else {
@@ -710,12 +569,10 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Chiude la modale anagrafica
                 const modalEl = document.getElementById('modalEditAnagrafica');
                 const modalInstance = bootstrap.Modal.getInstance(modalEl);
                 modalInstance?.hide();
 
-                // Feedback e refresh
                 setTimeout(() => {
                     showToast(data.message, 'success');
                     location.reload();
@@ -726,56 +583,100 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(() => showToast('Errore di connessione.', 'error'));
     });
-});
 
+    // ===========================
+    // 🔹 BONUS / MALUS
+    // ===========================
+    document.getElementById('btnSaveBonusMalus')?.addEventListener('click', () => {
+        const rawType = document.getElementById('bmType').value;
+        const type = rawType.toUpperCase();
+        const value = parseInt(document.getElementById('bmValue').value.trim(), 10);
+        const motivation = document.getElementById('bmMotivation').value.trim();
 
+        if (!value || !motivation) {
+            showToast('Compila tutti i campi.', 'warning');
+            return;
+        }
 
-// ===========================
-// 🔹 BONUS / MALUS
-// ===========================
-document.getElementById('btnSaveBonusMalus')?.addEventListener('click', () => {
-    const userId = "{{ $user->user_id }}";
-    const rawType = document.getElementById('bmType').value; // "Bonus" | "Malus"
-    const type = rawType.toUpperCase();                      // normalizzato in "BONUS" | "MALUS"
-    const value = parseInt(document.getElementById('bmValue').value.trim());
-    const motivation = document.getElementById('bmMotivation').value.trim();
+        fetch(`/user/${userId}/bonus-malus`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ type, value, motivation })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                showToast(data.message || 'Errore durante l\'operazione.', 'error');
+                return;
+            }
 
-    if (!value || !motivation) {
-        showToast('Compila tutti i campi.');
-        return;
-    }
-
-    fetch(`/user/${userId}/bonus-malus`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ type, value, motivation })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            // ✅ Chiudi la modale
             const modalEl = document.getElementById('modalBonusMalus');
             const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            modalInstance?.hide();
 
-            // ✅ Messaggio e ricarica
-            setTimeout(() => {
+            const finalizeBonusMalusUI = () => {
+                // 1. pulizia completa bootstrap/modal
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+
+                // 2. aggiorna punti
+                const userPointsEl = document.getElementById('userPoints');
+                if (userPointsEl && typeof data.points !== 'undefined') {
+                    userPointsEl.textContent = data.points;
+                }
+
+                // 3. aggiorna storico attività via AJAX
+                const storicoTableBody = document.getElementById('storicoTableBody');
+                if (storicoTableBody && data.storico_html) {
+                    storicoTableBody.innerHTML = data.storico_html;
+                }
+
+                // 4. reset form
+                document.getElementById('bmType').value = 'Bonus';
+                document.getElementById('bmValue').value = '';
+                document.getElementById('bmMotivation').value = '';
+
+                // 5. toast finale
                 showToast(data.message, 'success');
-                location.reload();
-            }, 300);
-        } else {
-            showToast(data.message || 'Errore durante l\'operazione.', 'error');
-        }
-    })
-    .catch(() => showToast('Errore di connessione.', 'error'));
+            };
+
+            if (modalEl) {
+                modalEl.addEventListener('hidden.bs.modal', finalizeBonusMalusUI, { once: true });
+            }
+
+            if (modalInstance) {
+                modalInstance.hide();
+            } else {
+                finalizeBonusMalusUI();
+            }
+        })
+        .catch(() => {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+
+            showToast('Errore di connessione.', 'error');
+        });
+    });
+
+    // ===========================
+    // 🔹 COPIA CODICE PREMIO
+    // ===========================
+    document.querySelectorAll('.copy-code-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const code = btn.dataset.code || '';
+
+            navigator.clipboard.writeText(code)
+                .then(() => showToast('Codice copiato', 'success'))
+                .catch(() => showToast('Errore nella copia', 'error'));
+        });
+    });
 });
-
-
-
 </script>
 @endsection
-
