@@ -15,6 +15,10 @@ class UserProfileController extends Controller
      */
     public function show(Request $request, $uid)
     {
+
+    DB::enableQueryLog();
+    $start = microtime(true);
+
         // ===============================
         // 1️⃣ DATI BASE (t_user_info)
         // ===============================
@@ -33,55 +37,15 @@ class UserProfileController extends Controller
             abort(404, 'Utente non trovato');
         }
 
-        // ===============================
-        // ⚡ ATTIVITÀ — conteggio filtrato
-        // ===============================
-        // Recupera tutti i sid validi da t_panel_control (panel=1)
-        $sidValidi = DB::table('t_panel_control')
-            ->where('panel', 1)
-            ->pluck('sur_id')
-            ->toArray();
+    // ===============================
+// 2️⃣ ATTIVITÀ LIGHT (senza t_respint)
+// ===============================
+$userInvites = DB::table('t_user_invites')
+    ->select(['user_id', 'invites', 'updated_at', 'last_rebuild'])
+    ->where('user_id', $uid)
+    ->first();
 
-        // Query principale: contiamo solo se SID è valido o PRJ = CINTPANEL
-        $stats = DB::table('t_respint')
-            ->selectRaw("
-                COUNT(*) as inviti,
-                SUM(CASE WHEN iid != -1 THEN 1 ELSE 0 END) as click,
-                SUM(CASE WHEN status = 3 THEN 1 ELSE 0 END) as complete_millebytes,
-                SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) as sospese,
-                SUM(CASE WHEN status IN (4,5) THEN 1 ELSE 0 END) as non_target
-            ")
-            ->where('uid', $uid)
-            ->where(function ($q) use ($sidValidi) {
-                $q->whereIn('sid', $sidValidi)
-                  ->orWhere('prj_name', 'CINTPANEL');
-            })
-            ->first();
-
-        // Conteggi per origine inviti
-        $countByOrigin = DB::table('t_respint')
-            ->selectRaw("
-                SUM(CASE WHEN prj_name = 'CINTPANEL' THEN 1 ELSE 0 END) as cint_inviti,
-                SUM(CASE WHEN prj_name != 'CINTPANEL' THEN 1 ELSE 0 END) as millebytes_inviti
-            ")
-            ->where('uid', $uid)
-            ->where(function ($q) use ($sidValidi) {
-                $q->whereIn('sid', $sidValidi)
-                  ->orWhere('prj_name', 'CINTPANEL');
-            })
-            ->first();
-
-        $inviti = $stats->inviti ?? 0;
-        $click = $stats->click ?? 0;
-        $completeMillebytes = $stats->complete_millebytes ?? 0;
-        $sospese = $stats->sospese ?? 0;
-        $nonTarget = $stats->non_target ?? 0;
-
-        $completeTotali = $completeMillebytes;
-        $partecipazione = $inviti > 0 ? round(($click / $inviti) * 100) : 0;
-
-        $cintInviti = $countByOrigin->cint_inviti ?? 0;
-        $millebytesInviti = $countByOrigin->millebytes_inviti ?? 0;
+$inviti = $userInvites->invites ?? 0;
 
         // ===============================
         // 🕓 Ultima attività
@@ -93,11 +57,12 @@ class UserProfileController extends Controller
         // ===============================
         // 3️⃣ PREMI
         // ===============================
-        $premi = DB::table('t_user_history')
-            ->where('user_id', $uid)
-            ->where('event_type', 'withdraw')
-            ->orderByDesc('event_date')
-            ->get();
+$premi = DB::table('t_user_history')
+    ->select(['event_date', 'event_info', 'codice2', 'giorno_paga', 'pagato', 'ip'])
+    ->where('user_id', $uid)
+    ->where('event_type', 'withdraw')
+    ->orderByDesc('event_date')
+    ->get();
 
         $premiPagati = $premi->where('pagato', 1)->count();
         $premiDaPagare = $premi->where('pagato', 0)->count();
@@ -110,6 +75,12 @@ $showAll = $request->query('full', 0);
 $storico = $this->buildStorico($uid, $showAll ? null : 30);
 
 
+Log::info('UserProfile show total time', [
+    'uid' => $uid,
+    'duration_sec' => round(microtime(true) - $start, 3),
+    'queries' => DB::getQueryLog(),
+]);
+
         // ===============================
         // 5️⃣ RETURN ALLA VIEW
         // ===============================
@@ -117,15 +88,7 @@ $storico = $this->buildStorico($uid, $showAll ? null : 30);
             'user' => $user,
             'attivita' => [
                 'inviti' => $inviti,
-                'click' => $click,
-                'complete_millebytes' => $completeMillebytes,
-                'complete_totali' => $completeTotali,
-                'sospese' => $sospese,
-                'non_target' => $nonTarget,
-                'partecipazione' => $partecipazione,
                 'ultima_attivita' => $ultimaAttivita,
-                'cint_inviti' => $cintInviti,
-                'millebytes_inviti' => $millebytesInviti,
             ],
             'premi' => [
                 'lista' => $premi,
@@ -275,9 +238,10 @@ public function assignBonusMalus(Request $request, $user_id)
 
 private function buildStorico($user_id, $limit = 30)
 {
-    $storicoQuery = DB::table('t_user_history')
-        ->where('user_id', $user_id)
-        ->orderByDesc('event_date');
+$storicoQuery = DB::table('t_user_history')
+    ->select(['event_date', 'event_type', 'event_info', 'prev_level', 'new_level'])
+    ->where('user_id', $user_id)
+    ->orderByDesc('event_date');
 
     if (!is_null($limit)) {
         $storicoQuery->limit($limit);

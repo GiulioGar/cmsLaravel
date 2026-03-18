@@ -132,92 +132,52 @@
 {{-- 🔹 SEZIONE ATTIVITÀ --}}
 <div class="card shadow-sm border-0 mb-4">
     <div class="card-body">
+
         <div class="row g-3">
 
-            {{-- Inviti con dettaglio CINT / MILLEBYTES --}}
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
-                    <div class="kpi-icon text-secondary mb-2"><i class="bi bi-envelope-paper fs-3"></i></div>
-                    <div class="kpi-value fs-4 fw-bold">{{ $attivita['inviti'] }}</div>
-                    <div class="kpi-label text-muted small">Inviti totali</div>
-
-                    {{-- Mini dettaglio CINT/MILLEBYTES --}}
-                    <div class="pt-2 mt-1 border-top w-100">
-                        <div class="d-flex justify-content-between px-2 text-muted small">
-                            <span><i class="bi bi-circle-fill text-success small me-1"></i>CINT</span>
-                            <span>{{ $attivita['cint_inviti'] }}</span>
-                        </div>
-                        <div class="d-flex justify-content-between px-2 text-muted small">
-                            <span><i class="bi bi-circle-fill text-primary small me-1"></i>MIL</span>
-                            <span>{{ $attivita['millebytes_inviti'] }}</span>
-                        </div>
-                    </div>
-                </div>
+    {{-- Inviti totali --}}
+    <div class="col-12 col-md-4">
+        <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
+            <div class="kpi-icon text-secondary mb-2">
+                <i class="bi bi-envelope-paper fs-3"></i>
             </div>
-
-            {{-- Bytes totali + gestione Bonus/Malus --}}
-                <div class="col-6 col-md-4 col-lg-3">
-                    <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
-                        <div class="kpi-icon text-primary mb-2"><i class="bi bi-coin fs-3"></i></div>
-                        <div id="userPoints" class="kpi-value fs-4 fw-bold">{{ $user->points ?? 0 }}</div>
-                        <div class="kpi-label text-muted small mb-2">Bytes totali</div>
-
-                        {{-- Bottone per assegnare Bonus o Malus --}}
-                        <button class="btn btn-sm btn-outline-primary mt-auto"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalBonusMalus">
-                            <i class="bi bi-plus-slash-minus me-1"></i> Bonus / Malus
-                        </button>
-                    </div>
-                </div>
-
-
-            {{-- Click --}}
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
-                    <div class="kpi-icon text-success mb-2"><i class="bi bi-mouse fs-3"></i></div>
-                    <div class="kpi-value fs-4 fw-bold">{{ $attivita['click'] }}</div>
-                    <div class="kpi-label text-muted small">Click</div>
-                </div>
-            </div>
-
-            {{-- Complete --}}
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
-                    <div class="kpi-icon text-info mb-2"><i class="bi bi-trophy fs-3"></i></div>
-                    <div class="kpi-value fs-4 fw-bold">{{ $attivita['complete_totali'] }}</div>
-                    <div class="kpi-label text-muted small">Complete</div>
-                </div>
-            </div>
-
-            {{-- Sospese --}}
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
-                    <div class="kpi-icon text-warning mb-2"><i class="bi bi-hourglass-split fs-3"></i></div>
-                    <div class="kpi-value fs-4 fw-bold">{{ $attivita['sospese'] }}</div>
-                    <div class="kpi-label text-muted small">Sospese</div>
-                </div>
-            </div>
-
-            {{-- Non Target --}}
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
-                    <div class="kpi-icon text-muted mb-2"><i class="bi bi-x-octagon fs-3"></i></div>
-                    <div class="kpi-value fs-4 fw-bold">{{ $attivita['non_target'] }}</div>
-                    <div class="kpi-label text-muted small">Non Target</div>
-                </div>
-            </div>
-
-            {{-- Partecipazione --}}
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
-                    <div class="kpi-icon text-primary mb-2"><i class="bi bi-graph-up fs-3"></i></div>
-                    <div class="kpi-value fs-4 fw-bold">{{ $attivita['partecipazione'] }}%</div>
-                    <div class="kpi-label text-muted small">Partecipazione</div>
-                </div>
-            </div>
-
+            <div class="kpi-value fs-4 fw-bold">{{ $attivita['inviti'] }}</div>
+            <div class="kpi-label text-muted small">Inviti totali</div>
         </div>
+    </div>
+
+    {{-- Bytes totali + Bonus/Malus --}}
+    <div class="col-12 col-md-4">
+        <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
+            <div class="kpi-icon text-primary mb-2">
+                <i class="bi bi-coin fs-3"></i>
+            </div>
+            <div id="userPoints" class="kpi-value fs-4 fw-bold">{{ $user->points ?? 0 }}</div>
+            <div class="kpi-label text-muted small mb-2">Bytes totali</div>
+
+            <button class="btn btn-sm btn-outline-primary mt-auto"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalBonusMalus">
+                <i class="bi bi-plus-slash-minus me-1"></i> Bonus / Malus
+            </button>
+        </div>
+    </div>
+
+    {{-- Ultima attività --}}
+    <div class="col-12 col-md-4">
+        <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
+            <div class="kpi-icon text-success mb-2">
+                <i class="bi bi-clock-history fs-3"></i>
+            </div>
+            <div class="kpi-value fs-6 fw-bold">
+                {{ $attivita['ultima_attivita'] ? \Carbon\Carbon::parse($attivita['ultima_attivita'])->format('d/m/Y') : '-' }}
+            </div>
+            <div class="kpi-label text-muted small">Ultima attività</div>
+        </div>
+    </div>
+
+</div>
+
     </div>
 </div>
 
