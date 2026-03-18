@@ -11,107 +11,21 @@ use Carbon\Carbon;
 class PanelUsersController extends Controller
 {
 
-    public function index()
-    {
-        $cutoffDate = now()->subMonths(18);
+        public function index()
+        {
+            $annoSelezionato = now()->year;
 
-        /*
-        * 1) Totale panel attivo/confermato
-        */
-        $totalePanel = DB::table('t_user_info')
-            ->where('active', 1)
-            ->where('confirm', 1)
-            ->count();
+            $anniDisponibili = DB::table('t_panel_control')
+                ->selectRaw("DISTINCT YEAR(sur_date) as anno")
+                ->whereNotNull('sur_date')
+                ->orderByDesc('anno')
+                ->pluck('anno');
 
-        $totalePanelUomo = DB::table('t_user_info')
-            ->where('active', 1)
-            ->where('confirm', 1)
-            ->where('gender', 1)
-            ->count();
-
-        $totalePanelDonna = DB::table('t_user_info')
-            ->where('active', 1)
-            ->where('confirm', 1)
-            ->where('gender', 2)
-            ->count();
-
-        /*
-        * 2) Utenti attivi ultimi 18 mesi
-        */
-        $totaleAttivi18Mesi = DB::table('t_user_info as u')
-            ->where('u.active', 1)
-            ->where('u.confirm', 1)
-            ->whereExists(function ($query) use ($cutoffDate) {
-                $query->select(DB::raw(1))
-                    ->from('t_user_history as h')
-                    ->whereColumn('h.user_id', 'u.user_id')
-                    ->where('h.event_date', '>=', $cutoffDate);
-            })
-            ->count();
-
-        $totaleAttivi18MesiUomo = DB::table('t_user_info as u')
-            ->where('u.active', 1)
-            ->where('u.confirm', 1)
-            ->where('u.gender', 1)
-            ->whereExists(function ($query) use ($cutoffDate) {
-                $query->select(DB::raw(1))
-                    ->from('t_user_history as h')
-                    ->whereColumn('h.user_id', 'u.user_id')
-                    ->where('h.event_date', '>=', $cutoffDate);
-            })
-            ->count();
-
-        $totaleAttivi18MesiDonna = DB::table('t_user_info as u')
-            ->where('u.active', 1)
-            ->where('u.confirm', 1)
-            ->where('u.gender', 2)
-            ->whereExists(function ($query) use ($cutoffDate) {
-                $query->select(DB::raw(1))
-                    ->from('t_user_history as h')
-                    ->whereColumn('h.user_id', 'u.user_id')
-                    ->where('h.event_date', '>=', $cutoffDate);
-            })
-            ->count();
-
-        /*
-        * 3) Percentuali
-        */
-        $percentualeAttivi18Mesi = ($totalePanel > 0)
-            ? round(($totaleAttivi18Mesi / $totalePanel) * 100, 1)
-            : 0;
-
-        $percentualeAttivi18MesiUomo = ($totalePanelUomo > 0)
-            ? round(($totaleAttivi18MesiUomo / $totalePanelUomo) * 100, 1)
-            : 0;
-
-        $percentualeAttivi18MesiDonna = ($totalePanelDonna > 0)
-            ? round(($totaleAttivi18MesiDonna / $totalePanelDonna) * 100, 1)
-            : 0;
-
-        $annoSelezionato = now()->year;
-        $mesi = $this->buildPanelStatsByYear($annoSelezionato);
-
-        $anniDisponibili = DB::table('t_panel_control')
-            ->selectRaw("DISTINCT YEAR(sur_date) as anno")
-            ->whereNotNull('sur_date')
-            ->orderByDesc('anno')
-            ->pluck('anno');
-
-        return view('panelUsers', compact(
-            'totalePanel',
-            'totalePanelUomo',
-            'totalePanelDonna',
-            'totaleAttivi18Mesi',
-            'totaleAttivi18MesiUomo',
-            'totaleAttivi18MesiDonna',
-            'percentualeAttivi18Mesi',
-            'percentualeAttivi18MesiUomo',
-            'percentualeAttivi18MesiDonna',
-            'mesi',
-            'annoSelezionato',
-            'anniDisponibili'
-        ));
-    }
+            return view('panelUsers', compact(
+                'annoSelezionato',
+                'anniDisponibili'
+            ));
+        }
 
 public function getPanelStats(Request $request)
 {
@@ -125,82 +39,120 @@ public function getPanelStats(Request $request)
     ]);
 }
 
-    public function getData(Request $request)
-    {
-        /*
-         * Subquery inviti
-         */
-        $invitesSub = DB::table('t_user_invites')
-            ->select(
-                'user_id',
-                DB::raw('COALESCE(invites, 0) as invites')
-            );
+public function getActiveSummary()
+{
+    $cutoffDate = now()->subMonths(18);
 
-        /*
-         * Subquery attività + partecipazione + ultima azione
-         */
-$historySub = DB::table('t_user_history')
-    ->select(
-        'user_id',
-        DB::raw("
-            SUM(
-                CASE
-                    WHEN event_type NOT IN ('subscribe', 'unsubscribe')
-                    THEN 1
-                    ELSE 0
-                END
-            ) as activity_count
-        "),
-        DB::raw("
-            SUM(
-                CASE
-                    WHEN event_type IN (
-                        'interview_quotafull',
-                        'interview_complete',
-                        'interview_screenout',
-                        'interview_complete_cint'
-                    )
-                    THEN 1
-                    ELSE 0
-                END
-            ) as interview_count
-        "),
-        DB::raw('MAX(id) as last_history_id'),
-        DB::raw('MAX(event_date) as last_event_date')
-    )
-    ->groupBy('user_id');
+    /*
+     * Subquery: utenti con almeno un evento negli ultimi 18 mesi
+     * DISTINCT evita duplicati per user_id
+     */
+    $recentActiveUsers = DB::table('t_user_history')
+        ->select('user_id')
+        ->where('event_date', '>=', $cutoffDate)
+        ->distinct();
 
-        /*
-         * Query principale
-         */
-$query = DB::table('t_user_info as u')
-    ->where('u.confirm', 1)
-    ->where('u.active', 1)
-    ->leftJoinSub($invitesSub, 'inv', function ($join) {
-        $join->on('u.user_id', '=', 'inv.user_id');
-    })
-    ->leftJoinSub($historySub, 'h', function ($join) {
-        $join->on('u.user_id', '=', 'h.user_id');
-    })
-    ->select([
-        'u.user_id',
-        'u.email',
-        'u.birth_date',
-        'u.reg_date',
-        DB::raw('COALESCE(inv.invites, 0) as invites'),
-        DB::raw('COALESCE(h.activity_count, 0) as activity_count'),
-        DB::raw('COALESCE(h.interview_count, 0) as interview_count'),
-        DB::raw('h.last_event_date as last_event_date'),
+    /*
+     * Una sola query:
+     * - prende tutti gli utenti attivi/confermati
+     * - marca con flag chi ha avuto attività negli ultimi 18 mesi
+     */
+    $users = DB::table('t_user_info as u')
+        ->leftJoinSub($recentActiveUsers, 'ra', function ($join) {
+            $join->on('u.user_id', '=', 'ra.user_id');
+        })
+        ->where('u.active', 1)
+        ->where('u.confirm', 1)
+        ->select([
+            'u.gender',
+            DB::raw('CASE WHEN ra.user_id IS NULL THEN 0 ELSE 1 END as is_active_18'),
+        ])
+        ->get();
+
+    /*
+     * Conteggi in collection
+     */
+    $totalePanel = $users->count();
+
+    $totalePanelUomo = $users->where('gender', 1)->count();
+    $totalePanelDonna = $users->where('gender', 2)->count();
+
+    $totaleAttivi18Mesi = $users->where('is_active_18', 1)->count();
+
+    $totaleAttivi18MesiUomo = $users
+        ->where('gender', 1)
+        ->where('is_active_18', 1)
+        ->count();
+
+    $totaleAttivi18MesiDonna = $users
+        ->where('gender', 2)
+        ->where('is_active_18', 1)
+        ->count();
+
+    $percentualeAttivi18Mesi = ($totalePanel > 0)
+        ? round(($totaleAttivi18Mesi / $totalePanel) * 100, 1)
+        : 0;
+
+    $percentualeAttivi18MesiUomo = ($totalePanelUomo > 0)
+        ? round(($totaleAttivi18MesiUomo / $totalePanelUomo) * 100, 1)
+        : 0;
+
+    $percentualeAttivi18MesiDonna = ($totalePanelDonna > 0)
+        ? round(($totaleAttivi18MesiDonna / $totalePanelDonna) * 100, 1)
+        : 0;
+
+    return response()->json([
+        'success' => true,
+        'totalePanel' => $totalePanel,
+        'totalePanelUomo' => $totalePanelUomo,
+        'totalePanelDonna' => $totalePanelDonna,
+        'totaleAttivi18Mesi' => $totaleAttivi18Mesi,
+        'totaleAttivi18MesiUomo' => $totaleAttivi18MesiUomo,
+        'totaleAttivi18MesiDonna' => $totaleAttivi18MesiDonna,
+        'percentualeAttivi18Mesi' => $percentualeAttivi18Mesi,
+        'percentualeAttivi18MesiUomo' => $percentualeAttivi18MesiUomo,
+        'percentualeAttivi18MesiDonna' => $percentualeAttivi18MesiDonna,
     ]);
+}
 
-        return DataTables::of($query)
+
+public function getData(Request $request)
+{
+    /*
+     * Inviti già aggregati per utente
+     */
+    $invitesAgg = DB::table('t_user_invites')
+        ->select(
+            'user_id',
+            DB::raw('COALESCE(invites, 0) as invites')
+        );
+
+    /*
+     * Query principale super leggera:
+     * niente history, niente last_event_date, niente activity_count
+     */
+    $query = DB::table('t_user_info as u')
+        ->where('u.confirm', 1)
+        ->where('u.active', 1)
+        ->leftJoinSub($invitesAgg, 'inv', function ($join) {
+            $join->on('u.user_id', '=', 'inv.user_id');
+        })
+        ->select([
+            'u.user_id',
+            'u.email',
+            'u.birth_date',
+            'u.reg_date',
+            DB::raw('COALESCE(inv.invites, 0) as invites'),
+        ]);
+
+    return DataTables::of($query)
         ->filterColumn('user_id', function ($query, $keyword) {
             $query->where('u.user_id', 'like', "%{$keyword}%");
         })
         ->filterColumn('email', function ($query, $keyword) {
             $query->where('u.email', 'like', "%{$keyword}%");
         })
-           ->editColumn('user_id', function ($row) {
+        ->editColumn('user_id', function ($row) {
             $uid = e($row->user_id);
             $url = route('user.profile', ['user_id' => $row->user_id]);
 
@@ -220,89 +172,42 @@ $query = DB::table('t_user_info as u')
                         ' . $email . '
                     </a>';
         })
-            ->editColumn('birth_date', function ($row) {
-                if (empty($row->birth_date)) {
-                    return 'N.D.';
+        ->editColumn('birth_date', function ($row) {
+            if (empty($row->birth_date)) {
+                return 'N.D.';
+            }
+
+            try {
+                return Carbon::parse($row->birth_date)->age;
+            } catch (\Exception $e) {
+                return 'N.D.';
+            }
+        })
+        ->editColumn('reg_date', function ($row) {
+            if (empty($row->reg_date)) {
+                return 'N.D.';
+            }
+
+            try {
+                $regDate = Carbon::parse($row->reg_date);
+                $now = now();
+
+                $months = $regDate->diffInMonths($now);
+                $years = $regDate->diffInYears($now);
+
+                if ($months < 12) {
+                    return $months . ' mesi';
                 }
 
-                try {
-                    return Carbon::parse($row->birth_date)->age;
-                } catch (\Exception $e) {
-                    return 'N.D.';
-                }
-            })
-            ->editColumn('activity_count', function ($row) {
-                $count = (int) $row->activity_count;
-
-                if ($count <= 0) {
-                    return '<span class="pu-badge pu-badge-muted">0</span>';
-                }
-
-                if ($count < 5) {
-                    return '<span class="pu-badge pu-badge-low">'.$count.'</span>';
-                }
-
-                if ($count < 20) {
-                    return '<span class="pu-badge pu-badge-mid">'.$count.'</span>';
-                }
-
-                return '<span class="pu-badge pu-badge-high">'.$count.'</span>';
-            })
-            ->addColumn('partecipazione', function ($row) {
-                $invites = (int) $row->invites;
-                $interviews = (int) $row->interview_count;
-
-                if ($invites <= 0) {
-                    return '<span class="pu-badge pu-badge-muted">0%</span>';
-                }
-
-                $percentage = round(($interviews / $invites) * 100, 1);
-
-                if ($percentage < 20) {
-                    $class = 'pu-badge-danger';
-                } elseif ($percentage < 50) {
-                    $class = 'pu-badge-warn';
-                } else {
-                    $class = 'pu-badge-success';
-                }
-
-                return '<span class="pu-badge '.$class.'">'.$percentage.'%</span>';
-            })
-            ->editColumn('reg_date', function ($row) {
-                if (empty($row->reg_date)) {
-                    return 'N.D.';
-                }
-
-                try {
-                    $regDate = Carbon::parse($row->reg_date);
-                    $now = now();
-
-                    $months = $regDate->diffInMonths($now);
-                    $years = $regDate->diffInYears($now);
-
-                    if ($months < 12) {
-                        return $months . ' mesi';
-                    }
-
-                    return $years . ' anni';
-                } catch (\Exception $e) {
-                    return 'N.D.';
-                }
-            })
-            ->editColumn('last_event_date', function ($row) {
-                if (empty($row->last_event_date)) {
-                    return 'N.D.';
-                }
-
-                try {
-                    return Carbon::parse($row->last_event_date)->format('d/m/Y');
-                } catch (\Exception $e) {
-                    return 'N.D.';
-                }
-            })
-        ->rawColumns(['user_id', 'email', 'activity_count', 'partecipazione'])
+                return $years . ' anni';
+            } catch (\Exception $e) {
+                return 'N.D.';
+            }
+        })
+        ->rawColumns(['user_id', 'email'])
         ->make(true);
-    }
+}
+
 
 private function buildPanelStatsByYear($annoSelezionato)
 {
@@ -633,7 +538,7 @@ private function formatInactivityLabelFromDate($lastDate)
     }
 }
 
-public function getInactiveSummary(Request $request)
+public function getInactiveSummaryOld(Request $request)
 {
     $years = (int) $request->input('years', 3);
 
@@ -711,6 +616,113 @@ public function getInactiveSummary(Request $request)
             $abandonersCount++;
         }
     }
+
+    $totalInactive = $inactiveCount + $abandonersCount;
+
+    $inactivePercent = ($totalActives > 0)
+        ? round(($totalInactive / $totalActives) * 100, 1)
+        : 0;
+
+    return response()->json([
+        'success' => true,
+        'years' => $years,
+        'totalActives' => $totalActives,
+        'totalInactive' => $totalInactive,
+        'inactiveCount' => $inactiveCount,
+        'abandonersCount' => $abandonersCount,
+        'inactivePercent' => $inactivePercent,
+    ]);
+}
+
+public function getInactiveSummary(Request $request)
+{
+    $years = (int) $request->input('years', 3);
+
+    if (!in_array($years, [1, 2, 3])) {
+        $years = 3;
+    }
+
+    $cutoffDate = now()->subYears($years);
+
+    /*
+     * Subquery aggregata history:
+     * - actions_count escludendo subscribe/unsubscribe
+     * - ultima azione
+     */
+    $historyStats = DB::table('t_user_history')
+        ->select(
+            'user_id',
+            DB::raw("
+                SUM(
+                    CASE
+                        WHEN event_type NOT IN ('subscribe', 'unsubscribe')
+                        THEN 1
+                        ELSE 0
+                    END
+                ) as actions_count
+            "),
+            DB::raw('MAX(event_date) as last_event_date')
+        )
+        ->groupBy('user_id');
+
+    /*
+     * Una sola query:
+     * - tutti gli utenti attivi/confermati
+     * - join con history aggregata
+     * - campi minimi necessari
+     */
+    $users = DB::table('t_user_info as u')
+        ->leftJoinSub($historyStats, 'h', function ($join) {
+            $join->on('u.user_id', '=', 'h.user_id');
+        })
+        ->where('u.active', 1)
+        ->where('u.confirm', 1)
+        ->select([
+            'u.reg_date',
+            DB::raw('COALESCE(h.actions_count, 0) as actions_count'),
+            'h.last_event_date',
+        ])
+        ->get()
+        ->map(function ($row) {
+            $row->actions_count = (int) $row->actions_count;
+            return $row;
+        });
+
+    /*
+     * Totale utenti attivi/confermati
+     */
+    $totalActives = $users->count();
+
+    /*
+     * Filtra solo quelli che rientrano nella definizione di inattività
+     */
+    $inactiveUsers = $users->filter(function ($user) use ($cutoffDate) {
+        // Caso A: nessuna azione, ma registrato prima della soglia
+        if (empty($user->last_event_date)) {
+            if (empty($user->reg_date)) {
+                return false;
+            }
+
+            try {
+                return Carbon::parse($user->reg_date)->lte($cutoffDate);
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+
+        // Caso B: ultima azione più vecchia della soglia
+        try {
+            return Carbon::parse($user->last_event_date)->lte($cutoffDate);
+        } catch (\Exception $e) {
+            return false;
+        }
+    });
+
+    /*
+     * Split inattivi / abandoners in collection
+     */
+    $inactiveCount = $inactiveUsers->where('actions_count', 0)->count();
+    $abandonersCount = $inactiveUsers->where('actions_count', '>', 0)->count();
 
     $totalInactive = $inactiveCount + $abandonersCount;
 
@@ -925,5 +937,7 @@ public function disableInactiveUsers(Request $request)
         'updated' => $updated,
     ]);
 }
+
+
 
 }

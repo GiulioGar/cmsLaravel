@@ -14,24 +14,28 @@
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <div>
                         <h4 class="mb-0">Utenti Panel</h4>
-                        <small class="text-muted">Consultazione utenti, inviti, attività e partecipazione</small>
+                        <small class="text-muted">Consultazione utenti, inviti e dati di iscrizione</small>
                     </div>
                 </div>
 
                     <div class="card-body">
                         <table id="panel-users-table" class="table table-sm table-striped align-middle w-100">
-                            <thead>
+                        <thead>
+                            <tr>
+                                <th>UID</th>
+                                <th>Email</th>
+                                <th>Età</th>
+                                <th>Inviti</th>
+                                <th>Iscrizione</th>
+                            </tr>
+                        </thead>
+                            <tbody>
                                 <tr>
-                                    <th>UID</th>
-                                    <th>Email</th>
-                                    <th>Età</th>
-                                    <th>Inviti</th>
-                                    <th>Attività</th>
-                                    <th>%</th>
-                                    <th>Iscrizione</th>
-                                    <th>Ultima Azione</th>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        Caricamento utenti in corso...
+                                    </td>
                                 </tr>
-                            </thead>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -42,58 +46,63 @@
 {{-- COLONNA DESTRA --}}
 <div class="col-lg-5">
 
-    <div class="card panel-users-card panel-stats-card">
-        <div class="card-header">
-            <h4 class="mb-0">Utenti attivi ultimi 18 mesi</h4>
-            <small class="text-muted">Utenti attivi e confermati con almeno un'azione negli ultimi 18 mesi</small>
+ <div class="card panel-users-card panel-stats-card">
+    <div class="card-header">
+        <h4 class="mb-0">Utenti attivi ultimi 18 mesi</h4>
+        <small class="text-muted">Utenti attivi e confermati con almeno un'azione negli ultimi 18 mesi</small>
+    </div>
+
+    <div class="card-body">
+
+        <div id="activeSummaryLoader" class="text-center py-4">
+            <div class="spinner-border text-secondary mb-2" style="width:1.8rem;height:1.8rem;"></div>
+            <div class="text-muted small">Caricamento riepilogo in corso...</div>
         </div>
 
-        <div class="card-body">
+        <div id="activeSummaryBox" class="d-none">
 
-            {{-- CARD PRINCIPALE --}}
             <div class="pu-stat-hero">
                 <div class="pu-stat-hero-top">
                     <div>
                         <div class="pu-stat-label">Totale attivi 18 mesi</div>
                         <div class="pu-stat-main">
-                            {{ number_format($totaleAttivi18Mesi, 0, ',', '.') }}
+                            <span id="totaleAttivi18MesiValue">0</span>
                             <span class="pu-stat-main-sub">
-                                / {{ number_format($totalePanel, 0, ',', '.') }}
+                                / <span id="totalePanelValue">0</span>
                             </span>
                         </div>
                     </div>
 
                     <div class="pu-stat-percent">
-                        {{ $percentualeAttivi18Mesi }}%
+                        <span id="percentualeAttivi18MesiValue">0</span>%
                     </div>
                 </div>
 
                 <div class="pu-progress-wrap mt-3">
                     <div class="pu-progress-track">
-                        <div class="pu-progress-fill pu-progress-fill-total" style="width: {{ $percentualeAttivi18Mesi }}%;"></div>
+                        <div id="percentualeAttivi18MesiBar" class="pu-progress-fill pu-progress-fill-total" style="width: 0%;"></div>
                     </div>
                 </div>
             </div>
 
-            {{-- MINI CARD UOMO / DONNA --}}
             <div class="row mt-3">
                 <div class="col-md-6 mb-3 mb-md-0">
                     <div class="pu-mini-stat pu-mini-stat-male">
                         <div class="pu-mini-head">
                             <span class="pu-mini-title">Uomini</span>
-                            <span class="pu-mini-percent">{{ $percentualeAttivi18MesiUomo }}%</span>
+                            <span class="pu-mini-percent"><span id="percentualeAttivi18MesiUomoValue">0</span>%</span>
                         </div>
 
                         <div class="pu-mini-value">
-                            {{ number_format($totaleAttivi18MesiUomo, 0, ',', '.') }}
+                            <span id="totaleAttivi18MesiUomoValue">0</span>
                             <span class="pu-mini-sub">
-                                / {{ number_format($totalePanelUomo, 0, ',', '.') }}
+                                / <span id="totalePanelUomoValue">0</span>
                             </span>
                         </div>
 
                         <div class="pu-progress-wrap mt-2">
                             <div class="pu-progress-track">
-                                <div class="pu-progress-fill pu-progress-fill-male" style="width: {{ $percentualeAttivi18MesiUomo }}%;"></div>
+                                <div id="percentualeAttivi18MesiUomoBar" class="pu-progress-fill pu-progress-fill-male" style="width: 0%;"></div>
                             </div>
                         </div>
                     </div>
@@ -103,19 +112,19 @@
                     <div class="pu-mini-stat pu-mini-stat-female">
                         <div class="pu-mini-head">
                             <span class="pu-mini-title">Donne</span>
-                            <span class="pu-mini-percent">{{ $percentualeAttivi18MesiDonna }}%</span>
+                            <span class="pu-mini-percent"><span id="percentualeAttivi18MesiDonnaValue">0</span>%</span>
                         </div>
 
                         <div class="pu-mini-value">
-                            {{ number_format($totaleAttivi18MesiDonna, 0, ',', '.') }}
+                            <span id="totaleAttivi18MesiDonnaValue">0</span>
                             <span class="pu-mini-sub">
-                                / {{ number_format($totalePanelDonna, 0, ',', '.') }}
+                                / <span id="totalePanelDonnaValue">0</span>
                             </span>
                         </div>
 
                         <div class="pu-progress-wrap mt-2">
                             <div class="pu-progress-track">
-                                <div class="pu-progress-fill pu-progress-fill-female" style="width: {{ $percentualeAttivi18MesiDonna }}%;"></div>
+                                <div id="percentualeAttivi18MesiDonnaBar" class="pu-progress-fill pu-progress-fill-female" style="width: 0%;"></div>
                             </div>
                         </div>
                     </div>
@@ -123,7 +132,9 @@
             </div>
 
         </div>
+
     </div>
+</div>
 
     <div class="card panel-users-card mt-4">
     <div class="card-header">
@@ -265,37 +276,13 @@
                     </tr>
                 </thead>
 
-                <tbody id="panel-stats-tbody">
-                    @foreach($mesi as $mese)
+                    <tbody id="panel-stats-tbody">
                         <tr>
-                            <td class="fw-bold text-capitalize">
-                                {{ $mese['mese_nome'] }}
-                            </td>
-
-                            <td>{{ number_format($mese['ricerche'], 0, ',', '.') }}</td>
-
-                            <td>
-                                <span class="badge bg-light text-dark">
-                                    {{ $mese['ir_medio'] }}%
-                                </span>
-                            </td>
-
-                            <td>{{ number_format($mese['contatti'], 0, ',', '.') }}</td>
-
-                            <td>
-                                <span class="text-primary fw-bold">
-                                    {{ number_format($mese['attivi'], 0, ',', '.') }}
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="text-success fw-bold">
-                                    {{ number_format($mese['registrati'], 0, ',', '.') }}
-                                </span>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                Caricamento statistiche in corso...
                             </td>
                         </tr>
-                    @endforeach
-                </tbody>
+                    </tbody>
 
             </table>
         </div>
@@ -332,6 +319,15 @@
         <div id="inactiveCountLoader" class="text-center py-4 d-none">
             <div class="spinner-border text-secondary mb-2" style="width:1.8rem;height:1.8rem;"></div>
             <div class="text-muted small">Calcolo in corso...</div>
+        </div>
+
+        <div id="inactiveInitialState" class="text-center py-4 mt-3">
+            <div class="text-muted small mb-2">
+                Il riepilogo inattivi non viene caricato automaticamente per alleggerire la pagina.
+            </div>
+            <div class="fw-semibold">
+                Clicca su <span class="text-primary">Aggiorna</span> per eseguire il calcolo.
+            </div>
         </div>
 
         <div id="inactiveCountBox" class="d-none mt-4">
@@ -455,98 +451,174 @@
 @endsection
 
 @section('scripts')
+
 <script>
-$(document).ready(function() {
-
-$('#panel-users-table').DataTable({
-    processing: true,
-    serverSide: true,
-    ajax: '{{ route("panelUsers.data") }}',
-    pageLength: 100,
-    lengthMenu: [25, 50, 100, 200],
-    scrollX: false,
-    autoWidth: false,
-    order: [[7, 'desc']],
-    columnDefs: [
-        { targets: 0, width: '110px' },
-        { targets: 1, width: '220px' },
-        { targets: 2, width: '70px' },
-        { targets: 3, width: '80px' },
-        { targets: 4, width: '80px' },
-        { targets: 5, width: '80px' },
-        { targets: 6, width: '100px' },
-        { targets: 7, width: '140px' }
-    ],
-columns: [
-    { data: 'user_id',         name: 'u.user_id', searchable: true },
-    { data: 'email',           name: 'u.email', searchable: true },
-    { data: 'birth_date',      name: 'u.birth_date', searchable: false },
-    { data: 'invites',         name: 'invites', searchable: false },
-    { data: 'activity_count',  name: 'activity_count', searchable: false },
-    { data: 'partecipazione',  name: 'partecipazione', orderable: false, searchable: false },
-    { data: 'reg_date',        name: 'u.reg_date', searchable: false },
-    { data: 'last_event_date', name: 'last_event_date', searchable: false }
-],
-    language: {
-        url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json",
-        search: "Cerca utente:",
-        searchPlaceholder: "UID o email..."
+function initPanelUsersTable() {
+    if ($.fn.DataTable.isDataTable('#panel-users-table')) {
+        return;
     }
-});
 
+    $('#panel-users-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: '{{ route("panelUsers.data") }}',
+        pageLength: 25,
+        lengthMenu: [25, 50, 100, 200],
+        scrollX: false,
+        autoWidth: false,
+        order: [[0, 'asc']],
+        columnDefs: [
+            { targets: 0, width: '120px' },
+            { targets: 1, width: '240px' },
+            { targets: 2, width: '80px' },
+            { targets: 3, width: '90px' },
+            { targets: 4, width: '110px' }
+        ],
+        columns: [
+            { data: 'user_id',    name: 'u.user_id', searchable: true,  orderable: true },
+            { data: 'email',      name: 'u.email', searchable: true,    orderable: true },
+            { data: 'birth_date', name: 'u.birth_date', searchable: false, orderable: false },
+            { data: 'invites',    name: 'invites', searchable: false,   orderable: true },
+            { data: 'reg_date',   name: 'u.reg_date', searchable: false, orderable: true }
+        ],
+        language: {
+            url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json",
+            search: "Cerca utente:",
+            searchPlaceholder: "UID o email..."
+        }
+    });
+}
+
+$(document).ready(function() {
+    setTimeout(function () {
+        initPanelUsersTable();
+    }, 350);
+});
+</script>
+
+
+<script>
+function loadActiveSummary() {
+    $('#activeSummaryLoader').removeClass('d-none');
+    $('#activeSummaryBox').addClass('d-none');
+
+    $.ajax({
+        url: '{{ route("panelUsers.activeSummary") }}',
+        type: 'GET',
+        success: function (response) {
+            $('#activeSummaryLoader').addClass('d-none');
+
+            if (!response.success) {
+                alert('Errore nel caricamento del riepilogo utenti attivi.');
+                return;
+            }
+
+            $('#totaleAttivi18MesiValue').text(Number(response.totaleAttivi18Mesi).toLocaleString('it-IT'));
+            $('#totalePanelValue').text(Number(response.totalePanel).toLocaleString('it-IT'));
+            $('#percentualeAttivi18MesiValue').text(response.percentualeAttivi18Mesi);
+            $('#percentualeAttivi18MesiBar').css('width', response.percentualeAttivi18Mesi + '%');
+
+            $('#totaleAttivi18MesiUomoValue').text(Number(response.totaleAttivi18MesiUomo).toLocaleString('it-IT'));
+            $('#totalePanelUomoValue').text(Number(response.totalePanelUomo).toLocaleString('it-IT'));
+            $('#percentualeAttivi18MesiUomoValue').text(response.percentualeAttivi18MesiUomo);
+            $('#percentualeAttivi18MesiUomoBar').css('width', response.percentualeAttivi18MesiUomo + '%');
+
+            $('#totaleAttivi18MesiDonnaValue').text(Number(response.totaleAttivi18MesiDonna).toLocaleString('it-IT'));
+            $('#totalePanelDonnaValue').text(Number(response.totalePanelDonna).toLocaleString('it-IT'));
+            $('#percentualeAttivi18MesiDonnaValue').text(response.percentualeAttivi18MesiDonna);
+            $('#percentualeAttivi18MesiDonnaBar').css('width', response.percentualeAttivi18MesiDonna + '%');
+
+            $('#activeSummaryBox').removeClass('d-none');
+        },
+        error: function () {
+            $('#activeSummaryLoader').addClass('d-none');
+            alert('Errore nel caricamento del riepilogo utenti attivi.');
+        }
+    });
+}
+
+$(document).ready(function () {
+    setTimeout(function () {
+        loadActiveSummary();
+    }, 1200);
 });
 </script>
 
 <script>
-$(document).ready(function () {
+function loadPanelStatsByYear(anno) {
+    $('#panel-stats-tbody').html(`
+        <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+                Caricamento statistiche in corso...
+            </td>
+        </tr>
+    `);
 
-    $('#panel-stats-year').on('change', function () {
-        let anno = $(this).val();
-
-        $.ajax({
-            url: '{{ route("panelUsers.panelStats") }}',
-            type: 'GET',
-            data: { anno: anno },
-            success: function (response) {
-                if (!response.success || !response.mesi) {
-                    return;
-                }
-
-                let rows = '';
-
-                response.mesi.forEach(function (mese) {
-                    rows += `
-                        <tr>
-                            <td class="fw-bold text-capitalize">${mese.mese_nome}</td>
-                            <td>${Number(mese.ricerche).toLocaleString('it-IT')}</td>
-                            <td>
-                                <span class="badge bg-light text-dark">
-                                    ${mese.ir_medio}%
-                                </span>
-                            </td>
-                            <td>${Number(mese.contatti).toLocaleString('it-IT')}</td>
-                            <td>
-                                <span class="text-primary fw-bold">
-                                    ${Number(mese.attivi).toLocaleString('it-IT')}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="text-success fw-bold">
-                                    ${Number(mese.registrati).toLocaleString('it-IT')}
-                                </span>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-                $('#panel-stats-tbody').html(rows);
-            },
-            error: function () {
-                alert('Errore nel caricamento delle statistiche del panel.');
+    $.ajax({
+        url: '{{ route("panelUsers.panelStats") }}',
+        type: 'GET',
+        data: { anno: anno },
+        success: function (response) {
+            if (!response.success || !response.mesi) {
+                $('#panel-stats-tbody').html(`
+                    <tr>
+                        <td colspan="6" class="text-center text-danger py-4">
+                            Errore nel caricamento delle statistiche
+                        </td>
+                    </tr>
+                `);
+                return;
             }
-        });
+
+            let rows = '';
+
+            response.mesi.forEach(function (mese) {
+                rows += `
+                    <tr>
+                        <td class="fw-bold text-capitalize">${mese.mese_nome}</td>
+                        <td>${Number(mese.ricerche).toLocaleString('it-IT')}</td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                ${mese.ir_medio}%
+                            </span>
+                        </td>
+                        <td>${Number(mese.contatti).toLocaleString('it-IT')}</td>
+                        <td>
+                            <span class="text-primary fw-bold">
+                                ${Number(mese.attivi).toLocaleString('it-IT')}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="text-success fw-bold">
+                                ${Number(mese.registrati).toLocaleString('it-IT')}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            $('#panel-stats-tbody').html(rows);
+        },
+        error: function () {
+            $('#panel-stats-tbody').html(`
+                <tr>
+                    <td colspan="6" class="text-center text-danger py-4">
+                        Errore nel caricamento delle statistiche
+                    </td>
+                </tr>
+            `);
+        }
+    });
+}
+
+$(document).ready(function () {
+    $('#panel-stats-year').on('change', function () {
+        loadPanelStatsByYear($(this).val());
     });
 
+    setTimeout(function () {
+        loadPanelStatsByYear($('#panel-stats-year').val());
+    }, 1800);
 });
 </script>
 
@@ -688,42 +760,43 @@ $(document).ready(function () {
 </script>
 
 <script>
-
-// ✅ FUNZIONE GLOBALE (FUORI)
 function loadInactiveSummary() {
     let years = $('#inactiveYears').val();
 
-    $('#inactiveCountLoader').removeClass('d-none');
+    $('#inactiveInitialState').addClass('d-none');
     $('#inactiveCountBox').addClass('d-none');
+    $('#inactiveCountLoader').removeClass('d-none');
 
     $.ajax({
         url: '{{ route("panelUsers.inactiveSummary") }}',
         type: 'GET',
         data: { years: years },
         success: function (response) {
+            $('#inactiveCountLoader').addClass('d-none');
+
             if (!response.success) {
+                $('#inactiveInitialState').removeClass('d-none');
+                alert('Errore nel caricamento utenti inattivi.');
                 return;
             }
 
-            $('#inactiveTotalValue').text(response.totalInactive.toLocaleString('it-IT'));
-            $('#inactiveCountValue').text(response.inactiveCount.toLocaleString('it-IT'));
-            $('#abandonersCountValue').text(response.abandonersCount.toLocaleString('it-IT'));
+            $('#inactiveTotalValue').text(Number(response.totalInactive).toLocaleString('it-IT'));
+            $('#inactiveCountValue').text(Number(response.inactiveCount).toLocaleString('it-IT'));
+            $('#abandonersCountValue').text(Number(response.abandonersCount).toLocaleString('it-IT'));
             $('#inactivePercentValue').text(response.inactivePercent + '%');
-            $('#inactiveTotalActives').text(response.totalActives.toLocaleString('it-IT'));
+            $('#inactiveTotalActives').text(Number(response.totalActives).toLocaleString('it-IT'));
             $('#inactivePercentBar').css('width', response.inactivePercent + '%');
 
-            $('#inactiveCountLoader').addClass('d-none');
             $('#inactiveCountBox').removeClass('d-none');
         },
         error: function () {
             $('#inactiveCountLoader').addClass('d-none');
+            $('#inactiveInitialState').removeClass('d-none');
             alert('Errore nel caricamento utenti inattivi.');
         }
     });
 }
 
-
-// ✅ QUI RESTA SOLO LA PARTE EVENTI
 $(document).ready(function () {
 
     $('#btnRefreshInactive').on('click', function () {
@@ -734,11 +807,7 @@ $(document).ready(function () {
         loadInactiveSummary();
     });
 
-    // primo caricamento
-    loadInactiveSummary();
-
 });
-
 </script>
 
 <script>
@@ -783,7 +852,7 @@ $(document).ready(function () {
                 if (!response.rows.length) {
                     rows = `
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="5" class="text-center text-muted py-4">
                                 Nessun utente trovato
                             </td>
                         </tr>
@@ -812,7 +881,7 @@ $(document).ready(function () {
                 $('#inactiveUsersLoader').addClass('d-none');
                 $('#inactiveUsersTableBody').html(`
                     <tr>
-                        <td colspan="8" class="text-center text-danger py-4">
+                        <td colspan="5" class="text-center text-danger py-4">
                             Errore nel caricamento della lista utenti
                         </td>
                     </tr>
