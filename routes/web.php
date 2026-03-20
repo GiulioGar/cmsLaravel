@@ -14,6 +14,7 @@ use App\Http\Controllers\AutotestController;
 use App\Http\Controllers\ConceptToolController;
 use App\Http\Controllers\PanelUsersController;
 use App\Http\Controllers\UserProfileController;
+use App\Http\Controllers\PremiPanelController;
 
 /*
 |--------------------------------------------------------------------------
@@ -144,6 +145,24 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::get('/fieldControl/targetField/fetchTargets', [TargetFieldController::class, 'fetchTargets'])->name('targetField.fetchTargets');
     Route::post('/fieldControl/targetField/addTarget', [TargetFieldController::class, 'addTarget'])->name('targetField.addTarget');
     Route::post('/fieldControl/targetField/assignTarget', [TargetFieldController::class, 'assignTarget'])->name('targetField.assignTarget');
+
+    // ============================================
+    // PREMI PANEL
+    // ============================================
+
+    Route::get('/premi-panel', [PremiPanelController::class, 'index'])->name('premi.panel');
+    Route::post('/premi-panel/paypal/{id}/pay', [PremiPanelController::class, 'payPaypal']) ->name('premi.panel.paypal.pay');
+    Route::post('/premi-panel/{id}/delete', [PremiPanelController::class, 'deleteReward']) ->name('premi.panel.delete');
+    Route::get('/premi-panel/data', [PremiPanelController::class, 'data'])->name('premi.panel.data');
+    Route::get('/premi-panel/summary', [PremiPanelController::class, 'summary'])->name('premi.panel.summary');
+    Route::post('/premi-panel/paypal/{id}/note', [PremiPanelController::class, 'savePaypalNote'])
+    ->name('premi.panel.paypal.note');
+    Route::post('/premi-panel/amazon/bulk-pay', [PremiPanelController::class, 'bulkPayAmazon'])
+    ->name('premi.panel.amazon.bulk.pay');
+    Route::get('/premi-panel/download-export/{filename}', [PremiPanelController::class, 'downloadExport'])
+    ->name('premi.panel.download.export');
+    Route::get('/premi-panel/paypal/export-missing-email', [PremiPanelController::class, 'exportPaypalMissingEmail'])
+    ->name('premi.panel.paypal.export.missing.email');
 
     // ============================================
     // PRIMIS API proxy
