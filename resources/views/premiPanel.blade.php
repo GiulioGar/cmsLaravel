@@ -217,6 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentType = @json($type);
     let currentStatus = @json($status);
 
+    const premiPanelDataUrl = @json(route('premi.panel.data'));
+const premiPanelSummaryUrl = @json(route('premi.panel.summary'));
+const premiPanelBulkAmazonUrl = @json(route('premi.panel.amazon.bulk.pay'));
+const premiPanelDeleteBaseUrl = @json(url('/premi-panel'));
+const premiPanelPaypalPayBaseUrl = @json(url('/premi-panel/paypal'));
+const premiPanelPaypalNoteBaseUrl = @json(url('/premi-panel/paypal'));
+
     function initPremiTable() {
         if (!window.jQuery || !$('#premi-panel-table').length) {
             return;
@@ -272,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         summaryWrapper.classList.add('loading');
 
-        return fetch(`/premi-panel/summary?type=${encodeURIComponent(currentType)}&status=${encodeURIComponent(currentStatus)}`, {
+        return fetch(`${premiPanelSummaryUrl}?type=${encodeURIComponent(currentType)}&status=${encodeURIComponent(currentStatus)}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -294,163 +301,179 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function bindPaypalButtons() {
-        document.querySelectorAll('.btn-pay-paypal').forEach(button => {
-            button.addEventListener('click', () => {
-                const id = button.dataset.id;
 
-                if (!confirm('Confermi il pagamento di questa richiesta Paypal?')) {
+function bindTableDelegatedActions() {
+    const tableWrapper = document.getElementById('premiPanelTableWrapper');
+
+    if (!tableWrapper) {
+        return;
+    }
+
+    if (tableWrapper.dataset.bound === '1') {
+        return;
+    }
+
+    tableWrapper.dataset.bound = '1';
+
+    tableWrapper.addEventListener('click', (event) => {
+        const paypalPayBtn = event.target.closest('.btn-pay-paypal');
+        const deleteBtn = event.target.closest('.btn-delete-reward');
+        const addNoteBtn = event.target.closest('.btn-add-note');
+        const readNoteBtn = event.target.closest('.btn-read-note');
+
+        if (paypalPayBtn) {
+            const id = paypalPayBtn.dataset.id;
+
+            if (!confirm('Confermi il pagamento di questa richiesta Paypal?')) {
+                return;
+            }
+
+            paypalPayBtn.disabled = true;
+            paypalPayBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+            fetch(`${premiPanelPaypalPayBaseUrl}/${id}/pay`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    paypalPayBtn.disabled = false;
+                    paypalPayBtn.innerHTML = '<i class="bi bi-cash-coin"></i>';
+                    showToast(data.message || 'Errore durante il pagamento.', 'error');
                     return;
                 }
 
-                button.disabled = true;
-                button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-
-                fetch(`/premi-panel/paypal/${id}/pay`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                    },
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.success) {
-                        button.disabled = false;
-                        button.innerHTML = '<i class="bi bi-cash-coin"></i>';
-                        showToast(data.message || 'Errore durante il pagamento.', 'error');
-                        return;
-                    }
-
-                    const row = document.getElementById(`reward-row-${id}`);
-                    if (!row) {
-                        showToast(data.message, 'success');
-                        refreshSummaryPanel();
-                        return;
-                    }
-
-                    const statusCell = row.querySelector('.payment-status-cell');
-                    const actionCell = row.querySelector('.payment-action-cell');
-
-                    if (statusCell) {
-                        statusCell.innerHTML = `
-                            <span class="action-icon success" title="Pagato">
-                                <i class="bi bi-check-circle-fill"></i>
-                            </span>
-                        `;
-                    }
-
-                    if (actionCell) {
-                        actionCell.innerHTML = '<span class="text-muted">-</span>';
-                    }
-
-                    highlightRow(row);
-                    refreshSummaryPanel();
+                const row = document.getElementById(`reward-row-${id}`);
+                if (!row) {
                     showToast(data.message, 'success');
-                })
-                .catch(() => {
-                    button.disabled = false;
-                    button.innerHTML = '<i class="bi bi-cash-coin"></i>';
-                    showToast('Errore di connessione.', 'error');
-                });
-            });
-        });
-    }
-
-
-    function bindDeleteButtons() {
-        document.querySelectorAll('.btn-delete-reward').forEach(button => {
-            button.addEventListener('click', () => {
-                const id = button.dataset.id;
-
-                if (!confirm('Confermi l\'eliminazione della richiesta premio? I punti utente verranno ripristinati.')) {
-                    return;
-                }
-
-                button.disabled = true;
-                button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-
-                fetch(`/premi-panel/${id}/delete`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                    },
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.success) {
-                        button.disabled = false;
-                        button.innerHTML = '<i class="bi bi-trash"></i>';
-                        showToast(data.message || 'Errore durante l\'eliminazione.', 'error');
-                        return;
-                    }
-
-                    const row = document.getElementById(`reward-row-${id}`);
-                    if (row) {
-                        if ($.fn.DataTable.isDataTable('#premi-panel-table')) {
-                            const table = $('#premi-panel-table').DataTable();
-                            table.row($(row)).remove().draw(false);
-                        } else {
-                            row.remove();
-                        }
-                    }
-
                     refreshSummaryPanel();
-
-                    let extraMessage = '';
-
-                    if (parseInt(data.payload.points_restored || 0, 10) > 0) {
-                        extraMessage += ` Punti ripristinati: ${data.payload.points_restored}.`;
-                    }
-
-                    if (parseInt(data.payload.released_amazon_code || 0, 10) === 1) {
-                        extraMessage += ' Codice Amazon rimesso disponibile.';
-                    }
-
-                    showToast((data.message || 'Richiesta eliminata.') + extraMessage, 'success');
-                })
-                .catch(() => {
-                    button.disabled = false;
-                    button.innerHTML = '<i class="bi bi-trash"></i>';
-                    showToast('Errore di connessione.', 'error');
-                });
-            });
-        });
-    }
-
-    function bindPaypalNoteButtons() {
-        document.querySelectorAll('.btn-add-note').forEach(button => {
-            button.addEventListener('click', () => {
-                const rewardId = button.dataset.id;
-                const modalEl = document.getElementById('modalPaypalNote');
-
-                if (!modalEl) {
                     return;
                 }
 
-                document.getElementById('paypalNoteRewardId').value = rewardId;
-                document.getElementById('paypalNoteText').value = '';
+                const statusCell = row.querySelector('.payment-status-cell');
+                const actionCell = row.querySelector('.payment-action-cell');
 
-                const modal = new bootstrap.Modal(modalEl);
-                modal.show();
+                if (statusCell) {
+                    statusCell.innerHTML = `
+                        <span class="action-icon success" title="Pagato">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </span>
+                    `;
+                }
+
+                if (actionCell) {
+                    actionCell.innerHTML = `
+                        <span class="badge badge-soft-success">
+                            ${data.row.paid_at}
+                        </span>
+                    `;
+                }
+
+                reloadPremiPanelData()
+                    .then(() => {
+                        showToast(data.message, 'success');
+                    })
+                    .catch(() => {
+                        showToast('Pagamento completato, ma errore nell’aggiornamento della schermata.', 'warning');
+                    });
+
+            })
+            .catch(() => {
+                paypalPayBtn.disabled = false;
+                paypalPayBtn.innerHTML = '<i class="bi bi-cash-coin"></i>';
+                showToast('Errore di connessione.', 'error');
             });
-        });
 
-        document.querySelectorAll('.btn-read-note').forEach(button => {
-            button.addEventListener('click', () => {
-                // Il tooltip mostra già la nota
+            return;
+        }
+
+        if (deleteBtn) {
+            const id = deleteBtn.dataset.id;
+
+            if (!confirm('Confermi l\'eliminazione della richiesta premio? I punti utente verranno ripristinati.')) {
+                return;
+            }
+
+            deleteBtn.disabled = true;
+            deleteBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+            fetch(`${premiPanelDeleteBaseUrl}/${id}/delete`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                    showToast(data.message || 'Errore durante l\'eliminazione.', 'error');
+                    return;
+                }
+
+                const row = document.getElementById(`reward-row-${id}`);
+                if (row) {
+                    if ($.fn.DataTable.isDataTable('#premi-panel-table')) {
+                        const table = $('#premi-panel-table').DataTable();
+                        table.row($(row)).remove().draw(false);
+                    } else {
+                        row.remove();
+                    }
+                }
+
+                refreshSummaryPanel();
+
+                let extraMessage = '';
+
+                if (parseInt(data.payload.points_restored || 0, 10) > 0) {
+                    extraMessage += ` Punti ripristinati: ${data.payload.points_restored}.`;
+                }
+
+                if (parseInt(data.payload.released_amazon_code || 0, 10) === 1) {
+                    extraMessage += ' Codice Amazon rimesso disponibile.';
+                }
+
+                showToast((data.message || 'Richiesta eliminata.') + extraMessage, 'success');
+            })
+            .catch(() => {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                showToast('Errore di connessione.', 'error');
             });
-        });
-    }
 
-function bindRewardActionButtons() {
-    bindPaypalButtons();
-    bindDeleteButtons();
-    bindPaypalNoteButtons();
+            return;
+        }
+
+        if (addNoteBtn) {
+            const rewardId = addNoteBtn.dataset.id;
+            const modalEl = document.getElementById('modalPaypalNote');
+
+            if (!modalEl) {
+                return;
+            }
+
+            document.getElementById('paypalNoteRewardId').value = rewardId;
+            document.getElementById('paypalNoteText').value = '';
+
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+            return;
+        }
+
+        if (readNoteBtn) {
+            return;
+        }
+    });
 }
 
-    function reloadPremiPanelData() {
+    function reloadPremiPanelData()
+    {
         const tableWrapper = document.getElementById('premiPanelTableWrapper');
         const summaryWrapper = document.getElementById('premiPanelSummaryWrapper');
 
@@ -462,7 +485,7 @@ function bindRewardActionButtons() {
             summaryWrapper.classList.add('loading');
         }
 
-        return fetch(`/premi-panel/data?type=${encodeURIComponent(currentType)}&status=${encodeURIComponent(currentStatus)}`, {
+        return fetch(`${premiPanelDataUrl}?type=${encodeURIComponent(currentType)}&status=${encodeURIComponent(currentStatus)}`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -509,7 +532,7 @@ function bindRewardActionButtons() {
             }
 
             initPremiTable();
-            bindRewardActionButtons();
+            bindTableDelegatedActions();
             bindAmazonBulkPayButton();
             bindAmazonBulkConfirmButton();
             initTooltips();
@@ -572,7 +595,7 @@ function bindRewardActionButtons() {
             btnSavePaypalNote.disabled = true;
             btnSavePaypalNote.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Salvataggio...';
 
-            fetch(`/premi-panel/paypal/${rewardId}/note`, {
+            fetch(`${premiPanelPaypalNoteBaseUrl}/${rewardId}/note`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -628,7 +651,6 @@ function bindRewardActionButtons() {
                 btnSavePaypalNote.disabled = false;
                 btnSavePaypalNote.innerHTML = '<i class="bi bi-save me-1"></i> Salva nota';
 
-                bindPaypalNoteButtons();
                 initTooltips();
 
                 showToast(data.message, 'success');
@@ -688,7 +710,7 @@ function bindAmazonBulkConfirmButton() {
         btnConfirmAmazonBulkPay.disabled = true;
         btnConfirmAmazonBulkPay.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Elaborazione...';
 
-        fetch(`/premi-panel/amazon/bulk-pay`, {
+        fetch(premiPanelBulkAmazonUrl, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -737,12 +759,12 @@ function bindAmazonBulkConfirmButton() {
     });
 }
 
-    initPremiTable();
-    bindRewardActionButtons();
-    bindFilterButtons();
-    bindAmazonBulkPayButton();
-    bindAmazonBulkConfirmButton();
-    initTooltips();
+initPremiTable();
+bindTableDelegatedActions();
+bindFilterButtons();
+bindAmazonBulkPayButton();
+bindAmazonBulkConfirmButton();
+initTooltips();
 });
 </script>
 @endsection

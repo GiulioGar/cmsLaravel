@@ -15,6 +15,7 @@ use App\Http\Controllers\ConceptToolController;
 use App\Http\Controllers\PanelUsersController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PremiPanelController;
+use App\Http\Controllers\RecruitmentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -163,6 +164,16 @@ Route::middleware(['auth.custom'])->group(function () {
     ->name('premi.panel.download.export');
     Route::get('/premi-panel/paypal/export-missing-email', [PremiPanelController::class, 'exportPaypalMissingEmail'])
     ->name('premi.panel.paypal.export.missing.email');
+
+    // ============================================
+    // RECRUITMENT
+    // ============================================
+    Route::get('/recruitment', [RecruitmentController::class, 'index'])->name('recruitment.index');
+
+    Route::get('/recruitment/daily', [RecruitmentController::class, 'daily'])->name('recruitment.daily');
+    Route::get('/recruitment/costs', [RecruitmentController::class, 'costs'])->name('recruitment.costs');
+    Route::get('/recruitment/activity', [RecruitmentController::class, 'activity'])->name('recruitment.activity');
+    Route::get('/recruitment/stats', [RecruitmentController::class, 'stats'])->name('recruitment.stats');
 
     // ============================================
     // PRIMIS API proxy
