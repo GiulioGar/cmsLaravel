@@ -1,666 +1,1455 @@
 @extends('layouts.main')
 
 @section('content')
-
 <link rel="stylesheet" href="{{ asset('css/recruitment.css') }}">
 
-<main class="content">
+<main class="content recruitment-page">
     <div class="container-fluid">
 
-        {{-- HEADER --}}
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="mb-1">Recruitment</h2>
-                <p class="text-muted mb-0">Monitoraggio campagne di reclutamento e referral</p>
-            </div>
-
-            <div class="d-flex flex-wrap gap-2">
-                <select id="filter-month" class="form-control">
-                    @for($m = 1; $m <= 12; $m++)
-                        <option value="{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}"
-                            {{ (int)$currentMonth === $m ? 'selected' : '' }}>
-                            {{ str_pad($m, 2, '0', STR_PAD_LEFT) }}
-                        </option>
-                    @endfor
-                </select>
-
-                <select id="filter-year" class="form-control">
-                    @for($y = now()->year; $y >= 2021; $y--)
-                        <option value="{{ $y }}" {{ $currentYear == $y ? 'selected' : '' }}>
-                            {{ $y }}
-                        </option>
-                    @endfor
-                </select>
-            </div>
-        </div>
-
-        {{-- KPI MINI BOX --}}
-        <div class="row mb-4">
-            <div class="col-xl-2 col-md-4 col-6 mb-3">
-                <div class="card recruitment-mini-card">
-                    <div class="card-body">
-                        <div class="mini-label">Registrati</div>
-                        <div class="mini-value" id="kpi-registered">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-2 col-md-4 col-6 mb-3">
-                <div class="card recruitment-mini-card">
-                    <div class="card-body">
-                        <div class="mini-label">Attivi</div>
-                        <div class="mini-value" id="kpi-active">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-2 col-md-4 col-6 mb-3">
-                <div class="card recruitment-mini-card">
-                    <div class="card-body">
-                        <div class="mini-label">% Attivi</div>
-                        <div class="mini-value" id="kpi-active-rate">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-2 col-md-4 col-6 mb-3">
-                <div class="card recruitment-mini-card">
-                    <div class="card-body">
-                        <div class="mini-label">Spesa</div>
-                        <div class="mini-value" id="kpi-cost">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-2 col-md-4 col-6 mb-3">
-                <div class="card recruitment-mini-card">
-                    <div class="card-body">
-                        <div class="mini-label">CPI Medio</div>
-                        <div class="mini-value" id="kpi-cpi">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-2 col-md-4 col-6 mb-3">
-                <div class="card recruitment-mini-card">
-                    <div class="card-body">
-                        <div class="mini-label">CPA Medio</div>
-                        <div class="mini-value" id="kpi-cpa">--</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-{{-- ANDAMENTO GIORNALIERO --}}
-<div class="card mb-4 recruitment-card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <div>
-            <h5 class="mb-0">Andamento mensile</h5>
-            <small class="text-muted">Vista calendario con referral attivi nel mese</small>
-        </div>
-        <div id="daily-loader" class="section-loader d-none">Caricamento...</div>
+<div class="recruitment-header mb-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+        <h2 class="mb-1">Recruitment Monitor</h2>
+        <p class="text-muted mb-0">
+            Monitoraggio campagne di reclutamento, costi, attività e statistiche per referral
+        </p>
     </div>
-    <div class="card-body">
 
-            <div class="daily-summary-box mb-3">
-                <div class="daily-total">
-                    Registrati Totali:
-                    <strong id="daily-total-registered">0</strong>
-                </div>
-            </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-outline-primary" id="btnOpenReportModal">
+            <i class="bi bi-download me-1"></i>
+            Genera Report CSV
+        </button>
 
-            <div class="daily-referrals mb-3" id="daily-referral-badges">
-                <div class="text-muted">Nessun referral da mostrare</div>
-            </div>
-
-            <div class="daily-month-title mb-3" id="daily-month-title">-</div>
-
-            <div class="table-responsive">
-                <table class="table table-bordered daily-calendar-table mb-0" id="daily-calendar-table">
-                    <thead>
-                        <tr>
-                            <th>Lunedì</th>
-                            <th>Martedì</th>
-                            <th>Mercoledì</th>
-                            <th>Giovedì</th>
-                            <th>Venerdì</th>
-                            <th>Sabato</th>
-                            <th>Domenica</th>
-                            <th>Iscritti</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-4">Nessun dato caricato</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
+        <button type="button" class="btn btn-primary" id="btnOpenCampaignModal">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nuova Campagna
+        </button>
     </div>
 </div>
 
-        {{-- SPESE + DETTAGLIO --}}
-        <div class="row mb-4">
-            <div class="col-xl-7 mb-4">
-                <div class="card recruitment-card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="row g-4">
+
+            {{-- COLONNA SINISTRA --}}
+            <div class="col-xl-6">
+
+                {{-- BOX RIEPILOGO ANNO --}}
+                <div class="card recruitment-card mb-4">
+                    <div class="card-header recruitment-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">Riepilogo anno</h5>
+                            <small class="text-muted">Panoramica generale registrati e attivi</small>
+                        </div>
+
+                        <div class="filter-box">
+                            <label for="filterSummaryYear" class="form-label mb-1">Anno</label>
+                            <select id="filterSummaryYear" class="form-select form-select-sm">
+                                @foreach($years as $year)
+                                    <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div id="summaryYearBox" class="placeholder-box">
+                            Box riepilogo annuale
+                        </div>
+                    </div>
+                </div>
+
+                {{-- BOX SPESE --}}
+                <div class="card recruitment-card mb-4">
+                    <div class="card-header recruitment-card-header d-flex justify-content-between align-items-center">
                         <div>
                             <h5 class="mb-0">Spese referral</h5>
-                            <small class="text-muted">Registrati, attivi, costi e KPI</small>
+                            <small class="text-muted">Costi, registrati e attivi per referral</small>
                         </div>
-                        <div id="costs-loader" class="section-loader d-none">Caricamento...</div>
+
+                        <div class="filter-box">
+                            <label for="filterCostsYear" class="form-label mb-1">Anno</label>
+                            <select id="filterCostsYear" class="form-select form-select-sm">
+                                @foreach($years as $year)
+                                    <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
+
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-striped align-middle mb-0" id="costs-table">
-                                <thead>
-                                    <tr>
-                                        <th>Referral</th>
-                                        <th>Registrati</th>
-                                        <th>Attivi</th>
-                                        <th>%</th>
-                                        <th>Costo</th>
-                                        <th>CPI</th>
-                                        <th>CPA</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">Nessun dato caricato</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div id="costsBox" class="placeholder-box">
+                            Box spese referral
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-xl-5 mb-4">
-                <div class="card recruitment-card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                {{-- BOX ATTIVITA --}}
+                <div class="card recruitment-card mb-4">
+                    <div class="card-header recruitment-card-header d-flex justify-content-between align-items-center">
                         <div>
-                            <h5 class="mb-0">Statistiche sintetiche</h5>
-                            <small class="text-muted">Panoramica annuale rapida</small>
+                            <h5 class="mb-0">Dettaglio attività per referral</h5>
+                            <small class="text-muted">Distribuzione utenti per fasce di attività</small>
                         </div>
-                        <div id="stats-loader" class="section-loader d-none">Caricamento...</div>
+
+                        <div class="filter-box">
+                            <label for="filterActivityYear" class="form-label mb-1">Anno</label>
+                            <select id="filterActivityYear" class="form-select form-select-sm">
+                                @foreach($years as $year)
+                                    <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
+
                     <div class="card-body">
-                        <div id="stats-summary-box" class="stats-summary-box">
-                            <div class="text-muted text-center py-5">Dati non ancora caricati</div>
+                        <div id="activityBox" class="placeholder-box">
+                            Box dettaglio attività
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        {{-- DETTAGLIO ATTIVITÀ --}}
-        <div class="card mb-4 recruitment-card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="mb-0">Dettaglio attività per referral</h5>
-                    <small class="text-muted">Distribuzione iscritti per fascia attività</small>
-                </div>
-                <div id="activity-loader" class="section-loader d-none">Caricamento...</div>
             </div>
-            <div class="card-body">
-                <div class="row" id="activity-boxes">
-                    <div class="col-12">
-                        <div class="text-center text-muted py-5">Nessun dato caricato</div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        {{-- DEMOGRAFICA --}}
-        <div class="row mb-4">
-            <div class="col-xl-4 mb-4">
-                <div class="card recruitment-card h-100">
-                    <div class="card-header">
-                        <h5 class="mb-0">Genere</h5>
+            {{-- COLONNA DESTRA --}}
+            <div class="col-xl-6">
+
+                {{-- BOX RIEPILOGO MENSILE --}}
+                <div class="card recruitment-card mb-4">
+                    <div class="card-header recruitment-card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h5 class="mb-0">Riepilogo mensile per referral</h5>
+                            <small class="text-muted">Conteggi mensili filtrati per mese e anno</small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <div class="filter-box">
+                                <label for="filterDailyMonth" class="form-label mb-1">Mese</label>
+                                <select id="filterDailyMonth" class="form-select form-select-sm">
+                                    @foreach($months as $monthNumber => $monthLabel)
+                                        <option value="{{ $monthNumber }}" {{ $monthNumber == $currentMonth ? 'selected' : '' }}>
+                                            {{ $monthLabel }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="filter-box">
+                                <label for="filterDailyYear" class="form-label mb-1">Anno</label>
+                                <select id="filterDailyYear" class="form-select form-select-sm">
+                                    @foreach($years as $year)
+                                        <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>
+                                            {{ $year }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     </div>
+
                     <div class="card-body">
-                        <canvas id="genderChart" height="220"></canvas>
+                        <div id="dailyBox" class="placeholder-box">
+                            Box riepilogo mensile
+                        </div>
                     </div>
                 </div>
+
+                {{-- BOX LOG ULTIMI REGISTRATI --}}
+                <div class="card recruitment-card mb-4">
+                    <div class="card-header recruitment-card-header">
+                        <div>
+                            <h5 class="mb-0">Ultimi 100 registrati</h5>
+                            <small class="text-muted">Log rapido ultime registrazioni</small>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div id="latestRegistrationsBox" class="placeholder-box">
+                            Tabella ultimi registrati
+                        </div>
+                    </div>
+                </div>
+
+                {{-- BOX STATS --}}
+                <div class="card recruitment-card mb-4">
+                    <div class="card-header recruitment-card-header d-flex justify-content-between align-items-center">
+                        <div>
+                        <h5 class="mb-0">Statistiche per Anagrafica</h5>
+                        <small class="text-muted">Distribuzione anagrafica per referral</small>
+                        </div>
+
+                        <div class="filter-box">
+                            <label for="filterStatsYear" class="form-label mb-1">Anno</label>
+                            <select id="filterStatsYear" class="form-select form-select-sm">
+                                @foreach($years as $year)
+                                    <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div id="statsBox" class="placeholder-box">
+                            Box statistiche
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="col-xl-4 mb-4">
-                <div class="card recruitment-card h-100">
-                    <div class="card-header">
-                        <h5 class="mb-0">Età</h5>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="ageChart" height="220"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-4 mb-4">
-                <div class="card recruitment-card h-100">
-                    <div class="card-header">
-                        <h5 class="mb-0">Area</h5>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="areaChart" height="220"></canvas>
-                    </div>
-                </div>
-            </div>
         </div>
-
     </div>
 </main>
+
+
+ {{-- MODALE NUOVA CAMPAGNA --}}
+
+<div class="modal fade" id="campaignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content recruitment-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuova Campagna Referral</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold d-block">Tipo Referral</label>
+
+                    <div class="d-flex flex-wrap gap-3">
+                        <label class="form-check-label">
+                            <input class="form-check-input me-1" type="radio" name="referral_mode" value="existing" checked>
+                            Esistente
+                        </label>
+
+                        <label class="form-check-label">
+                            <input class="form-check-input me-1" type="radio" name="referral_mode" value="new">
+                            Nuovo
+                        </label>
+                    </div>
+                </div>
+
+                <div id="existingReferralBox" class="mb-3">
+                    <label class="form-label">Seleziona Referral</label>
+                    <select class="form-select" id="existingReferralSelect">
+                        <option value="">-- seleziona --</option>
+                        @foreach($referrals as $ref)
+                            @if($ref->group_type !== 'fallback')
+                                <option value="{{ $ref->id }}">
+                                    {{ $ref->title }} ({{ $ref->code }})
+                                </option>
+                            @endif
+                        @endforeach
+                    </select>
+                </div>
+
+                <div id="newReferralBox" class="mb-3 d-none">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Codice</label>
+                            <input type="text" class="form-control" id="newReferralCode" maxlength="50">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Titolo</label>
+                            <input type="text" class="form-control" id="newReferralTitle" maxlength="255">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Icona</label>
+                            <input type="text" class="form-control" id="newReferralIcon" maxlength="150" placeholder="es. fa-regular fa-thumbs-up">
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Data inizio</label>
+                        <input type="date" class="form-control" id="campaignStart">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Data fine</label>
+                        <input type="date" class="form-control" id="campaignEnd">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">CPI</label>
+                        <input type="number" step="0.0001" min="0" class="form-control" id="campaignCpi">
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-check-label">
+                        <input class="form-check-input me-1" type="checkbox" id="campaignActive" checked>
+                        Attiva
+                    </label>
+                </div>
+
+                <div id="campaignError" class="alert alert-danger mt-3 d-none mb-0"></div>
+                <div id="campaignSuccess" class="alert alert-success mt-3 d-none mb-0"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Chiudi</button>
+                <button class="btn btn-primary" type="button" id="btnSaveCampaign">
+                    Salva Campagna
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content recruitment-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Genera Report CSV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Mese</label>
+                        <select class="form-select" id="reportMonth">
+                            @foreach($months as $monthNumber => $monthLabel)
+                                <option value="{{ $monthNumber }}" {{ $monthNumber == $currentMonth ? 'selected' : '' }}>
+                                    {{ $monthLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Anno</label>
+                        <select class="form-select" id="reportYear">
+                            @foreach($years as $year)
+                                <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>
+                                    {{ $year }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+<label class="form-label">Provenienza / Referral</label>
+<select class="form-select" id="reportReferral" multiple size="8">
+                        @foreach($referrals as $ref)
+                            <option value="{{ $ref->id }}">
+                                {{ $ref->title }} ({{ $ref->code }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="text-muted">
+                        Puoi selezionare più referral. Se non selezioni nulla verranno incluse tutte le provenienze.
+                    </small>
+                    <small class="text-muted">
+                        Se selezioni un referral, verranno incluse tutte le sue source_codes.
+                    </small>
+                </div>
+
+                <div id="reportError" class="alert alert-danger mt-3 d-none mb-0"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Chiudi</button>
+                <button class="btn btn-primary" type="button" id="btnDownloadReport">
+                    Scarica CSV
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
+
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
-
 <script>
-    window.recruitmentUrls = {
-        daily: "{{ route('recruitment.daily') }}",
-        costs: "{{ route('recruitment.costs') }}",
-        activity: "{{ route('recruitment.activity') }}",
-        stats: "{{ route('recruitment.stats') }}"
-    };
-</script>
+document.addEventListener('DOMContentLoaded', function () {
 
-<script>
-$(document).ready(function () {
+    const dailyBox = document.getElementById('dailyBox');
+    const filterDailyMonth = document.getElementById('filterDailyMonth');
+    const filterDailyYear = document.getElementById('filterDailyYear');
+
+    const costsBox = document.getElementById('costsBox');
+    const filterCostsYear = document.getElementById('filterCostsYear');
+
+    const activityBox = document.getElementById('activityBox');
+    const filterActivityYear = document.getElementById('filterActivityYear');
+
+    const statsBox = document.getElementById('statsBox');
+    const filterStatsYear = document.getElementById('filterStatsYear');
+
+    const latestRegistrationsBox = document.getElementById('latestRegistrationsBox');
+
+    const summaryYearBox = document.getElementById('summaryYearBox');
+    const filterSummaryYear = document.getElementById('filterSummaryYear');
+
+    const btnOpenCampaignModal = document.getElementById('btnOpenCampaignModal');
+    const btnSaveCampaign = document.getElementById('btnSaveCampaign');
+
+    const campaignModalElement = document.getElementById('campaignModal');
+    const campaignModal = new bootstrap.Modal(campaignModalElement);
 
 
+    const existingReferralBox = document.getElementById('existingReferralBox');
+    const newReferralBox = document.getElementById('newReferralBox');
 
-    function loadDaily() {
-        let year = $('#filter-year').val();
-        let month = $('#filter-month').val();
+    const existingReferralSelect = document.getElementById('existingReferralSelect');
+    const newReferralCode = document.getElementById('newReferralCode');
+    const newReferralTitle = document.getElementById('newReferralTitle');
+    const newReferralIcon = document.getElementById('newReferralIcon');
+    const campaignStart = document.getElementById('campaignStart');
+    const campaignEnd = document.getElementById('campaignEnd');
+    const campaignCpi = document.getElementById('campaignCpi');
+    const campaignActive = document.getElementById('campaignActive');
 
-        $('#daily-loader').removeClass('d-none');
+    const campaignError = document.getElementById('campaignError');
+    const campaignSuccess = document.getElementById('campaignSuccess');
 
-        $.ajax({
-            url: window.recruitmentUrls.daily,
-            type: 'GET',
-            data: {
-                year: year,
-                month: month
-            },
-            success: function(response) {
-                $('#daily-loader').addClass('d-none');
+    const btnOpenReportModal = document.getElementById('btnOpenReportModal');
+const btnDownloadReport = document.getElementById('btnDownloadReport');
 
-                if (!response.success) {
-                    return;
-                }
+const reportModalElement = document.getElementById('reportModal');
+const reportModal = new bootstrap.Modal(reportModalElement);
 
-updateDailySummary(
-    response.month_label || '',
-    response.total_registered || 0,
-    response.referrals || []
-);
-updateDailyCalendar(response.calendar || []);
+const reportMonth = document.getElementById('reportMonth');
+const reportYear = document.getElementById('reportYear');
+const reportReferral = document.getElementById('reportReferral');
+const reportError = document.getElementById('reportError');
 
-            },
-            error: function(xhr) {
-                $('#daily-loader').addClass('d-none');
-                console.error('Errore loadDaily', xhr.responseText);
-            }
-        });
-    }
+btnOpenCampaignModal.addEventListener('click', function () {
+    resetCampaignForm();
+    campaignModal.show();
+});
 
-function updateDailySummary(monthLabel, totalRegistered, referrals) {
-    $('#daily-total-registered').text(formatNumber(totalRegistered));
-    $('#daily-month-title').text(monthLabel || '-');
-
-    let html = '';
-
-    if (!referrals.length) {
-        html = '<div class="text-muted">Nessun referral con più di 1 iscritto</div>';
-        $('#daily-referral-badges').html(html);
-        return;
-    }
-
-    referrals.forEach(function(item) {
-        html += `
-            <span class="daily-referral-badge">
-                ${item.title}
-                <span class="daily-referral-count">${formatNumber(item.total)}</span>
-            </span>
-        `;
+document.querySelectorAll('input[name="referral_mode"]').forEach(function (el) {
+    el.addEventListener('change', function () {
+        if (this.value === 'existing') {
+            existingReferralBox.classList.remove('d-none');
+            newReferralBox.classList.add('d-none');
+        } else {
+            existingReferralBox.classList.add('d-none');
+            newReferralBox.classList.remove('d-none');
+        }
     });
+});
 
-    $('#daily-referral-badges').html(html);
-}
+campaignModalElement.addEventListener('hidden.bs.modal', function () {
+    resetCampaignForm();
+});
 
-    function updateDailyCalendar(rows) {
-        let html = '';
+btnSaveCampaign.addEventListener('click', function () {
+    const referralMode = document.querySelector('input[name="referral_mode"]:checked').value;
 
-        if (!rows.length) {
-            html = '<tr><td colspan="8" class="text-center text-muted py-4">Nessun dato trovato</td></tr>';
-            $('#daily-calendar-table tbody').html(html);
+    const payload = {
+        referral_mode: referralMode,
+        existing_referral_id: existingReferralSelect.value,
+        new_referral_code: newReferralCode.value.trim(),
+        new_referral_title: newReferralTitle.value.trim(),
+        new_referral_icon: newReferralIcon.value.trim(),
+        start_date: campaignStart.value,
+        end_date: campaignEnd.value,
+        cpi: campaignCpi.value,
+        is_active: campaignActive.checked ? 1 : 0
+    };
+
+    campaignError.classList.add('d-none');
+    campaignError.innerText = '';
+    campaignSuccess.classList.add('d-none');
+    campaignSuccess.innerText = '';
+
+    btnSaveCampaign.disabled = true;
+    btnSaveCampaign.innerHTML = 'Salvataggio...';
+
+    fetch(`{{ route('recruitment.campaigns.store') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(function (response) {
+        return response.json().then(function (data) {
+            return {
+                ok: response.ok,
+                status: response.status,
+                data: data
+            };
+        });
+    })
+    .then(function (result) {
+        if (!result.ok || !result.data.success) {
+            showCampaignError(result.data.message || 'Errore durante il salvataggio.');
+            btnSaveCampaign.disabled = false;
+            btnSaveCampaign.innerHTML = 'Salva Campagna';
             return;
         }
 
-        rows.forEach(function(week) {
-            html += '<tr>';
+        showCampaignSuccess(result.data.message || 'Campagna inserita correttamente.');
 
-            week.days.forEach(function(cell) {
-                if (!cell) {
-                    html += '<td class="daily-empty-cell"></td>';
-                    return;
-                }
+        loadDailyBox();
+        loadCostsBox();
+        loadActivityBox();
+        loadStatsBox();
+        loadSummaryYearBox();
 
-                html += `
-                    <td class="daily-day-cell">
-                        <div class="daily-day-number">${cell.day}</div>
-                    </td>
-                `;
-            });
+        setTimeout(function () {
+            campaignModal.hide();
+        }, 700);
+    })
+    .catch(function (error) {
+        console.error(error);
+        showCampaignError('Errore di connessione.');
+        btnSaveCampaign.disabled = false;
+        btnSaveCampaign.innerHTML = 'Salva Campagna';
+    });
+});
 
-            html += `<td class="daily-week-total">${formatNumber(week.week_total)}</td>`;
-            html += '</tr>';
-        });
-
-        $('#daily-calendar-table tbody').html(html);
-    }
-
-        function renderDailyChart(labels, series) {
-        let ctx = document.getElementById('dailyChart').getContext('2d');
-
-        if (dailyChart) {
-            dailyChart.destroy();
-        }
-
-        let datasets = series.map(function(item, index) {
-            let palette = [
-                '#4e73df',
-                '#1cc88a',
-                '#f6c23e',
-                '#e74a3b',
-                '#36b9cc',
-                '#6f42c1',
-                '#fd7e14',
-                '#20c997',
-                '#6610f2',
-                '#198754',
-                '#0d6efd',
-                '#dc3545',
-                '#ffc107',
-                '#6c757d',
-                '#17a2b8'
-            ];
-
-            let color = palette[index % palette.length];
-
-            return {
-                label: item.title,
-                data: item.data,
-                borderColor: color,
-                backgroundColor: color,
-                fill: false,
-                borderWidth: 2,
-                pointRadius: 2,
-                pointHoverRadius: 4,
-                lineTension: 0.25
-            };
-        });
-
-        dailyChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels.map(function(label) {
-                    let parts = label.split('-');
-                    return parts[2];
-                }),
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                legend: {
-                    position: 'bottom'
-                },
-                tooltips: {
-                    mode: 'index',
-                    intersect: false
-                },
-                hover: {
-                    mode: 'nearest',
-                    intersect: true
-                },
-                scales: {
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true,
-                            precision: 0
-                        }
-                    }],
-                    xAxes: [{
-                        ticks: {
-                            autoSkip: true,
-                            maxTicksLimit: 31
-                        }
-                    }]
-                }
-            }
-        });
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.innerText = text === null || text === undefined ? '' : text;
+        return div.innerHTML;
     }
 
     function formatNumber(value) {
-        return new Intl.NumberFormat('it-IT').format(value || 0);
+        return new Intl.NumberFormat('it-IT').format(value);
+    }
+
+    function formatDecimal(value, decimals) {
+        return new Intl.NumberFormat('it-IT', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        }).format(value);
     }
 
     function formatCurrency(value) {
-        let number = parseFloat(value || 0);
-        return new Intl.NumberFormat('it-IT', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(number) + '€';
+        return formatDecimal(value, 2) + ' €';
     }
 
-    function loadCosts() {
-        let year = $('#filter-year').val();
-
-        $('#costs-loader').removeClass('d-none');
-        $('#stats-loader').removeClass('d-none');
-
-        $.ajax({
-            url: window.recruitmentUrls.costs,
-            type: 'GET',
-            data: { year: year },
-            success: function(response) {
-                $('#costs-loader').addClass('d-none');
-                $('#stats-loader').addClass('d-none');
-
-                if (!response.success) {
-                    return;
-                }
-
-                updateKpi(response.kpi || {});
-                updateCostsTable(response.rows || []);
-                updateStatsSummary(response.kpi || {});
-            },
-            error: function() {
-                $('#costs-loader').addClass('d-none');
-                $('#stats-loader').addClass('d-none');
-            }
-        });
+function renderDailyBox(data) {
+    if (!data.success) {
+        dailyBox.innerHTML = `<div class="daily-empty">Errore nel caricamento dei dati</div>`;
+        return;
     }
 
-    function updateKpi(kpi) {
-        $('#kpi-registered').text(formatNumber(kpi.registered));
-        $('#kpi-active').text(formatNumber(kpi.active));
-        $('#kpi-active-rate').text((kpi.active_rate || 0) + '%');
-        $('#kpi-cost').text(formatCurrency(kpi.cost));
-        $('#kpi-cpi').text(formatCurrency(kpi.cpi));
-        $('#kpi-cpa').text(formatCurrency(kpi.cpa));
-    }
-
-    function updateCostsTable(rows) {
-        let html = '';
-
-        if (!rows.length) {
-            html = '<tr><td colspan="7" class="text-center text-muted py-4">Nessun dato trovato</td></tr>';
-            $('#costs-table tbody').html(html);
-            return;
-        }
-
-        rows.forEach(function(row) {
-            html += `
-                <tr>
-                    <td>
-                        <span class="referral-name">${row.title}</span>
-                        <span class="referral-sub">${row.code}</span>
-                    </td>
-                    <td>${formatNumber(row.registered)}</td>
-                    <td>${formatNumber(row.active)}</td>
-                    <td>${row.active_rate}%</td>
-                    <td>${formatCurrency(row.cost)}</td>
-                    <td>${formatCurrency(row.cpi)}</td>
-                    <td>${formatCurrency(row.cpa)}</td>
-                </tr>
-            `;
-        });
-
-        $('#costs-table tbody').html(html);
-    }
-
-    function updateStatsSummary(kpi) {
-        let html = `
-            <div class="stats-grid">
-                <div class="stats-item">
-                    <div class="stats-item-label">Registrati anno</div>
-                    <div class="stats-item-value">${formatNumber(kpi.registered)}</div>
+    let html = `
+        <div class="daily-month-shell">
+            <div class="daily-month-top">
+                <div class="daily-month-summary">
+                    <div class="daily-month-summary-label">Registrati mese</div>
+                    <div class="daily-month-summary-value">${formatNumber(data.total_registered)}</div>
+                    <div class="daily-month-summary-subtitle">${escapeHtml(data.month_label)}</div>
                 </div>
-                <div class="stats-item">
-                    <div class="stats-item-label">Attivi anno</div>
-                    <div class="stats-item-value">${formatNumber(kpi.active)}</div>
+
+                <div class="daily-month-badge">
+                    <span class="daily-month-badge-label">Referral attivi</span>
+                    <strong class="daily-month-badge-value">${formatNumber((data.referrals || []).length)}</strong>
                 </div>
-                <div class="stats-item">
-                    <div class="stats-item-label">% Attivi</div>
-                    <div class="stats-item-value">${kpi.active_rate || 0}%</div>
-                </div>
-                <div class="stats-item">
-                    <div class="stats-item-label">Spesa totale</div>
-                    <div class="stats-item-value">${formatCurrency(kpi.cost)}</div>
-                </div>
-                <div class="stats-item">
-                    <div class="stats-item-label">CPI medio</div>
-                    <div class="stats-item-value">${formatCurrency(kpi.cpi)}</div>
-                </div>
-                <div class="stats-item">
-                    <div class="stats-item-label">CPA medio</div>
-                    <div class="stats-item-value">${formatCurrency(kpi.cpa)}</div>
+            </div>
+    `;
+
+    if (!data.referrals || data.referrals.length === 0) {
+        html += `
+                <div class="daily-empty">
+                    Nessun dato disponibile per il periodo selezionato
                 </div>
             </div>
         `;
-
-        $('#stats-summary-box').html(html);
+        dailyBox.innerHTML = html;
+        return;
     }
 
-    function loadActivity() {
-        let year = $('#filter-year').val();
+    html += `<div class="daily-referral-grid">`;
 
-        $('#activity-loader').removeClass('d-none');
+    data.referrals.forEach(function(item) {
+        const sourcesText = item.sources && item.sources.length ? item.sources.join(', ') : '-';
+        const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)}"></i>` : '';
+        const sourceCount = item.sources && item.sources.length ? item.sources.length : 0;
 
-        $.ajax({
-            url: window.recruitmentUrls.activity,
-            type: 'GET',
-            data: { year: year },
-            success: function(response) {
-                $('#activity-loader').addClass('d-none');
+        html += `
+            <div class="daily-referral-card">
+                <div class="daily-referral-card-main">
+                    <div class="daily-referral-card-left">
+                        <div class="daily-referral-label-wrap">
+                            <span class="daily-referral-icon">${iconHtml}</span>
+                            <span class="daily-referral-label">${escapeHtml(item.label)}</span>
+                        </div>
 
-                if (!response.success) {
-                    return;
-                }
+                        <div class="daily-referral-meta">
+                            <span class="daily-referral-meta-pill">${sourceCount} source${sourceCount === 1 ? '' : 's'}</span>
+                            <span class="daily-referral-meta-pill daily-referral-meta-pill-hover" title="${escapeHtml(sourcesText)}">
+                                codici referral
+                            </span>
+                        </div>
+                    </div>
 
-                updateActivityBoxes(response.rows || []);
-            },
-            error: function(xhr) {
-                $('#activity-loader').addClass('d-none');
-                console.error('Errore loadActivity', xhr.responseText);
+                    <div class="daily-referral-total-wrap">
+                        <div class="daily-referral-total-label">Registrati</div>
+                        <div class="daily-referral-total">${formatNumber(item.total)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    dailyBox.innerHTML = html;
+}
+
+    function loadDailyBox() {
+        const month = filterDailyMonth.value;
+        const year = filterDailyYear.value;
+
+        dailyBox.innerHTML = `<div class="daily-loading">Caricamento riepilogo mensile...</div>`;
+
+        fetch(`{{ route('recruitment.daily') }}?month=${month}&year=${year}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
             }
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Errore HTTP');
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            renderDailyBox(data);
+        })
+        .catch(function(error) {
+            console.error(error);
+            dailyBox.innerHTML = `<div class="daily-empty">Impossibile caricare i dati del riepilogo mensile</div>`;
         });
     }
 
-    function updateActivityBoxes(rows) {
-        let html = '';
+   function renderCostsBox(data) {
+    if (!data.success) {
+        costsBox.innerHTML = `
+            <div class="daily-empty">
+                Errore nel caricamento dei costi
+            </div>
+        `;
+        return;
+    }
 
-        if (!rows.length) {
-            html = `
-                <div class="col-12">
-                    <div class="text-center text-muted py-5">Nessun dato trovato</div>
+    if (!data.rows || data.rows.length === 0) {
+        costsBox.innerHTML = `
+            <div class="daily-empty">
+                Nessun referral disponibile per l'anno selezionato
+            </div>
+        `;
+        return;
+    }
+
+    let html = `
+        <div class="costs-referral-grid">
+    `;
+
+    data.rows.forEach(function(item) {
+        const iconHtml = item.icon
+            ? `<i class="${escapeHtml(item.icon)}"></i>`
+            : '';
+
+        const sourcesText = item.sources && item.sources.length
+            ? item.sources.join(', ')
+            : '-';
+
+        const sourceCount = item.sources && item.sources.length
+            ? item.sources.length
+            : 0;
+
+        html += `
+            <div class="costs-referral-card">
+                <div class="costs-referral-card-main">
+                    <div class="costs-referral-card-left">
+                        <div class="daily-referral-label-wrap">
+                            <span class="daily-referral-icon">${iconHtml}</span>
+                            <span class="daily-referral-label">${escapeHtml(item.label)}</span>
+                        </div>
+
+                        <div class="daily-referral-meta">
+                            <span class="daily-referral-meta-pill">${sourceCount} source${sourceCount === 1 ? '' : 's'}</span>
+                            <span class="daily-referral-meta-pill daily-referral-meta-pill-hover" title="${escapeHtml(sourcesText)}">
+                                codici referral
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="costs-referral-side">
+                        <div class="costs-referral-main-number-label">Costo</div>
+                        <div class="costs-referral-main-number">${formatCurrency(item.cost)}</div>
+                    </div>
+                </div>
+
+                <div class="costs-referral-stats costs-referral-stats-top">
+                    <div class="costs-referral-stat">
+                        <span class="costs-referral-stat-label">Registrati</span>
+                        <strong class="costs-referral-stat-value">${formatNumber(item.registered)}</strong>
+                    </div>
+
+                    <div class="costs-referral-stat">
+                        <span class="costs-referral-stat-label">Attivi</span>
+                        <strong class="costs-referral-stat-value">${formatNumber(item.active)}</strong>
+                    </div>
+
+                    <div class="costs-referral-stat">
+                        <span class="costs-referral-stat-label">Attivi %</span>
+                        <strong class="costs-referral-stat-value">${formatDecimal(item.active_rate, 2)}%</strong>
+                    </div>
+                </div>
+
+                <div class="costs-referral-stats costs-referral-stats-bottom">
+                    <div class="costs-referral-stat">
+                        <span class="costs-referral-stat-label">CPI</span>
+                        <strong class="costs-referral-stat-value">${formatDecimal(item.cpi, 4)}</strong>
+                    </div>
+
+                    <div class="costs-referral-stat">
+                        <span class="costs-referral-stat-label">CPA</span>
+                        <strong class="costs-referral-stat-value">${formatCurrency(item.cpa)}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+
+    costsBox.innerHTML = html;
+}
+
+    function loadCostsBox() {
+        const year = filterCostsYear.value;
+
+        costsBox.innerHTML = `<div class="daily-loading">Caricamento spese referral...</div>`;
+
+        fetch(`{{ route('recruitment.costs') }}?year=${year}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Errore HTTP');
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            renderCostsBox(data);
+        })
+        .catch(function(error) {
+            console.error(error);
+            costsBox.innerHTML = `<div class="daily-empty">Impossibile caricare i costi referral</div>`;
+        });
+    }
+
+function renderActivityBox(data) {
+    if (!data.success) {
+        activityBox.innerHTML = `
+            <div class="daily-empty">
+                Errore nel caricamento del dettaglio attività
+            </div>
+        `;
+        return;
+    }
+
+    if (!data.rows || data.rows.length === 0) {
+        activityBox.innerHTML = `
+            <div class="daily-empty">
+                Nessun dato disponibile per l'anno selezionato
+            </div>
+        `;
+        return;
+    }
+
+    let html = `<div class="activity-card-grid">`;
+
+    data.rows.forEach(function(item) {
+        const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)}"></i>` : '';
+        const sources = item.sources || [];
+        const sourcesText = sources.join(', ');
+        const sourcesCount = sources.length;
+
+        html += `
+            <div class="activity-card">
+                <div class="activity-card-header">
+                    <div>
+                        <div class="activity-card-title">
+                            <span class="daily-referral-icon me-1">${iconHtml}</span>
+                            ${escapeHtml(item.label)}
+                        </div>
+                        <div class="activity-card-subtitle">
+                            Totale registrati: <strong>${formatNumber(item.total_registered)}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="activity-stats-table">
+                    <div class="activity-row activity-row-red">
+                        <div class="activity-label">Nessuna (0)</div>
+                        <div class="activity-value">${formatNumber(item.act_0)}</div>
+                        <div class="activity-percent">${formatDecimal(item.perc_0, 2)}%</div>
+                    </div>
+
+                    <div class="activity-row activity-row-orange">
+                        <div class="activity-label">Bassa (1-2)</div>
+                        <div class="activity-value">${formatNumber(item.act_1_2)}</div>
+                        <div class="activity-percent">${formatDecimal(item.perc_1_2, 2)}%</div>
+                    </div>
+
+                    <div class="activity-row activity-row-yellow">
+                        <div class="activity-label">Media (3-5)</div>
+                        <div class="activity-value">${formatNumber(item.act_3_5)}</div>
+                        <div class="activity-percent">${formatDecimal(item.perc_3_5, 2)}%</div>
+                    </div>
+
+                    <div class="activity-row activity-row-lime">
+                        <div class="activity-label">Buona (6-9)</div>
+                        <div class="activity-value">${formatNumber(item.act_6_9)}</div>
+                        <div class="activity-percent">${formatDecimal(item.perc_6_9, 2)}%</div>
+                    </div>
+
+                    <div class="activity-row activity-row-green">
+                        <div class="activity-label">Ottima (10+)</div>
+                        <div class="activity-value">${formatNumber(item.act_10_plus)}</div>
+                        <div class="activity-percent">${formatDecimal(item.perc_10_plus, 2)}%</div>
+                    </div>
+                </div>
+
+                <div class="activity-sources">
+                    <span class="activity-sources-pill" title="${escapeHtml(sourcesText)}">
+                        ${sourcesCount} source${sourcesCount === 1 ? '' : 's'}
+                    </span>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    activityBox.innerHTML = html;
+}
+
+    function loadActivityBox() {
+        const year = filterActivityYear.value;
+
+        activityBox.innerHTML = `
+            <div class="daily-loading">
+                Caricamento dettaglio attività...
+            </div>
+        `;
+
+        fetch(`{{ route('recruitment.activity') }}?year=${year}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Errore HTTP');
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            renderActivityBox(data);
+        })
+        .catch(function(error) {
+            console.error(error);
+            activityBox.innerHTML = `
+                <div class="daily-empty">
+                    Impossibile caricare il dettaglio attività
                 </div>
             `;
-            $('#activity-boxes').html(html);
-            return;
-        }
+        });
+    }
 
-        rows.forEach(function(row) {
-            html += `
-                <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="activity-card-header">
-                            <h6 class="activity-card-title">${row.title}</h6>
-                            <small class="text-muted">${row.code} · ${formatNumber(row.total_registered)} iscritti</small>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-sm activity-table mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Fascia</th>
-                                            <th>Utenti</th>
-                                            <th>%</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td><span class="activity-badge activity-none">0</span></td>
-                                            <td>${formatNumber(row.act_0)}</td>
-                                            <td>${row.perc_0}%</td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="activity-badge activity-low">1-2</span></td>
-                                            <td>${formatNumber(row.act_1_2)}</td>
-                                            <td>${row.perc_1_2}%</td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="activity-badge activity-mid">3-5</span></td>
-                                            <td>${formatNumber(row.act_3_5)}</td>
-                                            <td>${row.perc_3_5}%</td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="activity-badge activity-good">6-9</span></td>
-                                            <td>${formatNumber(row.act_6_9)}</td>
-                                            <td>${row.perc_6_9}%</td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="activity-badge activity-top">10+</span></td>
-                                            <td>${formatNumber(row.act_10_plus)}</td>
-                                            <td>${row.perc_10_plus}%</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+  function renderStatsBox(data) {
+    if (!data.success) {
+        statsBox.innerHTML = `
+            <div class="daily-empty">
+                Errore nel caricamento delle statistiche
+            </div>
+        `;
+        return;
+    }
+
+    if (!data.rows || data.rows.length === 0) {
+        statsBox.innerHTML = `
+            <div class="daily-empty">
+                Nessun dato disponibile per l'anno selezionato
+            </div>
+        `;
+        return;
+    }
+
+    let html = `<div class="demographic-card-grid">`;
+
+    data.rows.forEach(function(item) {
+        const iconHtml = item.icon
+            ? `<i class="${escapeHtml(item.icon)}"></i>`
+            : '';
+
+        const sources = item.sources || [];
+        const sourcesText = sources.length ? sources.join(', ') : '-';
+        const sourcesCount = sources.length;
+
+        html += `
+            <div class="demographic-card">
+                <div class="demographic-card-header">
+                    <div class="demographic-card-title-wrap">
+                        <span class="demographic-card-icon">${iconHtml}</span>
+                        <div>
+                            <div class="demographic-card-title">${escapeHtml(item.label)}</div>
+                            <div class="demographic-card-subtitle">
+                                Totale registrati: <strong>${formatNumber(item.total_registered)}</strong>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="demographic-layout">
+                    <div class="demographic-layout-left">
+                        <div class="demographic-section">
+                            <div class="demographic-section-title">
+                                <i class="bi bi-gender-ambiguous demographic-section-icon"></i>
+                                <span>Genere</span>
+                            </div>
+
+                            <div class="demographic-list">
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">Uomini</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.gender_male)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">Donne</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.gender_female)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">N.D.</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.gender_unknown)}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="demographic-section">
+                            <div class="demographic-section-title">
+                                <i class="bi bi-geo-alt demographic-section-icon"></i>
+                                <span>Area</span>
+                            </div>
+
+                            <div class="demographic-list">
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">Nord Ovest</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.area_nord_ovest)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">Nord Est</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.area_nord_est)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">Centro</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.area_centro)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">Sud</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.area_sud)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">N.D.</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.area_unknown)}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="demographic-layout-right">
+                        <div class="demographic-section demographic-section-age">
+                            <div class="demographic-section-title">
+                                <i class="bi bi-calendar3 demographic-section-icon"></i>
+                                <span>Età</span>
+                            </div>
+
+                            <div class="demographic-list">
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">&lt;18</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.age_under_18)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">18-24</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.age_18_24)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">25-34</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.age_25_34)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">35-44</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.age_35_44)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">45-54</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.age_45_54)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">55-64</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.age_55_64)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">65+</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.age_65_plus)}</strong>
+                                </div>
+                                <div class="demographic-list-row">
+                                    <span class="demographic-list-label">N.D.</span>
+                                    <strong class="demographic-list-value">${formatNumber(item.age_unknown)}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="demographic-card-footer">
+                    <span class="activity-sources-pill" title="${escapeHtml(sourcesText)}">
+                        ${sourcesCount} source${sourcesCount === 1 ? '' : 's'}
+                    </span>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    statsBox.innerHTML = html;
+}
+
+    function loadStatsBox() {
+        const year = filterStatsYear.value;
+
+        statsBox.innerHTML = `
+            <div class="daily-loading">
+                Caricamento statistiche...
+            </div>
+        `;
+
+        fetch(`{{ route('recruitment.stats') }}?year=${year}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Errore HTTP');
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            renderStatsBox(data);
+        })
+        .catch(function(error) {
+            console.error(error);
+
+            statsBox.innerHTML = `
+                <div class="daily-empty">
+                    Impossibile caricare le statistiche
+                </div>
             `;
         });
-
-        $('#activity-boxes').html(html);
     }
 
-    $('#filter-year').on('change', function () {
-        loadCosts();
-        loadActivity();
-        loadDaily();
+function renderLatestRegistrationsBox(data) {
+    if (!data.success) {
+        latestRegistrationsBox.innerHTML = `
+            <div class="daily-empty">
+                Errore nel caricamento degli ultimi registrati
+            </div>
+        `;
+        return;
+    }
+
+    if (!data.rows || data.rows.length === 0) {
+        latestRegistrationsBox.innerHTML = `
+            <div class="daily-empty">
+                Nessun dato disponibile
+            </div>
+        `;
+        return;
+    }
+
+    let html = `
+        <div class="latest-registrations-wrapper">
+            <div class="table-responsive latest-registrations-table-wrap">
+                <table class="table table-sm align-middle recruitment-table recruitment-table-compact mb-0">
+                    <thead>
+                        <tr>
+                            <th>Data/Ora</th>
+                            <th>Email</th>
+                            <th>Referral</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+
+    data.rows.forEach(function(item) {
+        const iconHtml = item.referral_icon
+            ? `<i class="${escapeHtml(item.referral_icon)} me-1"></i>`
+            : '';
+
+        html += `
+            <tr>
+                <td class="text-nowrap">${escapeHtml(item.reg_date)}</td>
+                <td class="latest-email-cell">${escapeHtml(item.email)}</td>
+                <td>
+                    <div class="latest-referral-cell">
+                        ${iconHtml}${escapeHtml(item.referral_label)}
+                    </div>
+                </td>
+            </tr>
+        `;
     });
 
-    $('#filter-month').on('change', function () {
-        loadDaily();
+    html += `
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+
+    latestRegistrationsBox.innerHTML = html;
+}
+
+function loadLatestRegistrationsBox() {
+    latestRegistrationsBox.innerHTML = `
+        <div class="daily-loading">
+            Caricamento ultimi registrati...
+        </div>
+    `;
+
+    fetch(`{{ route('recruitment.latestRegistrations') }}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Errore HTTP');
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        renderLatestRegistrationsBox(data);
+    })
+    .catch(function(error) {
+        console.error(error);
+
+        latestRegistrationsBox.innerHTML = `
+            <div class="daily-empty">
+                Impossibile caricare gli ultimi registrati
+            </div>
+        `;
+    });
+}
+
+function renderSummaryYearBox(data) {
+    if (!data.success) {
+        summaryYearBox.innerHTML = `
+            <div class="daily-empty">
+                Errore nel caricamento del riepilogo annuale
+            </div>
+        `;
+        return;
+    }
+
+    const budgetUsed = Math.max(0, Math.min(100, Number(data.kpi.budget_used_percent || 0)));
+    const topRegistered = data.highlights && data.highlights.top_registered ? data.highlights.top_registered : null;
+    const topActive = data.highlights && data.highlights.top_active ? data.highlights.top_active : null;
+
+    const topRegisteredIcon = topRegistered && topRegistered.icon
+        ? `<i class="${escapeHtml(topRegistered.icon)} me-1"></i>`
+        : '';
+
+    const topActiveIcon = topActive && topActive.icon
+        ? `<i class="${escapeHtml(topActive.icon)} me-1"></i>`
+        : '';
+
+    summaryYearBox.innerHTML = `
+        <div class="summary-year-layout">
+            <div class="summary-year-left">
+                <div class="summary-year-main-stack">
+                    <div class="summary-main-row summary-main-row-budget">
+                        <div class="summary-main-row-label">
+                            <i class="bi bi-wallet2 summary-main-row-icon"></i>
+                            <span>Budget</span>
+                        </div>
+                        <div class="summary-main-row-value">${formatCurrency(data.kpi.budget)}</div>
+                    </div>
+
+                    <div class="summary-main-row summary-main-row-spent">
+                        <div class="summary-main-row-label">
+                            <i class="bi bi-cash-stack summary-main-row-icon"></i>
+                            <span>Speso</span>
+                        </div>
+                        <div class="summary-main-row-value">${formatCurrency(data.kpi.spent)}</div>
+                    </div>
+
+                    <div class="summary-main-row summary-main-row-rest">
+                        <div class="summary-main-row-label">
+                            <i class="bi bi-piggy-bank summary-main-row-icon"></i>
+                            <span>Resto</span>
+                        </div>
+                        <div class="summary-main-row-value">${formatCurrency(data.kpi.rest)}</div>
+                    </div>
+
+                    <div class="summary-main-mini-grid">
+                        <div class="summary-main-mini-card">
+                            <div class="summary-main-mini-label">Iscritti</div>
+                            <div class="summary-main-mini-value">${formatNumber(data.kpi.registered)}</div>
+                        </div>
+
+                        <div class="summary-main-mini-card">
+                            <div class="summary-main-mini-label">Attivi</div>
+                            <div class="summary-main-mini-value">${formatNumber(data.kpi.active)}</div>
+                        </div>
+
+                        <div class="summary-main-mini-card">
+                            <div class="summary-main-mini-label">Attivi %</div>
+                            <div class="summary-main-mini-value">${formatDecimal(data.kpi.active_rate, 2)}%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-year-right">
+                <div class="summary-side-card">
+                    <div class="summary-year-section-title">Indicatori economici</div>
+
+                    <div class="summary-side-kpis">
+                        <div class="summary-side-kpi">
+                            <span class="summary-side-kpi-label">CPI Medio</span>
+                            <strong class="summary-side-kpi-value">${formatDecimal(data.kpi.cpi, 2)} €</strong>
+                        </div>
+
+                        <div class="summary-side-kpi">
+                            <span class="summary-side-kpi-label">CPA Medio</span>
+                            <strong class="summary-side-kpi-value">${formatCurrency(data.kpi.cpa)}</strong>
+                        </div>
+
+                        <div class="summary-side-kpi">
+                            <span class="summary-side-kpi-label">Referral attivi</span>
+                            <strong class="summary-side-kpi-value">${formatNumber(data.kpi.active_referral_count)}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-side-card">
+                    <div class="summary-year-section-title">Andamento budget</div>
+
+                    <div class="summary-year-budget-values">
+                        <span>Utilizzato</span>
+                        <strong>${formatDecimal(budgetUsed, 2)}%</strong>
+                    </div>
+
+                    <div class="summary-year-budget-bar">
+                        <div class="summary-year-budget-bar-fill" style="width: ${budgetUsed}%"></div>
+                    </div>
+
+                    <div class="summary-year-budget-legend">
+                        <span>Speso: <strong>${formatCurrency(data.kpi.spent)}</strong></span>
+                        <span>Resto: <strong>${formatCurrency(data.kpi.rest)}</strong></span>
+                    </div>
+                </div>
+
+                <div class="summary-side-card">
+                    <div class="summary-year-section-title">Top performance</div>
+
+                    <div class="summary-year-pill-grid">
+                        <div class="summary-year-pill">
+                            <span class="summary-year-pill-label">Top iscritti</span>
+                            <strong class="summary-year-pill-value">
+                                ${topRegistered ? `${topRegisteredIcon}${escapeHtml(topRegistered.label)} (${formatNumber(topRegistered.value)})` : '-'}
+                            </strong>
+                        </div>
+
+                        <div class="summary-year-pill">
+                            <span class="summary-year-pill-label">Top attivi</span>
+                            <strong class="summary-year-pill-value">
+                                ${topActive ? `${topActiveIcon}${escapeHtml(topActive.label)} (${formatNumber(topActive.value)})` : '-'}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function loadSummaryYearBox() {
+    const year = filterSummaryYear.value;
+
+    summaryYearBox.innerHTML = `
+        <div class="daily-loading">
+            Caricamento riepilogo annuale...
+        </div>
+    `;
+
+    fetch(`{{ route('recruitment.summaryYear') }}?year=${year}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('Errore HTTP');
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        renderSummaryYearBox(data);
+    })
+    .catch(function(error) {
+        console.error(error);
+
+        summaryYearBox.innerHTML = `
+            <div class="daily-empty">
+                Impossibile caricare il riepilogo annuale
+            </div>
+        `;
+    });
+}
+
+function resetCampaignForm() {
+    document.querySelector('input[name="referral_mode"][value="existing"]').checked = true;
+
+    existingReferralBox.classList.remove('d-none');
+    newReferralBox.classList.add('d-none');
+
+    existingReferralSelect.value = '';
+    newReferralCode.value = '';
+    newReferralTitle.value = '';
+    newReferralIcon.value = '';
+    campaignStart.value = '';
+    campaignEnd.value = '';
+    campaignCpi.value = '';
+    campaignActive.checked = true;
+
+    campaignError.classList.add('d-none');
+    campaignError.innerText = '';
+
+    campaignSuccess.classList.add('d-none');
+    campaignSuccess.innerText = '';
+
+    btnSaveCampaign.disabled = false;
+    btnSaveCampaign.innerHTML = 'Salva Campagna';
+}
+
+function showCampaignError(message) {
+    campaignSuccess.classList.add('d-none');
+    campaignSuccess.innerText = '';
+
+    campaignError.innerText = message || 'Errore';
+    campaignError.classList.remove('d-none');
+}
+
+function showCampaignSuccess(message) {
+    campaignError.classList.add('d-none');
+    campaignError.innerText = '';
+
+    campaignSuccess.innerText = message || 'Operazione completata';
+    campaignSuccess.classList.remove('d-none');
+}
+
+    filterDailyMonth.addEventListener('change', loadDailyBox);
+    filterDailyYear.addEventListener('change', loadDailyBox);
+    filterCostsYear.addEventListener('change', loadCostsBox);
+    filterActivityYear.addEventListener('change', loadActivityBox);
+    filterStatsYear.addEventListener('change', loadStatsBox);
+    filterSummaryYear.addEventListener('change', loadSummaryYearBox);
+
+    loadDailyBox();
+    loadCostsBox();
+    loadActivityBox();
+    loadStatsBox();
+    loadLatestRegistrationsBox();
+    loadSummaryYearBox();
+
+function resetReportForm() {
+    reportMonth.value = '{{ $currentMonth }}';
+    reportYear.value = '{{ $currentYear }}';
+    reportReferral.value = '';
+    reportError.classList.add('d-none');
+    reportError.innerText = '';
+    btnDownloadReport.disabled = false;
+    btnDownloadReport.innerHTML = 'Scarica CSV';
+}
+
+btnOpenReportModal.addEventListener('click', function () {
+    resetReportForm();
+    reportModal.show();
+});
+
+reportModalElement.addEventListener('hidden.bs.modal', function () {
+    resetReportForm();
+});
+
+btnDownloadReport.addEventListener('click', function () {
+    const month = reportMonth.value;
+    const year = reportYear.value;
+
+    const selectedReferralIds = Array.from(reportReferral.selectedOptions).map(function(option) {
+        return option.value;
     });
 
-    loadCosts();
-    loadActivity();
-    loadDaily();
+    reportError.classList.add('d-none');
+    reportError.innerText = '';
+
+    btnDownloadReport.disabled = true;
+    btnDownloadReport.innerHTML = 'Preparazione...';
+
+    const params = new URLSearchParams();
+    params.append('month', month);
+    params.append('year', year);
+
+    selectedReferralIds.forEach(function(id) {
+        params.append('referral_ids[]', id);
+    });
+
+    window.location.href = `{{ route('recruitment.report.export') }}?${params.toString()}`;
+
+    setTimeout(function () {
+        btnDownloadReport.disabled = false;
+        btnDownloadReport.innerHTML = 'Scarica CSV';
+        reportModal.hide();
+    }, 800);
+});
 
 });
 </script>

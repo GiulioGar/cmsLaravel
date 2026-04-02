@@ -174,6 +174,15 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::get('/recruitment/costs', [RecruitmentController::class, 'costs'])->name('recruitment.costs');
     Route::get('/recruitment/activity', [RecruitmentController::class, 'activity'])->name('recruitment.activity');
     Route::get('/recruitment/stats', [RecruitmentController::class, 'stats'])->name('recruitment.stats');
+    Route::get('/recruitment/latest-registrations', [RecruitmentController::class, 'latestRegistrations'])
+    ->name('recruitment.latestRegistrations');
+    Route::get('/recruitment/summary-year', [RecruitmentController::class, 'summaryYear'])
+    ->name('recruitment.summaryYear');
+    Route::post('/recruitment/campaigns/store', [RecruitmentController::class, 'storeCampaign'])
+    ->name('recruitment.campaigns.store');
+    Route::get('/recruitment/report/export', [RecruitmentController::class, 'exportReport'])
+    ->name('recruitment.report.export');
+
 
     // ============================================
     // PRIMIS API proxy

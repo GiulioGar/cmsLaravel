@@ -61,8 +61,9 @@
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="">
-                            <i class="align-middle" data-feather="map"></i> <span class="align-middle">Reclutamento</span>
+                        <a class="sidebar-link" href="{{ route('recruitment.index') }}">
+                            <i class="align-middle" data-feather="bar-chart-2"></i>
+                            <span class="align-middle">Reclutamento</span>
                         </a>
                     </li>
                 </ul>
