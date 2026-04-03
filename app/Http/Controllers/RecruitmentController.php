@@ -1366,22 +1366,24 @@ public function exportReport(Request $request)
     $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
     $endDate = $startDate->copy()->endOfMonth();
 
-    $query = DB::table('t_user_info')
-        ->select(
-            'user_id',
-            'email',
-            'gender',
-            'birth_date',
-            'provenienza',
-            'actions'
-        )
-        ->whereBetween('reg_date', [
-            $startDate->format('Y-m-d 00:00:00'),
-            $endDate->format('Y-m-d 23:59:59'),
-        ])
-        ->where('email', 'not like', '%.top')
-        ->whereNotNull('email')
-        ->where('email', '<>', '');
+$query = DB::table('t_user_info as u')
+    ->leftJoin('t_user_invites as ui', 'ui.user_id', '=', 'u.user_id')
+    ->select(
+        'u.user_id',
+        'u.email',
+        'u.gender',
+        'u.birth_date',
+        'u.provenienza',
+        'u.actions',
+        DB::raw('COALESCE(ui.invites, 0) as invites')
+    )
+    ->whereBetween('u.reg_date', [
+        $startDate->format('Y-m-d 00:00:00'),
+        $endDate->format('Y-m-d 23:59:59'),
+    ])
+    ->where('u.email', 'not like', '%.top')
+    ->whereNotNull('u.email')
+    ->where('u.email', '<>', '');
 
 if (!empty($referralIds)) {
     $referrals = DB::table('t_recruitment_referrals')
@@ -1419,7 +1421,7 @@ if (!empty($referralIds)) {
         ], 422);
     }
 
-    $query->whereIn('provenienza', $allSources);
+    $query->whereIn('u.provenienza', $allSources);
 
     $fileLabel = count($titles) === 1
         ? preg_replace('/[^A-Za-z0-9_-]/', '_', $titles[0])
@@ -1444,25 +1446,31 @@ if (!empty($referralIds)) {
         // BOM UTF-8 per Excel
         fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-        fputcsv($handle, [
-            'user_id',
-            'email',
-            'sesso',
-            'eta',
-            'provenienza',
-            'actions'
-        ], ';');
+fputcsv($handle, [
+    'user_id',
+    'email',
+    'sesso',
+    'eta',
+    'eta_45',
+    'provenienza',
+    'actions',
+    'invites'
+], ';');
 
-        foreach ($rows as $row) {
-            fputcsv($handle, [
-                $row->user_id,
-                $row->email,
-                $this->mapGenderLabel($row->gender),
-                $this->calculateAgeForCsv($row->birth_date),
-                $row->provenienza,
-                (int) ($row->actions ?? 0),
-            ], ';');
-        }
+    foreach ($rows as $row) {
+        $age = $this->calculateAgeForCsv($row->birth_date);
+
+        fputcsv($handle, [
+            $row->user_id,
+            $row->email,
+            $this->mapGenderLabel($row->gender),
+            $age,
+            $this->mapAge45Bucket($age),
+            $row->provenienza,
+            (int) ($row->actions ?? 0),
+            (int) ($row->invites ?? 0),
+        ], ';');
+    }
 
         fclose($handle);
     };
@@ -1494,6 +1502,15 @@ private function calculateAgeForCsv($birthDate)
     } catch (\Throwable $e) {
         return '';
     }
+}
+
+private function mapAge45Bucket($age)
+{
+    if ($age === '' || $age === null) {
+        return '';
+    }
+
+    return ((int) $age >= 45) ? 'over' : 'under';
 }
 
 }

@@ -183,6 +183,13 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::get('/recruitment/report/export', [RecruitmentController::class, 'exportReport'])
     ->name('recruitment.report.export');
 
+    // ============================================
+    // TICKETS
+    // ============================================
+    Route::get('/tickets', [\App\Http\Controllers\TicketsController::class, 'index'])->name('tickets.index');
+    Route::get('/tickets/{ticketId}/detail', [\App\Http\Controllers\TicketsController::class, 'detail'])->name('tickets.detail');
+    Route::post('/tickets/{ticketId}/update', [\App\Http\Controllers\TicketsController::class, 'update'])->name('tickets.update');
+
 
     // ============================================
     // PRIMIS API proxy

@@ -66,6 +66,14 @@
                             <span class="align-middle">Reclutamento</span>
                         </a>
                     </li>
+
+                <li class="sidebar-item {{ request()->routeIs('tickets.*') ? 'active' : '' }}">
+                    <a class="sidebar-link" href="{{ route('tickets.index') }}">
+                        <i class="align-middle" data-feather="message-circle"></i>
+                        <span class="align-middle">Tickets</span>
+                    </a>
+                </li>
+
                 </ul>
             </div>
         </nav>
