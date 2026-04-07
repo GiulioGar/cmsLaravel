@@ -74,6 +74,13 @@
                     </a>
                 </li>
 
+<li class="sidebar-item">
+    <a class="sidebar-link" href="{{ route('referral.index') }}">
+        <i class="align-middle" data-feather="user-plus"></i>
+        <span class="align-middle">Invita un amico</span>
+    </a>
+</li>
+
                 </ul>
             </div>
         </nav>

@@ -16,6 +16,7 @@ use App\Http\Controllers\PanelUsersController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PremiPanelController;
 use App\Http\Controllers\RecruitmentController;
+use App\Http\Controllers\ReferralController;
 
 /*
 |--------------------------------------------------------------------------
@@ -189,6 +190,19 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::get('/tickets', [\App\Http\Controllers\TicketsController::class, 'index'])->name('tickets.index');
     Route::get('/tickets/{ticketId}/detail', [\App\Http\Controllers\TicketsController::class, 'detail'])->name('tickets.detail');
     Route::post('/tickets/{ticketId}/update', [\App\Http\Controllers\TicketsController::class, 'update'])->name('tickets.update');
+
+    // ============================================
+    // REFERRAL - Invita un amico
+    // ============================================
+    Route::get('/referral', [ReferralController::class, 'index'])->name('referral.index');
+    Route::get('/referral/{refUserId}/detail', [ReferralController::class, 'detail'])->name('referral.detail');
+    Route::post('/referral/remove', [ReferralController::class, 'removeReferral'])->name('referral.remove');
+    Route::post('/referral/assign-bonus', [ReferralController::class, 'assignBonus'])->name('referral.assignBonus');
+        Route::get('/referral/export/new', [ReferralController::class, 'exportNewInvites'])->name('referral.export.new');
+    Route::get('/referral/export/all', [ReferralController::class, 'exportAllInvites'])->name('referral.export.all');
+        Route::get('/referral/export/report', [ReferralController::class, 'exportBonusReport'])->name('referral.export.report');
+            Route::post('/referral/recalculate-maturato', [ReferralController::class, 'recalculateMaturato'])
+        ->name('referral.recalculateMaturato');
 
 
     // ============================================
