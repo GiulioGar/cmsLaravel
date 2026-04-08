@@ -371,7 +371,7 @@ class ReferralController extends Controller
         $updatedRows = [];
         $updatedCount = 0;
 
-        DB::transaction(function () use ($aggregates, &$updatedRows, &$updatedCount) {
+               DB::transaction(function () use ($aggregates, &$updatedRows, &$updatedCount) {
             foreach ($aggregates as $item) {
                 $refUserId = (string) $item->ref_user_id;
                 $newMaturato = (int) $item->new_maturato;
@@ -421,29 +421,18 @@ class ReferralController extends Controller
             }
         });
 
-        $totals = DB::table('t_user_info as info')
-            ->join('t_user_info as ref', function ($join) {
-                $join->on('ref.user_id', '=', 'info.provenienza')
-                    ->where('ref.active', '=', 1);
-            })
-            ->whereNotNull('info.provenienza')
-            ->where('info.active', '=', 1)
-            ->groupByRaw('1')
-            ->select([
-                DB::raw('SUM(COALESCE(ref.home_phone, 0)) as total_maturato'),
-                DB::raw('SUM(COALESCE(ref.id_bacheca, 0)) as total_pagato'),
-                DB::raw('SUM(COALESCE(ref.home_phone, 0) - COALESCE(ref.id_bacheca, 0)) as total_rimanente'),
-            ])
-            ->first();
+        $totalMaturato = collect($updatedRows)->sum('bonus_maturato');
+        $totalPagato = collect($updatedRows)->sum('bonus_pagato');
+        $totalRimanente = collect($updatedRows)->sum('bonus_rimanente');
 
         return response()->json([
             'success' => true,
             'message' => 'Maturato referral aggiornato correttamente.',
             'updated_count' => $updatedCount,
             'totals' => [
-                'maturato' => (int) ($totals->total_maturato ?? 0),
-                'pagato' => (int) ($totals->total_pagato ?? 0),
-                'rimanente' => (int) ($totals->total_rimanente ?? 0),
+                'maturato' => (int) $totalMaturato,
+                'pagato' => (int) $totalPagato,
+                'rimanente' => (int) $totalRimanente,
             ],
             'updated_rows' => $updatedRows,
         ]);

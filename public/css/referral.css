@@ -215,3 +215,245 @@
 #btnRecalculateMaturato {
     border-radius: 10px;
 }
+
+.referral-kpi-grid {
+    align-items: stretch;
+}
+
+.referral-kpi-section-label {
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 2px;
+}
+
+.referral-kpi-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #e9eef5;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    background: #fff;
+}
+
+.referral-kpi-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    opacity: 0.95;
+}
+
+.referral-kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+}
+
+.referral-kpi-card .card-body {
+   padding: 14px 16px 12px;
+}
+
+.referral-kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.referral-kpi-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+.referral-kpi-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.14);
+    color: #475569;
+}
+
+.referral-kpi-value {
+    font-size: 26px;
+    line-height: 1;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.referral-kpi-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+}
+
+.referral-kpi-subtitle {
+    font-size: 11px;
+    line-height: 1.3;
+    color: #64748b;
+    min-height: auto;
+}
+
+/* VARIANTI */
+
+.referral-kpi-card-primary::before { background: #2563eb; }
+.referral-kpi-card-primary .referral-kpi-icon {
+    background: linear-gradient(135deg, rgba(37,99,235,0.14), rgba(37,99,235,0.24));
+    color: #2563eb;
+}
+
+.referral-kpi-card-info::before { background: #0891b2; }
+.referral-kpi-card-info .referral-kpi-icon {
+    background: linear-gradient(135deg, rgba(8,145,178,0.14), rgba(8,145,178,0.24));
+    color: #0891b2;
+}
+
+.referral-kpi-card-success::before { background: #059669; }
+.referral-kpi-card-success .referral-kpi-icon {
+    background: linear-gradient(135deg, rgba(5,150,105,0.14), rgba(5,150,105,0.24));
+    color: #059669;
+}
+
+.referral-kpi-card-violet::before { background: #7c3aed; }
+.referral-kpi-card-violet .referral-kpi-icon {
+    background: linear-gradient(135deg, rgba(124,58,237,0.14), rgba(124,58,237,0.24));
+    color: #7c3aed;
+}
+
+.referral-kpi-card-dark::before { background: #334155; }
+.referral-kpi-card-dark .referral-kpi-icon {
+    background: linear-gradient(135deg, rgba(51,65,85,0.14), rgba(51,65,85,0.24));
+    color: #334155;
+}
+
+.referral-kpi-card-warning::before { background: #d97706; }
+.referral-kpi-card-warning .referral-kpi-icon {
+    background: linear-gradient(135deg, rgba(217,119,6,0.14), rgba(217,119,6,0.24));
+    color: #d97706;
+}
+
+.referral-kpi-card-danger::before { background: #dc2626; }
+.referral-kpi-card-danger .referral-kpi-icon {
+    background: linear-gradient(135deg, rgba(220,38,38,0.14), rgba(220,38,38,0.24));
+    color: #dc2626;
+}
+
+.referral-kpi-card-email::before { background: #0f766e; }
+.referral-kpi-card-email .referral-kpi-icon {
+    background: linear-gradient(135deg, rgba(15,118,110,0.14), rgba(15,118,110,0.24));
+    color: #0f766e;
+}
+
+.referral-kpi-card-email-total::before { background: #475569; }
+.referral-kpi-card-email-total .referral-kpi-icon {
+    background: linear-gradient(135deg, rgba(71,85,105,0.14), rgba(71,85,105,0.24));
+    color: #475569;
+}
+
+@media (max-width: 767.98px) {
+    .referral-kpi-value {
+        font-size: 30px;
+    }
+
+    .referral-kpi-subtitle {
+        min-height: auto;
+    }
+}
+
+.referral-kpi-layout {
+    align-items: stretch;
+}
+
+.referral-kpi-panel {
+    background: rgba(255, 255, 255, 0.42);
+    border: 1px solid #dde5ef;
+    border-radius: 20px;
+    padding: 14px;
+}
+
+.referral-kpi-panel-bonus {
+    background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(248,250,252,0.9) 100%);
+}
+
+.referral-kpi-panel-header {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #334155;
+    margin-bottom: 10px;
+}
+
+.referral-kpi-card {
+    min-height: 100%;
+}
+
+.referral-kpi-card .card-body {
+    padding: 12px 14px 11px;
+}
+
+.referral-kpi-top {
+    margin-bottom: 8px;
+}
+
+.referral-kpi-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+.referral-kpi-badge {
+    font-size: 10px;
+    padding: 5px 8px;
+}
+
+.referral-kpi-value {
+    font-size: 22px;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.referral-kpi-title {
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+
+.referral-kpi-subtitle {
+    font-size: 11px;
+    line-height: 1.28;
+    min-height: auto;
+}
+
+@media (max-width: 1199.98px) {
+    .referral-kpi-panel {
+        padding: 12px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .referral-kpi-panel-header {
+        margin-bottom: 8px;
+    }
+
+    .referral-kpi-value {
+        font-size: 20px;
+    }
+}

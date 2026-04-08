@@ -57,88 +57,186 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-3 col-xl-2">
-            <div class="card referral-counter-card h-100">
-                <div class="card-body text-center">
-                    <div class="counter-label">Referrer</div>
-                    <div class="counter-value" id="summary-referrers">{{ $summary['referrers'] ?? 0 }}</div>
+<div class="row g-3 mb-4 referral-kpi-layout">
+    <div class="col-xl-7">
+        <div class="referral-kpi-panel h-100">
+            <div class="referral-kpi-panel-header">
+                <i class="bi bi-people me-2"></i>Panoramica referral
+            </div>
+
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <div class="card referral-kpi-card referral-kpi-card-primary h-100">
+                        <div class="card-body">
+                            <div class="referral-kpi-top">
+                                <div class="referral-kpi-icon">
+                                    <i class="bi bi-person-heart"></i>
+                                </div>
+                                <div class="referral-kpi-badge">Base</div>
+                            </div>
+
+                            <div class="referral-kpi-value" id="summary-referrers">{{ $summary['referrers'] ?? 0 }}</div>
+                            <div class="referral-kpi-title">Referrer</div>
+                            <div class="referral-kpi-subtitle">Utenti invitanti attivi nel sistema referral</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card referral-kpi-card referral-kpi-card-info h-100">
+                        <div class="card-body">
+                            <div class="referral-kpi-top">
+                                <div class="referral-kpi-icon">
+                                    <i class="bi bi-person-plus"></i>
+                                </div>
+                                <div class="referral-kpi-badge">Rete</div>
+                            </div>
+
+                            <div class="referral-kpi-value" id="summary-inviti">{{ $summary['inviti'] ?? 0 }}</div>
+                            <div class="referral-kpi-title">Inviti referral</div>
+                            <div class="referral-kpi-subtitle">Invitati attivi collegati ai referrer</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card referral-kpi-card referral-kpi-card-success h-100">
+                        <div class="card-body">
+                            <div class="referral-kpi-top">
+                                <div class="referral-kpi-icon">
+                                    <i class="bi bi-check2-circle"></i>
+                                </div>
+                                <div class="referral-kpi-badge">Stato</div>
+                            </div>
+
+                            <div class="referral-kpi-value" id="summary-iscritti">{{ $summary['iscritti'] ?? 0 }}</div>
+                            <div class="referral-kpi-title">Iscritti</div>
+                            <div class="referral-kpi-subtitle">Invitati attivi riconosciuti nel programma</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card referral-kpi-card referral-kpi-card-violet h-100">
+                        <div class="card-body">
+                            <div class="referral-kpi-top">
+                                <div class="referral-kpi-icon">
+                                    <i class="bi bi-lightning-charge"></i>
+                                </div>
+                                <div class="referral-kpi-badge">Attività</div>
+                            </div>
+
+                            <div class="referral-kpi-value" id="summary-attivi">{{ $summary['attivi'] ?? 0 }}</div>
+                            <div class="referral-kpi-title">Attivi</div>
+                            <div class="referral-kpi-subtitle">Invitati con almeno un’azione registrata</div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3 col-xl-2">
-            <div class="card referral-counter-card h-100">
-                <div class="card-body text-center">
-                    <div class="counter-label">Inviti referral</div>
-                    <div class="counter-value" id="summary-inviti">{{ $summary['inviti'] ?? 0 }}</div>
-                </div>
+            <div class="referral-kpi-panel-header mt-3">
+                <i class="bi bi-envelope-paper me-2"></i>Inviti email
             </div>
-        </div>
 
-        <div class="col-md-3 col-xl-2">
-            <div class="card referral-counter-card h-100">
-                <div class="card-body text-center">
-                    <div class="counter-label">Iscritti</div>
-                    <div class="counter-value" id="summary-iscritti">{{ $summary['iscritti'] ?? 0 }}</div>
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <div class="card referral-kpi-card referral-kpi-card-email h-100">
+                        <div class="card-body">
+                            <div class="referral-kpi-top">
+                                <div class="referral-kpi-icon">
+                                    <i class="bi bi-envelope"></i>
+                                </div>
+                                <div class="referral-kpi-badge">Nuovi</div>
+                            </div>
+
+                            <div class="referral-kpi-value">{{ $inviteCounters['new'] ?? 0 }}</div>
+                            <div class="referral-kpi-title">Nuovi inviti email</div>
+                            <div class="referral-kpi-subtitle">Record ancora da scaricare/esportare</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="col-md-3 col-xl-2">
-            <div class="card referral-counter-card h-100">
-                <div class="card-body text-center">
-                    <div class="counter-label">Attivi</div>
-                    <div class="counter-value" id="summary-attivi">{{ $summary['attivi'] ?? 0 }}</div>
-                </div>
-            </div>
-        </div>
+                <div class="col-md-6">
+                    <div class="card referral-kpi-card referral-kpi-card-email-total h-100">
+                        <div class="card-body">
+                            <div class="referral-kpi-top">
+                                <div class="referral-kpi-icon">
+                                    <i class="bi bi-collection"></i>
+                                </div>
+                                <div class="referral-kpi-badge">Archivio</div>
+                            </div>
 
-        <div class="col-md-3 col-xl-2">
-            <div class="card referral-counter-card h-100">
-                <div class="card-body text-center">
-                    <div class="counter-label">Maturato</div>
-                    <div class="counter-value" id="summary-maturato">{{ $summary['maturato'] ?? 0 }}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 col-xl-2">
-            <div class="card referral-counter-card counter-warning h-100">
-                <div class="card-body text-center">
-                    <div class="counter-label">Pagato</div>
-                    <div class="counter-value" id="summary-pagato">{{ $summary['pagato'] ?? 0 }}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card referral-counter-card counter-danger h-100">
-                <div class="card-body text-center">
-                    <div class="counter-label">Da assegnare</div>
-                    <div class="counter-value" id="summary-rimanente">{{ $summary['rimanente'] ?? 0 }}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card referral-counter-card h-100">
-                <div class="card-body text-center">
-                    <div class="counter-label">Nuovi inviti email</div>
-                    <div class="counter-value">{{ $inviteCounters['new'] ?? 0 }}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card referral-counter-card h-100">
-                <div class="card-body text-center">
-                    <div class="counter-label">Inviti email totali</div>
-                    <div class="counter-value">{{ $inviteCounters['total'] ?? 0 }}</div>
+                            <div class="referral-kpi-value">{{ $inviteCounters['total'] ?? 0 }}</div>
+                            <div class="referral-kpi-title">Inviti email totali</div>
+                            <div class="referral-kpi-subtitle">Storico complessivo presente in portaamico</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="col-xl-5">
+        <div class="referral-kpi-panel h-100 referral-kpi-panel-bonus">
+            <div class="referral-kpi-panel-header">
+                <i class="bi bi-award me-2"></i>Stato bonus referral
+            </div>
+
+            <div class="row g-2">
+                <div class="col-12">
+                    <div class="card referral-kpi-card referral-kpi-card-dark h-100">
+                        <div class="card-body">
+                            <div class="referral-kpi-top">
+                                <div class="referral-kpi-icon">
+                                    <i class="bi bi-wallet2"></i>
+                                </div>
+                                <div class="referral-kpi-badge">Totale</div>
+                            </div>
+
+                            <div class="referral-kpi-value" id="summary-maturato">{{ $summary['maturato'] ?? 0 }}</div>
+                            <div class="referral-kpi-title">Maturato</div>
+                            <div class="referral-kpi-subtitle">Bonus complessivo generato dai referral</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card referral-kpi-card referral-kpi-card-warning h-100">
+                        <div class="card-body">
+                            <div class="referral-kpi-top">
+                                <div class="referral-kpi-icon">
+                                    <i class="bi bi-cash-coin"></i>
+                                </div>
+                                <div class="referral-kpi-badge">Pagamenti</div>
+                            </div>
+
+                            <div class="referral-kpi-value" id="summary-pagato">{{ $summary['pagato'] ?? 0 }}</div>
+                            <div class="referral-kpi-title">Pagato</div>
+                            <div class="referral-kpi-subtitle">Bonus già assegnato agli utenti invitanti</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="card referral-kpi-card referral-kpi-card-danger h-100">
+                        <div class="card-body">
+                            <div class="referral-kpi-top">
+                                <div class="referral-kpi-icon">
+                                    <i class="bi bi-hourglass-split"></i>
+                                </div>
+                                <div class="referral-kpi-badge">Operativo</div>
+                            </div>
+
+                            <div class="referral-kpi-value" id="summary-rimanente">{{ $summary['rimanente'] ?? 0 }}</div>
+                            <div class="referral-kpi-title">Da assegnare</div>
+                            <div class="referral-kpi-subtitle">Residuo ancora disponibile da riconoscere</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <div class="card referral-card shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
