@@ -17,6 +17,7 @@ use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PremiPanelController;
 use App\Http\Controllers\RecruitmentController;
 use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\NotificationsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -203,6 +204,12 @@ Route::middleware(['auth.custom'])->group(function () {
         Route::get('/referral/export/report', [ReferralController::class, 'exportBonusReport'])->name('referral.export.report');
             Route::post('/referral/recalculate-maturato', [ReferralController::class, 'recalculateMaturato'])
         ->name('referral.recalculateMaturato');
+
+    // ============================================
+    // NOTIFICHE TOPBAR
+    // ============================================
+    Route::get('/notifications/summary', [NotificationsController::class, 'summary'])
+        ->name('notifications.summary');
 
 
     // ============================================

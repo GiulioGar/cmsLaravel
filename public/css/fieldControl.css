@@ -289,14 +289,7 @@ h3 {font-size: 15px!important;}
 
 /* NAVBAR con gradiente chiaro, bordo e ombra leggerissima */
 
-/* .custom-navbar {
-    background: linear-gradient(90deg, #f9f9f9 0%, #97ce61 100%);
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    padding: 0.5rem 1rem;
-  }
-  */
+
 
   /* NAVBAR con stile moderno */
 .custom-navbar {
@@ -1300,3 +1293,16 @@ h3 {font-size: 15px!important;}
 .trend-up{    background: rgba(220,38,38,.12);  color: #dc2626; } /* su = rosso */
 .trend-down{  background: rgba(22,163,74,.12);  color: #16a34a; } /* giu = verde */
 .trend-eq{    background: rgba(245,158,11,.14); color: #b45309; } /* uguale = giallo */
+
+.custom-navbar,
+.custom-navbar .container-fluid,
+.custom-navbar .nav,
+.custom-navbar .nav-item,
+.custom-navbar .dropdown {
+    overflow: visible !important;
+}
+
+.custom-navbar .dropdown-menu {
+    z-index: 3000 !important;
+    min-width: 220px;
+}

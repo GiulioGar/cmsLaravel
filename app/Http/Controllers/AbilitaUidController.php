@@ -305,10 +305,11 @@ public function enableUids(Request $request)
         ], 400);
     }
 
-    // 1. split, trim, rimozione vuoti, deduplica
     $uids = preg_split('/\r\n|\r|\n/', $uidsRaw);
     $uids = array_map('trim', $uids);
-    $uids = array_filter($uids, fn($v) => $v !== '');
+    $uids = array_filter($uids, function ($v) {
+        return $v !== '';
+    });
     $uids = array_values(array_unique($uids));
 
     if (empty($uids)) {
@@ -318,43 +319,45 @@ public function enableUids(Request $request)
         ], 400);
     }
 
-    // 2. leggo in una query gli UID già esistenti per quel SID
-    $existing = DB::table('t_respint')
-        ->where('sid', $sid)
-        ->whereIn('uid', $uids)
-        ->pluck('uid')
-        ->all();
-
-    $existingMap = array_flip($existing);
-
-    // 3. preparo i nuovi record
-    $toInsert = [];
+    $insertedCount = 0;
     $log = [];
+    $chunks = array_chunk($uids, 1000);
 
-    foreach ($uids as $uid) {
-        if (isset($existingMap[$uid])) {
-            continue;
+    foreach ($chunks as $uidsChunk) {
+        $existing = DB::table('t_respint')
+            ->where('sid', $sid)
+            ->whereIn('uid', $uidsChunk)
+            ->pluck('uid')
+            ->all();
+
+        $existingMap = array_flip($existing);
+        $toInsert = [];
+
+        foreach ($uidsChunk as $uid) {
+            if (isset($existingMap[$uid])) {
+                continue;
+            }
+
+            $toInsert[] = [
+                'sid' => $sid,
+                'uid' => $uid,
+                'status' => 0,
+                'iid' => -1,
+                'prj_name' => $prj,
+            ];
+
+            $insertedCount++;
+            $log[] = "UID {$uid} abilitato";
         }
 
-        $toInsert[] = [
-            'sid' => $sid,
-            'uid' => $uid,
-            'status' => 0,
-            'iid' => -1,
-            'prj_name' => $prj,
-        ];
-
-        $log[] = "UID {$uid} abilitato";
-    }
-
-    // 4. insert unica
-    if (!empty($toInsert)) {
-        DB::table('t_respint')->insert($toInsert);
+        if (!empty($toInsert)) {
+            DB::table('t_respint')->insert($toInsert);
+        }
     }
 
     return response()->json([
         'success' => true,
-        'count' => count($toInsert),
+        'count' => $insertedCount,
         'actions' => array_slice($log, -5)
     ]);
 }

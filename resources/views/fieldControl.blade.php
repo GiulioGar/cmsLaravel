@@ -22,9 +22,9 @@
         <!-- Menu orizzontale con dropdown -->
         <ul class="nav custom-nav-links">
             <!-- Ricerche in corso -->
-            <li class="nav-item dropdown position-relative">
-                <a class="nav-link dropdown-toggle" href="#" id="ongoingResearchDropdown" role="button"
-                   data-bs-toggle="dropdown" aria-expanded="false">
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="ongoingResearchDropdown" role="button"
+       data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-tasks me-1"></i> Ricerche in corso
                 </a>
                 <ul class="dropdown-menu" aria-labelledby="ongoingResearchDropdown">
@@ -70,12 +70,17 @@
             </li>
 
             <!-- Impostazioni con dropdown -->
-            <li class="nav-item dropdown position-relative">
-                <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button"
-                   data-bs-toggle="dropdown" aria-expanded="false">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle"
+                href="#"
+                id="settingsDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="true"
+                aria-expanded="false">
                     <i class="fas fa-cog me-1"></i> Impostazioni
                 </a>
-                <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="settingsDropdown">
                     <li>
                         <a class="dropdown-item {{ $panelData->stato == 1 ? 'disabled text-muted' : '' }}"
                            href="#"
@@ -953,220 +958,18 @@
 @endsection
 
 @section('scripts')
-
 <script>
-
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const chartsData = @json($filtrateCountsByPanel); // Passiamo i dati da Laravel a JS
-
-
-        Object.keys(chartsData).forEach((panelName, index) => {
-            let labels = [];
-            let values = [];
-            let tooltips = [];
-
-            if (chartsData[panelName]) {
-                Object.entries(chartsData[panelName]).forEach(([question, count]) => {
-                    let parts = question.split(" - ");
-                    // console.log("📊 Dati ricevuti per i panel:", parts);
-                        let questionCode = parts[0] ?? "N/A";
-                        let questionText = parts.slice(1).join(" - ") || "Testo non disponibile";
-
-                        labels.push(questionCode);
-                        values.push(count);
-                        tooltips.push({
-                            code: questionCode,
-                            text: questionText
-                        });
-                });
-
-                // Tutti i canvas seguono il pattern "chart-panel-X"
-                let panelSlug = panelName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                let canvasID = `chart-panel-${panelSlug}`;
-                let canvas = document.getElementById(canvasID);
-
-                if (canvas) {
-                    new Chart(canvas, {
-                        type: 'bar', // Grafico a barre
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Filtrate',
-                                data: values,
-                                backgroundColor: '#7bd87d', // Colore verde
-                                borderColor: '#2E7D32',
-                                borderWidth: 1
-                            }]
-                        },
-
-                        options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: {
-                                        tooltip: {
-                                            callbacks: {
-                                                title: () => null, // Rimuove il titolo predefinito del tooltip
-                                                label: function (context) {
-                                                    let dataIndex = context.dataIndex;
-                                                    let questionData = tooltips[dataIndex];
-
-                                                    console.log("🔍 Tooltip Data:", questionData); // DEBUG
-
-                                                    if (questionData) {
-                                                        let truncatedText = questionData.text.length > 50
-                                                            ? questionData.text.substring(0, 50) + "..."
-                                                            : questionData.text;
-
-                                                        return `${questionData.code}: ${truncatedText}`;
-                                                    } else {
-                                                        return "Dati non disponibili";
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                    scales: {
-                                        x: {
-                                            beginAtZero: true
-                                        }
-                                    }
-                                }
-
-
-                    });
-                } else {
-                    console.warn(`⚠️ Nessun canvas trovato per ${panelName} (ID: ${canvasID})`);
-                }
-            }
-        });
-    });
+    window.FieldControlConfig = {
+        csrfToken: @json(csrf_token()),
+        prj: @json($prj),
+        sid: @json($sid),
+        routes: {
+            closeSurvey: @json(route('close.survey')),
+            resetBloccate: @json(route('reset.bloccate'))
+        },
+        filtrateCountsByPanel: @json($filtrateCountsByPanel)
+    };
 </script>
 
-
-
-
-
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-        var dropdownElements = document.querySelectorAll('.dropdown-toggle');
-
-        // Inizializza tutti i dropdown
-        dropdownElements.forEach(function (dropdown) {
-            new bootstrap.Dropdown(dropdown);
-        });
-
-        console.log("✅ Bootstrap Dropdown inizializzato correttamente.");
-
-        // Aggiungiamo un event listener globale ai dropdown-toggle
-        document.body.addEventListener("click", function (event) {
-            if (event.target.classList.contains("dropdown-toggle")) {
-                var dropdown = bootstrap.Dropdown.getOrCreateInstance(event.target);
-                dropdown.show();
-            }
-        });
-    });
-</script>
-
-<!-- Script JavaScript per chiudere la ricerca -->
-<script>
-    function closeSurvey(prj, sid) {
-        if (!confirm("Sei sicuro di voler chiudere questa ricerca?")) return;
-
-        fetch("{{ route('close.survey') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({ prj: prj, sid: sid })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert("Ricerca chiusa con successo!");
-                location.reload();
-            } else {
-                alert("Errore: " + data.message);
-            }
-        })
-        .catch(error => {
-            alert("Si è verificato un errore.");
-            console.error(error);
-        });
-    }
-</script>
-
-<script>
-    document.getElementById("resetBloccateBtn").addEventListener("click", function() {
-        if (!confirm("⚠️ ATTENZIONE: Questa operazione NON è reversibile! Sei sicuro di voler resettare le interviste bloccate?")) {
-            return;
-        }
-
-        fetch("{{ route('reset.bloccate') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({
-                prj: "{{ $prj }}",
-                sid: "{{ $sid }}"
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(`${data.resetCount} interviste sono state resettate e riabilitate.`);
-                location.reload();
-            } else {
-                alert("Errore: " + data.message);
-            }
-        })
-        .catch(error => {
-            alert("Si è verificato un errore durante il reset.");
-            console.error(error);
-        });
-    });
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll('.kpi-progressfill').forEach(function (bar) {
-        const pct = bar.getAttribute('data-pct') || 0;
-        // piccola delay per permettere il render e poi animare
-        setTimeout(() => { bar.style.width = pct + '%'; }, 80);
-    });
-});
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  document.querySelectorAll(".fc-kpi-progress").forEach(function (wrap) {
-    var fill = wrap.querySelector(".fc-kpi-progress-fill");
-    if (!fill) return;
-
-    var ir = parseFloat(wrap.getAttribute("data-ir") || "0");
-    if (isNaN(ir)) ir = 0;
-    ir = Math.max(0, Math.min(100, ir));
-
-    // parte da 0 e anima fino al valore
-    fill.style.width = "0%";
-    requestAnimationFrame(function () {
-      fill.style.width = ir + "%";
-    });
-  });
-});
-</script>
-
+<script src="{{ asset('js/fieldControl.js') }}"></script>
 @endsection
