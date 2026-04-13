@@ -49,9 +49,14 @@
     }
 
     // === COPIA LINK GENERATI ===
-    function copyLinks() {
+async function copyLinks() {
+    const button = document.getElementById('btn-copy-links');
+    const token = button ? button.dataset.copyToken : '';
+
+    if (!token) {
         const textarea = document.getElementById('generatedLinks');
-        if (!textarea) {
+
+        if (!textarea || !textarea.value.trim()) {
             Swal.fire({ icon: 'info', title: 'Nessun link da copiare' });
             return;
         }
@@ -63,46 +68,67 @@
         Swal.fire({
             icon: 'success',
             title: 'Copiati!',
-            text: 'Tutti i link sono stati copiati negli appunti.',
+            text: 'Tutti i link visibili sono stati copiati negli appunti.',
             timer: 1500,
             showConfirmButton: false
         });
+
+        return;
     }
 
-    // === ESPORTA CSV ===
-    function exportCSV() {
-        const textarea = document.getElementById('generatedLinks');
-        if (!textarea) {
-            Swal.fire({ icon: 'info', title: 'Nessun link da esportare' });
-            return;
+    try {
+        if (!urls.copyLinksBase) {
+            throw new Error('URL copia link non configurato.');
         }
 
-        const links = textarea.value.trim().split('\n').filter(function (l) {
-            return l !== '';
+        const response = await fetch(urls.copyLinksBase + '/' + token, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         });
 
-        if (links.length === 0) {
-            Swal.fire({ icon: 'info', title: 'Nessun link da esportare' });
-            return;
+        if (!response.ok) {
+            throw new Error('Impossibile recuperare i link completi.');
         }
 
-        const sid = new URLSearchParams(new URL(links[0]).search).get('sid') || 'SID';
-        const pan = new URLSearchParams(new URL(links[0]).search).get('pan') || 'PANEL';
-        const filename = 'links_' + pan + '_' + sid + '.csv';
+        const text = await response.text();
 
-        let csvContent = 'Url;Code\n';
+        if (!text.trim()) {
+            throw new Error('Nessun link disponibile da copiare.');
+        }
 
-        links.forEach(function (url) {
-            const code = new URLSearchParams(new URL(url).search).get('uid') || '';
-            csvContent += url + ';' + code + '\n';
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            temp.style.position = 'fixed';
+            temp.style.left = '-9999px';
+            temp.style.top = '-9999px';
+            document.body.appendChild(temp);
+            temp.focus();
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+        }
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Copiati!',
+            text: 'Tutti i link generati sono stati copiati negli appunti.',
+            timer: 1500,
+            showConfirmButton: false
         });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Errore',
+            text: error.message || 'Errore durante la copia dei link.'
+        });
     }
+}
+
 
     // === AJAX INSERIMENTO PANEL ===
     function bindAddPanelForm() {
@@ -793,11 +819,10 @@
         }
     }
 
-    function bindLeftSideActions() {
+function bindLeftSideActions() {
     const sidSelect = document.getElementById('sid');
     const copyGuestBtn = document.getElementById('btn-copy-guest-link');
     const copyLinksBtn = document.getElementById('btn-copy-links');
-    const exportCsvBtn = document.getElementById('btn-export-csv');
 
     if (sidSelect) {
         sidSelect.addEventListener('change', function () {
@@ -811,10 +836,6 @@
 
     if (copyLinksBtn) {
         copyLinksBtn.addEventListener('click', copyLinks);
-    }
-
-    if (exportCsvBtn) {
-        exportCsvBtn.addEventListener('click', exportCSV);
     }
 }
 

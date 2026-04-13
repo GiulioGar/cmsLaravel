@@ -42,17 +42,39 @@ class AbilitaUidController extends Controller
                 ]);
     }
 
-    public function store(Request $request)
+public function store(Request $request)
 {
     $request->validate([
         'sid' => 'required|string|exists:t_surveys,sid',
         'prj' => 'required|string',
         'panel_code' => 'required|integer|exists:t_fornitoripanel,panel_code',
         'num_links' => 'required|integer|min:1|max:100000',
+        'extra_vars' => 'nullable|string',
     ]);
 
     $sid = $request->sid;
     $prj = strtoupper(trim($request->prj));
+    $extraVarsRaw = trim((string) $request->input('extra_vars'));
+    $extraVarsString = '';
+
+    if ($extraVarsRaw !== '') {
+        $pairs = explode(';', $extraVarsRaw);
+
+        $formatted = [];
+
+        foreach ($pairs as $pair) {
+            $pair = trim($pair);
+
+            // accetto solo key=value validi
+            if ($pair !== '' && strpos($pair, '=') !== false) {
+                $formatted[] = $pair;
+            }
+        }
+
+        if (!empty($formatted)) {
+            $extraVarsString = '&' . implode('&', $formatted);
+        }
+    }
 
     $panel = DB::table('t_fornitoripanel')
         ->where('panel_code', $request->panel_code)
@@ -65,14 +87,40 @@ class AbilitaUidController extends Controller
     $generator = new UidGeneratorService();
     $uids = $generator->generateBatch($panel->name, (int) $request->num_links);
 
-    $links = [];
+    $previewLinks = [];
+    $previewLimit = 200;
     $rowsToInsert = [];
 
-    foreach ($uids as $uid) {
-        $links[] = [
-            'link' => "https://www.primisoft.com/primis/run.do?sid={$sid}&prj={$prj}&uid={$uid}&pan={$panel->panel_code}",
-            'uid' => $uid,
-        ];
+    $exportDir = storage_path('app/abilita_uid_exports');
+
+    if (!File::exists($exportDir)) {
+        File::makeDirectory($exportDir, 0755, true);
+    }
+
+    $exportToken = uniqid('abilita_uid_', true);
+    $exportFilename = "links_{$panel->panel_code}_{$sid}_" . date('Ymd_His') . ".csv";
+    $exportPath = $exportDir . DIRECTORY_SEPARATOR . $exportToken . '.csv';
+
+    $handle = fopen($exportPath, 'w');
+
+    if ($handle === false) {
+        return back()->withErrors(['export' => 'Impossibile creare il file CSV di esportazione.']);
+    }
+
+    // intestazione CSV
+    fputcsv($handle, ['Url', 'Code'], ';');
+
+    foreach ($uids as $index => $uid) {
+        $link = "https://www.primisoft.com/primis/run.do?sid={$sid}&prj={$prj}&uid={$uid}&pan={$panel->panel_code}{$extraVarsString}";
+
+        if ($index < $previewLimit) {
+            $previewLinks[] = [
+                'link' => $link,
+                'uid' => $uid,
+            ];
+        }
+
+        fputcsv($handle, [$link, $uid], ';');
 
         $rowsToInsert[] = [
             'sid' => $sid,
@@ -83,12 +131,12 @@ class AbilitaUidController extends Controller
         ];
     }
 
-    // Insert a blocchi per evitare migliaia di query singole
+    fclose($handle);
+
     foreach (array_chunk($rowsToInsert, 1000) as $chunk) {
         DB::table('t_respint')->insert($chunk);
     }
 
-    // Ricarico i dati della pagina direttamente, senza usare la sessione
     $surveys = DB::table('t_surveys')
         ->select('sid', 'prj_name')
         ->where('status', 2)
@@ -115,8 +163,12 @@ class AbilitaUidController extends Controller
     return view('abilitaUid', [
         'surveys' => $surveys,
         'panels' => $panels,
-        'generatedLinks' => $links,
+        'generatedLinks' => $previewLinks,
         'successMessage' => count($uids) . ' UID generati e salvati correttamente.',
+        'totalGeneratedLinks' => count($uids),
+        'previewLimit' => $previewLimit,
+        'exportToken' => $exportToken,
+        'exportFilename' => $exportFilename,
     ]);
 }
 
@@ -551,6 +603,60 @@ public function searchRespintRecords(Request $request)
         'count' => $rows->count(),
         'search_type' => ctype_digit($term) ? 'iid' : 'uid',
     ]);
+}
+
+public function downloadGeneratedLinksCsv($token, Request $request)
+{
+    $filename = $request->query('filename', 'links_export.csv');
+    $path = storage_path('app/abilita_uid_exports/' . $token . '.csv');
+
+    if (!File::exists($path)) {
+        abort(404, 'File export non trovato.');
+    }
+
+    return response()->download($path, $filename, [
+        'Content-Type' => 'text/csv; charset=UTF-8',
+    ]);
+}
+
+public function copyGeneratedLinksText($token)
+{
+    $path = storage_path('app/abilita_uid_exports/' . $token . '.csv');
+
+    if (!File::exists($path)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'File export non trovato.'
+        ], 404);
+    }
+
+    $handle = fopen($path, 'r');
+
+    if ($handle === false) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Impossibile leggere il file export.'
+        ], 500);
+    }
+
+    $lines = [];
+    $isFirstRow = true;
+
+    while (($row = fgetcsv($handle, 0, ';')) !== false) {
+        if ($isFirstRow) {
+            $isFirstRow = false;
+            continue; // salto intestazione
+        }
+
+        if (isset($row[0]) && trim($row[0]) !== '') {
+            $lines[] = $row[0];
+        }
+    }
+
+    fclose($handle);
+
+    return response(implode("\n", $lines), 200)
+        ->header('Content-Type', 'text/plain; charset=UTF-8');
 }
 
 }

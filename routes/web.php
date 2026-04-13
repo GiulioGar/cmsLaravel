@@ -97,6 +97,10 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/abilita-uid/preview-reset-iids', [AbilitaUidController::class, 'previewResetIids']);
     Route::post('/abilita-uid/search-records', [AbilitaUidController::class, 'searchRespintRecords'])
     ->name('abilita.uid.search-records');
+    Route::get('/abilita-uid/download-links/{token}', [AbilitaUidController::class, 'downloadGeneratedLinksCsv'])
+    ->name('abilita.uid.download-links');
+    Route::get('/abilita-uid/copy-links/{token}', [AbilitaUidController::class, 'copyGeneratedLinksText'])
+        ->name('abilita.uid.copy-links');
 
     // ============================================
     // AUTOTEST

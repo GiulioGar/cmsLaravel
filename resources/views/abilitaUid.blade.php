@@ -74,6 +74,19 @@
               <input type="number" name="num_links" min="1" max="100000" class="form-control" required>
             </div>
 
+    <div class="col-12">
+    <label class="form-label">Variabili aggiuntive</label>
+    <input
+        type="text"
+        name="extra_vars"
+        class="form-control"
+        placeholder="Esempio: lang=1;test=1"
+    >
+    <div class="form-text">
+        Usa ; come separatore. Es: lang=1;test=1 → &lang=1&test=1
+    </div>
+</div>
+
             <div class="col-12 text-end mt-2">
 <button type="submit" id="btn-genera-links" class="btn btn-primary">
   <i class="fa-solid fa-bolt"></i> Genera Links
@@ -92,22 +105,41 @@
           </div>
         </div>
 
-        <div class="au-card-body">
-          @if(!empty($generatedLinks))
+            <div class="au-card-body">
+            @if(!empty($generatedLinks))
+                @if(!empty($totalGeneratedLinks) && !empty($previewLimit) && $totalGeneratedLinks > $previewLimit)
+                <div class="alert alert-warning mb-3">
+                    Generati <strong>{{ $totalGeneratedLinks }}</strong> link.
+                    In anteprima vengono mostrati solo i primi <strong>{{ $previewLimit }}</strong> per motivi di performance.
+                </div>
+                @endif
+
             <div class="au-toolbar">
-              <button type="button" id="btn-copy-links" class="btn btn-sm btn-outline-primary">
-                <i class="fa-regular fa-copy"></i> Copia Tutti
-              </button>
-              <button type="button" id="btn-export-csv" class="btn btn-sm btn-outline-success">
-                <i class="fa-solid fa-file-csv"></i> Esporta CSV
-              </button>
+                <button
+                    type="button"
+                    id="btn-copy-links"
+                    class="btn btn-sm btn-outline-primary"
+                    @if(!empty($exportToken)) data-copy-token="{{ $exportToken }}" @endif
+                >
+                    <i class="fa-regular fa-copy"></i> Copia Tutti
+                </button>
+
+                @if(!empty($exportToken))
+                    <a
+                        href="{{ route('abilita.uid.download-links', ['token' => $exportToken, 'filename' => $exportFilename ?? 'links_export.csv']) }}"
+                        id="btn-export-csv"
+                        class="btn btn-sm btn-outline-success"
+                    >
+                        <i class="fa-solid fa-file-csv"></i> Esporta CSV
+                    </a>
+                @endif
             </div>
 
-            <textarea id="generatedLinks" class="form-control au-textarea" rows="10" readonly>@foreach($generatedLinks as $l){{ $l['link'] }}&#10;@endforeach</textarea>
-          @else
-            <p class="text-muted m-0">Nessun link generato ancora.</p>
-          @endif
-        </div>
+                <textarea id="generatedLinks" class="form-control au-textarea" rows="10" readonly>@foreach($generatedLinks as $l){{ $l['link'] }}&#10;@endforeach</textarea>
+            @else
+                <p class="text-muted m-0">Nessun link generato ancora.</p>
+            @endif
+            </div>
       </div>
 
     </div>
@@ -434,6 +466,8 @@
                         data-panel-id="{{ $p->id }}"
                         title="Elimina"
                     >
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
                   </td>
                 </tr>
               @endforeach
@@ -460,7 +494,8 @@
             enableUids: '{{ url('/abilita-uid/enable-uids') }}',
             resetIids: '{{ url('/abilita-uid/reset-iids') }}',
             previewResetIids: '{{ url('/abilita-uid/preview-reset-iids') }}',
-            searchRecords: '{{ route('abilita.uid.search-records') }}'
+            searchRecords: '{{ route('abilita.uid.search-records') }}',
+            copyLinksBase: '{{ url('/abilita-uid/copy-links') }}'
         }
     };
 </script>
