@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\UidGeneratorService;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class AbilitaUidController extends Controller
 {
@@ -31,19 +32,35 @@ class AbilitaUidController extends Controller
 
         $panels = DB::table('t_fornitoripanel')
             ->select('id', 'panel_code', 'name', 'red_3', 'red_4', 'red_5', 'complete', 'spesa')
-            ->orderBy('id', 'asc')
+            ->orderBy('panel_code', 'asc')
             ->get();
 
-        return view('abilitaUid', [
+                return view('abilitaUid', [
                     'surveys' => $surveys,
                     'panels' => $panels,
                     'generatedLinks' => [],
                     'successMessage' => null,
+                    'formData' => [
+                        'sid' => '',
+                        'prj' => '',
+                        'panel_code' => '',
+                        'num_links' => '',
+                        'extra_vars' => '',
+                    ],
                 ]);
     }
 
 public function store(Request $request)
 {
+
+Log::info('ABILITA UID STORE START', [
+    'sid' => $request->sid,
+    'panel_code' => $request->panel_code,
+    'num_links' => $request->num_links,
+    'extra_vars' => $request->input('extra_vars'),
+    'time' => now()->format('Y-m-d H:i:s.u'),
+]);
+
     $request->validate([
         'sid' => 'required|string|exists:t_surveys,sid',
         'prj' => 'required|string',
@@ -160,6 +177,14 @@ public function store(Request $request)
         ->orderBy('name', 'asc')
         ->get();
 
+        $formData = [
+            'sid' => $sid,
+            'prj' => $prj,
+            'panel_code' => $panel->panel_code,
+            'num_links' => (string) $request->input('num_links'),
+            'extra_vars' => $extraVarsRaw,
+        ];
+
     return view('abilitaUid', [
         'surveys' => $surveys,
         'panels' => $panels,
@@ -169,6 +194,7 @@ public function store(Request $request)
         'previewLimit' => $previewLimit,
         'exportToken' => $exportToken,
         'exportFilename' => $exportFilename,
+           'formData' => $formData,
     ]);
 }
 

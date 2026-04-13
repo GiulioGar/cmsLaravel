@@ -27,18 +27,41 @@
             @csrf
 
             <div class="col-md-6">
-              <label class="form-label">SID</label>
-              <select name="sid" id="sid" class="form-select" required>
+            <label class="form-label">SID</label>
+
+            <div class="au-search-select" data-target-select="#sid">
+                <button type="button" class="au-search-select-toggle">
+                <span class="au-search-select-label">-- Seleziona SID --</span>
+                <i class="fa-solid fa-chevron-down"></i>
+                </button>
+
+                <div class="au-search-select-dropdown" style="display:none;">
+                <div class="au-search-select-box">
+                    <input
+                    type="text"
+                    class="au-search-select-input"
+                    placeholder="Cerca SID..."
+                    autocomplete="off"
+                    >
+                </div>
+
+                <div class="au-search-select-options"></div>
+                </div>
+            </div>
+
+            <select name="sid" id="sid" class="form-select d-none" required>
                 <option value="">-- Seleziona SID --</option>
                 @foreach($surveys as $s)
-                  <option value="{{ $s->sid }}">{{ $s->sid }} ({{ $s->prj_name }})</option>
+                <option value="{{ $s->sid }}" {{ ($formData['sid'] ?? '') == $s->sid ? 'selected' : '' }}>
+                    {{ $s->sid }} ({{ $s->prj_name }})
+                </option>
                 @endforeach
-              </select>
+            </select>
             </div>
 
             <div class="col-md-6">
               <label class="form-label">PRJ</label>
-              <input type="text" name="prj" id="prj" class="form-control" readonly required>
+              <input type="text" name="prj" id="prj" class="form-control" readonly required value="{{ $formData['prj'] ?? '' }}">
             </div>
 
             <div class="col-12 au-guest">
@@ -53,20 +76,42 @@
             </div>
 
             <div class="col-md-8">
-              <label class="form-label d-flex align-items-center gap-2">
+            <label class="form-label d-flex align-items-center gap-2">
                 <span>Panel</span>
                 <button type="button" class="au-btn-icon" title="Gestisci Panel"
                         data-bs-toggle="modal" data-bs-target="#panelModal">
-                  <i class="fa-solid fa-rotate"></i>
+                <i class="fa-solid fa-rotate"></i>
                 </button>
-              </label>
+            </label>
 
-              <select name="panel_code" class="form-select" required>
+            <div class="au-search-select" data-target-select="#panel_code">
+                <button type="button" class="au-search-select-toggle">
+                <span class="au-search-select-label">-- Seleziona Panel --</span>
+                <i class="fa-solid fa-chevron-down"></i>
+                </button>
+
+                <div class="au-search-select-dropdown" style="display:none;">
+                <div class="au-search-select-box">
+                    <input
+                    type="text"
+                    class="au-search-select-input"
+                    placeholder="Cerca panel..."
+                    autocomplete="off"
+                    >
+                </div>
+
+                <div class="au-search-select-options"></div>
+                </div>
+            </div>
+
+            <select name="panel_code" id="panel_code" class="form-select d-none" required>
                 <option value="">-- Seleziona Panel --</option>
                 @foreach($panels as $p)
-                  <option value="{{ $p->panel_code }}">{{ $p->panel_code }} - {{ $p->name }}</option>
+                <option value="{{ $p->panel_code }}" {{ (string) ($formData['panel_code'] ?? '') === (string) $p->panel_code ? 'selected' : '' }}>
+                    {{ $p->panel_code }} - {{ $p->name }}
+                </option>
                 @endforeach
-              </select>
+            </select>
             </div>
 
             <div class="col-md-4">
@@ -76,12 +121,13 @@
 
     <div class="col-12">
     <label class="form-label">Variabili aggiuntive</label>
-    <input
-        type="text"
-        name="extra_vars"
-        class="form-control"
-        placeholder="Esempio: lang=1;test=1"
-    >
+<input
+    type="text"
+    name="extra_vars"
+    class="form-control"
+    placeholder="Esempio: lang=1;test=1"
+    value="{{ $formData['extra_vars'] ?? '' }}"
+>
     <div class="form-text">
         Usa ; come separatore. Es: lang=1;test=1 → &lang=1&test=1
     </div>
@@ -159,13 +205,34 @@
         <div class="au-card-body">
           <div class="row g-3 align-items-end">
             <div class="col-md-7">
-              <label class="form-label">SID</label>
-              <select id="sidRight" class="form-select">
+            <label class="form-label">SID</label>
+
+            <div class="au-search-select" data-target-select="#sidRight">
+                <button type="button" class="au-search-select-toggle">
+                <span class="au-search-select-label">-- Seleziona SID --</span>
+                <i class="fa-solid fa-chevron-down"></i>
+                </button>
+
+                <div class="au-search-select-dropdown" style="display:none;">
+                <div class="au-search-select-box">
+                    <input
+                    type="text"
+                    class="au-search-select-input"
+                    placeholder="Cerca SID..."
+                    autocomplete="off"
+                    >
+                </div>
+
+                <div class="au-search-select-options"></div>
+                </div>
+            </div>
+
+            <select id="sidRight" class="form-select d-none">
                 <option value="">-- Seleziona SID --</option>
                 @foreach($surveys as $s)
-                  <option value="{{ $s->sid }}">{{ $s->sid }} ({{ $s->prj_name }})</option>
+                <option value="{{ $s->sid }}">{{ $s->sid }} ({{ $s->prj_name }})</option>
                 @endforeach
-              </select>
+            </select>
             </div>
 
             <div class="col-md-5">
@@ -197,7 +264,7 @@
                     placeholder="Esempio:&#10;IDEXCINABC1234&#10;IDEXDYNXYZ5678&#10;o IID numerici"></textarea>
 
           <div class="mt-3 d-flex justify-content-end gap-2 flex-wrap">
-            <button id="btn-enable-uids" class="btn btn-success">
+            <button type="button" id="btn-enable-uids" class="btn btn-success">
               <i class="fa-solid fa-check"></i> Abilita UID
             </button>
             <button id="btn-reset-iids" type="button" class="btn btn-danger" disabled>

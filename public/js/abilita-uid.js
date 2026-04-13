@@ -780,17 +780,25 @@ async function copyLinks() {
         });
     }
 
-    function bindGenerateFormLoading() {
-        const form = document.querySelector('form[action="' + urls.generate + '"]');
-        const btn = document.getElementById('btn-genera-links');
+function bindGenerateFormLoading() {
+    const form = document.querySelector('form[action="' + urls.generate + '"]');
+    const btn = document.getElementById('btn-genera-links');
 
-        if (!form || !btn) return;
+    if (!form || !btn) return;
 
-        form.addEventListener('submit', function () {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generazione...';
-        });
-    }
+    let isSubmitting = false;
+
+    form.addEventListener('submit', function (e) {
+        if (isSubmitting) {
+            e.preventDefault();
+            return;
+        }
+
+        isSubmitting = true;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generazione...';
+    });
+}
 
     function bindSearchEnter() {
         const searchInput = document.getElementById('searchUidIid');
@@ -882,15 +890,151 @@ function bindDeletePanelButtons() {
     });
 }
 
+function initCustomSearchSelects() {
+    const wrappers = document.querySelectorAll('.au-search-select');
+
+    wrappers.forEach(function (wrapper) {
+        const selectSelector = wrapper.dataset.targetSelect;
+        const select = document.querySelector(selectSelector);
+
+        if (!select) {
+            return;
+        }
+
+        const toggle = wrapper.querySelector('.au-search-select-toggle');
+        const label = wrapper.querySelector('.au-search-select-label');
+        const dropdown = wrapper.querySelector('.au-search-select-dropdown');
+        const input = wrapper.querySelector('.au-search-select-input');
+        const optionsBox = wrapper.querySelector('.au-search-select-options');
+
+        if (!toggle || !label || !dropdown || !input || !optionsBox) {
+            return;
+        }
+
+        const originalOptions = Array.from(select.options).map(function (option, index) {
+            return {
+                value: option.value,
+                text: option.text,
+                selected: option.selected,
+                isPlaceholder: index === 0 && option.value === ''
+            };
+        });
+
+        function getSelectedText() {
+            const selectedOption = select.options[select.selectedIndex];
+            return selectedOption ? selectedOption.text : '-- Seleziona --';
+        }
+
+        function updateLabel() {
+            label.textContent = getSelectedText();
+        }
+
+        function renderOptions(searchTerm) {
+            const term = (searchTerm || '').trim().toLowerCase();
+            optionsBox.innerHTML = '';
+
+            const filtered = originalOptions.filter(function (item) {
+                if (item.isPlaceholder) {
+                    return false;
+                }
+
+                if (term === '') {
+                    return true;
+                }
+
+                return item.text.toLowerCase().indexOf(term) !== -1;
+            });
+
+            if (!filtered.length) {
+                optionsBox.innerHTML = '<div class="au-search-select-empty">Nessun risultato trovato</div>';
+                return;
+            }
+
+            filtered.forEach(function (item) {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'au-search-select-option';
+
+                if (String(select.value) === String(item.value)) {
+                    optionEl.classList.add('is-selected');
+                }
+
+                optionEl.textContent = item.text;
+                optionEl.dataset.value = item.value;
+
+                optionEl.addEventListener('click', function () {
+                    select.value = item.value;
+                    updateLabel();
+                    closeDropdown();
+
+                    const event = new Event('change', { bubbles: true });
+                    select.dispatchEvent(event);
+                });
+
+                optionsBox.appendChild(optionEl);
+            });
+        }
+
+        function openDropdown() {
+            dropdown.style.display = 'block';
+            renderOptions(input.value);
+            setTimeout(function () {
+                input.focus();
+            }, 0);
+        }
+
+        function closeDropdown() {
+            dropdown.style.display = 'none';
+            input.value = '';
+        }
+
+        function isOpen() {
+            return dropdown.style.display !== 'none';
+        }
+
+        updateLabel();
+        renderOptions('');
+
+        toggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (isOpen()) {
+                closeDropdown();
+            } else {
+                openDropdown();
+            }
+        });
+
+        input.addEventListener('input', function () {
+            renderOptions(this.value);
+        });
+
+        input.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!wrapper.contains(e.target)) {
+                closeDropdown();
+            }
+        });
+
+        select.addEventListener('change', function () {
+            updateLabel();
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
-        bindLeftSideActions();
-        bindRightSideActions();
-        bindDeletePanelButtons();
-        bindAddPanelForm();
-        bindGenerateFormLoading();
-        bindSearchEnter();
-        bindUidInputWatcher();
-        initRightPanelState();
+    bindLeftSideActions();
+    bindRightSideActions();
+    bindDeletePanelButtons();
+    bindAddPanelForm();
+    bindGenerateFormLoading();
+    bindSearchEnter();
+    bindUidInputWatcher();
+    initRightPanelState();
+    initCustomSearchSelects();
 
     const sidLeft = document.getElementById('sid');
     if (sidLeft) {

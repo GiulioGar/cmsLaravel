@@ -12,7 +12,7 @@
   border: 1px solid rgba(15,23,42,.06);
   border-radius: 14px;
   box-shadow: 0 10px 26px rgba(15,23,42,.06);
-  overflow: hidden;
+  overflow: visible;
   background: #fff;
 }
 
@@ -224,3 +224,104 @@
 .au-pill--5{ background: rgba(239,68,68,.15);  border-color: rgba(239,68,68,.35);  color:#991b1b; }  /* quotafull */
 .au-pill--6{ background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.35); color:#1d4ed8; }  /* guest */
 .au-pill--7{ background: rgba(100,116,139,.18);border-color: rgba(100,116,139,.35); color:#334155; }  /* bloccata */
+
+
+/* =========================
+   Search Select custom
+   ========================= */
+
+.au-search-select {
+  position: relative;
+}
+
+.au-search-select-toggle {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgba(15,23,42,.12);
+  border-radius: 12px;
+  background: #fff;
+  padding: 0.55rem 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.au-search-select-toggle:hover,
+.au-search-select-toggle:focus {
+  border-color: rgba(13,110,253,.45);
+  box-shadow: 0 0 0 0.2rem rgba(13,110,253,.10);
+  outline: none;
+}
+
+.au-search-select-label {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.au-search-select-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 1055;
+  background: #fff;
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(15,23,42,.12);
+  overflow: hidden;
+}
+
+.au-search-select-box {
+  padding: 10px;
+  border-bottom: 1px solid rgba(15,23,42,.06);
+  background: #f8fafc;
+}
+
+.au-search-select-input {
+  width: 100%;
+  border: 1px solid rgba(15,23,42,.12);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+}
+
+.au-search-select-input:focus {
+  border-color: rgba(13,110,253,.45);
+  box-shadow: 0 0 0 0.2rem rgba(13,110,253,.10);
+}
+
+.au-search-select-options {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+
+.au-search-select-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: .95rem;
+  line-height: 1.25rem;
+  transition: background .12s ease;
+}
+
+.au-search-select-option:hover,
+.au-search-select-option.is-active {
+  background: rgba(13,110,253,.10);
+}
+
+.au-search-select-option.is-selected {
+  background: rgba(13,110,253,.18);
+  color: #0d6efd;
+  font-weight: 700;
+}
+
+.au-search-select-empty {
+  padding: 12px 14px;
+  color: rgba(0,0,0,.55);
+  font-size: .9rem;
+}
