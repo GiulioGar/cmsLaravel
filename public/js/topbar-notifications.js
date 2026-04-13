@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
+    var topbarNotifications = document.getElementById('topbarNotifications');
     var totalRequests = document.getElementById('totalRequests');
     var totalRequestsText = document.getElementById('totalRequestsText');
     var amazonRequests = document.getElementById('amazonRequests');
@@ -6,10 +7,17 @@ document.addEventListener('DOMContentLoaded', function () {
     var openTickets = document.getElementById('openTickets');
     var runningSurveys = document.getElementById('runningSurveys');
 
-if (!totalRequests || !totalRequestsText || !amazonRequests || !paypalRequests || !openTickets || !runningSurveys) {
-    console.warn('Topbar notifications: elementi DOM mancanti.');
-    return;
-}
+    if (!topbarNotifications || !totalRequests || !totalRequestsText || !amazonRequests || !paypalRequests || !openTickets || !runningSurveys) {
+        console.warn('Topbar notifications: elementi DOM mancanti.');
+        return;
+    }
+
+    var summaryUrl = topbarNotifications.getAttribute('data-summary-url');
+
+    if (!summaryUrl) {
+        console.warn('Topbar notifications: URL summary mancante.');
+        return;
+    }
 
     function updateCountStyle(element, value) {
         element.textContent = value;
@@ -21,7 +29,7 @@ if (!totalRequests || !totalRequestsText || !amazonRequests || !paypalRequests |
     }
 
     function updateNotifications() {
-        fetch('/notifications/summary', {
+        fetch(summaryUrl, {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',

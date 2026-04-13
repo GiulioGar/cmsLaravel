@@ -1,4 +1,6 @@
-<li class="nav-item dropdown topbar-alerts">
+<li class="nav-item dropdown topbar-alerts"
+    id="topbarNotifications"
+    data-summary-url="{{ route('notifications.summary') }}">
     <a class="nav-icon dropdown-toggle topbar-alerts-toggle"
        href="#"
        id="alertsDropdown"
