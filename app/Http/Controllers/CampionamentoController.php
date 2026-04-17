@@ -47,263 +47,53 @@ class CampionamentoController extends Controller
 // ============================
 public function utentiDisponibili(Request $request)
 {
-    $surId      = (string) $request->input('sur_id');
-    $samples    = $request->input('samples', []);
-    $excludeRaw = $request->input('exclude_codes', '');
-    $debug      = (bool) $request->boolean('debug');
+    $surId        = (string) $request->input('sur_id');
+    $samples      = $request->input('samples', []);
+    $excludeCodes = $this->normalizeExcludeCodes($request->input('exclude_codes', ''));
+    $debug        = (bool) $request->boolean('debug');
 
-    // normalizza codici esclusione
-    if (is_string($excludeRaw)) {
-        $excludeCodes = array_values(array_filter(array_map('trim', explode(';', $excludeRaw))));
-    } elseif (is_array($excludeRaw)) {
-        $excludeCodes = array_values(array_filter(array_map('trim', $excludeRaw)));
-    } else {
-        $excludeCodes = [];
-    }
-
-    $userKey = 'user_id';
-    $items   = [];
-
-    // Helper per interpolare SQL
-    $interpolateSql = function (string $sql, array $bindings) {
-        $parts = explode('?', $sql);
-        $out   = array_shift($parts);
-        foreach ($bindings as $b) {
-            if (is_null($b))      $rep = 'NULL';
-            elseif (is_numeric($b)) $rep = (string) $b;
-            else $rep = "'" . str_replace("'", "''", (string) $b) . "'";
-            $out .= $rep . (count($parts) ? array_shift($parts) : '');
-        }
-        if (count($parts)) $out .= implode('', $parts);
-        return $out;
-    };
+    $items = [];
 
     Log::info('campionamento.utentiDisponibili.start', [
-    'surId' => $surId,
-    'samples_count' => count($samples),
+        'surId' => $surId,
+        'samples_count' => count($samples),
+        'exclude_codes' => $excludeCodes,
+    ]);
+
+    foreach ($samples as $i => $sample) {
+        $q = $this->buildSampleQuery($surId, (array) $sample, $excludeCodes);
+
+        Log::info('campionamento.count.before', [
+            'index' => $i,
+            'sql' => $this->interpolateSql($q->toSql(), $q->getBindings()),
         ]);
 
-    // ========= Conteggi per sottocampione =========
-// ========= Conteggi per sottocampione =========
-foreach ($samples as $i => $s) {
-    $followup = isset($s['followup']) ? (bool)$s['followup'] : false;
-    $sessi    = isset($s['sesso']) ? (array) $s['sesso'] : [];
-    $etaMin   = isset($s['eta_da']) ? (int) $s['eta_da'] : null;
-    $etaMax   = isset($s['eta_a'])  ? (int) $s['eta_a']  : null;
-    $reg      = isset($s['regioni']) ? (array) $s['regioni'] : [];
-    $aree     = isset($s['aree']) ? (array) $s['aree'] : [];
-    $prov     = isset($s['province_id']) ? (array) $s['province_id'] : [];
-    $targetId = isset($s['target_id']) ? (int) $s['target_id'] : null;
+        $count = (clone $q)->count();
 
-    if (!empty($targetId)) {
-        if ($followup) {
-            $q = DB::table('utenti_target as ut')
-                ->join('t_user_info as u', 'u.user_id', '=', 'ut.uid')
-                ->join('t_respint as r', function ($join) use ($surId) {
-                    $join->on('r.uid', '=', 'u.user_id')
-                         ->where('r.sid', '=', $surId);
-                })
-                ->where('ut.target_id', (int) $targetId)
-                ->whereNotNull('ut.uid')
-                ->whereNotIn('r.status', [3, 4, 5])
-                ->select('u.user_id')
-                ->distinct();
-        } else {
-            $q = DB::table('utenti_target as ut')
-                ->join('t_user_info as u', 'u.user_id', '=', 'ut.uid')
-                ->leftJoin('t_respint as r', function ($join) use ($surId) {
-                    $join->on('r.uid', '=', 'u.user_id')
-                         ->where('r.sid', '=', $surId);
-                })
-                ->where('ut.target_id', (int) $targetId)
-                ->whereNotNull('ut.uid')
-                ->whereNull('r.uid')
-                ->select('u.user_id')
-                ->distinct();
-        }
-    } else {
-        $q = UserInfo::query()
-            ->from('t_user_info as u');
+        Log::info('campionamento.count.after', [
+            'index' => $i,
+            'count' => $count,
+        ]);
 
-        if ($followup) {
-            $q->whereExists(function ($sub) use ($surId, $userKey) {
-                $sub->select(DB::raw(1))
-                    ->from('t_respint as r')
-                    ->whereColumn('r.uid', "u.$userKey")
-                    ->where('r.sid', $surId)
-                    ->whereNotIn('r.status', [3,4,5]);
-            });
-        } else {
-            $q->whereNotExists(function ($sub) use ($surId, $userKey) {
-                $sub->select(DB::raw(1))
-                    ->from('t_respint as r')
-                    ->whereColumn('r.uid', "u.$userKey")
-                    ->where('r.sid', $surId);
-            });
-        }
-    }
+        $row = [
+            'index' => $i,
+            'count' => $count,
+        ];
 
-    $q->where('u.confirm', 1);
-    $q->where('u.active', 1);
-
-    if (!empty($sessi)) {
-        $map  = ['Uomo'=>1,'Donna'=>2,'1'=>1,'2'=>2];
-        $vals = array_values(array_unique(array_filter(array_map(fn($v)=>$map[trim($v)]??null,$sessi))));
-        if (!empty($vals)) {
-            $q->whereIn('u.gender', $vals);
-        }
-    }
-
-    $etaMin  = $etaMin ?? 18;
-    $etaMax  = $etaMax ?? 99;
-    $dataMin = now()->subYears($etaMax)->toDateString();
-    $dataMax = now()->subYears($etaMin)->toDateString();
-    $q->whereBetween('u.birth_date', [$dataMin, $dataMax]);
-
-    if (!empty($reg)) {
-        $q->whereIn('u.reg', (array) $reg);
-    }
-
-    if (!empty($aree)) {
-        $q->whereIn('u.area', (array) $aree);
-    }
-
-    if (!empty($prov)) {
-        $q->whereIn('u.province_id', (array) $prov);
-    }
-
-    Log::info('campionamento.count.before', [
-        'index' => $i,
-        'sql' => $interpolateSql($q->toSql(), $q->getBindings()),
-    ]);
-
-    $count = (clone $q)->count();
-
-    Log::info('campionamento.count.after', [
-        'index' => $i,
-        'count' => $count,
-    ]);
-
-    $row = ['index' => $i, 'count' => $count];
-    if ($debug) {
-        $row['sql_full'] = $interpolateSql($q->toSql(), $q->getBindings());
-    }
-    $items[] = $row;
-}
-
-
-Log::info('campionamento.total.start');
-
-
-        // ========= Totale unico corretto =========
-        $uidUnici = collect();
-
-        foreach ($samples as $s) {
-            $followup = isset($s['followup']) ? (bool)$s['followup'] : false;
-            $sessi    = isset($s['sesso']) ? (array) $s['sesso'] : [];
-            $etaMin   = isset($s['eta_da']) ? (int) $s['eta_da'] : null;
-            $etaMax   = isset($s['eta_a'])  ? (int) $s['eta_a']  : null;
-            $reg      = isset($s['regioni']) ? (array) $s['regioni'] : [];
-            $aree     = isset($s['aree']) ? (array) $s['aree'] : [];
-            $prov     = isset($s['province_id']) ? (array) $s['province_id'] : [];
-            $targetId = isset($s['target_id']) ? (int) $s['target_id'] : null;
-
-            if (!empty($targetId)) {
-                if ($followup) {
-                    $q = DB::table('utenti_target as ut')
-                        ->join('t_user_info as u', 'u.user_id', '=', 'ut.uid')
-                        ->join('t_respint as r', function ($join) use ($surId) {
-                            $join->on('r.uid', '=', 'u.user_id')
-                                ->where('r.sid', '=', $surId);
-                        })
-                        ->where('ut.target_id', (int) $targetId)
-                        ->whereNotNull('ut.uid')
-                        ->whereNotIn('r.status', [3, 4, 5])
-                        ->select('u.user_id')
-                        ->distinct();
-                } else {
-                    $q = DB::table('utenti_target as ut')
-                        ->join('t_user_info as u', 'u.user_id', '=', 'ut.uid')
-                        ->leftJoin('t_respint as r', function ($join) use ($surId) {
-                            $join->on('r.uid', '=', 'u.user_id')
-                                ->where('r.sid', '=', $surId);
-                        })
-                        ->where('ut.target_id', (int) $targetId)
-                        ->whereNotNull('ut.uid')
-                        ->whereNull('r.uid')
-                        ->select('u.user_id')
-                        ->distinct();
-                }
-            } else {
-                $q = UserInfo::query()
-                    ->from('t_user_info as u');
-
-                if ($followup) {
-                    $q->whereExists(function ($sub) use ($surId, $userKey) {
-                        $sub->select(DB::raw(1))
-                            ->from('t_respint as r')
-                            ->whereColumn('r.uid', "u.$userKey")
-                            ->where('r.sid', $surId)
-                            ->whereNotIn('r.status', [3,4,5]);
-                    });
-                } else {
-                    $q->whereNotExists(function ($sub) use ($surId, $userKey) {
-                        $sub->select(DB::raw(1))
-                            ->from('t_respint as r')
-                            ->whereColumn('r.uid', "u.$userKey")
-                            ->where('r.sid', $surId);
-                    });
-                }
-            }
-
-            $q->where('u.confirm', 1);
-            $q->where('u.active', 1);
-
-            if (!empty($sessi)) {
-                $map  = ['Uomo'=>1,'Donna'=>2,'1'=>1,'2'=>2];
-                $vals = array_values(array_unique(array_filter(array_map(fn($v)=>$map[trim($v)]??null,$sessi))));
-                if (!empty($vals)) {
-                    $q->whereIn('u.gender', $vals);
-                }
-            }
-
-            $etaMin  = $etaMin ?? 18;
-            $etaMax  = $etaMax ?? 99;
-            $dataMin = now()->subYears($etaMax)->toDateString();
-            $dataMax = now()->subYears($etaMin)->toDateString();
-            $q->whereBetween('u.birth_date', [$dataMin, $dataMax]);
-
-            if (!empty($reg)) {
-                $q->whereIn('u.reg', (array) $reg);
-            }
-
-            if (!empty($aree)) {
-                $q->whereIn('u.area', (array) $aree);
-            }
-
-            if (!empty($prov)) {
-                $q->whereIn('u.province_id', (array) $prov);
-            }
-
-            Log::info('campionamento.total.sample.before_pluck', [
-                'sql' => $interpolateSql($q->toSql(), $q->getBindings()),
-            ]);
-
-            $uids = $q->pluck('u.user_id')->all();
-
-            Log::info('campionamento.total.sample.after_pluck', [
-                'uids_count' => count($uids),
-            ]);
-
-            $uidUnici = $uidUnici->merge($uids);
+        if ($debug) {
+            $row['sql_full'] = $this->interpolateSql($q->toSql(), $q->getBindings());
         }
 
+        $items[] = $row;
+    }
 
-    $total = $uidUnici->unique()->count();
+        Log::info('campionamento.total.start');
 
-    Log::info('campionamento.total.end', [
-    'total' => $total,
-]);
+        $total = $this->countDistinctUsersAcrossSamples($surId, $samples, $excludeCodes);
+
+        Log::info('campionamento.total.end', [
+            'total' => $total,
+        ]);
 
     return response()->json([
         'items' => $items,
@@ -320,6 +110,7 @@ public function creaCampioni(Request $request)
 
     $surId   = (string)$request->input('sur_id');
     $samples = $request->input('samples', []);
+    $excludeCodes = $this->normalizeExcludeCodes($request->input('exclude_codes', ''));
 
     if (!$surId || !is_array($samples) || !count($samples)) {
         return response()->json(['error'=>'Parametri mancanti'], 422);
@@ -353,176 +144,55 @@ public function creaCampioni(Request $request)
     $giaSelezionatiStandard = [];
     $righeSelezionate = collect();
 
-    foreach ($samples as $s) {
+foreach ($samples as $s) {
+    $followup = !empty($s['followup']);
+    $invite   = max(1, (int) ($s['invite'] ?? 1));
 
-        $followup = isset($s['followup']) ? (bool)$s['followup'] : false;
-        $invite   = max(1, (int)($s['invite'] ?? 1));
+    $excludeUids = $followup ? $giaSelezionatiFollowup : $giaSelezionatiStandard;
 
-        $sessi    = (array)($s['sesso'] ?? []);
-        $etaMin   = $s['eta_da'] ?? 18;
-        $etaMax   = $s['eta_a'] ?? 99;
-        $reg      = (array)($s['regioni'] ?? []);
-        $aree     = (array)($s['aree'] ?? []);
-        $prov     = (array)($s['province_id'] ?? []);
-        $amp      = (array)($s['ampiezza'] ?? []);
-        $targetId = $s['target_id'] ?? null;
+    $q = $this->buildSampleQuery(
+        $surId,
+        (array) $s,
+        $excludeCodes,
+        $excludeUids
+    );
 
-        /*
-        |--------------------------------------------------------------------------
-        | COSTRUZIONE QUERY OTTIMIZZATA
-        |--------------------------------------------------------------------------
-        */
+    $users = $q->select([
+            'u.user_id as uid',
+            'u.email',
+            'u.first_name as firstName',
+            'u.gender',
+            'u.token'
+        ])
+        ->distinct()
+        ->inRandomOrder()
+        ->limit($invite)
+        ->get();
 
-        if (!empty($targetId)) {
+    foreach ($users as $u) {
+        $gs = ($u->gender == 1) ? 'o' : (($u->gender == 2) ? 'a' : '');
 
-            if ($followup) {
+        $righeSelezionate->push([
+            'uid' => $u->uid,
+            'email' => $u->email,
+            'firstName' => $u->firstName,
+            'genderSuffix' => $gs,
+            'sid' => $surId,
+            'prj' => $prj,
+            'argo' => $argo,
+            'bytes' => $bytes,
+            'loi' => $loi,
+            'token' => $u->token ?? '',
+            'followup' => $followup,
+        ]);
 
-                $q = DB::table('utenti_target as ut')
-                    ->join('t_user_info as u', 'u.user_id', '=', 'ut.uid')
-                    ->join('t_respint as r', function ($join) use ($surId) {
-                        $join->on('r.uid','=','u.user_id')
-                             ->where('r.sid','=',$surId);
-                    })
-                    ->where('ut.target_id', (int)$targetId)
-                    ->whereNotNull('ut.uid')
-                    ->whereNotIn('r.status',[3,4,5]);
-
-            } else {
-
-                $q = DB::table('utenti_target as ut')
-                    ->join('t_user_info as u','u.user_id','=','ut.uid')
-                    ->leftJoin('t_respint as r', function ($join) use ($surId) {
-                        $join->on('r.uid','=','u.user_id')
-                             ->where('r.sid','=',$surId);
-                    })
-                    ->where('ut.target_id',(int)$targetId)
-                    ->whereNotNull('ut.uid')
-                    ->whereNull('r.uid');
-            }
-
+        if ($followup) {
+            $giaSelezionatiFollowup[] = (string) $u->uid;
         } else {
-
-            $q = UserInfo::query()
-                ->from('t_user_info as u');
-
-            if ($followup) {
-
-                $q->whereExists(function($sub) use ($surId, $userKey) {
-                    $sub->select(DB::raw(1))
-                        ->from('t_respint as r')
-                        ->whereColumn('r.uid',"u.$userKey")
-                        ->where('r.sid',$surId)
-                        ->whereNotIn('r.status',[3,4,5]);
-                });
-
-            } else {
-
-                $q->whereNotExists(function($sub) use ($surId, $userKey) {
-                    $sub->select(DB::raw(1))
-                        ->from('t_respint as r')
-                        ->whereColumn('r.uid',"u.$userKey")
-                        ->where('r.sid',$surId);
-                });
-
-            }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | FILTRI DEMOGRAFICI
-        |--------------------------------------------------------------------------
-        */
-
-        $q->where('u.confirm',1);
-        $q->where('u.active',1);
-
-        if (!empty($sessi)) {
-            $map  = ['Uomo'=>1,'Donna'=>2,'1'=>1,'2'=>2];
-            $vals = array_values(array_unique(array_filter(array_map(fn($v)=>$map[trim($v)]??null,$sessi))));
-            if (!empty($vals)) {
-                $q->whereIn('u.gender',$vals);
-            }
-        }
-
-        $etaMin = $etaMin ?? 18;
-        $etaMax = $etaMax ?? 99;
-
-        $dataMin = now()->subYears($etaMax)->toDateString();
-        $dataMax = now()->subYears($etaMin)->toDateString();
-
-        $q->whereBetween('u.birth_date', [$dataMin, $dataMax]);
-
-        if (!empty($reg)) {
-            $q->whereIn('u.reg',$reg);
-        }
-
-        if (!empty($aree)) {
-            $q->whereIn('u.area',$aree);
-        }
-
-        if (!empty($prov)) {
-            $q->whereIn('u.province_id',$prov);
-        }
-
-        if (!empty($amp)) {
-            $q->whereIn('u.amp',$amp);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | ESCLUSIONE DUPLICATI TRA SOTTOCAMPIONI
-        |--------------------------------------------------------------------------
-        */
-
-        if ($followup && !empty($giaSelezionatiFollowup)) {
-            $q->whereNotIn("u.$userKey",$giaSelezionatiFollowup);
-        }
-
-        if (!$followup && !empty($giaSelezionatiStandard)) {
-            $q->whereNotIn("u.$userKey",$giaSelezionatiStandard);
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | ESTRAZIONE UTENTI
-        |--------------------------------------------------------------------------
-        */
-
-        $users = $q->select([
-                "u.$userKey as uid",
-                'u.email',
-                'u.first_name as firstName',
-                'u.gender',
-                'u.token'
-            ])
-            ->distinct()
-            ->inRandomOrder()
-            ->limit($invite)
-            ->get();
-
-        foreach ($users as $u) {
-
-            $gs = ($u->gender==1)?'o':(($u->gender==2)?'a':'');
-
-            $righeSelezionate->push([
-                'uid'=>$u->uid,
-                'email'=>$u->email,
-                'firstName'=>$u->firstName,
-                'genderSuffix'=>$gs,
-                'sid'=>$surId,
-                'prj'=>$prj,
-                'argo'=>$argo,
-                'bytes'=>$bytes,
-                'loi'=>$loi,
-                'token'=>$u->token ?? '',
-            ]);
-
-            if ($followup)
-                $giaSelezionatiFollowup[] = (string)$u->uid;
-            else
-                $giaSelezionatiStandard[] = (string)$u->uid;
+            $giaSelezionatiStandard[] = (string) $u->uid;
         }
     }
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -531,16 +201,20 @@ public function creaCampioni(Request $request)
     */
 
 if ($righeSelezionate->isNotEmpty()) {
-
     $toInsert = $righeSelezionate
-        ->filter(fn($r) => !in_array($r['uid'], $giaSelezionatiFollowup))
-        ->map(fn($r) => [
-            'sid' => $surId,
-            'uid' => $r['uid'],
-            'status' => 0,
-            'iid' => -1,
-            'prj_name' => $prj,
-        ])->all();
+        ->filter(function ($r) {
+            return empty($r['followup']);
+        })
+        ->map(function ($r) use ($surId, $prj) {
+            return [
+                'sid' => $surId,
+                'uid' => $r['uid'],
+                'status' => 0,
+                'iid' => -1,
+                'prj_name' => $prj,
+            ];
+        })
+        ->all();
 
     if (!empty($toInsert)) {
         DB::transaction(function () use ($toInsert) {
@@ -632,6 +306,194 @@ private function aggiornaInvitiUtenti(array $uids): void
     ";
 
     DB::statement($sql, $bindings);
+}
+
+
+private function normalizeExcludeCodes($excludeRaw): array
+{
+    if (is_string($excludeRaw)) {
+        return array_values(array_filter(array_map('trim', explode(';', $excludeRaw))));
+    }
+
+    if (is_array($excludeRaw)) {
+        return array_values(array_filter(array_map('trim', $excludeRaw)));
+    }
+
+    return [];
+}
+
+private function buildSampleQuery(
+    string $surId,
+    array $sample,
+    array $excludeCodes = [],
+    array $excludeUids = []
+) {
+    $userKey  = 'user_id';
+    $followup = !empty($sample['followup']);
+    $sessi    = isset($sample['sesso']) ? (array) $sample['sesso'] : [];
+    $etaMin   = isset($sample['eta_da']) ? (int) $sample['eta_da'] : null;
+    $etaMax   = isset($sample['eta_a']) ? (int) $sample['eta_a'] : null;
+    $reg      = isset($sample['regioni']) ? (array) $sample['regioni'] : [];
+    $aree     = isset($sample['aree']) ? (array) $sample['aree'] : [];
+    $prov     = isset($sample['province_id']) ? (array) $sample['province_id'] : [];
+    $amp      = isset($sample['ampiezza']) ? (array) $sample['ampiezza'] : [];
+    $targetId = isset($sample['target_id']) ? (int) $sample['target_id'] : null;
+    $iscrittoDal = isset($sample['iscritto_dal']) ? (int) $sample['iscritto_dal'] : null;
+
+    if (!empty($targetId)) {
+        if ($followup) {
+            $q = DB::table('utenti_target as ut')
+                ->join('t_user_info as u', 'u.user_id', '=', 'ut.uid')
+                ->join('t_respint as r', function ($join) use ($surId) {
+                    $join->on('r.uid', '=', 'u.user_id')
+                        ->where('r.sid', '=', $surId);
+                })
+                ->where('ut.target_id', $targetId)
+                ->whereNotNull('ut.uid')
+                ->whereNotIn('r.status', [3, 4, 5])
+                ->select('u.user_id')
+                ->distinct();
+        } else {
+            $q = DB::table('utenti_target as ut')
+                ->join('t_user_info as u', 'u.user_id', '=', 'ut.uid')
+                ->leftJoin('t_respint as r', function ($join) use ($surId) {
+                    $join->on('r.uid', '=', 'u.user_id')
+                        ->where('r.sid', '=', $surId);
+                })
+                ->where('ut.target_id', $targetId)
+                ->whereNotNull('ut.uid')
+                ->whereNull('r.uid')
+                ->select('u.user_id')
+                ->distinct();
+        }
+    } else {
+        $q = UserInfo::query()->from('t_user_info as u');
+
+        if ($followup) {
+            $q->whereExists(function ($sub) use ($surId, $userKey) {
+                $sub->select(DB::raw(1))
+                    ->from('t_respint as r')
+                    ->whereColumn('r.uid', "u.$userKey")
+                    ->where('r.sid', $surId)
+                    ->whereNotIn('r.status', [3, 4, 5]);
+            });
+        } else {
+            $q->whereNotExists(function ($sub) use ($surId, $userKey) {
+                $sub->select(DB::raw(1))
+                    ->from('t_respint as r')
+                    ->whereColumn('r.uid', "u.$userKey")
+                    ->where('r.sid', $surId);
+            });
+        }
+    }
+
+    $q->where('u.confirm', 1);
+    $q->where('u.active', 1);
+
+    if (!empty($sessi)) {
+        $map  = ['Uomo' => 1, 'Donna' => 2, '1' => 1, '2' => 2];
+        $vals = array_values(array_unique(array_filter(array_map(function ($v) use ($map) {
+            $v = trim((string) $v);
+            return $map[$v] ?? null;
+        }, $sessi))));
+
+        if (!empty($vals)) {
+            $q->whereIn('u.gender', $vals);
+        }
+    }
+
+    $etaMin = $etaMin ?? 18;
+    $etaMax = $etaMax ?? 99;
+
+    $dataMin = now()->subYears($etaMax)->toDateString();
+    $dataMax = now()->subYears($etaMin)->toDateString();
+
+    $q->whereBetween('u.birth_date', [$dataMin, $dataMax]);
+
+    if (!empty($reg)) {
+        $q->whereIn('u.reg', $reg);
+    }
+
+    if (!empty($aree)) {
+        $q->whereIn('u.area', $aree);
+    }
+
+    if (!empty($prov)) {
+        $q->whereIn('u.province_id', $prov);
+    }
+
+    if (!empty($amp)) {
+        $q->whereIn('u.amp', $amp);
+    }
+
+    if (!empty($iscrittoDal)) {
+    $q->whereNotNull('u.reg_date')
+      ->where('u.reg_date', '!=', '')
+      ->whereRaw('CAST(LEFT(u.reg_date, 4) AS UNSIGNED) >= ?', [$iscrittoDal]);
+}
+
+    if (!empty($excludeCodes)) {
+        $q->whereNotIn('u.user_id', function ($sub) use ($excludeCodes) {
+            $sub->select('r.uid')
+                ->from('t_respint as r')
+                ->whereIn('r.sid', $excludeCodes);
+        });
+    }
+
+    if (!empty($excludeUids)) {
+        $q->whereNotIn('u.user_id', $excludeUids);
+    }
+
+    return $q;
+}
+
+private function interpolateSql(string $sql, array $bindings): string
+{
+    $parts = explode('?', $sql);
+    $out = array_shift($parts);
+
+    foreach ($bindings as $binding) {
+        if (is_null($binding)) {
+            $replacement = 'NULL';
+        } elseif (is_numeric($binding)) {
+            $replacement = (string) $binding;
+        } else {
+            $replacement = "'" . str_replace("'", "''", (string) $binding) . "'";
+        }
+
+        $out .= $replacement . (count($parts) ? array_shift($parts) : '');
+    }
+
+    if (count($parts)) {
+        $out .= implode('', $parts);
+    }
+
+    return $out;
+}
+
+private function countDistinctUsersAcrossSamples(string $surId, array $samples, array $excludeCodes = []): int
+{
+    $union = null;
+
+    foreach ($samples as $sample) {
+        $q = $this->buildSampleQuery($surId, (array) $sample, $excludeCodes)
+            ->select('u.user_id');
+
+        if ($union === null) {
+            $union = $q;
+        } else {
+            $union->union($q);
+        }
+    }
+
+    if ($union === null) {
+        return 0;
+    }
+
+    return DB::query()
+        ->fromSub($union, 'sample_union')
+        ->distinct('user_id')
+        ->count('user_id');
 }
 
 }
