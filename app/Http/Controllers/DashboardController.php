@@ -14,7 +14,7 @@ class DashboardController extends Controller
          * 1) Query per i record di t_panel_control
          */
         $records = DB::select("
-            SELECT prj, sur_id, description, red_surv, durata, goal, complete, end_field
+            SELECT prj, sur_id, description, red_surv, durata, goal, complete, end_field,cliente
             FROM t_panel_control
             WHERE stato = 0
             ORDER BY stato, giorni_rimanenti ASC, id DESC

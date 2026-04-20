@@ -1,5 +1,56 @@
 @extends('layouts.main')
 
+<style>
+
+.project-link {
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    color: #212529;
+    text-decoration: none;
+    position: relative;
+    transition: color 0.2s ease;
+
+    font-family: inherit; /* 👈 aggiungi questo */
+}
+
+#activityLogTable {
+    font-size: 12px;
+    font-family: inherit;
+}
+
+body {
+    font-family: 'Inter', Arial, sans-serif;
+}
+
+/* linea animata sotto */
+.project-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 0%;
+    height: 2px;
+    background-color: #0d6efd;
+    transition: width 0.25s ease;
+}
+
+/* hover */
+.project-link:hover {
+    color: #0d6efd;
+}
+
+.project-link:hover::after {
+    width: 100%;
+}
+
+.project-row:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+
+</style>
+
 @section('content')
 <main>
     <div class="container-fluid p-0">
@@ -15,7 +66,7 @@
                 <div class="text-muted small">Elenco ricerche aperte e stato avanzamento</div>
             </div>
             <div class="text-muted small">
-                <i class="fa-solid fa-circle-info"></i> Attenzione per Scaduto si intende la scadenza prevista non vuol dire che il field sia chiuso
+                <i class="fa-solid fa-circle-info"></i> Clicca sulla ricerca per visualizzare il dettaglio sul Field
             </div>
         </div>
     </div>
@@ -25,11 +76,12 @@
             <table class="table table-hover align-middle mb-0" id="tblProjects">
                 <thead class="table-light">
                     <tr>
-                        <th style="min-width: 140px;">Ricerca</th>
-                        <th class="text-center" style="min-width: 90px;">IR</th>
-                        <th class="text-center" style="min-width: 90px;">LOI</th>
-                        <th class="text-center" style="min-width: 160px;">Andamento</th>
-                        <th class="text-center" style="min-width: 120px;">Scadenza</th>
+    <th style="min-width: 260px;">Ricerca</th>
+    <th class="text-center" style="min-width: 90px;">IR</th>
+    <th class="text-center" style="min-width: 90px;">LOI</th>
+    <th class="text-center" style="min-width: 140px;">Status</th>
+    <th class="text-center" style="min-width: 160px;">Andamento</th>
+    <th class="text-center" style="min-width: 120px;">Scadenza</th>
                     </tr>
                 </thead>
 
@@ -81,8 +133,8 @@ $defaultColor = '#9DCE6B';
 
                         <tr class="project-row">
 
-                            {{-- RICERCA --}}
-                <td style="min-width:240px;">
+{{-- RICERCA --}}
+<td style="min-width:260px;">
     @php
         $prj = strtoupper($row->prj ?? '');
         $badgeColor = $prjColors[$prj] ?? $defaultColor;
@@ -90,37 +142,21 @@ $defaultColor = '#9DCE6B';
     @endphp
 
     <div class="d-flex justify-content-between align-items-start">
+        <div class="pe-2">
+            <a href="{{ $fieldUrl }}" class="project-link">
+                {{ $row->sur_id }} - {{ $row->description ?: 'N.D.' }}
+            </a>
 
-        <div>
-            <div class="d-flex align-items-center gap-2">
-
-                {{-- Badge PRJ colorato --}}
-                <span class="badge"
-                      style="background-color: {{ $badgeColor }}; color: #ffffff; font-weight:600;">
-                    {{ $prj }}
-                </span>
-
-                {{-- SUR_ID --}}
-                <span class="fw-bold">
-                    {{ $row->sur_id }}
-                </span>
-
-            </div>
-
-            {{-- Description sotto --}}
-            <div class="text-muted small text-truncate mt-1"
-                 style="max-width:300px;">
-                {{ $row->description }}
-            </div>
+                <div class="text-muted small mt-1">
+                    ({{ $prj }} - {{ $row->cliente ?? 'N.D.' }})
+                </div>
         </div>
 
-        {{-- Icona apertura --}}
         <a href="{{ $fieldUrl }}"
-           class="text-primary ms-2"
+           class="text-primary ms-2 flex-shrink-0"
            title="Apri Field Control">
             <i class="bi bi-folder-symlink fs-3"></i>
         </a>
-
     </div>
 </td>
 
@@ -137,33 +173,47 @@ $defaultColor = '#9DCE6B';
                                 <span class="text-muted">{{ $row->durata }} min</span>
                             </td>
 
-                            {{-- ANDAMENTO --}}
-                            <td class="align-middle">
-                                <div class="d-flex justify-content-center align-items-center" style="height:70px;">
-                                    <canvas
-                                        class="row-doughnut"
-                                        id="chart-{{ $row->sur_id }}"
-                                        width="120"
-                                        height="70"
-                                        data-andamento="{{ $andamento }}">
-                                    </canvas>
-                                </div>
-                            </td>
+{{-- COMPLETE / GOAL --}}
+<td class="text-center align-middle">
+    <div class="d-inline-flex flex-column align-items-center justify-content-center px-3 py-2 rounded-3"
+         style="background: #f8f9fa; min-width: 95px; border: 1px solid #e9ecef;">
+        <span class="fw-bold" style="font-size: 1rem; line-height: 1;">
+            {{ number_format($row->complete ?? 0) }}
+        </span>
+        <span class="text-muted small my-1">di</span>
+        <span class="fw-semibold text-primary" style="font-size: 0.95rem; line-height: 1;">
+            {{ number_format($row->goal ?? 0) }}
+        </span>
+    </div>
+</td>
 
-                            {{-- SCADENZA --}}
-                            <td class="text-center">
-                                @if (is_null($differenza))
-                                    <span class="badge bg-secondary">N/A</span>
-                                @elseif ($differenza === 0)
-                                    <span class="badge bg-primary">Oggi</span>
-                                @elseif ($differenza < 0)
-                                    <span class="badge bg-danger">Scaduto</span>
-                                @elseif ($differenza <= 7)
-                                    <span class="badge bg-warning text-dark">{{ $differenza }} giorni</span>
-                                @else
-                                    <span class="badge bg-success">{{ $differenza }} giorni</span>
-                                @endif
-                            </td>
+{{-- ANDAMENTO --}}
+<td class="align-middle">
+    <div class="d-flex justify-content-center align-items-center" style="height:70px;">
+        <canvas
+            class="row-doughnut"
+            id="chart-{{ $row->sur_id }}"
+            width="120"
+            height="70"
+            data-andamento="{{ $andamento }}">
+        </canvas>
+    </div>
+</td>
+
+        {{-- SCADENZA --}}
+        <td class="text-center align-middle">
+            @if (is_null($differenza))
+                <span class="badge bg-secondary">N/A</span>
+            @elseif ($differenza === 0)
+                <span class="badge bg-primary">Oggi</span>
+            @elseif ($differenza < 0)
+                <span class="badge bg-danger">+ {{ abs($differenza) }} gg</span>
+            @elseif ($differenza <= 7)
+                <span class="badge bg-warning text-dark">- {{ $differenza }} gg</span>
+            @else
+                <span class="badge bg-success">- {{ $differenza }} gg</span>
+            @endif
+        </td>
 
                         </tr>
                     @endforeach
@@ -364,7 +414,7 @@ $defaultColor = '#9DCE6B';
                         </div>
 
                         {{-- Contenitore per effetto di scorrimento --}}
-                        <div class="table-responsive" style="max-height: 200px; overflow-y: hidden; font-size: 12px;">
+                        <div class="table-responsive" style="max-height: 200px; overflow-y: hidden; font-size: 10px;">
                             <table class="table table-sm table-striped text-center" id="activityLogTable">
                                 <thead class="table-dark">
                                     <tr>
