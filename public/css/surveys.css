@@ -391,3 +391,119 @@ table.dataTable tbody tr:hover{
 .sv-row-active:hover td{
   background: rgba(37,99,235,.08) !important;
 }
+
+/* ===== Primis status ===== */
+.sv-status{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  font-size:.9rem;
+  border:1px solid rgba(0,0,0,.08);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.sv-status:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+}
+
+.sv-status--green{
+  background: rgba(22,163,74,.12);
+  color:#16a34a;
+  border-color: rgba(22,163,74,.25);
+}
+
+.sv-status--yellow{
+  background: rgba(245,158,11,.15);
+  color:#f59e0b;
+  border-color: rgba(245,158,11,.25);
+}
+
+.sv-status--red{
+  background: rgba(220,38,38,.12);
+  color:#dc2626;
+  border-color: rgba(220,38,38,.25);
+}
+
+/* ===== Giorni field ===== */
+.sv-day{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:56px;
+  padding:.28rem .6rem;
+  border-radius:999px;
+  font-weight:800;
+  font-size:.74rem;
+  border:1px solid rgba(0,0,0,.08);
+  font-variant-numeric: tabular-nums;
+}
+
+.sv-day--open{
+  background: rgba(22,163,74,.12);
+  border-color: rgba(22,163,74,.22);
+  color:#166534;
+}
+
+.sv-day--today{
+  background: rgba(59,130,246,.14);
+  border-color: rgba(59,130,246,.24);
+  color:#1d4ed8;
+}
+
+.sv-day--over{
+  background: rgba(180,83,9,.14);
+  border-color: rgba(180,83,9,.24);
+  color:#92400e;
+}
+
+.sv-day--closed{
+  background: rgba(127,29,29,.14);
+  border-color: rgba(127,29,29,.24);
+  color:#7f1d1d;
+}
+
+.sv-day--na{
+  background: rgba(148,163,184,.20);
+  border-color: rgba(148,163,184,.30);
+  color:#334155;
+}
+
+/* ===== Panel icon only ===== */
+.sv-panel-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  font-size:.9rem;
+  border:1px solid rgba(0,0,0,.08);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+
+.sv-panel-icon:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0,0,0,.12);
+}
+
+.sv-panel-icon--green{
+  background: rgba(22,163,74,.12);
+  border-color: rgba(22,163,74,.24);
+  color:#166534;
+}
+
+.sv-panel-icon--slate{
+  background: rgba(15,23,42,.06);
+  border-color: rgba(15,23,42,.12);
+  color:#334155;
+}
+
+.sv-panel-icon--violet{
+  background: rgba(124,58,237,.10);
+  border-color: rgba(124,58,237,.18);
+  color:#6d28d9;
+}

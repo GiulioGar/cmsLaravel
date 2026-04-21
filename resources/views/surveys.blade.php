@@ -38,6 +38,7 @@
                     <th>Giorni</th>
                     <th>Costo</th>
                     <th>Bytes</th>
+                    <th>Primis</th>
                     <th></th>
                 </tr>
             </thead>
@@ -480,6 +481,7 @@
 
 <script>
 $(document).ready(function() {
+  
 
     /********************************************************
      * 1) Inizializziamo la tabella DataTables
@@ -503,8 +505,10 @@ $(document).ready(function() {
             { data: 'red_surv',          name: 'red_surv' },
             { data: 'end_field',         name: 'end_field' },
             { data: 'giorni_rimanenti',  name: 'giorni_rimanenti' },
-            { data: 'Costo',             name: 'Costo' },
+            { data: 'costo',             name: 'costo' },
             { data: 'bytes',             name: 'bytes' },
+            { data: 'primis_status', name: 'primis_status' },
+
             {
                 data: 'campo_edit',
                 name: 'campo_edit',
@@ -512,6 +516,9 @@ $(document).ready(function() {
                 searchable: false
             },
         ],
+            drawCallback: function() {
+        initBootstrapTooltips();
+          },
         language: {
             url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json"
         }
@@ -729,6 +736,20 @@ $(document).ready(function() {
 
         $('input[name="point"]').attr("placeholder", points);
     });
+
+
+function initBootstrapTooltips() {
+    $('[data-bs-toggle="tooltip"]').each(function () {
+        const existing = bootstrap.Tooltip.getInstance(this);
+        if (existing) {
+            existing.dispose();
+        }
+
+        new bootstrap.Tooltip(this);
+    });
+}
+
+initBootstrapTooltips();
 
 });
 </script>

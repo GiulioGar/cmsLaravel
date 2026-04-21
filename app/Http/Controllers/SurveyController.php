@@ -26,21 +26,27 @@ class SurveyController extends Controller
      */
     public function getData(Request $request)
     {
-        $query = PanelControl::select([
-            'sur_id',
-            'prj',
-            'description',
-            'panel',
-            'complete',
-            'red_panel',
-            'red_surv',
-            'end_field',
-            'giorni_rimanenti', // Se non serve più dal DB, puoi rimuoverlo
-            'Costo',
-            'bytes',
-            'stato',  // << NOTA: usiamo "stato" al posto di "status"
-            'id'
-        ]);
+            $query = PanelControl::select([
+                't_panel_control.sur_id',
+                't_panel_control.prj',
+                't_panel_control.description',
+                't_panel_control.panel',
+                't_panel_control.complete',
+                't_panel_control.red_panel',
+                't_panel_control.red_surv',
+                't_panel_control.end_field',
+                't_panel_control.sur_date',
+                't_panel_control.giorni_rimanenti',
+                't_panel_control.costo',
+                't_panel_control.bytes',
+                't_panel_control.stato',
+                't_panel_control.id',
+                't_surveys.status as primis_status' // 👈 NUOVO
+            ])
+            ->leftJoin('t_surveys', function($join) {
+                $join->on('t_surveys.sid', '=', 't_panel_control.sur_id')
+                    ->on('t_surveys.prj_name', '=', 't_panel_control.prj');
+            });
 
         // Ordinamento: prima ricerche con stato=0, poi stato=1, poi le altre
        // ->orderByRaw("CASE WHEN stato = 0 THEN 0 WHEN stato = 1 THEN 1 ELSE 2 END ASC")
@@ -57,51 +63,63 @@ class SurveyController extends Controller
                 })
 
             // Se vuoi convertire i valori di "panel" in stringhe
-                        ->editColumn('panel', function($row) {
-                            $label = 'N.D.';
-                            $class = 'sv-badge--slate';
-                            $icon  = 'fas fa-layer-group';
+            ->editColumn('panel', function($row) {
+                $label = 'N.D.';
+                $class = 'sv-panel-icon--slate';
+                $icon  = 'fas fa-question-circle';
 
-                            switch ((int)$row->panel) {
-                                case 1:
-                                    $label = 'Interactive';
-                                    $class = 'sv-badge--blue';
-                                    $icon  = 'fas fa-user-friends';
-                                    break;
-                                case 0:
-                                    $label = 'Esterno';
-                                    $class = 'sv-badge--slate';
-                                    $icon  = 'fas fa-globe';
-                                    break;
-                                case 2:
-                                    $label = 'Lista';
-                                    $class = 'sv-badge--violet';
-                                    $icon  = 'fas fa-list';
-                                    break;
-                                default:
-                                    $label = e((string)$row->panel);
-                                    $class = 'sv-badge--slate';
-                                    $icon  = 'fas fa-question-circle';
-                                    break;
-                            }
+                switch ((int)$row->panel) {
+                    case 1:
+                        $label = 'Panel Interactive';
+                        $class = 'sv-panel-icon--green';
+                        $icon  = 'fas fa-user-friends';
+                        break;
 
-                            return "<span class=\"sv-badge {$class}\"><i class=\"{$icon}\"></i>{$label}</span>";
-                        })
+                    case 0:
+                        $label = 'Panel Esterno';
+                        $class = 'sv-panel-icon--slate';
+                        $icon  = 'fas fa-globe';
+                        break;
 
+                    case 2:
+                        $label = 'Da Lista';
+                        $class = 'sv-panel-icon--violet';
+                        $icon  = 'fas fa-list';
+                        break;
+
+                    default:
+                        $label = 'N.D.';
+                        $class = 'sv-panel-icon--slate';
+                        $icon  = 'fas fa-question-circle';
+                        break;
+                }
+
+                return '<span class="sv-panel-icon ' . $class . '"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                data-bs-title="' . e($label) . '">
+                            <i class="' . $icon . '"></i>
+                        </span>';
+            })
 
                 ->editColumn('red_panel', function($row) {
+                    // Se non è panel Interactive, IR Panel non ha senso
+                    if ((int)$row->panel !== 1) {
+                        return '<span class="sv-badge sv-ir sv-ir--na">N.A.</span>';
+                    }
+
                     $val = is_numeric($row->red_panel) ? (float)$row->red_panel : null;
 
                     if ($val === null) {
                         return '<span class="sv-badge sv-ir sv-ir--na">N.D.</span>';
                     }
 
-                    // soglie conservative (modificabili)
                     $class = ($val >= 25) ? 'sv-ir--good' : (($val >= 12) ? 'sv-ir--mid' : 'sv-ir--bad');
                     $txt = rtrim(rtrim(number_format($val, 2, '.', ''), '0'), '.');
 
                     return "<span class=\"sv-badge sv-ir {$class}\">{$txt}%</span>";
                 })
+
                 ->editColumn('red_surv', function($row) {
                     $val = is_numeric($row->red_surv) ? (float)$row->red_surv : null;
 
@@ -118,18 +136,22 @@ class SurveyController extends Controller
                     $val = is_numeric($row->complete) ? (int)$row->complete : 0;
                     return "<span class=\"sv-num\">{$val}</span>";
                 })
-                ->editColumn('Costo', function($row) {
-                    if ($row->Costo === null || $row->Costo === '') {
-                        return '<span class="sv-badge sv-ir sv-ir--na">N.D.</span>';
-                    }
 
-                    if (is_numeric($row->Costo)) {
-                        $txt = number_format((float)$row->Costo, 2, ',', '.');
-                        return "<span class=\"sv-num\">{$txt}</span><span class=\"sv-muted ms-1\">€</span>";
-                    }
+                    ->editColumn('costo', function($row) {
 
-                    return e((string)$row->Costo);
-                })
+                        if ($row->costo === null || $row->costo === '') {
+                            return '<span class="sv-badge sv-ir sv-ir--na">N.D.</span>';
+                        }
+
+                        if (is_numeric($row->costo)) {
+                            $txt = number_format((float)$row->costo, 2, ',', '.');
+
+                            return '<span class="sv-num">' . $txt . '</span><span class="sv-muted ms-1">€</span>';
+                        }
+
+                        return e((string)$row->costo);
+                    })
+
                 ->editColumn('bytes', function($row) {
                     if ($row->bytes === null || $row->bytes === '') {
                         return '<span class="sv-badge sv-ir sv-ir--na">N.D.</span>';
@@ -143,6 +165,43 @@ class SurveyController extends Controller
                     return e((string)$row->bytes);
                 })
 
+                ->editColumn('primis_status', function($row) {
+
+                    $status = $row->primis_status;
+
+                    if ($status === null) {
+                        return '<span class="sv-badge sv-ir--na">N.D.</span>';
+                    }
+
+                    if ((int)$status === 2) {
+                        return '<span class="sv-status sv-status--green"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    data-bs-title="Aperta">
+                                    <i class="fas fa-play-circle"></i>
+                                </span>';
+                    }
+
+                    if ((int)$status === 0 || (int)$status === 1) {
+                        return '<span class="sv-status sv-status--yellow"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    data-bs-title="In progettazione">
+                                    <i class="fas fa-pencil-ruler"></i>
+                                </span>';
+                    }
+
+                    if ((int)$status >= 3) {
+                        return '<span class="sv-status sv-status--red"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    data-bs-title="Chiusa">
+                                    <i class="fas fa-stop-circle"></i>
+                                </span>';
+                    }
+
+                    return '<span class="sv-badge sv-ir--na">N.D.</span>';
+                })   
 
             // Pallino rosso lampeggiante accanto a sur_id se stato=0
             ->editColumn('sur_id', function($row) {
@@ -182,30 +241,71 @@ class SurveyController extends Controller
 
                 return "$dayOfWeek $dayNum $month $year";
             })
+
             // Calcolo dei giorni rimanenti
             ->editColumn('giorni_rimanenti', function($row) {
-                if (!$row->end_field) {
-                    // Se manca end_field, mettiamo un badge grigio "N.D."
-                    return '<span class="badge bg-secondary">N.D.</span>';
+                $stato = (int) ($row->stato ?? 0);
+
+                // =========================
+                // RICERCA CHIUSA
+                // =========================
+                if ($stato === 1) {
+                    if (empty($row->sur_date) || empty($row->end_field)) {
+                        return '<span class="sv-day sv-day--na"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    data-bs-title="Durata field non disponibile">N.D.</span>';
+                    }
+
+                    $start = Carbon::parse($row->sur_date)->startOfDay();
+                    $end   = Carbon::parse($row->end_field)->startOfDay();
+
+                    $duration = max(1, $start->diffInDays($end) + 1);
+
+                    return '<span class="sv-day sv-day--closed"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                data-bs-title="Durata field ' . $duration . ' giorni">'
+                                . $duration .
+                            '</span>';
+                }
+
+                // =========================
+                // RICERCA APERTA
+                // =========================
+                if (empty($row->end_field)) {
+                    return '<span class="sv-day sv-day--na">N.D.</span>';
                 }
 
                 $today = Carbon::today();
-                $end   = Carbon::parse($row->end_field);
+                $end   = Carbon::parse($row->end_field)->startOfDay();
 
-                // diffInDays con parametro "false" => calcola differenza con segno
                 $diff = $today->diffInDays($end, false);
 
-                if ($diff == 0) {
-                    // OGGI
-                    return '<span class="badge bg-info">OGGI</span>';
-                } elseif ($diff < 0) {
-                    // end_field è passato -> "Concluso"
-                    return '<span class="badge bg-danger">Concluso</span>';
-                } else {
-                    // Restano $diff giorni -> "X giorni"
-                    return '<span class="badge bg-success">' . $diff . ' giorni</span>';
+                if ($diff === 0) {
+                    return '<span class="sv-day sv-day--today"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                data-bs-title="Fine field oggi">Oggi</span>';
                 }
+
+                if ($diff > 0) {
+                    return '<span class="sv-day sv-day--open"
+                                data-bs-toggle="tooltip"
+                                data-bs-placement="top"
+                                data-bs-title="' . $diff . ' giorni alla fine">-' . $diff . '</span>';
+                }
+
+                $overdue = abs($diff);
+
+                return '<span class="sv-day sv-day--over"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            data-bs-title="' . $overdue . ' giorni oltre la fine">+' . $overdue . '</span>';
             })
+
+
+
             // Se Costo è null o vuoto, mostra "N.D."
             ->editColumn('Costo', function($row) {
                 return ($row->Costo === null || $row->Costo === '')
@@ -219,7 +319,7 @@ class SurveyController extends Controller
                             </button>';
                 })
             // Ricordiamoci di abilitare i campi HTML
-            ->rawColumns(['sur_id', 'panel', 'complete', 'red_panel', 'red_surv', 'Costo', 'bytes', 'giorni_rimanenti', 'campo_edit'])
+            ->rawColumns(['sur_id', 'panel', 'complete', 'red_panel', 'red_surv', 'costo', 'bytes', 'giorni_rimanenti', 'campo_edit','primis_status'])
             ->setRowClass(function ($row) {
              return ((int)$row->stato === 0) ? 'sv-row-active' : '';
                     })
