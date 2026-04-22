@@ -472,6 +472,9 @@ class SurveyController extends Controller
                     $survey->age1_target = $validated['age1_target'] ?? null;
                     $survey->age2_target = $validated['age2_target'] ?? null;
 
+                    // Salva anche i bytes su t_panel_control
+                    $survey->bytes       = isset($validated['point']) ? (int) $validated['point'] : 0;
+
                     $survey->save();
 
                     // =========================

@@ -55,7 +55,7 @@ class FieldControlController extends Controller
         }
         unset($panel);
 
-        $utentiDisponibili = $this->getUtentiDisponibili($sid);
+        $utentiDisponibili = $this->getUtentiDisponibili($sid, $panelData);
         $mediaRedPanel = $this->calcolaMediaRedPanel();
 
         $stimaInterviste = ((int) $panelValueFromDB === 1)
@@ -81,10 +81,12 @@ class FieldControlController extends Controller
         $logData = $sreService->buildLogDataFromInterviews($interviews, $questionMap);
         $dataSummaryByPanel = $sreService->buildDataSummaryByDateFromInterviews($interviews);
 
-        $ricercheInCorso = DB::table('t_panel_control')
-            ->where('stato', 0)
-            ->orderBy('description', 'asc')
-            ->get(['sur_id', 'description', 'prj']);
+$ricercheInCorso = Cache::remember('fieldcontrol_ricerche_in_corso', now()->addMinutes(5), function () {
+    return DB::table('t_panel_control')
+        ->where('stato', 0)
+        ->orderBy('description', 'asc')
+        ->get(['sur_id', 'description', 'prj']);
+});
 
         return view('fieldControl', compact(
             'prj',
@@ -310,48 +312,47 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
         ]);
     }
 
-    private function getUtentiDisponibili($sid)
-    {
-        $panelTarget = DB::table('t_panel_control')->where('sur_id', $sid)->first();
-
-        if (!$panelTarget) {
-            return 0;
-        }
-
-        $genderFilter = [1, 2];
-
-        switch ($panelTarget->sex_target) {
-            case 1:
-                $genderFilter = [1];
-                break;
-            case 2:
-                $genderFilter = [2];
-                break;
-            case 3:
-                $genderFilter = [1, 2];
-                break;
-        }
-
-        $etaMin = $panelTarget->age1_target;
-        $etaMax = $panelTarget->age2_target;
-        $annoCorrente = date('Y');
-
-        return DB::table('t_user_info')
-            ->whereIn('gender', $genderFilter)
-            ->whereRaw("YEAR(birth_date) BETWEEN ? AND ?", [$annoCorrente - $etaMax, $annoCorrente - $etaMin])
-            ->where('active', 1)
-            ->where('confirm', 1)
-            ->whereNotExists(function ($query) use ($sid) {
-                $query->select(DB::raw(1))
-                    ->from('t_respint')
-                    ->whereRaw('t_respint.uid = t_user_info.user_id')
-                    ->where('t_respint.sid', $sid);
-            })
-            ->count();
+private function getUtentiDisponibili($sid, $panelTarget)
+{
+    if (!$panelTarget) {
+        return 0;
     }
 
-    private function calcolaMediaRedPanel()
-    {
+    $genderFilter = [1, 2];
+
+    switch ((int) $panelTarget->sex_target) {
+        case 1:
+            $genderFilter = [1];
+            break;
+        case 2:
+            $genderFilter = [2];
+            break;
+        case 3:
+            $genderFilter = [1, 2];
+            break;
+    }
+
+    $etaMin = (int) $panelTarget->age1_target;
+    $etaMax = (int) $panelTarget->age2_target;
+    $annoCorrente = date('Y');
+
+    return DB::table('t_user_info')
+        ->whereIn('gender', $genderFilter)
+        ->whereRaw("YEAR(birth_date) BETWEEN ? AND ?", [$annoCorrente - $etaMax, $annoCorrente - $etaMin])
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotExists(function ($query) use ($sid) {
+            $query->select(DB::raw(1))
+                ->from('t_respint')
+                ->whereRaw('t_respint.uid = t_user_info.user_id')
+                ->where('t_respint.sid', $sid);
+        })
+        ->count();
+}
+
+private function calcolaMediaRedPanel()
+{
+    return Cache::remember('fieldcontrol_media_red_panel', now()->addMinutes(30), function () {
         $dueAnniFa = now()->subYears(2);
 
         return DB::table('t_panel_control')
@@ -359,7 +360,8 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
             ->whereBetween('red_panel', [7, 29])
             ->where('sur_date', '>=', $dueAnniFa)
             ->avg('red_panel') ?? 0;
-    }
+    });
+}
 
     private function calcolaStimaInterviste($utentiDisponibili, $redSurv, $mediaRedPanel)
     {
@@ -413,37 +415,43 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
 
     private function buildQuestionMap(PrimisApiService $primis, $prj, $sid): array
     {
-        $response = $primis->listQuestions($prj, $sid);
+        $cacheKey = "fieldcontrol_question_map_{$prj}_{$sid}";
 
-        if (!isset($response['questions']) || !is_array($response['questions'])) {
-            return [];
-        }
+        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($primis, $prj, $sid) {
+            $response = $primis->listQuestions($prj, $sid);
 
-        $questionMap = [];
-
-        foreach ($response['questions'] as $question) {
-            if (!isset($question['id'])) {
-                continue;
+            if (!isset($response['questions']) || !is_array($response['questions'])) {
+                return [];
             }
 
-            $questionMap[$question['id']] = [
-                'code' => $question['code'] ?? 'Codice Sconosciuto',
-                'text' => $question['text'] ?? 'Testo non disponibile',
-            ];
-        }
+            $questionMap = [];
 
-        return $questionMap;
+            foreach ($response['questions'] as $question) {
+                if (!isset($question['id'])) {
+                    continue;
+                }
+
+                $questionMap[$question['id']] = [
+                    'code' => $question['code'] ?? 'Codice Sconosciuto',
+                    'text' => $question['text'] ?? 'Testo non disponibile',
+                ];
+            }
+
+            return $questionMap;
+        });
     }
 
 private function getPanelNamesMap(): array
 {
-    return DB::table('t_fornitoripanel')
-        ->orderBy('panel_code')
-        ->pluck('name', 'panel_code')
-        ->map(function ($name) {
-            return trim((string) $name);
-        })
-        ->toArray();
+    return Cache::remember('fieldcontrol_panel_names_map', now()->addMinutes(30), function () {
+        return DB::table('t_fornitoripanel')
+            ->orderBy('panel_code')
+            ->pluck('name', 'panel_code')
+            ->map(function ($name) {
+                return trim((string) $name);
+            })
+            ->toArray();
+    });
 }
 
 private function getPanelExportConfig(string $panelName): ?object

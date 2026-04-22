@@ -597,10 +597,12 @@ $(document).ready(function() {
             method: 'GET',
             success: function(response) {
                 $('#sid').empty();
-                // Aggiungi option
+
                 response.forEach(function(item) {
                     $('#sid').append('<option value="' + item.sid + '">' + item.sid + '</option>');
                 });
+
+                $('#panel').trigger('change');
                 $('#createSurveyModal').modal('show');
             },
             error: function(){
@@ -723,19 +725,24 @@ $(document).ready(function() {
     /********************************************************
      * 7) Calcolo punti
      ********************************************************/
-    $(document).on('change', 'input', function() {
-        let valIr  = $('input[name="ir"]').val();
-        let valLoi = $('input[name="loi"]').val();
+$(document).on('input change', '#ir, #loi', function() {
+    let valIr  = parseFloat($('#ir').val());
+    let valLoi = parseFloat($('#loi').val());
 
-        const k     = 125.66;
-        const alpha = 0.699;
-        const beta  = 0.172;
+    if (!valIr || !valLoi || valIr <= 0 || valLoi <= 0) {
+        $('#point').val('');
+        return;
+    }
 
-        let points = k * Math.pow(valLoi, alpha) / Math.pow(valIr, beta);
-        points = Math.round(points);
+    const k     = 125.66;
+    const alpha = 0.699;
+    const beta  = 0.172;
 
-        $('input[name="point"]').attr("placeholder", points);
-    });
+    let points = k * Math.pow(valLoi, alpha) / Math.pow(valIr, beta);
+    points = Math.round(points);
+
+    $('#point').val(points);
+});
 
 
 function initBootstrapTooltips() {
