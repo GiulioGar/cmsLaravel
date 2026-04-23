@@ -201,19 +201,70 @@
                             Timing
                         </div>
 
-                        @php
-                            $giorniField = 'N/A';
-                            if (($panelData->stato ?? null) == 1) {
-                                $giorniField = $panelData->sur_date ? \Carbon\Carbon::parse($panelData->sur_date)->diffInDays(now()) : 'N/A';
-                            } elseif (($panelData->stato ?? null) == 0 && $panelData->end_field) {
-                                $giorniField = \Carbon\Carbon::parse($panelData->sur_date)->diffInDays(\Carbon\Carbon::parse($panelData->end_field));
-                            }
-                        @endphp
+@php
+    $giorniField = 'N/A';
+    $timingHint = null;
+    $timingHintClass = 'timing-hint-neutral';
+    $timingHintIcon = 'fas fa-clock';
 
-                        <div class="kpi-value">
-                            {{ $giorniField }}
-                            <span class="kpi-unit">giorni</span>
+    $startField = !empty($panelData->sur_date) ? \Carbon\Carbon::parse($panelData->sur_date)->startOfDay() : null;
+    $endField = !empty($panelData->end_field) ? \Carbon\Carbon::parse($panelData->end_field)->startOfDay() : null;
+    $today = now()->startOfDay();
+    $isClosed = ((int) ($panelData->stato ?? 0) === 1);
+
+    if ($startField) {
+        if ($isClosed) {
+            $giorniField = $endField ? $startField->diffInDays($endField) : $startField->diffInDays($today);
+        } else {
+            $giorniField = $startField->diffInDays($today);
+        }
+    }
+
+    if (!$isClosed && $endField) {
+        $daysDiff = $today->diffInDays($endField, false);
+
+        if ($daysDiff > 1) {
+            $timingHint = "Altri {$daysDiff} giorni di field";
+            $timingHintClass = 'timing-hint-info';
+            $timingHintIcon = 'fas fa-hourglass-half';
+        } elseif ($daysDiff === 1) {
+            $timingHint = '1 altro giorno di field';
+            $timingHintClass = 'timing-hint-info';
+            $timingHintIcon = 'fas fa-hourglass-end';
+        } elseif ($daysDiff === 0) {
+            $timingHint = 'Oggi il field chiude!';
+            $timingHintClass = 'timing-hint-warning';
+            $timingHintIcon = 'fas fa-bell';
+        } else {
+            $giorniRitardo = abs($daysDiff);
+
+            if ($giorniRitardo === 1) {
+                $timingHint = 'Il field è in ritardo di 1 giorno';
+            } else {
+                $timingHint = "Il field è in ritardo di {$giorniRitardo} giorni";
+            }
+
+            $timingHintClass = 'timing-hint-danger';
+            $timingHintIcon = 'fas fa-triangle-exclamation';
+        }
+    } elseif ($isClosed) {
+        $timingHint = 'Field chiuso';
+        $timingHintClass = 'timing-hint-success';
+        $timingHintIcon = 'fas fa-circle-check';
+    }
+@endphp
+
+                    <div class="kpi-value">
+                        {{ $giorniField }}
+                        <span class="kpi-unit">giorni</span>
+                    </div>
+
+                    @if($timingHint)
+                        <div class="timing-hint {{ $timingHintClass }}">
+                            <i class="{{ $timingHintIcon }} me-2"></i>
+                            <span>{{ $timingHint }}</span>
                         </div>
+                    @endif
                     </div>
                     <span class="kpi-chip kpi-chip-green">Field</span>
                 </div>
@@ -247,22 +298,44 @@
                             Info
                         </div>
 
-                        @php
-                            $statusLabel = 'N/A';
-                            $statusChipClass = 'kpi-chip-dark';
-                            $statusIcon = 'fas fa-question-circle';
+                    @php
+                        $statusLabel = 'N/A';
+                        $statusChipClass = 'kpi-chip-dark';
+                        $statusIcon = 'fas fa-question-circle';
 
-                            if (($panelData->stato ?? null) == 0) {
-                                $statusLabel = 'Aperta';
-                                $statusChipClass = 'kpi-chip-blue';
-                                $statusIcon = 'fa-solid fa-door-open';   // oppure fa-circle
+                        if (($panelData->stato ?? null) == 0) {
+                            $statusLabel = 'Aperta';
+                            $statusChipClass = 'kpi-chip-blue';
+                            $statusIcon = 'fa-solid fa-door-open';
+                        }
+                        elseif (($panelData->stato ?? null) == 1) {
+                            $statusLabel = 'Chiusa';
+                            $statusChipClass = 'kpi-chip-dark';
+                            $statusIcon = 'fa-solid fa-door-closed';
+                        }
+
+                        $primisStatusLabel = 'N/A';
+                        $primisStatusClass = 'primis-status-neutral';
+                        $primisStatusIcon = 'fas fa-circle-question';
+
+                        if ($primisSurveyStatus !== null) {
+                            $primisSurveyStatus = (int) $primisSurveyStatus;
+
+                            if (in_array($primisSurveyStatus, [1, 2], true)) {
+                                $primisStatusLabel = 'Progettazione';
+                                $primisStatusClass = 'primis-status-planning';
+                                $primisStatusIcon = 'fas fa-drafting-compass';
+                            } elseif ($primisSurveyStatus === 3) {
+                                $primisStatusLabel = 'Raccolta';
+                                $primisStatusClass = 'primis-status-collect';
+                                $primisStatusIcon = 'fas fa-database';
+                            } elseif ($primisSurveyStatus >= 4) {
+                                $primisStatusLabel = 'Chiusa';
+                                $primisStatusClass = 'primis-status-closed';
+                                $primisStatusIcon = 'fas fa-lock';
                             }
-                            elseif (($panelData->stato ?? null) == 1) {
-                                $statusLabel = 'Chiusa';
-                                $statusChipClass = 'kpi-chip-dark';
-                                $statusIcon = 'fa-solid fa-door-closed';          // oppure fa-check-circle
-                            }
-                        @endphp
+                        }
+                    @endphp
 
                         <div class="kpi-value">
                             {{ $panelData->durata ?? 'N/A' }}
@@ -277,6 +350,13 @@
                 </div>
 
                 <div class="kpi-meta mt-3">
+                        <div class="kpi-row">
+                        <span class="kpi-key">Primis</span>
+                        <span class="primis-status-badge {{ $primisStatusClass }}">
+                            <i class="{{ $primisStatusIcon }} me-1"></i>
+                            {{ $primisStatusLabel }}
+                        </span>
+                    </div>
                     <div class="kpi-row">
                         <span class="kpi-key">Panel</span>
                         <span class="kpi-val">
@@ -345,6 +425,19 @@
                         <!-- Tab Home - Totale -->
                     <div class="tab-pane fade show active" id="tab1">
 
+                        @php
+                        $totContatti = max(1, (int) ($counts['contatti'] ?? 0));
+
+                        $totPerc = [
+                            'complete' => round(((int) ($counts['complete'] ?? 0) / $totContatti) * 100, 1),
+                            'non_target' => round(((int) ($counts['non_target'] ?? 0) / $totContatti) * 100, 1),
+                            'over_quota' => round(((int) ($counts['over_quota'] ?? 0) / $totContatti) * 100, 1),
+                            'sospese' => round(((int) ($counts['sospese'] ?? 0) / $totContatti) * 100, 1),
+                            'bloccate' => round(((int) ($counts['bloccate'] ?? 0) / $totContatti) * 100, 1),
+                            'contatti' => 100.0,
+                        ];
+                    @endphp
+
                         <div class="fc-kpi-card">
                             <div class="fc-kpi-head">
                                 <div>
@@ -369,35 +462,118 @@
                             </div>
 
                             <div class="fc-kpi-grid mt-3">
-                                <div class="fc-kpi-item fc-ok">
+
+                            <div class="fc-kpi-item fc-ok">
+                                <div class="fc-kpi-top">
+                                    <div class="fc-kpi-icon">
+                                        <i class="fas fa-circle-check"></i>
+                                    </div>
                                     <div class="fc-kpi-label">Complete</div>
-                                    <div class="fc-kpi-value">{{ $counts['complete'] }}</div>
                                 </div>
 
-                                <div class="fc-kpi-item fc-warn">
+                                <div class="fc-kpi-value">{{ $counts['complete'] }}</div>
+
+                                <div class="fc-kpi-meta-row">
+                                    <div class="fc-kpi-pill"
+                                        data-bs-toggle="tooltip"
+                                        title="Percentuale di Complete sui contatti">
+                                        {{ rtrim(rtrim(number_format($totPerc['complete'], 1), '0'), '.') }}%
+                                    </div>
+                                    <div class="fc-kpi-meta-text"></div>
+                                </div>
+                            </div>
+
+                            <div class="fc-kpi-item fc-warn">
+                                <div class="fc-kpi-top">
+                                    <div class="fc-kpi-icon">
+                                        <i class="fas fa-bullseye"></i>
+                                    </div>
                                     <div class="fc-kpi-label">Non in target</div>
-                                    <div class="fc-kpi-value">{{ $counts['non_target'] }}</div>
                                 </div>
 
-                                <div class="fc-kpi-item fc-danger">
+                                <div class="fc-kpi-value">{{ $counts['non_target'] }}</div>
+
+                                <div class="fc-kpi-meta-row">
+                                    <div class="fc-kpi-pill"
+                                        data-bs-toggle="tooltip"
+                                        title="Percentuale di Non in target sui contatti">
+                                        {{ rtrim(rtrim(number_format($totPerc['non_target'], 1), '0'), '.') }}%
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="fc-kpi-item fc-danger">
+                                <div class="fc-kpi-top">
+                                    <div class="fc-kpi-icon">
+                                        <i class="fas fa-arrow-trend-up"></i>
+                                    </div>
                                     <div class="fc-kpi-label">Over quota</div>
-                                    <div class="fc-kpi-value">{{ $counts['over_quota'] }}</div>
                                 </div>
 
-                                <div class="fc-kpi-item fc-info">
+                                <div class="fc-kpi-value">{{ $counts['over_quota'] }}</div>
+
+                                <div class="fc-kpi-meta-row">
+                                    <div class="fc-kpi-pill"
+                                        data-bs-toggle="tooltip"
+                                        title="Percentuale di Over quota sui contatti">
+                                        {{ rtrim(rtrim(number_format($totPerc['over_quota'], 1), '0'), '.') }}%
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="fc-kpi-item fc-info">
+                                <div class="fc-kpi-top">
+                                    <div class="fc-kpi-icon">
+                                        <i class="fas fa-pause"></i>
+                                    </div>
                                     <div class="fc-kpi-label">Sospese</div>
-                                    <div class="fc-kpi-value">{{ $counts['sospese'] }}</div>
                                 </div>
 
-                                <div class="fc-kpi-item fc-dark">
+                                <div class="fc-kpi-value">{{ $counts['sospese'] }}</div>
+
+                                <div class="fc-kpi-meta-row">
+                                    <div class="fc-kpi-pill"
+                                        data-bs-toggle="tooltip"
+                                        title="Percentuale di Sospese sui contatti">
+                                        {{ rtrim(rtrim(number_format($totPerc['sospese'], 1), '0'), '.') }}%
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="fc-kpi-item fc-dark">
+                                <div class="fc-kpi-top">
+                                    <div class="fc-kpi-icon">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
                                     <div class="fc-kpi-label">Bloccate</div>
-                                    <div class="fc-kpi-value">{{ $counts['bloccate'] }}</div>
                                 </div>
 
-                                <div class="fc-kpi-item">
-                                    <div class="fc-kpi-label">Contatti</div>
-                                    <div class="fc-kpi-value">{{ $counts['contatti'] }}</div>
+                                <div class="fc-kpi-value">{{ $counts['bloccate'] }}</div>
+
+                                <div class="fc-kpi-meta-row">
+                                    <div class="fc-kpi-pill"
+                                        data-bs-toggle="tooltip"
+                                        title="Percentuale di Bloccate sui contatti">
+                                        {{ rtrim(rtrim(number_format($totPerc['bloccate'], 1), '0'), '.') }}%
+                                    </div>
+
                                 </div>
+                            </div>
+
+                        <div class="fc-kpi-item fc-base">
+                            <div class="fc-kpi-top">
+                                <div class="fc-kpi-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="fc-kpi-label">Contatti</div>
+                            </div>
+
+                            <div class="fc-kpi-value">{{ $counts['contatti'] }}</div>
+                        </div>
+
                             </div>
 
                             @if(count($panelCounts) == 1 && array_key_exists('Interactive', $panelCounts))
@@ -431,10 +607,21 @@
                         @foreach ($panelCounts as $panelName => $panelData)
                             <div class="tab-pane fade" id="tab{{ $loop->index + 2 }}">
 
-                                @php
-                                    $panelIr = $panelData['redemption'] ?? 0;
-                                    if (!is_numeric($panelIr)) { $panelIr = 0; }
-                                @endphp
+                        @php
+                            $panelIr = $panelData['redemption'] ?? 0;
+                            if (!is_numeric($panelIr)) { $panelIr = 0; }
+
+                            $panelContatti = max(1, (int) ($panelData['contatti'] ?? 0));
+
+                            $panelPerc = [
+                                'complete' => round(((int) ($panelData['complete'] ?? 0) / $panelContatti) * 100, 1),
+                                'non_target' => round(((int) ($panelData['non_target'] ?? 0) / $panelContatti) * 100, 1),
+                                'over_quota' => round(((int) ($panelData['over_quota'] ?? 0) / $panelContatti) * 100, 1),
+                                'sospese' => round(((int) ($panelData['sospese'] ?? 0) / $panelContatti) * 100, 1),
+                                'bloccate' => round(((int) ($panelData['bloccate'] ?? 0) / $panelContatti) * 100, 1),
+                                'contatti' => 100.0,
+                            ];
+                        @endphp
 
                                 <div class="fc-kpi-card">
 
@@ -461,35 +648,117 @@
                                     </div>
 
                                     <div class="fc-kpi-grid mt-3">
-                                        <div class="fc-kpi-item fc-ok">
+
+                                    <div class="fc-kpi-item fc-ok">
+                                        <div class="fc-kpi-top">
+                                            <div class="fc-kpi-icon">
+                                                <i class="fas fa-circle-check"></i>
+                                            </div>
                                             <div class="fc-kpi-label">Complete</div>
-                                            <div class="fc-kpi-value">{{ $panelData['complete'] }}</div>
                                         </div>
 
-                                        <div class="fc-kpi-item fc-warn">
+                                        <div class="fc-kpi-value">{{ $panelData['complete'] }}</div>
+
+                                        <div class="fc-kpi-meta-row">
+                                            <div class="fc-kpi-pill"
+                                                data-bs-toggle="tooltip"
+                                                title="Percentuale di Complete sui contatti del panel">
+                                                {{ rtrim(rtrim(number_format($panelPerc['complete'], 1), '0'), '.') }}%
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                    <div class="fc-kpi-item fc-warn">
+                                        <div class="fc-kpi-top">
+                                            <div class="fc-kpi-icon">
+                                                <i class="fas fa-bullseye"></i>
+                                            </div>
                                             <div class="fc-kpi-label">Non in target</div>
-                                            <div class="fc-kpi-value">{{ $panelData['non_target'] }}</div>
                                         </div>
 
-                                        <div class="fc-kpi-item fc-danger">
-                                            <div class="fc-kpi-label">Over quota</div>
-                                            <div class="fc-kpi-value">{{ $panelData['over_quota'] }}</div>
+                                        <div class="fc-kpi-value">{{ $panelData['non_target'] }}</div>
+
+                                        <div class="fc-kpi-meta-row">
+                                            <div class="fc-kpi-pill"
+                                                data-bs-toggle="tooltip"
+                                                title="Percentuale di Non in target sui contatti del panel">
+                                                {{ rtrim(rtrim(number_format($panelPerc['non_target'], 1), '0'), '.') }}%
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                <div class="fc-kpi-item fc-danger">
+                                    <div class="fc-kpi-top">
+                                        <div class="fc-kpi-icon">
+                                            <i class="fas fa-arrow-trend-up"></i>
+                                        </div>
+                                        <div class="fc-kpi-label">Over quota</div>
+                                    </div>
+
+                                    <div class="fc-kpi-value">{{ $panelData['over_quota'] }}</div>
+
+                                    <div class="fc-kpi-meta-row">
+                                        <div class="fc-kpi-pill"
+                                            data-bs-toggle="tooltip"
+                                            title="Percentuale di Over quota sui contatti del panel">
+                                            {{ rtrim(rtrim(number_format($panelPerc['over_quota'], 1), '0'), '.') }}%
                                         </div>
 
-                                        <div class="fc-kpi-item fc-info">
-                                            <div class="fc-kpi-label">Sospese</div>
-                                            <div class="fc-kpi-value">{{ $panelData['sospese'] }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="fc-kpi-item fc-info">
+                                    <div class="fc-kpi-top">
+                                        <div class="fc-kpi-icon">
+                                            <i class="fas fa-pause"></i>
+                                        </div>
+                                        <div class="fc-kpi-label">Sospese</div>
+                                    </div>
+
+                                    <div class="fc-kpi-value">{{ $panelData['sospese'] }}</div>
+
+                                    <div class="fc-kpi-meta-row">
+                                        <div class="fc-kpi-pill"
+                                            data-bs-toggle="tooltip"
+                                            title="Percentuale di Sospese sui contatti del panel">
+                                            {{ rtrim(rtrim(number_format($panelPerc['sospese'], 1), '0'), '.') }}%
                                         </div>
 
-                                        <div class="fc-kpi-item fc-dark">
-                                            <div class="fc-kpi-label">Bloccate</div>
-                                            <div class="fc-kpi-value">{{ $panelData['bloccate'] }}</div>
-                                        </div>
+                                    </div>
+                                </div>
 
-                                        <div class="fc-kpi-item">
-                                            <div class="fc-kpi-label">Contatti</div>
-                                            <div class="fc-kpi-value">{{ $panelData['contatti'] }}</div>
+                            <div class="fc-kpi-item fc-dark">
+                                <div class="fc-kpi-top">
+                                    <div class="fc-kpi-icon">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                    <div class="fc-kpi-label">Bloccate</div>
+                                </div>
+
+                                <div class="fc-kpi-value">{{ $panelData['bloccate'] }}</div>
+
+                                <div class="fc-kpi-meta-row">
+                                    <div class="fc-kpi-pill"
+                                        data-bs-toggle="tooltip"
+                                        title="Percentuale di Bloccate sui contatti del panel">
+                                        {{ rtrim(rtrim(number_format($panelPerc['bloccate'], 1), '0'), '.') }}%
+                                    </div>
+
+                                </div>
+                            </div>
+
+                                        <div class="fc-kpi-item fc-base">
+                                    <div class="fc-kpi-top">
+                                        <div class="fc-kpi-icon">
+                                            <i class="fas fa-users"></i>
                                         </div>
+                                        <div class="fc-kpi-label">Contatti</div>
+                                    </div>
+
+                                    <div class="fc-kpi-value">{{ $panelData['contatti'] }}</div>
+                                </div>
                                     </div>
 
                                     {{-- Extra SOLO per Interactive (come prima), quando ci sono più panel --}}
@@ -614,70 +883,129 @@
 
 
         <!-- Sezione Quote -->
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div style="background-color: #9ECE6C" class="card-header text-white d-flex align-items-center">
-                    <i class="fas fa-chart-line me-2"></i> <h6 style="color:#212529" class="mb-0"><b>Controllo Quote</b></h6>
-                </div>
-                <div class="card-body p-2">
-                    <div class="table-responsive quota-table-container" style="max-height: 350px; overflow-y: auto;">
-                        <table class="table table-sm table-bordered table-hover text-center">
-                            <thead style="color:aliceblue!important" class="sticky-header">
-                                <tr>
-                                    <th class="small">Quota</th>
-                                    <th class="small">Totale</th>
-                                    <th class="small">Entrate</th>
-                                    <th class="small">Missing</th>
+<!-- Sezione Quote -->
+<div class="col-md-6">
+    <div class="card shadow-sm quota-card-modern">
+        <div class="card-header quota-card-header d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-chart-line me-2"></i>
+                <h6 class="mb-0"><b>Controllo Quote</b></h6>
+            </div>
+            <span class="quota-header-badge">Live</span>
+        </div>
 
-                                </tr>
-                            </thead>
-                            <tbody>
-                            @if($quotaData->isEmpty())
-                                <tr>
-                                    <td colspan="4" class="p-0">
-                                        <div class="fc-empty-inline">
-                                            <div class="fc-empty-icon sm">
-                                                <i class="fas fa-layer-group"></i>
-                                            </div>
-                                            <div>
-                                                <div class="fc-empty-title sm">Quote non impostate</div>
-                                                <div class="fc-empty-subtitle sm">
-                                                    Imposta le quote per visualizzare il controllo avanzamento.
-                                                </div>
-                                            </div>
+        <div class="card-body p-2">
+            <div class="table-responsive quota-table-container" style="max-height: 350px; overflow-y: auto;">
+                <table class="table table-sm quota-table-modern align-middle mb-0">
+                    <thead class="sticky-header quota-table-head">
+                        <tr>
+                            <th>Quota</th>
+                            <th class="text-center">Totale</th>
+                            <th class="text-center">Entrate / Impatto</th>
+                            <th class="text-center">Missing</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if($quotaData->isEmpty())
+                        <tr>
+                            <td colspan="4" class="p-0">
+                                <div class="fc-empty-inline">
+                                    <div class="fc-empty-icon sm">
+                                        <i class="fas fa-layer-group"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fc-empty-title sm">Quote non impostate</div>
+                                        <div class="fc-empty-subtitle sm">
+                                            Imposta le quote per visualizzare il controllo avanzamento.
                                         </div>
-                                    </td>
-                                </tr>
-                            @else
-                                @foreach ($quotaData as $quota)
-                                    <tr class="align-middle">
-                                        <td class="small">{{ $quota->quota }}</td>
-                                        <td class="small fw-bold">{{ $quota->totale }}</td>
-                                        <td class="small">
-                                            <span style="font-size: 12px" class="badge bg-success">
-                                                <i class="fas fa-check-circle"></i> {{ $quota->entrate }}
-                                            </span>
-                                        </td>
-                                        <td class="small">
-                                            @if ($quota->missing > 0)
-                                                <span style="font-size: 12px" class="badge bg-danger">
-                                                    <i class="fas fa-exclamation-circle"></i> {{ $quota->missing }}
-                                                </span>
-                                            @else
-                                                <span style="font-size: 12px" class="badge bg-success">
-                                                    <i class="fas fa-check"></i> 0
-                                                </span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            @endif
-                            </tbody>
-                        </table>
-                    </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    @else
+    @php
+        $totaleIntervisteGenerale = 0;
+
+        foreach ($quotaData as $quotaRow) {
+            if ($quotaRow->quota === 'Interviste Totali') {
+                $totaleIntervisteGenerale = (int) $quotaRow->entrate;
+                break;
+            }
+        }
+    @endphp
+
+    @foreach ($quotaData as $quota)
+        @php
+            $totale = (int) $quota->totale;
+            $entrate = (int) $quota->entrate;
+            $missing = (int) $quota->missing;
+            $quotaLabel = (string) $quota->quota;
+
+            $isTotalRow = $quotaLabel === 'Interviste Totali';
+
+            $denominator = $totaleIntervisteGenerale;
+            $impactPercent = 0;
+
+            if ($entrate > 0 && $denominator > 0) {
+                $impactPercent = round(($entrate / $denominator) * 100, 1);
+            }
+
+            $ratioText = '';
+            if ($entrate > 0 && $denominator > 0) {
+                $ratioText = "({$entrate}/{$denominator})";
+            }
+        @endphp
+
+        <tr class="quota-row {{ $isTotalRow ? 'quota-row-total' : '' }}">
+            <td>
+                <div class="quota-name-wrap">
+                    <div class="quota-name">{{ $quotaLabel }}</div>
                 </div>
+            </td>
+
+            <td class="text-center">
+                <span class="quota-total-pill">
+                    {{ $totale }}
+                </span>
+            </td>
+
+            <td class="text-center">
+                <div class="quota-entrate-inline-row">
+                    <span class="quota-entrate-pill {{ $entrate <= 0 ? 'is-zero' : '' }}">
+                        @if($entrate > 0)
+                            <i class="fas fa-check-circle me-1"></i>
+                        @else
+                            <i class="fas fa-minus-circle me-1"></i>
+                        @endif
+                        {{ $entrate }}
+                    </span>
+
+                    <span class="quota-entrate-percent-pill {{ $entrate > 0 ? 'is-positive' : 'is-zero' }}">
+                        {{ $impactPercent > 0 ? number_format($impactPercent, 1) : '0' }}%
+                    </span>
+                </div>
+            </td>
+
+            <td class="text-center">
+                @if ($missing > 0)
+                    <span class="quota-missing-pill is-danger">
+                        <i class="fas fa-exclamation-circle me-1"></i>{{ $missing }}
+                    </span>
+                @else
+                    <span class="quota-missing-pill is-ok">
+                        <i class="fas fa-check me-1"></i>0
+                    </span>
+                @endif
+            </td>
+        </tr>
+    @endforeach
+@endif
+                    </tbody>
+                </table>
             </div>
         </div>
+    </div>
+</div>
 
         <!-- Fine Sezione Quote -->
 
@@ -971,5 +1299,7 @@
     };
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <script src="{{ asset('js/fieldControl.js') }}"></script>
 @endsection

@@ -81,12 +81,23 @@ class FieldControlController extends Controller
         $logData = $sreService->buildLogDataFromInterviews($interviews, $questionMap);
         $dataSummaryByPanel = $sreService->buildDataSummaryByDateFromInterviews($interviews);
 
-$ricercheInCorso = Cache::remember('fieldcontrol_ricerche_in_corso', now()->addMinutes(5), function () {
+$cacheKey = "fieldcontrol_ricerche_in_corso_{$prj}_{$sid}";
+
+$ricercheInCorso = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($prj, $sid) {
     return DB::table('t_panel_control')
         ->where('stato', 0)
+        ->where(function ($query) use ($prj, $sid) {
+            $query->where('sur_id', '!=', $sid)
+                  ->orWhere('prj', '!=', $prj);
+        })
         ->orderBy('description', 'asc')
         ->get(['sur_id', 'description', 'prj']);
 });
+
+$primisSurveyStatus = DB::table('t_surveys')
+    ->where('sid', $sid)
+    ->where('prj_name', $prj)
+    ->value('status');
 
         return view('fieldControl', compact(
             'prj',
@@ -103,7 +114,8 @@ $ricercheInCorso = Cache::remember('fieldcontrol_ricerche_in_corso', now()->addM
             'quotaData',
             'logData',
             'dataSummaryByPanel',
-            'ricercheInCorso'
+            'ricercheInCorso',
+            'primisSurveyStatus'
         ));
     }
 

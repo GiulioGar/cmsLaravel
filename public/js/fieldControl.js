@@ -52,101 +52,211 @@
             .replace(/(^-|-$)/g, '');
     }
 
-    function initCharts() {
-        if (typeof Chart === 'undefined') {
+function initCharts() {
+    if (typeof Chart === 'undefined') {
+        return;
+    }
+
+    if (typeof ChartDataLabels !== 'undefined') {
+        Chart.register(ChartDataLabels);
+    }
+
+    Object.keys(chartsData).forEach(function (panelName) {
+        const panelRows = chartsData[panelName];
+        const labels = [];
+        const values = [];
+        const questionTooltips = [];
+        let totalFiltrate = 0;
+
+        if (!panelRows) {
             return;
         }
 
-        Object.keys(chartsData).forEach(function (panelName) {
-            const panelRows = chartsData[panelName];
-            const labels = [];
-            const values = [];
-            const tooltips = [];
+        Object.entries(panelRows).forEach(function (entry) {
+            const question = entry[0];
+            const count = Number(entry[1] || 0);
 
-            if (!panelRows) {
-                return;
-            }
+            const parts = question.split(' - ');
+            const questionCode = parts[0] || 'N/A';
+            const questionText = parts.slice(1).join(' - ') || 'Testo non disponibile';
 
-            Object.entries(panelRows).forEach(function (entry) {
-                const question = entry[0];
-                const count = entry[1];
-
-                const parts = question.split(' - ');
-                const questionCode = parts[0] || 'N/A';
-                const questionText = parts.slice(1).join(' - ') || 'Testo non disponibile';
-
-                labels.push(questionCode);
-                values.push(count);
-                tooltips.push({
-                    code: questionCode,
-                    text: questionText
-                });
+            labels.push(questionCode);
+            values.push(count);
+            questionTooltips.push({
+                code: questionCode,
+                text: questionText
             });
 
-            const canvasId = 'chart-panel-' + buildPanelSlug(panelName);
-            const canvas = document.getElementById(canvasId);
+            totalFiltrate += count;
+        });
 
-            if (!canvas) {
-                return;
+        const percentages = values.map(function (value) {
+            if (totalFiltrate <= 0) {
+                return 0;
             }
 
-            new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Filtrate',
-                        data: values,
-                        backgroundColor: '#7bd87d',
-                        borderColor: '#2E7D32',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                title: function () {
-                                    return null;
-                                },
-                                label: function (context) {
-                                    const dataIndex = context.dataIndex;
-                                    const questionData = tooltips[dataIndex];
+            return (value / totalFiltrate) * 100;
+        });
 
-                                    if (!questionData) {
-                                        return 'Dati non disponibili';
+        const canvasId = 'chart-panel-' + buildPanelSlug(panelName);
+        const canvas = document.getElementById(canvasId);
+
+        if (!canvas) {
+            return;
+        }
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Filtrate',
+                    data: values,
+                    backgroundColor: '#7bd87d',
+                    borderColor: '#2E7D32',
+                    borderWidth: 1,
+                    percentages: percentages,
+                    questionTooltips: questionTooltips
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 28
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function (items) {
+                                if (!items || !items.length) {
+                                    return '';
+                                }
+
+                                const dataIndex = items[0].dataIndex;
+                                const dataset = items[0].dataset;
+                                const questionData = dataset.questionTooltips
+                                    ? dataset.questionTooltips[dataIndex]
+                                    : null;
+
+                                return questionData ? questionData.code : '';
+                            },
+                            label: function (context) {
+                                const dataIndex = context.dataIndex;
+                                const dataset = context.dataset;
+                                const questionData = dataset.questionTooltips
+                                    ? dataset.questionTooltips[dataIndex]
+                                    : null;
+
+                                const lines = [];
+
+                                function wrapText(text, maxLineLength, maxLines) {
+                                    if (!text) {
+                                        return [];
                                     }
 
-                                    const truncatedText = questionData.text.length > 80
-                                        ? questionData.text.substring(0, 80) + '...'
-                                        : questionData.text;
+                                    const words = String(text).split(/\s+/);
+                                    const wrapped = [];
+                                    let currentLine = '';
 
-                                    return questionData.code + ': ' + truncatedText;
+                                    words.forEach(function (word) {
+                                        const testLine = currentLine ? (currentLine + ' ' + word) : word;
+
+                                        if (testLine.length <= maxLineLength) {
+                                            currentLine = testLine;
+                                            return;
+                                        }
+
+                                        if (currentLine) {
+                                            wrapped.push(currentLine);
+                                        }
+
+                                        currentLine = word;
+                                    });
+
+                                    if (currentLine) {
+                                        wrapped.push(currentLine);
+                                    }
+
+                                    if (wrapped.length > maxLines) {
+                                        const limited = wrapped.slice(0, maxLines);
+                                        limited[maxLines - 1] = limited[maxLines - 1].replace(/\s*\.*$/, '') + '...';
+                                        return limited;
+                                    }
+
+                                    return wrapped;
                                 }
+
+                                if (questionData) {
+                                    const wrappedQuestionText = wrapText(questionData.text, 38, 4);
+                                    lines.push.apply(lines, wrappedQuestionText);
+                                }
+
+                                lines.push('Filtrate: ' + context.raw);
+
+                                const percentage = dataset.percentages
+                                    ? dataset.percentages[dataIndex]
+                                    : 0;
+
+                                lines.push('% sul totale filtrate: ' + percentage.toFixed(1) + '%');
+
+                                return lines;
                             }
                         }
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
-                            }
+                    datalabels: {
+                        display: function (context) {
+                            return context.dataset.data[context.dataIndex] > 0;
                         },
-                        x: {
-                            ticks: {
-                                autoSkip: false,
-                                maxRotation: 45,
-                                minRotation: 0
+                        anchor: 'end',
+                        align: 'end',
+                        offset: -2,
+                        clamp: true,
+                        clip: false,
+                        color: function (context) {
+                            return context.dataIndex % 2 === 0 ? '#111827' : '#15803d';
+                        },
+                        font: {
+                            weight: '700',
+                            size: 9
+                        },
+                    formatter: function (value, context) {
+                        const dataset = context.dataset;
+                        const percentage = dataset.percentages
+                            ? dataset.percentages[context.dataIndex]
+                            : 0;
+
+                        return percentage.toFixed(1) + '% ';
+                    }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 0,
+                            minRotation: 0,
+                            callback: function (value, index) {
+                                return labels[index] || '';
                             }
                         }
                     }
                 }
-            });
+            }
         });
-    }
+    });
+}
 
     function closeSurvey(prjValue, sidValue) {
         if (!confirm('Sei sicuro di voler chiudere questa ricerca?')) {

@@ -7,20 +7,20 @@ use Illuminate\Support\Facades\Log;
 
 class FieldControlSreService
 {
-    public function resolveResultsDirectory(string $prj, string $sid): ?string
-    {
-        $localDirectory = base_path("var/imr/fields/{$prj}/{$sid}/results");
-        if (is_dir($localDirectory)) {
-            return $localDirectory;
-        }
-
-        $serverDirectory = "/var/imr/fields/{$prj}/{$sid}/results";
-        if (is_dir($serverDirectory)) {
-            return $serverDirectory;
-        }
-
-        return null;
+public function resolveResultsDirectory(string $prj, string $sid): ?string
+{
+    $serverDirectory = "/var/imr/fields/{$prj}/{$sid}/results";
+    if (is_dir($serverDirectory)) {
+        return $serverDirectory;
     }
+
+    $localDirectory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+    if (is_dir($localDirectory)) {
+        return $localDirectory;
+    }
+
+    return null;
+}
 
     public function getSreFiles(?string $directory): array
     {
