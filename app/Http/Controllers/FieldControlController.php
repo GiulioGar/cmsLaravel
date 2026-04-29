@@ -12,28 +12,40 @@ use Illuminate\Support\Facades\Cache;
 
 class FieldControlController extends Controller
 {
-    public function index(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
-    {
-        ini_set('memory_limit', '256M');
+public function index(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
+{
+    ini_set('memory_limit', '256M');
 
-        $prj = $request->query('prj');
-        $sid = $request->query('sid');
+    $prj = $request->query('prj');
+    $sid = $request->query('sid');
 
-        $panelData = PanelControl::where('sur_id', $sid)->first();
-        $quotaData = $this->getQuotaData($sid);
+    $panelData = PanelControl::where('sur_id', $sid)->first();
+    $quotaData = $this->getQuotaData($sid);
 
-        $directory = $sreService->resolveResultsDirectory($prj, $sid);
+    $directory = $sreService->resolveResultsDirectory($prj, $sid);
 
-        $panelNames = $this->getPanelNamesMap();
+    // 👇 NON SERVE PIÙ PER LA CLASSIFICAZIONE
+    // $panelNames = $this->getPanelNamesMap();
 
-        $panelValueFromDB = $panelData->panel ?? null;
+    $panelValueFromDB = $panelData->panel ?? null;
 
-        $files = $sreService->getSreFiles($directory);
-        $interviews = $sreService->buildInterviewDataset($files, $panelNames, $panelValueFromDB);
+    $files = $sreService->getSreFiles($directory);
 
-        $summary = $sreService->summarizeInterviews($interviews, count($files));
-        $counts = $summary['counts'];
-        $panelCounts = $summary['panelCounts'];
+    /*
+    |--------------------------------------------------------------------------
+    | NUOVA LOGICA SRE (SUPER IMPORTANTE)
+    |--------------------------------------------------------------------------
+    */
+    $interviews = $sreService->buildInterviewDataset($files, $prj, $sid);
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUMMARY
+    |--------------------------------------------------------------------------
+    */
+    $summary = $sreService->summarizeInterviews($interviews, count($files));
+    $counts = $summary['counts'];
+    $panelCounts = $summary['panelCounts'];
 
     $abilitati = DB::table('t_respint as r')
         ->join('t_user_info as u', 'u.user_id', '=', 'r.uid')
@@ -41,83 +53,105 @@ class FieldControlController extends Controller
         ->where('r.status', '!=', 6)
         ->count();
 
-        $denominator = $counts['contatti'] - $counts['sospese'] - $counts['bloccate'] - $counts['over_quota'];
-        $redemption = ($denominator > 0)
-            ? round(($counts['complete'] / $denominator) * 100, 2)
+    $denominator = $counts['contatti'] - $counts['sospese'] - $counts['bloccate'] - $counts['over_quota'];
+
+    $redemption = ($denominator > 0)
+        ? round(($counts['complete'] / $denominator) * 100, 2)
+        : 0;
+
+    foreach ($panelCounts as $panelName => &$panel) {
+        $panelDenominator = $panel['contatti'] - $panel['sospese'] - $panel['bloccate'] - $panel['over_quota'];
+
+        $panel['redemption'] = ($panelDenominator > 0)
+            ? round(($panel['complete'] / $panelDenominator) * 100, 2)
             : 0;
-
-        foreach ($panelCounts as $panelName => &$panel) {
-            $panelDenominator = $panel['contatti'] - $panel['sospese'] - $panel['bloccate'] - $panel['over_quota'];
-
-            $panel['redemption'] = ($panelDenominator > 0)
-                ? round(($panel['complete'] / $panelDenominator) * 100, 2)
-                : 0;
-        }
-        unset($panel);
-
-        $utentiDisponibili = $this->getUtentiDisponibili($sid, $panelData);
-        $mediaRedPanel = $this->calcolaMediaRedPanel();
-
-        $stimaInterviste = ((int) $panelValueFromDB === 1)
-            ? $this->calcolaStimaInterviste($utentiDisponibili, $redemption, $mediaRedPanel)
-            : null;
-
-        $bytes = $panelData->bytes ?? 0;
-
-        $this->updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes);
-
-        $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
-
-        $filtrateCountsByPanel = $sreService->buildFiltrateCountsFromInterviews($interviews, $questionMap);
-
-        $hasFiltrate = false;
-        foreach ($filtrateCountsByPanel as $panel => $rows) {
-            if (!empty($rows) && array_sum($rows) > 0) {
-                $hasFiltrate = true;
-                break;
-            }
-        }
-
-        $logData = $sreService->buildLogDataFromInterviews($interviews, $questionMap);
-        $dataSummaryByPanel = $sreService->buildDataSummaryByDateFromInterviews($interviews);
-
-$cacheKey = "fieldcontrol_ricerche_in_corso_{$prj}_{$sid}";
-
-$ricercheInCorso = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($prj, $sid) {
-    return DB::table('t_panel_control')
-        ->where('stato', 0)
-        ->where(function ($query) use ($prj, $sid) {
-            $query->where('sur_id', '!=', $sid)
-                  ->orWhere('prj', '!=', $prj);
-        })
-        ->orderBy('description', 'asc')
-        ->get(['sur_id', 'description', 'prj']);
-});
-
-$primisSurveyStatus = DB::table('t_surveys')
-    ->where('sid', $sid)
-    ->where('prj_name', $prj)
-    ->value('status');
-
-        return view('fieldControl', compact(
-            'prj',
-            'sid',
-            'panelData',
-            'counts',
-            'abilitati',
-            'redemption',
-            'panelCounts',
-            'utentiDisponibili',
-            'stimaInterviste',
-            'filtrateCountsByPanel',
-            'hasFiltrate',
-            'quotaData',
-            'logData',
-            'dataSummaryByPanel',
-            'ricercheInCorso',
-            'primisSurveyStatus'
-        ));
     }
+    unset($panel);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | UTENTI / STIME
+    |--------------------------------------------------------------------------
+    */
+    $utentiDisponibili = $this->getUtentiDisponibili($sid, $panelData);
+    $mediaRedPanel = $this->calcolaMediaRedPanel();
+
+    $stimaInterviste = ((int) $panelValueFromDB === 1)
+        ? $this->calcolaStimaInterviste($utentiDisponibili, $redemption, $mediaRedPanel)
+        : null;
+
+    $bytes = $panelData->bytes ?? 0;
+
+    $this->updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes);
+
+    /*
+    |--------------------------------------------------------------------------
+    | QUESTION MAP + FILTRATE
+    |--------------------------------------------------------------------------
+    */
+    $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
+
+    $filtrateCountsByPanel = $sreService->buildFiltrateCountsFromInterviews($interviews, $questionMap);
+
+    $hasFiltrate = false;
+    foreach ($filtrateCountsByPanel as $panel => $rows) {
+        if (!empty($rows) && array_sum($rows) > 0) {
+            $hasFiltrate = true;
+            break;
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LOG & TIME SERIES
+    |--------------------------------------------------------------------------
+    */
+    $logData = $sreService->buildLogDataFromInterviews($interviews, $questionMap);
+    $dataSummaryByPanel = $sreService->buildDataSummaryByDateFromInterviews($interviews);
+
+    /*
+    |--------------------------------------------------------------------------
+    | CACHE RICERCHE IN CORSO
+    |--------------------------------------------------------------------------
+    */
+    $cacheKey = "fieldcontrol_ricerche_in_corso_{$prj}_{$sid}";
+
+    $ricercheInCorso = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($prj, $sid) {
+        return DB::table('t_panel_control')
+            ->where('stato', 0)
+            ->where(function ($query) use ($prj, $sid) {
+                $query->where('sur_id', '!=', $sid)
+                      ->orWhere('prj', '!=', $prj);
+            })
+            ->orderBy('description', 'asc')
+            ->get(['sur_id', 'description', 'prj']);
+    });
+
+    $primisSurveyStatus = DB::table('t_surveys')
+        ->where('sid', $sid)
+        ->where('prj_name', $prj)
+        ->value('status');
+
+    return view('fieldControl', compact(
+        'prj',
+        'sid',
+        'panelData',
+        'counts',
+        'abilitati',
+        'redemption',
+        'panelCounts',
+        'utentiDisponibili',
+        'stimaInterviste',
+        'filtrateCountsByPanel',
+        'hasFiltrate',
+        'quotaData',
+        'logData',
+        'dataSummaryByPanel',
+        'ricercheInCorso',
+        'primisSurveyStatus'
+    ));
+}
 
 public function downloadCSV(Request $request, FieldControlSreService $sreService)
 {
@@ -141,15 +175,27 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
         return redirect()->back()->with('error', 'Nessun file .sre trovato.');
     }
 
-    $panelNames = $this->getPanelNamesMap();
+    /*
+    |--------------------------------------------------------------------------
+    | DATASET UNICO (NUOVA LOGICA)
+    |--------------------------------------------------------------------------
+    */
+    $interviews = $sreService->buildInterviewDataset($files, $prj, $sid);
+
     $panelExportConfig = $this->getPanelExportConfig($panelName);
 
     $safePanelName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $panelName);
     $fileName = "download_{$safePanelName}_{$prj}_{$sid}.csv";
 
-    $response = new StreamedResponse(function () use ($files, $prj, $sid, $panelName, $panelNames, $panelExportConfig, $sreService) {
+    $response = new StreamedResponse(function () use ($interviews, $panelName, $panelExportConfig, $prj, $sid, $sreService) {
+
         $handle = fopen('php://output', 'w');
 
+        /*
+        |--------------------------------------------------------------------------
+        | HEADER DINAMICO
+        |--------------------------------------------------------------------------
+        */
         $extraFields = [];
 
         if ($panelExportConfig) {
@@ -165,31 +211,33 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
         $csvHeaders = array_merge(['uid'], $extraFields, ['statusCode', 'Status', 'link']);
         fputcsv($handle, $csvHeaders, ';');
 
-        foreach ($files as $file) {
-            $parsed = $sreService->parseSreFile($file);
+        /*
+        |--------------------------------------------------------------------------
+        | LOOP SU DATASET (NON FILE!)
+        |--------------------------------------------------------------------------
+        */
+        foreach ($interviews as $interview) {
 
-            if (empty($parsed)) {
+            if ($interview['panel'] !== $panelName) {
                 continue;
             }
 
-            $panelUsed = $sreService->resolvePanelFromRawData($parsed['raw'], $panelNames, 1) ?? 'Interactive';
-
-            if ($panelUsed !== $panelName) {
-                continue;
-            }
+            $raw = $interview['raw'];
 
             $statusMap = $sreService->getDownloadStatusMap();
-            $statusLabel = $statusMap[$parsed['status_code']] ?? 'unknown';
+            $statusLabel = $statusMap[$interview['status_code']] ?? 'unknown';
 
-            $uid = $sreService->extractTaggedFieldValue($parsed['raw'], 'sysUID');
-            if ($uid === 'N/A') {
-                $uid = $parsed['uid'] ?? 'N/A';
-            }
+            $uid = $interview['uid'] ?? 'N/A';
 
+            /*
+            |--------------------------------------------------------------------------
+            | EXTRA FIELDS
+            |--------------------------------------------------------------------------
+            */
             $extraValues = [];
 
             foreach ($extraFields as $fieldName) {
-                $fieldValue = $sreService->extractTaggedFieldValue($parsed['raw'], $fieldName);
+                $fieldValue = $sreService->extractTaggedFieldValue($raw, $fieldName);
 
                 if ($fieldValue === 'N/A') {
                     $fieldValue = 'N.D.';
@@ -198,20 +246,31 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
                 $extraValues[] = $fieldValue;
             }
 
-            $panelCode = array_search($panelName, $panelNames, true);
+            /*
+            |--------------------------------------------------------------------------
+            | LINK
+            |--------------------------------------------------------------------------
+            */
+            if ($panelName === 'Interactive') {
+                $link = "https://www.primisoft.com/primis/run.do?sid={$sid}&prj={$prj}&uid={$uid}";
+            } else {
+                // recuperiamo panel_code da config
+                $panelCode = $panelExportConfig->panel_code ?? null;
 
-            if ($panelName !== 'Interactive' && $panelCode === false) {
-                continue;
+                $link = $panelCode
+                    ? "https://www.primisoft.com/primis/run.do?sid={$sid}&prj={$prj}&uid={$uid}&pan={$panelCode}"
+                    : "https://www.primisoft.com/primis/run.do?sid={$sid}&prj={$prj}&uid={$uid}";
             }
 
-            $link = ($panelName === 'Interactive')
-                ? "https://www.primisoft.com/primis/run.do?sid={$sid}&prj={$prj}&uid={$uid}"
-                : "https://www.primisoft.com/primis/run.do?sid={$sid}&prj={$prj}&uid={$uid}&pan={$panelCode}";
-
+            /*
+            |--------------------------------------------------------------------------
+            | ROW
+            |--------------------------------------------------------------------------
+            */
             $row = array_merge(
                 [$uid],
                 $extraValues,
-                [$parsed['status_code'], $statusLabel, $link]
+                [$interview['status_code'], $statusLabel, $link]
             );
 
             fputcsv($handle, $row, ';');
@@ -308,7 +367,20 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
         $panelInteractiveComplete = $panelCounts['Interactive']['complete'] ?? 0;
         $panelExternalComplete = array_sum(array_column(array_diff_key($panelCounts, ['Interactive' => '']), 'complete'));
 
-        $redPanel = ($abilitati > 0) ? round($counts['contatti'] / $abilitati, 2) : 0;
+        $panelContatti = 0;
+
+            foreach ($panelCounts as $panelName => $panel) {
+                if ($panelName !== 'Da lista') {
+                    $panelContatti += $panel['contatti'];
+                }
+            }
+
+$panelInteractiveContatti = $panelCounts['Interactive']['contatti'] ?? 0;
+
+$redPanel = ($abilitati > 0)
+    ? round($panelInteractiveContatti / $abilitati, 2)
+    : 0;
+
         $costo = ($bytes / 1000) * $panelInteractiveComplete;
 
         DB::table('t_panel_control')->where('sur_id', $sid)->update([

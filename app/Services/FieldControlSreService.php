@@ -3,24 +3,32 @@
 namespace App\Services;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class FieldControlSreService
 {
-public function resolveResultsDirectory(string $prj, string $sid): ?string
-{
-    $serverDirectory = "/var/imr/fields/{$prj}/{$sid}/results";
-    if (is_dir($serverDirectory)) {
-        return $serverDirectory;
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | DIRECTORY + FILES
+    |--------------------------------------------------------------------------
+    */
 
-    $localDirectory = base_path("var/imr/fields/{$prj}/{$sid}/results");
-    if (is_dir($localDirectory)) {
-        return $localDirectory;
-    }
+    public function resolveResultsDirectory(string $prj, string $sid): ?string
+    {
+        $serverDirectory = "/var/imr/fields/{$prj}/{$sid}/results";
+        if (is_dir($serverDirectory)) {
+            return $serverDirectory;
+        }
 
-    return null;
-}
+        $localDirectory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+        if (is_dir($localDirectory)) {
+            return $localDirectory;
+        }
+
+        return null;
+    }
 
     public function getSreFiles(?string $directory): array
     {
@@ -32,6 +40,12 @@ public function resolveResultsDirectory(string $prj, string $sid): ?string
 
         return is_array($files) ? $files : [];
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PARSING
+    |--------------------------------------------------------------------------
+    */
 
     public function parseSreFile(string $file): array
     {
@@ -48,7 +62,6 @@ public function resolveResultsDirectory(string $prj, string $sid): ?string
             'file' => $file,
             'file_number' => $this->extractSreFileNumber($file),
             'raw' => $data,
-            'columns' => $columns,
             'iid' => $this->getSreValue($data, $columns['iid']),
             'uid' => $this->getSreValue($data, $columns['uid']),
             'start_date' => $this->getSreValue($data, $columns['start_date']),
@@ -59,10 +72,22 @@ public function resolveResultsDirectory(string $prj, string $sid): ?string
         ];
     }
 
-    public function buildInterviewDataset(array $files, array $panelNames, $panelValueFromDB): array
-    {
-        $interviews = [];
+    /*
+    |--------------------------------------------------------------------------
+    | CORE: BUILD DATASET (NUOVA LOGICA PANEL)
+    |--------------------------------------------------------------------------
+    */
 
+    public function buildInterviewDataset(array $files, string $prj, string $sid): array
+    {
+        $parsedList = [];
+        $uidsToCheck = [];
+
+        /*
+        |--------------------------------------------------------------------------
+        | 1° LOOP → PARSING + RACCOLTA UID
+        |--------------------------------------------------------------------------
+        */
         foreach ($files as $file) {
             $parsed = $this->parseSreFile($file);
 
@@ -70,14 +95,97 @@ public function resolveResultsDirectory(string $prj, string $sid): ?string
                 continue;
             }
 
-            $parsed['panel_used'] = $this->resolvePanelFromRawData($parsed['raw'], $panelNames, $panelValueFromDB);
-            $parsed['panel_for_reports'] = $this->resolvePanelFromRawData($parsed['raw'], $panelNames, 1) ?? 'Interactive';
+            $pan = $this->extractPanFromRaw($parsed['raw']);
+
+            if ($pan === null) {
+                $uid = $this->extractUidSafe($parsed);
+                if ($uid !== null) {
+                    $uidsToCheck[$uid] = true;
+                }
+            }
+
+            $parsed['pan'] = $pan;
+            $parsedList[] = $parsed;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | CACHE UID INTERACTIVE
+        |--------------------------------------------------------------------------
+        */
+        $cacheKey = "fieldcontrol_valid_interactive_uids_{$prj}_{$sid}";
+
+        $validInteractiveUids = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($uidsToCheck) {
+
+            if (empty($uidsToCheck)) {
+                return [];
+            }
+
+            $valid = [];
+            $uids = array_keys($uidsToCheck);
+
+            foreach (array_chunk($uids, 1000) as $chunk) {
+                $found = DB::table('t_user_info')
+                    ->whereIn('user_id', $chunk)
+                    ->pluck('user_id')
+                    ->toArray();
+
+                foreach ($found as $uid) {
+                    $valid[(string)$uid] = true;
+                }
+            }
+
+            return $valid;
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | PANEL MAP (DB)
+        |--------------------------------------------------------------------------
+        */
+        $panelNames = DB::table('t_fornitoripanel')
+            ->pluck('name', 'panel_code')
+            ->map(fn($v) => trim((string)$v))
+            ->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | 2° LOOP → CLASSIFICAZIONE
+        |--------------------------------------------------------------------------
+        */
+        $interviews = [];
+
+        foreach ($parsedList as $parsed) {
+
+            $panel = null;
+
+            // 1. pan presente
+            if ($parsed['pan'] !== null) {
+                $panel = $panelNames[$parsed['pan']] ?? 'Altro Panel';
+            } else {
+                // 2. fallback UID
+                $uid = $this->extractUidSafe($parsed);
+
+                if ($uid !== null && isset($validInteractiveUids[$uid])) {
+                    $panel = 'Interactive';
+                } else {
+                    $panel = 'Da lista';
+                }
+            }
+
+            $parsed['panel'] = $panel;
 
             $interviews[] = $parsed;
         }
 
         return $interviews;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUMMARY
+    |--------------------------------------------------------------------------
+    */
 
     public function summarizeInterviews(array $interviews, int $totalFiles): array
     {
@@ -93,206 +201,219 @@ public function resolveResultsDirectory(string $prj, string $sid): ?string
         $panelCounts = [];
 
         foreach ($interviews as $interview) {
-            $panelUsed = $interview['panel_used'];
 
-            if (!$panelUsed) {
-                continue;
-            }
+            $panel = $interview['panel'];
 
-            if (!isset($panelCounts[$panelUsed])) {
-                $panelCounts[$panelUsed] = [
+            if (!isset($panelCounts[$panel])) {
+                $panelCounts[$panel] = [
                     'complete' => 0,
                     'non_target' => 0,
                     'over_quota' => 0,
                     'sospese' => 0,
                     'bloccate' => 0,
                     'contatti' => 0,
-                    'redemption' => 0.0,
+                    'redemption' => 0,
                 ];
             }
 
-            $panelCounts[$panelUsed]['contatti']++;
+            $panelCounts[$panel]['contatti']++;
 
-            switch ((int) $interview['status_code']) {
+            switch ((int)$interview['status_code']) {
                 case 3:
                     $counts['complete']++;
-                    $panelCounts[$panelUsed]['complete']++;
+                    $panelCounts[$panel]['complete']++;
                     break;
                 case 4:
                     $counts['non_target']++;
-                    $panelCounts[$panelUsed]['non_target']++;
+                    $panelCounts[$panel]['non_target']++;
                     break;
                 case 5:
                     $counts['over_quota']++;
-                    $panelCounts[$panelUsed]['over_quota']++;
+                    $panelCounts[$panel]['over_quota']++;
                     break;
                 case 0:
                     $counts['sospese']++;
-                    $panelCounts[$panelUsed]['sospese']++;
+                    $panelCounts[$panel]['sospese']++;
                     break;
                 case 7:
                     $counts['bloccate']++;
-                    $panelCounts[$panelUsed]['bloccate']++;
+                    $panelCounts[$panel]['bloccate']++;
                     break;
             }
         }
 
-        return [
-            'counts' => $counts,
-            'panelCounts' => $panelCounts,
+        return compact('counts', 'panelCounts');
+    }
+
+    public function buildLogDataFromInterviews(array $interviews, array $questionMap): array
+{
+    usort($interviews, function ($a, $b) {
+        return $b['file_number'] <=> $a['file_number'];
+    });
+
+    $statusMap = $this->getInterviewStatusMap();
+    $logData = [];
+
+    foreach ($interviews as $interview) {
+        $questionId = (int) $interview['last_question_code'];
+
+        $questionDetails = $questionMap[$questionId] ?? [
+            'code' => 'N/A',
+            'text' => 'Domanda non trovata',
+        ];
+
+        $questionCode = e($questionDetails['code']);
+        $questionText = e($questionDetails['text']);
+
+        $logData[] = [
+            'iid' => $interview['iid'],
+            'uid' => $interview['uid'],
+            'ultimo_update' => $interview['end_date'],
+            'ultima_azione' => "<span data-bs-toggle='tooltip' title='{$questionText}'>{$questionCode}</span>",
+            'stato' => $statusMap[$interview['status_code']] ?? 'Sconosciuto',
+            'durata' => $this->formatDuration((int) $interview['duration']),
         ];
     }
+
+    return $logData;
+}
+
+public function buildDataSummaryByDateFromInterviews(array $interviews): array
+{
+    $dataSummaryByPanel = [];
+
+    foreach ($interviews as $interview) {
+        $interviewDate = $interview['start_date'];
+
+        if ($interviewDate === 'N/A' || empty($interviewDate)) {
+            continue;
+        }
+
+        $carbon = $this->parseDateToCarbon($interviewDate);
+
+        if (!$carbon) {
+            continue;
+        }
+
+        $panel = $interview['panel'];
+
+        $dayKey = $carbon->format('Y-m-d');
+        $displayDate = $carbon->locale('it')->isoFormat('dddd D MMMM YYYY');
+
+        if (!isset($dataSummaryByPanel[$panel])) {
+            $dataSummaryByPanel[$panel] = [];
+        }
+
+        if (!isset($dataSummaryByPanel[$panel][$dayKey])) {
+            $dataSummaryByPanel[$panel][$dayKey] = [
+                'display_date' => $displayDate,
+                'contatti' => 0,
+                'complete' => 0,
+                'non_target' => 0,
+                'quotafull' => 0,
+                'bloccate' => 0,
+                'total_duration' => 0,
+            ];
+        }
+
+        $dataSummaryByPanel[$panel][$dayKey]['contatti']++;
+
+        switch ((int) $interview['status_code']) {
+            case 3:
+                $dataSummaryByPanel[$panel][$dayKey]['complete']++;
+                $dataSummaryByPanel[$panel][$dayKey]['total_duration'] += (int) $interview['duration'];
+                break;
+            case 4:
+                $dataSummaryByPanel[$panel][$dayKey]['non_target']++;
+                break;
+            case 5:
+                $dataSummaryByPanel[$panel][$dayKey]['quotafull']++;
+                break;
+            case 7:
+                $dataSummaryByPanel[$panel][$dayKey]['bloccate']++;
+                break;
+        }
+    }
+
+    foreach ($dataSummaryByPanel as &$summary) {
+        krsort($summary);
+    }
+
+    return $dataSummaryByPanel;
+}
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FILTRATE (USA panel)
+    |--------------------------------------------------------------------------
+    */
 
     public function buildFiltrateCountsFromInterviews(array $interviews, array $questionMap): array
     {
         $panelFiltrateCounts = [];
 
         foreach ($interviews as $interview) {
-            if ((int) $interview['status_code'] !== 4) {
+
+            if ((int)$interview['status_code'] !== 4) {
                 continue;
             }
 
-            $panelUsed = $interview['panel_for_reports'];
-            $questionId = (int) $interview['last_question_code'];
+            $panel = $interview['panel'];
+            $questionId = (int)$interview['last_question_code'];
 
-            if (!isset($panelFiltrateCounts[$panelUsed])) {
-                $panelFiltrateCounts[$panelUsed] = [];
+            if (!isset($panelFiltrateCounts[$panel])) {
+                $panelFiltrateCounts[$panel] = [];
             }
 
-            $questionDetails = $questionMap[$questionId] ?? [
+            $question = $questionMap[$questionId] ?? [
                 'code' => 'N/A',
                 'text' => 'Domanda non trovata',
             ];
 
-            $questionLabel = $questionDetails['code'] . ' - ' . $questionDetails['text'];
+            $label = $question['code'] . ' - ' . $question['text'];
 
-            if (!isset($panelFiltrateCounts[$panelUsed][$questionLabel])) {
-                $panelFiltrateCounts[$panelUsed][$questionLabel] = 1;
-            } else {
-                $panelFiltrateCounts[$panelUsed][$questionLabel]++;
-            }
+            $panelFiltrateCounts[$panel][$label] =
+                ($panelFiltrateCounts[$panel][$label] ?? 0) + 1;
         }
 
-        foreach ($panelFiltrateCounts as &$filtrateCounts) {
-            arsort($filtrateCounts);
+        foreach ($panelFiltrateCounts as &$rows) {
+            arsort($rows);
         }
-        unset($filtrateCounts);
 
         return $panelFiltrateCounts;
     }
 
-    public function buildLogDataFromInterviews(array $interviews, array $questionMap): array
+    /*
+    |--------------------------------------------------------------------------
+    | UTILS
+    |--------------------------------------------------------------------------
+    */
+
+    private function extractPanFromRaw(array $data): ?int
     {
-        usort($interviews, function ($a, $b) {
-            return $b['file_number'] <=> $a['file_number'];
-        });
-
-        $statusMap = $this->getInterviewStatusMap();
-        $logData = [];
-
-        foreach ($interviews as $interview) {
-            $questionId = (int) $interview['last_question_code'];
-
-            $questionDetails = $questionMap[$questionId] ?? [
-                'code' => 'N/A',
-                'text' => 'Domanda non trovata',
-            ];
-
-            $questionCode = e($questionDetails['code']);
-            $questionText = e($questionDetails['text']);
-
-            $logData[] = [
-                'iid' => $interview['iid'],
-                'uid' => $interview['uid'],
-                'ultimo_update' => $interview['end_date'],
-                'ultima_azione' => "<span data-bs-toggle='tooltip' title='{$questionText}'>{$questionCode}</span>",
-                'stato' => $statusMap[$interview['status_code']] ?? 'Sconosciuto',
-                'durata' => $this->formatDuration((int) $interview['duration']),
-            ];
+        foreach ($data as $element) {
+            if (strpos($element, 'pan=') !== false) {
+                return (int) str_replace('pan=', '', $element);
+            }
         }
-
-        return $logData;
+        return null;
     }
 
-    public function buildDataSummaryByDateFromInterviews(array $interviews): array
+    private function extractUidSafe(array $parsed): ?string
     {
-        $dataSummaryByPanel = [];
+        $uid = $this->extractTaggedFieldValue($parsed['raw'], 'sysUID');
 
-        foreach ($interviews as $interview) {
-            $interviewDate = $interview['start_date'];
-
-            if ($interviewDate === 'N/A' || empty($interviewDate)) {
-                continue;
-            }
-
-            $carbon = $this->parseDateToCarbon($interviewDate);
-
-            if (!$carbon) {
-                continue;
-            }
-
-            $panelUsed = $interview['panel_for_reports'];
-            $dayKey = $carbon->format('Y-m-d');
-            $displayDate = $carbon->locale('it')->isoFormat('dddd D MMMM YYYY');
-
-            if (!isset($dataSummaryByPanel[$panelUsed])) {
-                $dataSummaryByPanel[$panelUsed] = [];
-            }
-
-            if (!isset($dataSummaryByPanel[$panelUsed][$dayKey])) {
-                $dataSummaryByPanel[$panelUsed][$dayKey] = [
-                    'display_date' => $displayDate,
-                    'contatti' => 0,
-                    'complete' => 0,
-                    'non_target' => 0,
-                    'quotafull' => 0,
-                    'bloccate' => 0,
-                    'total_duration' => 0,
-                ];
-            }
-
-            $dataSummaryByPanel[$panelUsed][$dayKey]['contatti']++;
-
-            switch ((int) $interview['status_code']) {
-                case 3:
-                    $dataSummaryByPanel[$panelUsed][$dayKey]['complete']++;
-                    $dataSummaryByPanel[$panelUsed][$dayKey]['total_duration'] += (int) $interview['duration'];
-                    break;
-                case 4:
-                    $dataSummaryByPanel[$panelUsed][$dayKey]['non_target']++;
-                    break;
-                case 5:
-                    $dataSummaryByPanel[$panelUsed][$dayKey]['quotafull']++;
-                    break;
-                case 7:
-                    $dataSummaryByPanel[$panelUsed][$dayKey]['bloccate']++;
-                    break;
-            }
+        if ($uid === 'N/A') {
+            $uid = $parsed['uid'] ?? null;
         }
 
-        foreach ($dataSummaryByPanel as &$summary) {
-            krsort($summary);
+        if ($uid === null) {
+            return null;
         }
-        unset($summary);
 
-        return $dataSummaryByPanel;
+        return trim((string)$uid);
     }
-
-public function resolvePanelFromRawData(array $data, array $panelNames, $panelValueFromDB = null): ?string
-{
-    foreach ($data as $element) {
-        if (strpos($element, 'pan=') !== false) {
-            $panelValue = (int) str_replace('pan=', '', $element);
-            return $panelNames[$panelValue] ?? null;
-        }
-    }
-
-    if ((int) $panelValueFromDB === 1) {
-        return 'Interactive';
-    }
-
-    return null;
-}
 
     public function extractTaggedFieldValue(array $data, string $fieldKey): string
     {
@@ -301,9 +422,14 @@ public function resolvePanelFromRawData(array $data, array $panelNames, $panelVa
                 return str_replace($fieldKey . '=', '', $data[$i]);
             }
         }
-
         return 'N/A';
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | METODI ORIGINALI (NON TOCCATI)
+    |--------------------------------------------------------------------------
+    */
 
     public function getInterviewStatusMap(): array
     {
@@ -329,21 +455,14 @@ public function resolvePanelFromRawData(array $data, array $panelNames, $panelVa
 
     public function formatDuration(int $seconds): string
     {
-        if ($seconds < 60) {
-            return $seconds . ' sec.';
-        }
-
-        return round($seconds / 60, 1) . ' min.';
+        return $seconds < 60 ? $seconds . ' sec.' : round($seconds / 60, 1) . ' min.';
     }
 
     public function parseDateToCarbon($rawDate): ?Carbon
     {
-        $cleanDate = str_replace([' CET', ' CEST'], '', trim($rawDate));
-
         try {
-            return Carbon::createFromFormat('d/m/Y H:i:s', $cleanDate, 'Europe/Rome');
+            return Carbon::createFromFormat('d/m/Y H:i:s', str_replace([' CET', ' CEST'], '', trim($rawDate)), 'Europe/Rome');
         } catch (\Exception $e) {
-            Log::warning("parseDateToCarbon() - Impossibile parsare la data: [{$rawDate}], errore: {$e->getMessage()}");
             return null;
         }
     }
@@ -351,24 +470,17 @@ public function resolvePanelFromRawData(array $data, array $panelNames, $panelVa
     private function readFirstLineFromSre(string $file): ?string
     {
         $handle = fopen($file, 'r');
-
-        if (!$handle) {
-            return null;
-        }
+        if (!$handle) return null;
 
         $line = fgets($handle);
         fclose($handle);
 
-        return ($line !== false) ? trim($line) : null;
+        return $line ? trim($line) : null;
     }
 
     private function parseSreLine(?string $line): array
     {
-        if ($line === null || $line === '') {
-            return [];
-        }
-
-        return explode(';', $line);
+        return $line ? explode(';', $line) : [];
     }
 
     private function getSreColumnMap(array $data): array
@@ -376,7 +488,6 @@ public function resolvePanelFromRawData(array $data, array $panelNames, $panelVa
         $hasVersion = isset($data[0]) && $data[0] === '2.0';
 
         return [
-            'version' => $hasVersion ? 0 : null,
             'prj' => $hasVersion ? 1 : 0,
             'sid' => $hasVersion ? 2 : 1,
             'iid' => $hasVersion ? 3 : 2,
@@ -391,11 +502,7 @@ public function resolvePanelFromRawData(array $data, array $panelNames, $panelVa
 
     private function getSreValue(array $data, ?int $index, $default = 'N/A')
     {
-        if ($index === null) {
-            return $default;
-        }
-
-        return $data[$index] ?? $default;
+        return $index !== null ? ($data[$index] ?? $default) : $default;
     }
 
     private function extractSreFileNumber(string $file): int
