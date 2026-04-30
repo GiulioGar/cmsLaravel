@@ -411,7 +411,27 @@
                             @foreach ($panelCounts as $panelName => $panelData)
                                 <li class="nav-item">
                                     <a class="nav-link fc-side-link" id="tab{{ $loop->index + 2 }}-tab" data-bs-toggle="pill" href="#tab{{ $loop->index + 2 }}">
-                                        <i class="fas fa-chart-pie me-2"></i> {{ $panelName }}
+                                       @if($panelName === 'Interactive')
+                                        <span class="fc-panel-tab-icon fc-panel-interactive">
+                                            <i class="fa-solid fa-users"></i>
+                                        </span>
+                                        <span>{{ $panelName }}</span>
+                                    @elseif($panelName === 'Da lista')
+                                        <span class="fc-panel-tab-icon fc-panel-lista"
+                                            data-bs-toggle="tooltip"
+                                            title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
+                                            <i class="fa-solid fa-list-ul"></i>
+                                        </span>
+                                        <span data-bs-toggle="tooltip"
+                                            title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
+                                            {{ $panelName }}
+                                        </span>
+                                    @else
+                                        <span class="fc-panel-tab-icon fc-panel-external">
+                                            <i class="fa-solid fa-building-user"></i>
+                                        </span>
+                                        <span>{{ $panelName }}</span>
+                                    @endif
                                     </a>
                                 </li>
                             @endforeach
@@ -628,7 +648,27 @@
                                     <div class="fc-kpi-head">
                                         <div>
                                             <div class="fc-kpi-eyebrow">Panel</div>
-                                            <div class="fc-kpi-title">{{ $panelName }}</div>
+                                            <div class="fc-kpi-title fc-panel-title">
+                                                @if($panelName === 'Interactive')
+                                                    <span class="fc-panel-title-badge fc-panel-interactive">
+                                                        <i class="fa-solid fa-users me-1"></i>
+                                                        {{ $panelName }}
+                                                    </span>
+                                                @elseif($panelName === 'Da lista')
+                                                    <span class="fc-panel-title-badge fc-panel-lista"
+                                                        data-bs-toggle="tooltip"
+                                                        title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
+                                                        <i class="fa-solid fa-list-ul me-1"></i>
+                                                        {{ $panelName }}
+                                                        <i class="fa-solid fa-circle-info ms-1"></i>
+                                                    </span>
+                                                @else
+                                                    <span class="fc-panel-title-badge fc-panel-external">
+                                                        <i class="fa-solid fa-building-user me-1"></i>
+                                                        {{ $panelName }}
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </div>
 
                                         <div class="fc-kpi-ir">
@@ -811,7 +851,27 @@
                            id="tab-panel-{{ $loop->index }}-nav"
                            data-bs-toggle="pill"
                            href="#tab-panel-{{ $loop->index }}">
-                            <i class="fas fa-chart-pie me-2"></i> {{ $panelName }}
+                                @if($panelName === 'Interactive')
+                            <span class="fc-panel-tab-icon fc-panel-interactive">
+                                <i class="fa-solid fa-users"></i>
+                            </span>
+                            <span>{{ $panelName }}</span>
+                        @elseif($panelName === 'Da lista')
+                            <span class="fc-panel-tab-icon fc-panel-lista"
+                                data-bs-toggle="tooltip"
+                                title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
+                                <i class="fa-solid fa-list-ul"></i>
+                            </span>
+                            <span data-bs-toggle="tooltip"
+                                title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
+                                {{ $panelName }}
+                            </span>
+                        @else
+                            <span class="fc-panel-tab-icon fc-panel-external">
+                                <i class="fa-solid fa-building-user"></i>
+                            </span>
+                            <span>{{ $panelName }}</span>
+                        @endif
                         </a>
                     </li>
                 @endforeach

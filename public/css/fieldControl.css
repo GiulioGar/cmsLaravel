@@ -1814,3 +1814,50 @@ h3 {font-size: 15px!important;}
   border-color: rgba(16,185,129,.22);
   box-shadow: 0 4px 10px rgba(16,185,129,.16);
 }
+
+.fc-panel-tab-icon{
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: .45rem;
+    font-size: .78rem;
+    border: 1px solid rgba(0,0,0,.06);
+    flex-shrink: 0;
+}
+
+.fc-panel-title{
+    display: flex;
+    align-items: center;
+}
+
+.fc-panel-title-badge{
+    display: inline-flex;
+    align-items: center;
+    padding: .38rem .65rem;
+    border-radius: 999px;
+    font-size: .9rem;
+    font-weight: 900;
+    border: 1px solid rgba(0,0,0,.06);
+    line-height: 1;
+}
+
+.fc-panel-interactive{
+    background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(22,163,74,.12));
+    color: #1d4ed8;
+    border-color: rgba(37,99,235,.18);
+}
+
+.fc-panel-lista{
+    background: linear-gradient(135deg, rgba(100,116,139,.12), rgba(124,58,237,.12));
+    color: #475569;
+    border-color: rgba(100,116,139,.20);
+}
+
+.fc-panel-external{
+    background: linear-gradient(135deg, rgba(245,158,11,.14), rgba(59,130,246,.10));
+    color: #b45309;
+    border-color: rgba(245,158,11,.22);
+}
