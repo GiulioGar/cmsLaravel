@@ -95,7 +95,7 @@
                     <table class="table table-sm table-bordered table-anagrafica mb-0">
                         <tr><th>Data di nascita:</th><td>{{ $user->birth_date ? \Carbon\Carbon::parse($user->birth_date)->format('d/m/Y') : '-' }}</td></tr>
                         <tr><th>Registrazione:</th><td>{{ $user->reg_date ?? '-' }}</td></tr>
-                        <tr><th>Genere:</th><td>{{ $user->gender == 1 ? 'Maschile' : 'Femminile' }}</td></tr>
+                        <tr><th>Genere:</th><td>{{ $user->gender_label ?? '-' }}</td></tr>
                         <tr><th>Istruzione:</th><td>{{ $user->instr_level_id ?? '-' }}</td></tr>
                         <tr><th>Lavoro:</th><td>{{ $user->work_id ?? '-' }}</td></tr>
                         <tr><th>Stato civile:</th><td>{{ $user->mar_status_id ?? '-' }}</td></tr>
@@ -291,7 +291,7 @@
 
             </table>
 
-            @if($storico->count() >= 20)
+            @if($storico->count() >= 30 && !request()->query('full'))
                 <div class="text-center mt-3">
                     <a href="{{ url('/panel/user/' . $user->user_id . '?full=1') }}"
                        class="btn btn-outline-secondary btn-sm btn-show-all">

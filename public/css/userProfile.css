@@ -26,25 +26,6 @@ body {
     justify-content: space-between;
 }
 
-.header-anagrafica {
-    background: #eff6ff;
-    color: #1d4ed8;
-}
-
-.header-attivita {
-    background: #f0fdf4;
-    color: #15803d;
-}
-
-.header-premi {
-    background: #fffbeb;
-    color: #b45309;
-}
-
-.header-storico {
-    background: #f8fafc;
-    color: #475569;
-}
 
 .table-anagrafica th {
     width: 35%;

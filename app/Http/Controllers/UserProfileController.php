@@ -14,91 +14,98 @@ class UserProfileController extends Controller
      * Mostra il profilo utente completo.
      */
     public function show(Request $request, $uid)
-    {
-
-    DB::enableQueryLog();
+{
     $start = microtime(true);
 
-        // ===============================
-        // 1️⃣ DATI BASE (t_user_info)
-        // ===============================
-            $user = DB::table('t_user_info')
-                ->where('user_id', $uid)
-                ->first();
-
-            if (!$user) {
-                abort(404, 'Utente non trovato');
-            }
-
-            $provinceMap = $this->getProvinceMap();
-            $user->province_name = $provinceMap[$user->province_id] ?? '-';
-
-        if (!$user) {
-            abort(404, 'Utente non trovato');
-        }
+    if (config('app.debug')) {
+        DB::enableQueryLog();
+    }
 
     // ===============================
-// 2️⃣ ATTIVITÀ LIGHT (senza t_respint)
-// ===============================
-$userInvites = DB::table('t_user_invites')
-    ->select(['user_id', 'invites', 'updated_at', 'last_rebuild'])
-    ->where('user_id', $uid)
-    ->first();
+    // 1) DATI BASE UTENTE
+    // ===============================
+    $user = DB::table('t_user_info')
+        ->where('user_id', $uid)
+        ->first();
 
-$inviti = $userInvites->invites ?? 0;
-
-        // ===============================
-        // 🕓 Ultima attività
-        // ===============================
-        $ultimaAttivita = DB::table('t_user_history')
-            ->where('user_id', $uid)
-            ->max('event_date');
-
-        // ===============================
-        // 3️⃣ PREMI
-        // ===============================
-$premi = DB::table('t_user_history')
-    ->select(['event_date', 'event_info', 'codice2', 'giorno_paga', 'pagato', 'ip'])
-    ->where('user_id', $uid)
-    ->where('event_type', 'withdraw')
-    ->orderByDesc('event_date')
-    ->get();
-
-        $premiPagati = $premi->where('pagato', 1)->count();
-        $premiDaPagare = $premi->where('pagato', 0)->count();
-        $premiTotali = $premi->count();
-
-// ===============================
-// 4️⃣ STORICO ATTIVITÀ
-// ===============================
-$showAll = $request->query('full', 0);
-$storico = $this->buildStorico($uid, $showAll ? null : 30);
-
-
-Log::info('UserProfile show total time', [
-    'uid' => $uid,
-    'duration_sec' => round(microtime(true) - $start, 3),
-    'queries' => DB::getQueryLog(),
-]);
-
-        // ===============================
-        // 5️⃣ RETURN ALLA VIEW
-        // ===============================
-        return view('userProfile', [
-            'user' => $user,
-            'attivita' => [
-                'inviti' => $inviti,
-                'ultima_attivita' => $ultimaAttivita,
-            ],
-            'premi' => [
-                'lista' => $premi,
-                'pagati' => $premiPagati,
-                'da_pagare' => $premiDaPagare,
-                'totali' => $premiTotali,
-            ],
-            'storico' => $storico,
-        ]);
+    if (!$user) {
+        abort(404, 'Utente non trovato');
     }
+
+    $provinceMap = $this->getProvinceMap();
+    $user->province_name = $provinceMap[$user->province_id] ?? '-';
+
+    $fullName = trim(($user->first_name ?? '') . ' ' . ($user->second_name ?? ''));
+    $user->full_name = $fullName !== '' ? $fullName : $user->user_id;
+
+    $user->gender_label = $this->getGenderLabel($user->gender);
+
+    // ===============================
+    // 2) ATTIVITÀ LIGHT
+    // ===============================
+    $userInvites = DB::table('t_user_invites')
+        ->select(['user_id', 'invites', 'updated_at', 'last_rebuild'])
+        ->where('user_id', $uid)
+        ->first();
+
+    $inviti = $userInvites->invites ?? 0;
+
+    // ===============================
+    // 3) ULTIMA ATTIVITÀ
+    // ===============================
+    $ultimaAttivita = DB::table('t_user_history')
+        ->where('user_id', $uid)
+        ->max('event_date');
+
+    // ===============================
+    // 4) PREMI
+    // ===============================
+    $premi = DB::table('t_user_history')
+        ->select(['event_date', 'event_info', 'codice2', 'giorno_paga', 'pagato', 'ip'])
+        ->where('user_id', $uid)
+        ->where('event_type', 'withdraw')
+        ->orderByDesc('event_date')
+        ->get();
+
+    $premiPagati = $premi->where('pagato', 1)->count();
+    $premiDaPagare = $premi->where('pagato', 0)->count();
+    $premiTotali = $premi->count();
+
+    // ===============================
+    // 5) STORICO ATTIVITÀ
+    // ===============================
+    $showAll = $request->query('full', 0);
+    $storico = $this->buildStorico($uid, $showAll ? null : 30);
+
+    $logData = [
+        'uid' => $uid,
+        'duration_sec' => round(microtime(true) - $start, 3),
+    ];
+
+    if (config('app.debug')) {
+        $logData['queries'] = DB::getQueryLog();
+    }
+
+    Log::info('UserProfile show total time', $logData);
+
+    // ===============================
+    // 6) RETURN ALLA VIEW
+    // ===============================
+    return view('userProfile', [
+        'user' => $user,
+        'attivita' => [
+            'inviti' => $inviti,
+            'ultima_attivita' => $ultimaAttivita,
+        ],
+        'premi' => [
+            'lista' => $premi,
+            'pagati' => $premiPagati,
+            'da_pagare' => $premiDaPagare,
+            'totali' => $premiTotali,
+        ],
+        'storico' => $storico,
+    ]);
+}
 
 
 // ===============================
@@ -122,19 +129,33 @@ Log::info('UserProfile show total time', [
     /**
      * Elimina definitivamente un utente (rimozione riga)
      */
-    public function delete($user_id)
-    {
-        try {
-            DB::table('t_user_info')
-                ->where('user_id', $user_id)
-                ->delete();
+public function delete($user_id)
+{
+    try {
+        DB::table('t_user_info')
+            ->where('user_id', $user_id)
+            ->update([
+                'active' => 9,
+                'confirm' => 9,
+                'email' => DB::raw("CONCAT('deleted_', user_id, '_', UNIX_TIMESTAMP(), '@deleted.local')"),
+                'paypalEmail' => null,
+                'mobile_phone' => null,
+                'home_phone' => null,
+            ]);
 
-            return response()->json(['success' => true, 'message' => 'Utente eliminato definitivamente.']);
-        } catch (\Exception $e) {
-            Log::error('Errore eliminazione utente: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Errore durante l\'eliminazione.']);
-        }
+        return response()->json([
+            'success' => true,
+            'message' => 'Utente disattivato e dati di contatto rimossi.',
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Errore eliminazione logica utente: ' . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Errore durante l\'eliminazione.',
+        ]);
     }
+}
 
     /**
      * Riattiva un utente (active=1, confirm=1)
@@ -178,61 +199,79 @@ public function updateAnagrafica(Request $request, $user_id)
 
 public function assignBonusMalus(Request $request, $user_id)
 {
-    // ✅ Accetta sia minuscole che maiuscole
     $validated = $request->validate([
         'type' => 'required|string|in:Bonus,Malus,BONUS,MALUS',
         'motivation' => 'required|string|max:255',
         'value' => 'required|integer|min:1',
     ]);
 
-    // ✅ Normalizza il tipo in formato coerente (Bonus / Malus)
-    $type = ucfirst(strtolower(trim($validated['type']))); // "Bonus" | "Malus"
+    $type = ucfirst(strtolower(trim($validated['type'])));
 
     try {
-        $user = DB::table('t_user_info')->where('user_id', $user_id)->first();
-        if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Utente non trovato.']);
+        $result = DB::transaction(function () use ($user_id, $validated, $type) {
+            $user = DB::table('t_user_info')
+                ->where('user_id', $user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'Utente non trovato.',
+                ];
+            }
+
+            $prev = (int) $user->points;
+            $inputValue = (int) $validated['value'];
+
+            if ($type === 'Bonus') {
+                $new = $prev + $inputValue;
+
+            } else {
+                $new = max(0, $prev - $inputValue);
+
+            }
+
+            DB::table('t_user_info')
+                ->where('user_id', $user_id)
+                ->update([
+                    'points' => $new,
+                ]);
+
+            DB::table('t_user_history')->insert([
+                'user_id'    => $user_id,
+                'event_date' => now(),
+                'event_type' => $type,
+                'event_info' => $validated['motivation'],
+                'prev_level' => $prev,
+                'new_level'  => $new,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => $type . ' assegnato correttamente.',
+                'points'  => $new,
+            ];
+        });
+
+        if (!$result['success']) {
+            return response()->json($result);
         }
-
-        $prev  = (int) $user->points;
-        $value = (int) $validated['value'];
-
-        // ✅ Calcolo nuovo livello
-        if ($type === 'Bonus') {
-            $new = $prev + $value;
-        } else { // Malus
-            $new = max(0, $prev - $value);
-            $value = -$value; // per completezza logica
-        }
-
-        // ✅ Aggiorna punti utente
-        DB::table('t_user_info')
-            ->where('user_id', $user_id)
-            ->update(['points' => $new]);
-
-        // ✅ Inserisce nel log storico
-        DB::table('t_user_history')->insert([
-            'user_id'    => $user_id,
-            'event_date' => now(),
-            'event_type' => $type,                   // sempre "Bonus" o "Malus"
-            'event_info' => $validated['motivation'],
-            'prev_level' => $prev,
-            'new_level'  => $new,
-        ]);
 
         $storico = $this->buildStorico($user_id, 30);
         $storicoHtml = view('partials.userProfileStoricoRows', compact('storico'))->render();
 
-        return response()->json([
-            'success' => true,
-            'message' => $type . ' assegnato correttamente.',
-            'points'  => $new,
-            'storico_html' => $storicoHtml,
-        ]);
+        $result['storico_html'] = $storicoHtml;
+
+        return response()->json($result);
 
     } catch (\Exception $e) {
         Log::error('Errore bonus/malus: ' . $e->getMessage());
-        return response()->json(['success' => false, 'message' => 'Errore durante l\'operazione.']);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Errore durante l\'operazione.',
+        ]);
     }
 }
 
@@ -251,12 +290,22 @@ $storicoQuery = DB::table('t_user_history')
         $diff = (int)(($item->new_level ?? 0) - ($item->prev_level ?? 0));
         $item->bytes = $diff;
 
-        // Divide info solo se contiene virgole o pipe
+        // Divide info solo per eventi sondaggio, non per Bonus/Malus/Premi
         $info = [];
-        if (!empty($item->event_info) && str_contains($item->event_info, ',')) {
-            $info = explode(',', $item->event_info);
-        } elseif (!empty($item->event_info) && str_contains($item->event_info, '|')) {
-            $info = explode('|', $item->event_info);
+
+        $isInterviewEvent = in_array($item->event_type, [
+            'interview_screenout',
+            'interview_complete',
+            'interview_quotafull',
+            'interview_complete_cint',
+        ], true);
+
+        if ($isInterviewEvent && !empty($item->event_info)) {
+            if (strpos($item->event_info, ',') !== false) {
+                $info = explode(',', $item->event_info);
+            } elseif (strpos($item->event_info, '|') !== false) {
+                $info = explode('|', $item->event_info);
+            }
         }
 
         $item->iid = trim(str_replace(['(', ')'], '', $info[0] ?? '-'));
@@ -323,6 +372,18 @@ $storicoQuery = DB::table('t_user_history')
 
         return $item;
     });
+}
+
+private function getGenderLabel($gender)
+{
+    switch ((int) $gender) {
+        case 1:
+            return 'Maschile';
+        case 2:
+            return 'Femminile';
+        default:
+            return '-';
+    }
 }
 
 private function getProvinceMap()

@@ -481,7 +481,7 @@
 
 <script>
 $(document).ready(function() {
-  
+
 
     /********************************************************
      * 1) Inizializziamo la tabella DataTables
@@ -507,7 +507,7 @@ $(document).ready(function() {
             { data: 'giorni_rimanenti',  name: 'giorni_rimanenti' },
             { data: 'costo',             name: 'costo' },
             { data: 'bytes',             name: 'bytes' },
-            { data: 'primis_status', name: 'primis_status' },
+           { data: 'primis_status', name: 't_surveys.status', searchable: false, orderable: false },
 
             {
                 data: 'campo_edit',

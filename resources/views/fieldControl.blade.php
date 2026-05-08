@@ -228,7 +228,7 @@
             $timingHintClass = 'timing-hint-info';
             $timingHintIcon = 'fas fa-hourglass-half';
         } elseif ($daysDiff === 1) {
-            $timingHint = '1 altro giorno di field';
+            $timingHint = 'Domani ultimo giorno di field!';
             $timingHintClass = 'timing-hint-info';
             $timingHintIcon = 'fas fa-hourglass-end';
         } elseif ($daysDiff === 0) {
@@ -321,15 +321,15 @@
                         if ($primisSurveyStatus !== null) {
                             $primisSurveyStatus = (int) $primisSurveyStatus;
 
-                            if (in_array($primisSurveyStatus, [1, 2], true)) {
+                            if (in_array($primisSurveyStatus, [0, 1], true)) {
                                 $primisStatusLabel = 'Progettazione';
                                 $primisStatusClass = 'primis-status-planning';
                                 $primisStatusIcon = 'fas fa-drafting-compass';
-                            } elseif ($primisSurveyStatus === 3) {
+                            } elseif ($primisSurveyStatus === 2) {
                                 $primisStatusLabel = 'Raccolta';
                                 $primisStatusClass = 'primis-status-collect';
                                 $primisStatusIcon = 'fas fa-database';
-                            } elseif ($primisSurveyStatus >= 4) {
+                            } elseif ($primisSurveyStatus >= 3) {
                                 $primisStatusLabel = 'Chiusa';
                                 $primisStatusClass = 'primis-status-closed';
                                 $primisStatusIcon = 'fas fa-lock';
