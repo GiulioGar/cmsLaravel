@@ -1,0 +1,41 @@
+# Istruzioni progetto CMS
+
+Stack:
+- Laravel 8
+- PHP 7.4.23
+- MySQL
+- Blade
+- Bootstrap
+- DataTables server-side
+
+Regole:
+- Non usare sintassi PHP 8.
+- Non modificare il database senza proporre prima la migration.
+- Preferire controller snelli, service class e query ottimizzate.
+- Evitare breaking changes sulle route esistenti.
+- Non toccare file .env.
+- Non modificare storage/logs/laravel.log.
+- Prima di proporre modifiche, spiegare i file coinvolti.
+- Dopo ogni modifica, indicare come testarla.
+
+Convenzioni Blade:
+- Il layout usa @section('scripts'), non @push('scripts').
+
+File .sre:
+- La prima colonna può contenere versione tipo 2.0.
+- Se presente, gli indici dei campi vanno scalati.
+- Campi principali: prj, sid, iid, uid, data inizio, data fine, durata, status, ultima domanda.
+
+## Codex usage rules
+
+- Do not scan the entire repository unless explicitly requested.
+- For normal tasks, read only the files mentioned in the prompt and directly related files.
+- Before modifying files, provide a short plan.
+- Prefer small, incremental changes.
+- Do not perform massive refactors.
+- Do not run git push, merge, deploy, or remote server commands.
+- Local git add and git commit are allowed only when explicitly requested.
+- Keep compatibility with Laravel 8 and PHP 7.4.23.
+- Do not use PHP 8 syntax.
+- Do not modify .env files.
+- Do not modify storage/logs or cache files.
