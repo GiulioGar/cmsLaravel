@@ -275,6 +275,104 @@ public function assignBonusMalus(Request $request, $user_id)
     }
 }
 
+public function respintLogSummary($user_id)
+{
+    try {
+        $report = $this->buildRespintStatusReport($user_id);
+
+        return response()->json([
+            'success' => true,
+            'total' => $report['total'],
+            'status_report' => $report,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Errore conteggio log t_respint utente: ' . $e->getMessage(), [
+            'user_id' => $user_id,
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Errore durante l\'aggiornamento del log.',
+        ], 500);
+    }
+}
+
+public function respintLogDetail($user_id)
+{
+    try {
+        $panelEndFieldQuery = DB::table('t_panel_control')
+            ->select('sur_id', DB::raw('MAX(end_field) as end_field'))
+            ->groupBy('sur_id');
+
+        $rawRows = DB::table('t_respint as r')
+            ->leftJoinSub($panelEndFieldQuery, 'pc', function ($join) {
+                $join->on('pc.sur_id', '=', 'r.sid');
+            })
+            ->select([
+                'r.sid',
+                'r.prj_name',
+                'r.status',
+                'r.iid',
+                'pc.end_field',
+            ])
+            ->where('r.uid', $user_id)
+            ->orderByRaw("
+                CASE
+                    WHEN r.sid REGEXP '^[A-Za-z][0-9]+' THEN LEFT(r.sid, 1)
+                    ELSE r.sid
+                END DESC
+            ")
+            ->orderByRaw("
+                CASE
+                    WHEN r.sid REGEXP '^[A-Za-z][0-9]+' THEN CAST(SUBSTRING(r.sid, 2) AS UNSIGNED)
+                    ELSE 0
+                END DESC
+            ")
+            ->orderByDesc('r.sid')
+            ->orderByDesc('r.iid')
+            ->get();
+
+        $statusCounts = [];
+        foreach ($rawRows as $row) {
+            $key = is_null($row->status) ? 'unknown' : (string) (int) $row->status;
+            $statusCounts[$key] = ($statusCounts[$key] ?? 0) + 1;
+        }
+
+        $report = $this->formatRespintStatusReport($statusCounts);
+
+        $rows = $rawRows->map(function ($row) {
+            $meta = $this->getRespintStatusMeta($row->status);
+
+            return [
+                'sid' => $row->sid ?? '-',
+                'prj_name' => $row->prj_name ?? '-',
+                'status' => is_null($row->status) ? '-' : (int) $row->status,
+                'status_label' => $meta['label'],
+                'status_badge_class' => $meta['badge_class'],
+                'status_row_class' => $meta['row_class'],
+                'iid' => $row->iid ?? '-',
+                'end_field' => $this->formatRespintEndField($row->end_field ?? null),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'total' => $rows->count(),
+            'status_report' => $report,
+            'rows' => $rows,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Errore dettaglio log t_respint utente: ' . $e->getMessage(), [
+            'user_id' => $user_id,
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Errore durante il caricamento del log.',
+        ], 500);
+    }
+}
+
 private function buildStorico($user_id, $limit = 30)
 {
 $storicoQuery = DB::table('t_user_history')
@@ -289,6 +387,7 @@ $storicoQuery = DB::table('t_user_history')
     return $storicoQuery->get()->map(function ($item) {
         $diff = (int)(($item->new_level ?? 0) - ($item->prev_level ?? 0));
         $item->bytes = $diff;
+        $eventType = strtolower((string) $item->event_type);
 
         // Divide info solo per eventi sondaggio, non per Bonus/Malus/Premi
         $info = [];
@@ -317,7 +416,7 @@ $storicoQuery = DB::table('t_user_history')
         $item->evento_color = 'secondary';
         $item->evento_icon = 'bi-question-circle';
 
-        switch ($item->event_type) {
+        switch ($eventType) {
             case 'interview_screenout':
                 $item->evento_label = 'SCREENOUT';
                 $item->evento_color = 'danger';
@@ -353,7 +452,15 @@ $storicoQuery = DB::table('t_user_history')
                 $item->tipologia = $item->event_info ?? 'Premio';
                 break;
 
-            case 'Bonus':
+            case 'bonus_amico':
+                $item->bytes = abs($diff);
+                $item->evento_label = 'BONUS AMICO';
+                $item->evento_color = 'success';
+                $item->evento_icon = 'bi-people-fill';
+                $item->tipologia = $item->event_info ?? 'Bonus referral';
+                break;
+
+            case 'bonus':
                 $item->bytes = abs($diff);
                 $item->evento_label = 'BONUS';
                 $item->evento_color = 'primary';
@@ -361,7 +468,7 @@ $storicoQuery = DB::table('t_user_history')
                 $item->tipologia = $item->event_info ?? 'Bonus';
                 break;
 
-            case 'Malus':
+            case 'malus':
                 $item->bytes = -abs($diff);
                 $item->evento_label = 'MALUS';
                 $item->evento_color = 'orange';
@@ -372,6 +479,142 @@ $storicoQuery = DB::table('t_user_history')
 
         return $item;
     });
+}
+
+private function buildRespintStatusReport($user_id): array
+{
+    $statusCounts = [];
+
+    $rows = DB::table('t_respint')
+        ->select('status', DB::raw('COUNT(*) as total'))
+        ->where('uid', $user_id)
+        ->groupBy('status')
+        ->get();
+
+    foreach ($rows as $row) {
+        $key = is_null($row->status) ? 'unknown' : (string) (int) $row->status;
+        $statusCounts[$key] = (int) $row->total;
+    }
+
+    return $this->formatRespintStatusReport($statusCounts);
+}
+
+private function formatRespintStatusReport(array $statusCounts): array
+{
+    $knownStatuses = [0, 1, 3, 4, 5, 7];
+    $items = [];
+    $total = array_sum($statusCounts);
+
+    foreach ($knownStatuses as $status) {
+        $meta = $this->getRespintStatusMeta($status);
+
+        $items[] = [
+            'status' => $status,
+            'label' => $meta['label'],
+            'count' => (int) ($statusCounts[(string) $status] ?? 0),
+            'report_class' => $meta['report_class'],
+        ];
+    }
+
+    $otherCount = 0;
+    foreach ($statusCounts as $status => $count) {
+        if ($status === 'unknown' || !in_array((int) $status, $knownStatuses, true)) {
+            $otherCount += (int) $count;
+        }
+    }
+
+    if ($otherCount > 0) {
+        $meta = $this->getRespintStatusMeta(null);
+
+        $items[] = [
+            'status' => null,
+            'label' => 'Altro',
+            'count' => $otherCount,
+            'report_class' => $meta['report_class'],
+        ];
+    }
+
+    return [
+        'total' => (int) $total,
+        'items' => $items,
+    ];
+}
+
+private function formatRespintEndField($endField): string
+{
+    if (empty($endField)) {
+        return '-';
+    }
+
+    try {
+        return Carbon::parse($endField)->format('d/m/Y');
+    } catch (\Exception $e) {
+        return (string) $endField;
+    }
+}
+
+private function getRespintStatusMeta($status): array
+{
+    if (is_null($status) || $status === '') {
+        return [
+            'label' => 'Sconosciuto',
+            'badge_class' => 'respint-status-badge respint-status-other',
+            'report_class' => 'respint-report-other',
+            'row_class' => 'respint-row-other',
+        ];
+    }
+
+    switch ((int) $status) {
+        case 0:
+            return [
+                'label' => 'Inattiva',
+                'badge_class' => 'respint-status-badge respint-status-0',
+                'report_class' => 'respint-report-0',
+                'row_class' => 'respint-row-0',
+            ];
+        case 1:
+            return [
+                'label' => 'Sospesa',
+                'badge_class' => 'respint-status-badge respint-status-1',
+                'report_class' => 'respint-report-1',
+                'row_class' => 'respint-row-1',
+            ];
+        case 3:
+            return [
+                'label' => 'Completa',
+                'badge_class' => 'respint-status-badge respint-status-3',
+                'report_class' => 'respint-report-3',
+                'row_class' => 'respint-row-3',
+            ];
+        case 4:
+            return [
+                'label' => 'Screenout',
+                'badge_class' => 'respint-status-badge respint-status-4',
+                'report_class' => 'respint-report-4',
+                'row_class' => 'respint-row-4',
+            ];
+        case 5:
+            return [
+                'label' => 'Quotafull',
+                'badge_class' => 'respint-status-badge respint-status-5',
+                'report_class' => 'respint-report-5',
+                'row_class' => 'respint-row-5',
+            ];
+        case 7:
+            return [
+                'label' => 'Bad quality',
+                'badge_class' => 'respint-status-badge respint-status-7',
+                'report_class' => 'respint-report-7',
+                'row_class' => 'respint-row-7',
+            ];
+        default:
+            return [
+                'label' => 'Sconosciuto',
+                'badge_class' => 'respint-status-badge respint-status-other',
+                'report_class' => 'respint-report-other',
+                'row_class' => 'respint-row-other',
+            ];
+    }
 }
 
 private function getGenderLabel($gender)

@@ -181,6 +181,44 @@
     </div>
 </div>
 
+<div class="activity-log-panel">
+    <div class="activity-log-header">
+        <div class="activity-log-title-wrap">
+            <div class="activity-log-icon">
+                <i class="bi bi-list-check"></i>
+            </div>
+            <div>
+                <div class="activity-log-title">Log t_respint</div>
+                <div id="respintLogStatus" class="activity-log-status">Non aggiornato</div>
+            </div>
+        </div>
+
+        <div class="activity-log-actions">
+            <button type="button" class="btn btn-sm btn-outline-success" id="btnRefreshRespintLog">
+                <i class="bi bi-arrow-clockwise me-1"></i> Aggiorna log
+            </button>
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary"
+                    id="btnOpenRespintLog"
+                    title="Apri dettaglio log"
+                    aria-label="Apri dettaglio log"
+                    disabled>
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="activity-log-summary">
+        <div>
+            <div id="respintLogTotal" class="activity-log-total">-</div>
+            <div class="activity-log-label">Record presenti</div>
+        </div>
+        <div class="activity-log-source">t_respint</div>
+    </div>
+
+    <div id="respintLogReport" class="respint-report-grid mt-3"></div>
+</div>
+
 
 
                 </div>
@@ -422,7 +460,65 @@
   </div>
 </div>
 
-{{-- 🔹 Contenitore Toasts Bootstrap --}}
+{{-- Modale Log t_respint --}}
+<div class="modal fade" id="modalRespintLog" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header respint-log-modal-header">
+        <div>
+            <h6 class="modal-title mb-0"><i class="bi bi-list-check me-1"></i> Log t_respint</h6>
+            <small class="respint-log-modal-subtitle">Totale record: <span id="respintLogModalTotal">-</span></small>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="respintLogModalReport" class="respint-report-grid respint-report-grid-modal mb-3"></div>
+
+        <div class="respint-log-filter mb-3">
+            <label for="respintSidFilter" class="form-label mb-1">Filtra per SID</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search"
+                       id="respintSidFilter"
+                       class="form-control"
+                       placeholder="Cerca SID..."
+                       autocomplete="off">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        id="btnClearRespintSidFilter"
+                        title="Cancella filtro"
+                        aria-label="Cancella filtro">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div id="respintLogVisibleCount" class="respint-log-filter-count"></div>
+        </div>
+
+        <div class="table-responsive respint-log-table-wrapper">
+            <table class="table table-sm table-striped text-center align-middle mb-0 respint-log-table">
+                <thead>
+                    <tr>
+                        <th>SID</th>
+                        <th>PRJ</th>
+                        <th>Fine field</th>
+                        <th>Status</th>
+                        <th>IID</th>
+                    </tr>
+                </thead>
+                <tbody id="respintLogTableBody">
+                    <tr>
+                        <td colspan="5" class="text-muted">Log non caricato</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{-- Contenitore Toasts Bootstrap --}}
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 2000">
   <div id="toastContainer"></div>
 </div>
@@ -462,6 +558,41 @@ function showToast(message, type = 'success') {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const userId = "{{ $user->user_id }}";
+    const respintSummaryUrl = @json(route('user.respint.summary', ['user_id' => $user->user_id]));
+    const respintDetailUrl = @json(route('user.respint.log', ['user_id' => $user->user_id]));
+
+    function escapeHtml(value) {
+        return String(value ?? '-')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function formatNumber(value) {
+        return new Intl.NumberFormat('it-IT').format(Number(value) || 0);
+    }
+
+    function renderRespintReport(report, targetEl) {
+        if (!targetEl) {
+            return;
+        }
+
+        const items = Array.isArray(report?.items) ? report.items : [];
+
+        if (!items.length) {
+            targetEl.innerHTML = '';
+            return;
+        }
+
+        targetEl.innerHTML = items.map(item => `
+            <div class="respint-report-card ${escapeHtml(item.report_class || '')}">
+                <span class="respint-report-label">${escapeHtml(item.label)}</span>
+                <span class="respint-report-value">${formatNumber(item.count)}</span>
+            </div>
+        `).join('');
+    }
 
     // ===========================
     // 🔹 GESTIONE STATO UTENTE
@@ -626,7 +757,227 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ===========================
-    // 🔹 COPIA CODICE PREMIO
+    // LOG t_respint
+    // ===========================
+    const respintTotalEl = document.getElementById('respintLogTotal');
+    const respintStatusEl = document.getElementById('respintLogStatus');
+    const btnRefreshRespintLog = document.getElementById('btnRefreshRespintLog');
+    const btnOpenRespintLog = document.getElementById('btnOpenRespintLog');
+    const respintReportEl = document.getElementById('respintLogReport');
+    const respintModalReportEl = document.getElementById('respintLogModalReport');
+    const respintSidFilterEl = document.getElementById('respintSidFilter');
+    const btnClearRespintSidFilter = document.getElementById('btnClearRespintSidFilter');
+    const respintLogVisibleCount = document.getElementById('respintLogVisibleCount');
+    const respintLogTableBody = document.getElementById('respintLogTableBody');
+    const respintLogModalTotal = document.getElementById('respintLogModalTotal');
+    const modalRespintLogEl = document.getElementById('modalRespintLog');
+    let respintLogTotal = null;
+    let respintLogRows = [];
+
+    function setRespintDetailEnabled(enabled) {
+        if (!btnOpenRespintLog) {
+            return;
+        }
+
+        btnOpenRespintLog.disabled = !enabled;
+        btnOpenRespintLog.classList.toggle('disabled', !enabled);
+    }
+
+    function updateRespintVisibleCount(visibleCount, totalCount) {
+        if (!respintLogVisibleCount) {
+            return;
+        }
+
+        if (!totalCount) {
+            respintLogVisibleCount.textContent = '';
+            return;
+        }
+
+        respintLogVisibleCount.textContent = `${formatNumber(visibleCount)} / ${formatNumber(totalCount)} righe`;
+    }
+
+    function renderRespintLogRows() {
+        if (!respintLogTableBody) {
+            return;
+        }
+
+        const filterValue = (respintSidFilterEl?.value || '').trim().toLowerCase();
+        const rows = filterValue
+            ? respintLogRows.filter(row => String(row.sid || '').toLowerCase().includes(filterValue))
+            : respintLogRows;
+
+        updateRespintVisibleCount(rows.length, respintLogRows.length);
+
+        if (!respintLogRows.length) {
+            respintLogTableBody.innerHTML = '<tr><td colspan="5" class="text-muted">Nessun log trovato</td></tr>';
+            setRespintDetailEnabled(false);
+            return;
+        }
+
+        if (!rows.length) {
+            respintLogTableBody.innerHTML = '<tr><td colspan="5" class="text-muted">Nessun risultato</td></tr>';
+            return;
+        }
+
+        respintLogTableBody.innerHTML = rows.map(row => {
+            const statusValue = escapeHtml(row.status);
+            const statusLabel = escapeHtml(row.status_label);
+            const badgeClass = escapeHtml(row.status_badge_class || 'respint-status-badge respint-status-other');
+            const rowClass = escapeHtml(row.status_row_class || '');
+
+            return `
+                <tr class="${rowClass}">
+                    <td>${escapeHtml(row.sid)}</td>
+                    <td class="text-start">${escapeHtml(row.prj_name)}</td>
+                    <td>${escapeHtml(row.end_field)}</td>
+                    <td><span class="badge ${badgeClass}">${statusValue} - ${statusLabel}</span></td>
+                    <td>${escapeHtml(row.iid)}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    respintSidFilterEl?.addEventListener('input', renderRespintLogRows);
+
+    btnClearRespintSidFilter?.addEventListener('click', () => {
+        if (!respintSidFilterEl) {
+            return;
+        }
+
+        respintSidFilterEl.value = '';
+        respintSidFilterEl.focus();
+        renderRespintLogRows();
+    });
+
+    btnRefreshRespintLog?.addEventListener('click', () => {
+        const originalHtml = btnRefreshRespintLog.innerHTML;
+
+        btnRefreshRespintLog.disabled = true;
+        btnRefreshRespintLog.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Aggiorno';
+        if (respintStatusEl) {
+            respintStatusEl.textContent = 'Aggiornamento...';
+        }
+
+        fetch(respintSummaryUrl, {
+            headers: {
+                'Accept': 'application/json',
+            },
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Errore risposta server');
+            }
+
+            return res.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Errore aggiornamento log');
+            }
+
+            respintLogTotal = Number(data.total) || 0;
+
+            if (respintTotalEl) {
+                respintTotalEl.textContent = formatNumber(respintLogTotal);
+            }
+
+            if (respintStatusEl) {
+                respintStatusEl.textContent = 'Aggiornato ora';
+            }
+
+            renderRespintReport(data.status_report, respintReportEl);
+            renderRespintReport(data.status_report, respintModalReportEl);
+
+            setRespintDetailEnabled(respintLogTotal > 0);
+        })
+        .catch(() => {
+            if (respintStatusEl) {
+                respintStatusEl.textContent = 'Errore aggiornamento';
+            }
+
+            setRespintDetailEnabled(false);
+            showToast('Errore durante l\'aggiornamento del log.', 'error');
+        })
+        .finally(() => {
+            btnRefreshRespintLog.disabled = false;
+            btnRefreshRespintLog.innerHTML = originalHtml;
+        });
+    });
+
+    btnOpenRespintLog?.addEventListener('click', () => {
+        if (btnOpenRespintLog.disabled || !modalRespintLogEl) {
+            return;
+        }
+
+        if (respintLogModalTotal) {
+            respintLogModalTotal.textContent = respintLogTotal === null ? '-' : formatNumber(respintLogTotal);
+        }
+
+        if (respintSidFilterEl) {
+            respintSidFilterEl.value = '';
+        }
+
+        updateRespintVisibleCount(0, 0);
+
+        if (respintLogTableBody) {
+            respintLogTableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-muted">
+                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                        Caricamento log...
+                    </td>
+                </tr>
+            `;
+        }
+
+        const modalInstance = new bootstrap.Modal(modalRespintLogEl);
+        modalInstance.show();
+
+        fetch(respintDetailUrl, {
+            headers: {
+                'Accept': 'application/json',
+            },
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Errore risposta server');
+            }
+
+            return res.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                throw new Error(data.message || 'Errore caricamento log');
+            }
+
+            const rows = Array.isArray(data.rows) ? data.rows : [];
+            respintLogTotal = Number(data.total) || rows.length;
+
+            if (respintLogModalTotal) {
+                respintLogModalTotal.textContent = formatNumber(respintLogTotal);
+            }
+
+            if (respintTotalEl) {
+                respintTotalEl.textContent = formatNumber(respintLogTotal);
+            }
+
+            renderRespintReport(data.status_report, respintReportEl);
+            renderRespintReport(data.status_report, respintModalReportEl);
+
+            respintLogRows = rows;
+            renderRespintLogRows();
+        })
+        .catch(() => {
+            if (respintLogTableBody) {
+                respintLogTableBody.innerHTML = '<tr><td colspan="5" class="text-danger">Errore nel caricamento del log</td></tr>';
+            }
+
+            showToast('Errore durante il caricamento del log.', 'error');
+        });
+    });
+
+    // ===========================
+    // COPIA CODICE PREMIO
     // ===========================
     document.querySelectorAll('.copy-code-btn').forEach(btn => {
         btn.addEventListener('click', () => {

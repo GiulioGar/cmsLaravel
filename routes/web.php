@@ -136,6 +136,8 @@ Route::middleware(['auth.custom'])->group(function () {
     // ============================================
     Route::get('/user/{user_id}', [UserProfileController::class, 'show'])->name('user.profile');
 
+    Route::get('/user/{user_id}/respint-log/summary', [UserProfileController::class, 'respintLogSummary'])->name('user.respint.summary');
+    Route::get('/user/{user_id}/respint-log', [UserProfileController::class, 'respintLogDetail'])->name('user.respint.log');
     Route::post('/user/{user_id}/deactivate', [UserProfileController::class, 'deactivate'])->name('user.deactivate');
     Route::post('/user/{user_id}/delete', [UserProfileController::class, 'delete'])->name('user.delete');
     Route::post('/user/{user_id}/activate', [UserProfileController::class, 'activate'])->name('user.activate');
