@@ -188,7 +188,7 @@
                 <i class="bi bi-list-check"></i>
             </div>
             <div>
-                <div class="activity-log-title">Log t_respint</div>
+                <div class="activity-log-title">Log utente</div>
                 <div id="respintLogStatus" class="activity-log-status">Non aggiornato</div>
             </div>
         </div>
@@ -331,7 +331,7 @@
 
             @if($storico->count() >= 30 && !request()->query('full'))
                 <div class="text-center mt-3">
-                    <a href="{{ url('/panel/user/' . $user->user_id . '?full=1') }}"
+                    <a href="{{ route('user.profile', ['user_id' => $user->user_id, 'full' => 1]) }}"
                        class="btn btn-outline-secondary btn-sm btn-show-all">
                         <i class="bi bi-list-ul me-1"></i> Mostra tutto
                     </a>
@@ -466,7 +466,7 @@
     <div class="modal-content border-0 shadow">
       <div class="modal-header respint-log-modal-header">
         <div>
-            <h6 class="modal-title mb-0"><i class="bi bi-list-check me-1"></i> Log t_respint</h6>
+            <h6 class="modal-title mb-0"><i class="bi bi-list-check me-1"></i> Log utente</h6>
             <small class="respint-log-modal-subtitle">Totale record: <span id="respintLogModalTotal">-</span></small>
         </div>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -558,6 +558,11 @@ function showToast(message, type = 'success') {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const userId = "{{ $user->user_id }}";
+    const userDeactivateUrl = @json(route('user.deactivate', ['user_id' => $user->user_id]));
+    const userDeleteUrl = @json(route('user.delete', ['user_id' => $user->user_id]));
+    const userActivateUrl = @json(route('user.activate', ['user_id' => $user->user_id]));
+    const userUpdateInfoUrl = @json(route('user.update.info', ['user_id' => $user->user_id]));
+    const userBonusMalusUrl = @json(route('user.bonus.malus', ['user_id' => $user->user_id]));
     const respintSummaryUrl = @json(route('user.respint.summary', ['user_id' => $user->user_id]));
     const respintDetailUrl = @json(route('user.respint.log', ['user_id' => $user->user_id]));
 
@@ -574,12 +579,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Intl.NumberFormat('it-IT').format(Number(value) || 0);
     }
 
+    function formatPercent(count, total) {
+        const parsedTotal = Number(total) || 0;
+
+        if (!parsedTotal) {
+            return '0%';
+        }
+
+        return `${((Number(count) || 0) / parsedTotal * 100).toFixed(1).replace('.', ',')}%`;
+    }
+
     function renderRespintReport(report, targetEl) {
         if (!targetEl) {
             return;
         }
 
         const items = Array.isArray(report?.items) ? report.items : [];
+        const total = Number(report?.total) || items.reduce((sum, item) => sum + (Number(item.count) || 0), 0);
 
         if (!items.length) {
             targetEl.innerHTML = '';
@@ -589,7 +605,10 @@ document.addEventListener('DOMContentLoaded', () => {
         targetEl.innerHTML = items.map(item => `
             <div class="respint-report-card ${escapeHtml(item.report_class || '')}">
                 <span class="respint-report-label">${escapeHtml(item.label)}</span>
-                <span class="respint-report-value">${formatNumber(item.count)}</span>
+                <span class="respint-report-value">
+                    ${formatNumber(item.count)}
+                    <small class="respint-report-percent">(${formatPercent(item.count, total)})</small>
+                </span>
             </div>
         `).join('');
     }
@@ -599,19 +618,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===========================
     document.getElementById('btnDeactivate')?.addEventListener('click', () => {
         if (confirm('Confermi la disattivazione dell’utente?')) {
-            sendUserAction(`/user/${userId}/deactivate`, 'modalUserActive');
+            sendUserAction(userDeactivateUrl, 'modalUserActive');
         }
     });
 
     document.getElementById('btnDelete')?.addEventListener('click', () => {
         if (confirm('Confermi l’eliminazione definitiva dell’utente?')) {
-            sendUserAction(`/user/${userId}/delete`, 'modalUserActive');
+            sendUserAction(userDeleteUrl, 'modalUserActive');
         }
     });
 
     document.getElementById('btnActivate')?.addEventListener('click', () => {
         if (confirm('Confermi la riattivazione dell’utente?')) {
-            sendUserAction(`/user/${userId}/activate`, 'modalUserInactive');
+            sendUserAction(userActivateUrl, 'modalUserInactive');
         }
     });
 
@@ -648,7 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = document.getElementById('editEmail').value.trim();
         const paypalEmail = document.getElementById('editPaypalEmail').value.trim();
 
-        fetch(`/user/${userId}/update-info`, {
+        fetch(userUpdateInfoUrl, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -689,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        fetch(`/user/${userId}/bonus-malus`, {
+        fetch(userBonusMalusUrl, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
