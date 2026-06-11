@@ -380,7 +380,7 @@ class SurveyController extends Controller
                 $survey->sex_target   = $request->input('sex_target');
                 $survey->age1_target  = $request->input('age1_target');
                 $survey->age2_target  = $request->input('age2_target');
-                $survey->complete     = $request->input('complete');
+                $survey->goal         = $request->input('goal');
                 $survey->description  = $request->input('description');
                 $survey->stato        = $request->input('stato'); // 0=Aperto, 1=Chiuso
 

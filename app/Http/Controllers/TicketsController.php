@@ -70,13 +70,22 @@ class TicketsController extends Controller
         $withdraws = DB::table('t_user_history')
             ->select([
                 'event_date',
+                'event_info',
                 'codice2 as premio',
                 'giorno_paga',
             ])
             ->where('user_id', $ticket->user_id)
             ->where('event_type', 'withdraw')
             ->orderByDesc('event_date')
-            ->get();
+            ->get()
+            ->map(function ($withdraw) {
+                $withdraw->event_date_label = $this->formatShortDate($withdraw->event_date);
+                $withdraw->giorno_paga_label = $this->formatShortDate($withdraw->giorno_paga);
+                $withdraw->tipologia_premio = $this->detectRewardType($withdraw->event_info);
+                $withdraw->cifra_premio = $this->detectRewardAmount($withdraw->event_info);
+
+                return $withdraw;
+            });
 
         $suggestedReplies = $this->buildSuggestedReplies($ticket);
 
@@ -91,6 +100,45 @@ class TicketsController extends Controller
             'success' => true,
             'html' => $html,
         ]);
+    }
+
+    private function formatShortDate($date)
+    {
+        if (empty($date)) {
+            return '-';
+        }
+
+        return \Carbon\Carbon::parse($date)->format('d-m-y');
+    }
+
+    private function detectRewardType($eventInfo)
+    {
+        $eventInfo = trim((string) $eventInfo);
+
+        if ($eventInfo === '') {
+            return '-';
+        }
+
+        if (stripos($eventInfo, 'paypal') !== false) {
+            return 'Paypal';
+        }
+
+        if (stripos($eventInfo, 'amazon') !== false) {
+            return 'Amazon';
+        }
+
+        return $eventInfo;
+    }
+
+    private function detectRewardAmount($eventInfo)
+    {
+        $eventInfo = trim((string) $eventInfo);
+
+        if (preg_match('/(\d+(?:[,.]\d+)?)\s*euro/i', $eventInfo, $matches)) {
+            return str_replace('.', ',', $matches[1]) . ' €';
+        }
+
+        return '-';
     }
 
 public function update(Request $request, $ticketId)

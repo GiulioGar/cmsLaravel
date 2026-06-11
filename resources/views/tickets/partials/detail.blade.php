@@ -130,7 +130,9 @@
                             <table class="table table-sm align-middle mb-0 ticket-detail-table-modern">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Data richiesta</th>
+                                        <th>Data</th>
+                                        <th>Tipologia</th>
+                                        <th>Cifra</th>
                                         <th>Premio</th>
                                         <th>Giorno paga</th>
                                     </tr>
@@ -138,9 +140,11 @@
                                 <tbody>
                                     @foreach($withdraws as $withdraw)
                                         <tr>
-                                            <td>{{ $withdraw->event_date }}</td>
+                                            <td>{{ $withdraw->event_date_label }}</td>
+                                            <td>{{ $withdraw->tipologia_premio }}</td>
+                                            <td>{{ $withdraw->cifra_premio }}</td>
                                             <td>{{ $withdraw->premio ?: '-' }}</td>
-                                            <td>{{ $withdraw->giorno_paga ?: '-' }}</td>
+                                            <td>{{ $withdraw->giorno_paga_label }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

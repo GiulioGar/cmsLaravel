@@ -12,14 +12,16 @@ table.dataTable thead th {
 
 /* Pallino stato "attivo" - pulse soft */
 .blinking-dot{
-  display:inline-block;
+  display:block;
   width: 9px;
   height: 9px;
-  margin-right: 6px;
+  margin: 0;
   border-radius: 50%;
   background: #ef4444; /* rosso più moderno */
-  position: relative;
-  top: -1px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  margin-top: -4.5px;
   box-shadow: 0 0 0 1px rgba(239,68,68,.25);
   animation: dotPulse 1.4s ease-in-out infinite;
 }
@@ -111,6 +113,12 @@ table.surveys-table tbody tr:hover{
 @keyframes blink { 50% { opacity: 0; } }
 
 .link-sur-id{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 86px;
+  padding-left: 16px;
   font-weight: 800;
   color: #0f172a;
   text-decoration: none;
