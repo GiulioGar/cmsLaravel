@@ -151,6 +151,50 @@
     </div>
 </div>
 
+{{-- MODALE IMPORT CSV AMAZON --}}
+
+<div class="modal fade" id="modalAmazonImportCsv" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header amazon-modal-header text-white">
+                <h6 class="modal-title">
+                    <i class="bi bi-upload me-2"></i>Importa codici Amazon da CSV
+                </h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="formAmazonImportCsv" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="amazonImportCsvFile" class="form-label">File CSV Amazon</label>
+                        <input
+                            type="file"
+                            class="form-control"
+                            id="amazonImportCsvFile"
+                            name="csv_file"
+                            accept=".csv,text/csv,text/plain"
+                            required
+                        >
+                        <div class="form-text">
+                            Formato atteso: Sequenza;Codice;Valore;Scadenza;Numero di serie.
+                        </div>
+                    </div>
+                </form>
+
+                <div id="amazonImportCsvResult" class="import-result d-none"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Chiudi</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitAmazonImportCsv">
+                    <i class="bi bi-upload me-1"></i> Importa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 @endsection
@@ -213,6 +257,15 @@ function initTooltips(scope = document) {
     });
 }
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     let currentType = @json($type);
     let currentStatus = @json($status);
@@ -220,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const premiPanelDataUrl = @json(route('premi.panel.data'));
 const premiPanelSummaryUrl = @json(route('premi.panel.summary'));
 const premiPanelBulkAmazonUrl = @json(route('premi.panel.amazon.bulk.pay'));
+const premiPanelImportAmazonCsvUrl = @json(route('premi.panel.amazon.import.csv'));
 const premiPanelDeleteBaseUrl = @json(url('/premi-panel'));
 const premiPanelPaypalPayBaseUrl = @json(url('/premi-panel/paypal'));
 const premiPanelPaypalNoteBaseUrl = @json(url('/premi-panel/paypal'));
@@ -682,6 +736,111 @@ function bindTableDelegatedActions() {
         });
     }
 
+    function renderAmazonImportResult(data) {
+        const resultBox = document.getElementById('amazonImportCsvResult');
+
+        if (!resultBox) {
+            return;
+        }
+
+        const duplicateItems = (data.duplicates || []).map(item => {
+            const line = item.line ? `Riga ${item.line}: ` : '';
+            return `<li>${escapeHtml(line + item.code + ' - ' + item.reason)}</li>`;
+        }).join('');
+
+        const invalidItems = (data.invalid_rows || []).map(item => {
+            const code = item.code ? ` (${item.code})` : '';
+            return `<li>Riga ${escapeHtml(item.line)}${escapeHtml(code)}: ${escapeHtml(item.reason)}</li>`;
+        }).join('');
+
+        resultBox.classList.remove('d-none');
+        resultBox.innerHTML = `
+            <div class="alert alert-success mb-3">
+                <strong>${escapeHtml(data.message || 'Import completato.')}</strong><br>
+                Inseriti: ${parseInt(data.inserted_count || 0, 10)}.
+                Duplicati: ${parseInt(data.duplicate_count || 0, 10)}.
+                Scartati: ${parseInt(data.invalid_count || 0, 10)}.
+            </div>
+            ${duplicateItems ? `<div class="import-result-section"><div class="fw-semibold mb-1">Duplicati non inseriti</div><ul class="mb-0">${duplicateItems}</ul></div>` : ''}
+            ${invalidItems ? `<div class="import-result-section mt-3"><div class="fw-semibold mb-1">Righe scartate</div><ul class="mb-0">${invalidItems}</ul></div>` : ''}
+        `;
+    }
+
+    function bindAmazonImportCsv() {
+        const btnOpen = document.getElementById('btnOpenAmazonImportModal');
+        const btnSubmit = document.getElementById('btnSubmitAmazonImportCsv');
+        const fileInput = document.getElementById('amazonImportCsvFile');
+        const resultBox = document.getElementById('amazonImportCsvResult');
+        const modalEl = document.getElementById('modalAmazonImportCsv');
+
+        if (btnOpen && modalEl && btnOpen.dataset.bound !== '1') {
+            btnOpen.dataset.bound = '1';
+            btnOpen.addEventListener('click', () => {
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+
+                if (resultBox) {
+                    resultBox.classList.add('d-none');
+                    resultBox.innerHTML = '';
+                }
+
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            });
+        }
+
+        if (!btnSubmit || !fileInput || btnSubmit.dataset.bound === '1') {
+            return;
+        }
+
+        btnSubmit.dataset.bound = '1';
+        btnSubmit.addEventListener('click', () => {
+            if (!fileInput.files.length) {
+                showToast('Seleziona un file CSV da importare.', 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('csv_file', fileInput.files[0]);
+
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Importazione...';
+
+            fetch(premiPanelImportAmazonCsvUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+                body: formData,
+            })
+            .then(res => res.json())
+            .then(data => {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="bi bi-upload me-1"></i> Importa';
+
+                if (!data.success) {
+                    showToast(data.message || 'Errore durante l\'import CSV.', 'error');
+                    renderAmazonImportResult(data);
+                    return;
+                }
+
+                renderAmazonImportResult(data);
+                reloadPremiPanelData();
+                showToast(
+                    `Import completato. Inseriti: ${parseInt(data.inserted_count || 0, 10)}. Duplicati: ${parseInt(data.duplicate_count || 0, 10)}.`,
+                    data.duplicate_count > 0 || data.invalid_count > 0 ? 'warning' : 'success'
+                );
+            })
+            .catch(() => {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<i class="bi bi-upload me-1"></i> Importa';
+                showToast('Errore di connessione durante l\'import CSV.', 'error');
+            });
+        });
+    }
+
 function bindAmazonBulkConfirmButton() {
     const btnConfirmAmazonBulkPay = document.getElementById('btnConfirmAmazonBulkPay');
 
@@ -764,6 +923,7 @@ bindTableDelegatedActions();
 bindFilterButtons();
 bindAmazonBulkPayButton();
 bindAmazonBulkConfirmButton();
+bindAmazonImportCsv();
 initTooltips();
 });
 </script>

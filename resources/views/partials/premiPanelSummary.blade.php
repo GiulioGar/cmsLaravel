@@ -118,9 +118,21 @@
         ============================ --}}
         @if($type === 'amazon')
             <div class="summary-section">
-<div class="summary-section-title">
-    <i class="bi bi-box-seam"></i>
-    Premi disponibili
+<div class="summary-section-title summary-section-title-with-action">
+    <span>
+        <i class="bi bi-box-seam"></i>
+        Premi disponibili
+    </span>
+    <button
+        type="button"
+        class="summary-icon-action"
+        id="btnOpenAmazonImportModal"
+        data-bs-toggle="tooltip"
+        data-bs-placement="top"
+        title="Importa CSV Amazon"
+    >
+        <i class="bi bi-cloud-arrow-up-fill"></i>
+    </button>
 </div>
 
                 <div class="table-responsive">

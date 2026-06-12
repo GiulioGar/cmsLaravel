@@ -12,8 +12,7 @@ class PremiPanelController extends Controller
 
 public function index(Request $request)
 {
-    $type = strtolower($request->get('type', 'amazon'));
-    $status = $request->get('status', '0');
+    list($type, $status) = $this->normalizeFilters($request);
 
     $data = $this->buildPanelData($type, $status);
 
@@ -22,8 +21,7 @@ public function index(Request $request)
 
 public function data(Request $request)
 {
-    $type = strtolower($request->get('type', 'amazon'));
-    $status = $request->get('status', '0');
+    list($type, $status) = $this->normalizeFilters($request);
 
     $data = $this->buildPanelData($type, $status);
 
@@ -38,8 +36,7 @@ return response()->json([
 
 public function summary(Request $request)
 {
-    $type = strtolower($request->get('type', 'amazon'));
-    $status = $request->get('status', '0');
+    list($type, $status) = $this->normalizeFilters($request);
 
     $data = $this->buildPanelData($type, $status);
 
@@ -343,6 +340,22 @@ return [
         'current_year' => $currentYear,
     ],
     ];
+}
+
+private function normalizeFilters(Request $request): array
+{
+    $type = strtolower((string) $request->get('type', 'amazon'));
+    $status = (string) $request->get('status', '0');
+
+    if (!in_array($type, ['amazon', 'paypal'], true)) {
+        $type = 'amazon';
+    }
+
+    if (!in_array($status, ['0', '1'], true)) {
+        $status = '0';
+    }
+
+    return [$type, $status];
 }
 
 private function extractPremioLabel($eventInfo, $type)
@@ -785,6 +798,162 @@ public function bulkPayAmazon(Request $request)
             'message' => 'Errore durante il pagamento massivo Amazon.',
         ], 500);
     }
+}
+
+public function importAmazonCsv(Request $request)
+{
+    $request->validate([
+        'csv_file' => 'required|file|mimes:csv,txt|max:5120',
+    ]);
+
+    try {
+        $file = $request->file('csv_file');
+        $handle = fopen($file->getRealPath(), 'r');
+
+        if (!$handle) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File CSV non leggibile.',
+            ], 422);
+        }
+
+        $rows = [];
+        $duplicates = [];
+        $invalidRows = [];
+        $seenCodes = [];
+        $lineNumber = 0;
+
+        while (($data = fgetcsv($handle, 0, ';')) !== false) {
+            $lineNumber++;
+
+            if ($lineNumber === 1) {
+                continue;
+            }
+
+            if (count($data) === 1 && trim((string) $data[0]) === '') {
+                continue;
+            }
+
+            if (count($data) < 5) {
+                $invalidRows[] = [
+                    'line' => $lineNumber,
+                    'reason' => 'Numero colonne non valido.',
+                ];
+                continue;
+            }
+
+            $sequence = trim((string) $data[0]);
+            $code = trim((string) $data[1]);
+            $value = $this->parseAmazonCsvValue($data[2]);
+            $expiry = trim((string) $data[3]);
+            $serial = trim((string) $data[4]);
+
+            if ($sequence === '' || $code === '' || $serial === '' || $expiry === '' || !in_array($value, [2, 5, 10, 20], true)) {
+                $invalidRows[] = [
+                    'line' => $lineNumber,
+                    'code' => $code,
+                    'reason' => 'Sequenza, codice, valore, scadenza o seriale non valido.',
+                ];
+                continue;
+            }
+
+            if (isset($seenCodes[$code])) {
+                $duplicates[] = [
+                    'line' => $lineNumber,
+                    'code' => $code,
+                    'reason' => 'Duplicato nel CSV.',
+                ];
+                continue;
+            }
+
+            $seenCodes[$code] = true;
+
+            $rows[] = [
+                'sequenza' => $sequence,
+                'codice' => $code,
+                'valore' => $value,
+                'scadenza' => $expiry,
+                'seriale' => $serial,
+                'status' => 'disponibile',
+                'user' => null,
+                'pagamento' => null,
+            ];
+        }
+
+        fclose($handle);
+
+        if (empty($rows)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nessun codice valido da importare.',
+                'inserted_count' => 0,
+                'duplicate_count' => count($duplicates),
+                'invalid_count' => count($invalidRows),
+                'duplicates' => $duplicates,
+                'invalid_rows' => $invalidRows,
+            ], 422);
+        }
+
+        $codes = array_column($rows, 'codice');
+        $existingCodes = DB::table('t_premidb')
+            ->whereIn('codice', $codes)
+            ->pluck('codice')
+            ->map(function ($code) {
+                return (string) $code;
+            })
+            ->all();
+
+        $existingMap = array_flip($existingCodes);
+        $insertRows = [];
+
+        foreach ($rows as $row) {
+            if (isset($existingMap[$row['codice']])) {
+                $duplicates[] = [
+                    'code' => $row['codice'],
+                    'reason' => 'Codice già presente in archivio.',
+                ];
+                continue;
+            }
+
+            $insertRows[] = $row;
+        }
+
+        if (!empty($insertRows)) {
+            DB::transaction(function () use ($insertRows) {
+                foreach (array_chunk($insertRows, 500) as $chunk) {
+                    DB::table('t_premidb')->insert($chunk);
+                }
+            });
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Import CSV completato.',
+            'inserted_count' => count($insertRows),
+            'duplicate_count' => count($duplicates),
+            'invalid_count' => count($invalidRows),
+            'duplicates' => array_slice($duplicates, 0, 50),
+            'invalid_rows' => array_slice($invalidRows, 0, 50),
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Errore import CSV Amazon premiPanel: ' . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Errore durante l\'import del CSV Amazon.',
+        ], 500);
+    }
+}
+
+private function parseAmazonCsvValue($value)
+{
+    $value = str_replace(',', '.', (string) $value);
+
+    if (preg_match('/(\d+(?:\.\d+)?)/', $value, $matches)) {
+        return (int) round((float) $matches[1]);
+    }
+
+    return null;
 }
 
 public function downloadExport($filename)

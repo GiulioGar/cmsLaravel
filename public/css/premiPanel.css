@@ -2,6 +2,48 @@ body {
     background: #f8fafc;
 }
 
+.import-result {
+    max-height: 280px;
+    overflow: auto;
+}
+
+.import-result-section {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 0.85rem 1rem;
+}
+
+.summary-section-title-with-action {
+    justify-content: space-between;
+}
+
+.summary-section-title-with-action span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.summary-icon-action {
+    width: 32px;
+    height: 32px;
+    border: 1px solid rgba(255, 98, 0, 0.25);
+    border-radius: 8px;
+    background: rgba(255, 98, 0, 0.08);
+    color: var(--amazon-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.18s ease;
+}
+
+.summary-icon-action:hover {
+    background: var(--amazon-color);
+    border-color: var(--amazon-color);
+    color: #ffffff;
+}
+
 .card {
     border: 1px solid #e5e7eb;
     border-radius: 16px;

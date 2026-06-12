@@ -168,6 +168,8 @@ Route::middleware(['auth.custom'])->group(function () {
     ->name('premi.panel.paypal.note');
     Route::post('/premi-panel/amazon/bulk-pay', [PremiPanelController::class, 'bulkPayAmazon'])
     ->name('premi.panel.amazon.bulk.pay');
+    Route::post('/premi-panel/amazon/import-csv', [PremiPanelController::class, 'importAmazonCsv'])
+    ->name('premi.panel.amazon.import.csv');
     Route::get('/premi-panel/download-export/{filename}', [PremiPanelController::class, 'downloadExport'])
     ->name('premi.panel.download.export');
     Route::get('/premi-panel/paypal/export-missing-email', [PremiPanelController::class, 'exportPaypalMissingEmail'])

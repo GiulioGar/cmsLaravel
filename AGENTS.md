@@ -26,6 +26,14 @@ File .sre:
 - Se presente, gli indici dei campi vanno scalati.
 - Campi principali: prj, sid, iid, uid, data inizio, data fine, durata, status, ultima domanda.
 
+Premi panel:
+- La tabella premi Amazon e' `t_premidb`.
+- Campi usati per import CSV Amazon: `sequenza`, `codice`, `valore`, `scadenza`, `seriale`, `status`, `user`, `pagamento`.
+- CSV Amazon atteso con separatore `;`: Sequenza, Codice, Valore, Scadenza, Numero di serie.
+- Il valore CSV puo' arrivare come `EUR 2,00` e viene convertito in intero.
+- I codici importati devono entrare con `status = disponibile`, `user = null`, `pagamento = null`.
+- I duplicati non devono essere inseriti e vanno segnalati.
+
 ## Codex usage rules
 
 - Do not scan the entire repository unless explicitly requested.
