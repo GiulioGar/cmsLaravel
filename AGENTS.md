@@ -47,3 +47,24 @@ Premi panel:
 - Do not use PHP 8 syntax.
 - Do not modify .env files.
 - Do not modify storage/logs or cache files.
+
+## Performance and Context Rules
+
+- Never scan the entire repository unless explicitly requested.
+- Never perform architecture reviews unless explicitly requested.
+- Prefer reading only files mentioned in the prompt.
+- If additional files are needed, explain why before reading them.
+- Keep responses concise.
+- Prefer summaries over detailed reports.
+- For analysis tasks, inspect only the minimum number of files required.
+- Do not inspect vendor/, node_modules/, storage/, bootstrap/cache/, public/build/ unless explicitly requested.
+- When resuming a session, use git history and current branch status instead of re-analysing the entire project.
+- Before opening large controllers (>500 lines), confirm they are required for the task.
+- Do not search unrelated controllers or views.
+
+## Response Style
+
+- Keep answers concise.
+- Prefer bullet points.
+- Do not generate long reports unless requested.
+- Summarize findings in less than 10 bullet points when possible.

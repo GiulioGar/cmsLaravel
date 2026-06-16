@@ -183,11 +183,16 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
     $interviews = $sreService->buildInterviewDataset($files, $prj, $sid);
 
     $panelExportConfig = $this->getPanelExportConfig($panelName);
+    $configVariables = $sreService->getConfigRedirectVariables(
+        $prj,
+        $sid,
+        $panelExportConfig->panel_code ?? null
+    );
 
     $safePanelName = preg_replace('/[^A-Za-z0-9_\-]/', '_', $panelName);
     $fileName = "download_{$safePanelName}_{$prj}_{$sid}.csv";
 
-    $response = new StreamedResponse(function () use ($interviews, $panelName, $panelExportConfig, $prj, $sid, $sreService) {
+    $response = new StreamedResponse(function () use ($interviews, $panelName, $panelExportConfig, $configVariables, $prj, $sid, $sreService) {
 
         $handle = fopen('php://output', 'w');
 
@@ -205,6 +210,12 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
                 if ($fieldName !== '') {
                     $extraFields[] = $fieldName;
                 }
+            }
+        }
+
+        foreach ($configVariables as $variableName) {
+            if (!in_array($variableName, $extraFields, true)) {
+                $extraFields[] = $variableName;
             }
         }
 
@@ -237,7 +248,7 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
             $extraValues = [];
 
             foreach ($extraFields as $fieldName) {
-                $fieldValue = $sreService->extractTaggedFieldValue($raw, $fieldName);
+                $fieldValue = $sreService->resolveDownloadFieldValue($interview, $fieldName, $prj, $sid);
 
                 if ($fieldValue === 'N/A') {
                     $fieldValue = 'N.D.';

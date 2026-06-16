@@ -41,6 +41,88 @@ class FieldControlSreService
         return is_array($files) ? $files : [];
     }
 
+    public function resolveResourcesDirectory(string $prj, string $sid): ?string
+    {
+        $serverDirectory = "/var/imr/fields/{$prj}/{$sid}/resources";
+        if (is_dir($serverDirectory)) {
+            return $serverDirectory;
+        }
+
+        $localDirectory = base_path("var/imr/fields/{$prj}/{$sid}/resources");
+        if (is_dir($localDirectory)) {
+            return $localDirectory;
+        }
+
+        return null;
+    }
+
+    public function getConfigRedirectVariables(string $prj, string $sid, $panelCode): array
+    {
+        if ($panelCode === null || $panelCode === '') {
+            return [];
+        }
+
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return [];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return [];
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return [];
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config)) {
+            return [];
+        }
+
+        $redirections = $config['interview']['production']['redirections'] ?? [];
+        if (!is_array($redirections)) {
+            return [];
+        }
+
+        $variables = [];
+
+        foreach ($redirections as $redirection) {
+            if (!is_array($redirection)) {
+                continue;
+            }
+
+            if (($redirection['parameter_name'] ?? null) !== 'pan') {
+                continue;
+            }
+
+            if ((string) ($redirection['parameter_value'] ?? '') !== (string) $panelCode) {
+                continue;
+            }
+
+            $redirectTo = (string) ($redirection['redirect_to'] ?? '');
+            if ($redirectTo === '') {
+                continue;
+            }
+
+            preg_match_all('/\$\(([^)]+)\)/', $redirectTo, $matches);
+
+            foreach ($matches[1] as $variableName) {
+                $variableName = trim((string) $variableName);
+
+                if ($variableName === '') {
+                    continue;
+                }
+
+                $variables[$variableName] = $variableName;
+            }
+        }
+
+        return array_values($variables);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | PARSING
@@ -423,6 +505,31 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
             }
         }
         return 'N/A';
+    }
+
+    public function resolveDownloadFieldValue(array $interview, string $fieldKey, string $prj, string $sid): string
+    {
+        $value = $this->extractTaggedFieldValue($interview['raw'], $fieldKey);
+
+        if ($value !== 'N/A') {
+            return $value;
+        }
+
+        switch ($fieldKey) {
+            case 'uid':
+            case 'sysUID':
+                return isset($interview['uid']) ? (string) $interview['uid'] : 'N/A';
+            case 'iid':
+                return isset($interview['iid']) ? (string) $interview['iid'] : 'N/A';
+            case 'prj':
+            case 'mioprj':
+                return $prj;
+            case 'sid':
+            case 'miosid':
+                return $sid;
+            default:
+                return 'N/A';
+        }
     }
 
     /*

@@ -57,6 +57,10 @@ function initCharts() {
         return;
     }
 
+    const maxVisibleFiltrateRows = 7;
+    const rowHeight = 44;
+    const chartVerticalPadding = 36;
+
     if (typeof ChartDataLabels !== 'undefined') {
         Chart.register(ChartDataLabels);
     }
@@ -105,6 +109,18 @@ function initCharts() {
             return;
         }
 
+        const canvasWrapper = canvas.parentElement;
+        const visibleRows = Math.min(labels.length || 1, maxVisibleFiltrateRows);
+        const canvasHeight = Math.max(220, (visibleRows * rowHeight) + chartVerticalPadding);
+        const scrollHeight = (labels.length * rowHeight) + chartVerticalPadding;
+
+        if (canvasWrapper) {
+            canvasWrapper.style.height = canvasHeight + 'px';
+            canvasWrapper.style.overflowY = labels.length > maxVisibleFiltrateRows ? 'auto' : 'hidden';
+        }
+
+        canvas.height = scrollHeight;
+
         new Chart(canvas, {
             type: 'bar',
             data: {
@@ -120,6 +136,7 @@ function initCharts() {
                 }]
             },
             options: {
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 layout: {
@@ -250,6 +267,19 @@ function initCharts() {
                             callback: function (value, index) {
                                 return labels[index] || '';
                             }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            autoSkip: false
                         }
                     }
                 }

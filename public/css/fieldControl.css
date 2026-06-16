@@ -1000,11 +1000,27 @@ h3 {font-size: 15px!important;}
 
 /* link base */
 .fc-side-link{
+  display: flex;
+  align-items: flex-start;
+  gap: .45rem;
+  width: 100%;
   border-radius: 10px !important;
   padding: .48rem .55rem !important;
   font-weight: 800;
   font-size: .84rem;
+  line-height: 1.2;
   padding-right: .8rem !important;
+}
+
+.fc-side-link .fc-panel-tab-icon{
+  flex: 0 0 auto;
+  margin-top: .08rem;
+}
+
+.fc-side-link-label{
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* icons subtle */
@@ -1169,6 +1185,9 @@ h3 {font-size: 15px!important;}
 .fc-chart-canvas{
   height: 280px;          /* stabile */
   position: relative;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  padding-right: .2rem;
 }
 
 /* responsive: più alto su mobile */

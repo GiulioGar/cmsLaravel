@@ -410,19 +410,19 @@
                             @if(count($panelCounts) > 1)
                             @foreach ($panelCounts as $panelName => $panelData)
                                 <li class="nav-item">
-                                    <a class="nav-link fc-side-link" id="tab{{ $loop->index + 2 }}-tab" data-bs-toggle="pill" href="#tab{{ $loop->index + 2 }}">
+                                    <a class="nav-link fc-side-link" id="tab{{ $loop->index + 2 }}-tab" data-bs-toggle="pill" href="#tab{{ $loop->index + 2 }}" title="{{ $panelName }}">
                                        @if($panelName === 'Interactive')
                                         <span class="fc-panel-tab-icon fc-panel-interactive">
                                             <i class="fa-solid fa-users"></i>
                                         </span>
-                                        <span>{{ $panelName }}</span>
+                                        <span class="fc-side-link-label">{{ $panelName }}</span>
                                     @elseif($panelName === 'Da lista')
                                         <span class="fc-panel-tab-icon fc-panel-lista"
                                             data-bs-toggle="tooltip"
                                             title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
                                             <i class="fa-solid fa-list-ul"></i>
                                         </span>
-                                        <span data-bs-toggle="tooltip"
+                                        <span class="fc-side-link-label" data-bs-toggle="tooltip"
                                             title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
                                             {{ $panelName }}
                                         </span>
@@ -430,7 +430,7 @@
                                         <span class="fc-panel-tab-icon fc-panel-external">
                                             <i class="fa-solid fa-building-user"></i>
                                         </span>
-                                        <span>{{ $panelName }}</span>
+                                        <span class="fc-side-link-label">{{ $panelName }}</span>
                                     @endif
                                     </a>
                                 </li>
