@@ -151,6 +151,7 @@ class FieldControlSreService
             'duration' => (int) $this->getSreValue($data, $columns['duration'], 0),
             'status_code' => (int) $this->getSreValue($data, $columns['status'], -1),
             'last_question_code' => (int) $this->getSreValue($data, $columns['last_question_code'], 0),
+            'last_file_question_code' => $this->extractLastQuestionCodeFromFile($file),
         ];
     }
 
@@ -337,21 +338,24 @@ class FieldControlSreService
     $logData = [];
 
     foreach ($interviews as $interview) {
-        $questionId = (int) $interview['last_question_code'];
+        $systemQuestionHtml = $this->buildQuestionTooltipHtml(
+            (int) $interview['last_question_code'],
+            $questionMap,
+            'Ultima domanda da sistema'
+        );
 
-        $questionDetails = $questionMap[$questionId] ?? [
-            'code' => 'N/A',
-            'text' => 'Domanda non trovata',
-        ];
-
-        $questionCode = e($questionDetails['code']);
-        $questionText = e($questionDetails['text']);
+        $fileQuestionHtml = $this->buildQuestionTooltipHtml(
+            (int) ($interview['last_file_question_code'] ?? 0),
+            $questionMap,
+            'Ultima domanda nel File Dati'
+        );
 
         $logData[] = [
             'iid' => $interview['iid'],
             'uid' => $interview['uid'],
-            'ultimo_update' => $interview['end_date'],
-            'ultima_azione' => "<span data-bs-toggle='tooltip' title='{$questionText}'>{$questionCode}</span>",
+            'ultimo_update' => $this->formatLogUpdateHtml($interview['end_date']),
+            'ultima_azione_sistema' => $systemQuestionHtml,
+            'ultima_azione_file' => $fileQuestionHtml,
             'stato' => $statusMap[$interview['status_code']] ?? 'Sconosciuto',
             'durata' => $this->formatDuration((int) $interview['duration']),
         ];
@@ -610,6 +614,81 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
     private function getSreValue(array $data, ?int $index, $default = 'N/A')
     {
         return $index !== null ? ($data[$index] ?? $default) : $default;
+    }
+
+    private function extractLastQuestionCodeFromFile(string $file): int
+    {
+        if (!is_readable($file)) {
+            return 0;
+        }
+
+        $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+        if (!is_array($lines) || count($lines) < 2) {
+            return 0;
+        }
+
+        for ($i = count($lines) - 1; $i >= 1; $i--) {
+            $line = trim((string) $lines[$i]);
+
+            if ($line === '') {
+                continue;
+            }
+
+            $parts = explode(';', $line);
+            $questionCode = isset($parts[1]) ? trim((string) $parts[1]) : '';
+
+            if ($questionCode !== '' && is_numeric($questionCode)) {
+                return (int) $questionCode;
+            }
+        }
+
+        return 0;
+    }
+
+    private function buildQuestionTooltipHtml(int $questionId, array $questionMap, string $tooltipPrefix): string
+    {
+        $questionDetails = $questionMap[$questionId] ?? [
+            'code' => 'N/A',
+            'text' => 'Domanda non trovata',
+        ];
+
+        $questionCode = e($questionDetails['code']);
+        $questionText = e($questionDetails['text']);
+        $tooltipTitle = '<div class="fc-question-tooltip-content">'
+            . '<div class="fc-question-tooltip-label">' . e($tooltipPrefix) . '</div>'
+            . '<div class="fc-question-tooltip-divider"></div>'
+            . '<div class="fc-question-tooltip-text">' . $questionText . '</div>'
+            . '</div>';
+
+        return "<span data-bs-toggle='tooltip' data-bs-html='true' data-bs-custom-class='fc-question-tooltip' title='{$tooltipTitle}'>{$questionCode}</span>";
+    }
+
+    private function formatLogUpdateHtml($rawDate): string
+    {
+        $date = trim((string) $rawDate);
+
+        if ($date === '' || strtoupper($date) === 'N/A') {
+            return 'N/A';
+        }
+
+        $parsedDate = $this->parseDateToCarbon($date);
+
+        if ($parsedDate instanceof Carbon) {
+            return e($parsedDate->format('d/m/Y')) . '<br><small class="text-muted">' . e($parsedDate->format('H:i:s')) . '</small>';
+        }
+
+        $cleanDate = trim(str_replace(array(' CET', ' CEST'), '', $date));
+        $parts = preg_split('/\s+/', $cleanDate);
+
+        if (is_array($parts) && count($parts) >= 2) {
+            $time = array_pop($parts);
+            $onlyDate = implode(' ', $parts);
+
+            return e($onlyDate) . '<br><small class="text-muted">' . e($time) . '</small>';
+        }
+
+        return e($cleanDate);
     }
 
     private function extractSreFileNumber(string $file): int

@@ -511,11 +511,51 @@ h3 {font-size: 15px!important;}
     color: #fff !important;
     font-weight: 500;
   }
+
+  .fc-question-tooltip .tooltip-inner {
+    background-color: #1f2937 !important;
+    color: #ffffff !important;
+    text-align: left;
+    max-width: 320px;
+    padding: 10px 12px;
+  }
+
+  .fc-question-tooltip-content {
+    text-align: left;
+  }
+
+  .fc-question-tooltip-label {
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .fc-question-tooltip-divider {
+    border-top: 1px solid rgba(255, 255, 255, 0.28);
+    margin: 0 0 6px 0;
+  }
+
+  .fc-question-tooltip-text {
+    color: #fde68a;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.45;
+  }
+
   .bs-tooltip-auto[x-placement^=top] .tooltip-arrow::before,
   .bs-tooltip-auto[x-placement^=bottom] .tooltip-arrow::before,
   .bs-tooltip-auto[x-placement^=left] .tooltip-arrow::before,
   .bs-tooltip-auto[x-placement^=right] .tooltip-arrow::before {
     background-color: #222E3C !important;
+  }
+
+  .fc-question-tooltip.bs-tooltip-auto[x-placement^=top] .tooltip-arrow::before,
+  .fc-question-tooltip.bs-tooltip-auto[x-placement^=bottom] .tooltip-arrow::before,
+  .fc-question-tooltip.bs-tooltip-auto[x-placement^=left] .tooltip-arrow::before,
+  .fc-question-tooltip.bs-tooltip-auto[x-placement^=right] .tooltip-arrow::before,
+  .fc-question-tooltip .tooltip-arrow::before {
+    background-color: #1f2937 !important;
   }
 
   /* =========================

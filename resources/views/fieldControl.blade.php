@@ -1079,12 +1079,16 @@
                         <table class="table table-sm table-bordered table-hover text-center">
                             <thead class="sticky-header-log bg-secondary text-white">
                                 <tr>
-                                    <th class="small">IID</th>
-                                    <th class="small">UID</th>
-                                    <th class="small">Ultimo Update</th>
-                                    <th class="small">Ultima Azione</th>
-                                    <th class="small">Stato</th>
-                                    <th class="small">Durata</th>
+                                    <th class="small" rowspan="2">IID</th>
+                                    <th class="small" rowspan="2">UID</th>
+                                    <th class="small" rowspan="2">Ultimo Update</th>
+                                    <th class="small" colspan="2">Ultima Azione</th>
+                                    <th class="small" rowspan="2">Stato</th>
+                                    <th class="small" rowspan="2">Durata</th>
+                                </tr>
+                                <tr>
+                                    <th class="small">Sistema</th>
+                                    <th class="small">File</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1092,23 +1096,38 @@
                                     <tr class="align-middle">
                                         <td class="small">{{ $log['iid'] }}</td>
                                         <td class="small">{{ $log['uid'] }}</td>
-                                        <td class="small">{{ $log['ultimo_update'] }}</td>
+                                        <td class="small">{!! $log['ultimo_update'] !!}</td>
                                         <td class="small">
-                                            {!! $log['ultima_azione'] !!}
+                                            {!! $log['ultima_azione_sistema'] !!}
+                                        </td>
+                                        <td class="small">
+                                            {!! $log['ultima_azione_file'] !!}
                                         </td>
                                         <td class="small">
                                             @if ($log['stato'] === 'Completa')
-                                                <span style="font-size: 10px" class="badge bg-success"><i class="fas fa-check-circle"></i> {{ $log['stato'] }}</span>
+                                                <span data-bs-toggle="tooltip" title="Completa">
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                </span>
                                             @elseif ($log['stato'] === 'Non in target')
-                                                <span style="font-size: 10px" class="badge bg-danger"><i class="fas fa-times-circle"></i> {{ $log['stato'] }}</span>
+                                                <span data-bs-toggle="tooltip" title="Non in target">
+                                                    <i class="fas fa-times-circle text-danger"></i>
+                                                </span>
                                             @elseif ($log['stato'] === 'Quotafull')
-                                                <span style="font-size: 10px" class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle"></i> {{ $log['stato'] }}</span>
+                                                <span data-bs-toggle="tooltip" title="Quotafull">
+                                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                                </span>
                                             @elseif ($log['stato'] === 'In Corso')
-                                                <span style="font-size: 10px" class="badge bg-primary"><i class="fas fa-hourglass-half"></i> {{ $log['stato'] }}</span>
+                                                <span data-bs-toggle="tooltip" title="In Corso">
+                                                    <i class="fas fa-hourglass-half text-primary"></i>
+                                                </span>
                                             @elseif ($log['stato'] === 'Bloccata')
-                                                <span style="font-size: 10px" class="badge bg-dark"><i class="fas fa-ban"></i> {{ $log['stato'] }}</span>
+                                                <span data-bs-toggle="tooltip" title="Bloccata">
+                                                    <i class="fas fa-ban text-dark"></i>
+                                                </span>
                                             @else
-                                                <span style="font-size: 10px" class="badge bg-secondary">{{ $log['stato'] }}</span>
+                                                <span data-bs-toggle="tooltip" title="{{ $log['stato'] }}">
+                                                    <i class="fas fa-circle text-secondary"></i>
+                                                </span>
                                             @endif
                                         </td>
                                         <td class="small">{{ $log['durata'] }}</td>
