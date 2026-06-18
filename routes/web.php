@@ -207,6 +207,8 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::get('/referral/{refUserId}/detail', [ReferralController::class, 'detail'])->name('referral.detail');
     Route::post('/referral/remove', [ReferralController::class, 'removeReferral'])->name('referral.remove');
     Route::post('/referral/assign-bonus', [ReferralController::class, 'assignBonus'])->name('referral.assignBonus');
+    Route::post('/referral/welcome-bonus/check', [ReferralController::class, 'checkWelcomeReferralBonus'])->name('referral.welcomeBonus.check');
+    Route::post('/referral/welcome-bonus/pay', [ReferralController::class, 'payWelcomeReferralBonus'])->name('referral.welcomeBonus.pay');
         Route::get('/referral/export/new', [ReferralController::class, 'exportNewInvites'])->name('referral.export.new');
     Route::get('/referral/export/all', [ReferralController::class, 'exportAllInvites'])->name('referral.export.all');
         Route::get('/referral/export/report', [ReferralController::class, 'exportBonusReport'])->name('referral.export.report');

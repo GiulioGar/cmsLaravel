@@ -438,6 +438,114 @@ class ReferralController extends Controller
         ]);
     }
 
+    public function checkWelcomeReferralBonus()
+    {
+        $eligibleUsers = $this->getWelcomeReferralEligibleUsers();
+
+        return response()->json([
+            'success' => true,
+            'count' => $eligibleUsers->count(),
+            'total_points' => $eligibleUsers->count() * 500,
+            'users' => $eligibleUsers->map(function ($user) {
+                return [
+                    'user_id' => (string) $user->user_id,
+                    'email' => (string) ($user->email ?? ''),
+                    'provenienza' => (string) ($user->provenienza ?? ''),
+                    'referrer_email' => (string) ($user->referrer_email ?? ''),
+                    'points' => (int) ($user->points ?? 0),
+                    'tag' => (string) ($user->tag ?? ''),
+                ];
+            })->values(),
+        ]);
+    }
+
+    public function payWelcomeReferralBonus()
+    {
+        $eligibleUsers = $this->getWelcomeReferralEligibleUsers();
+
+        if ($eligibleUsers->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nessun utente eleggibile per il bonus welcome referral.',
+            ], 422);
+        }
+
+        $paidUsers = [];
+        $paidCount = 0;
+        $totalAssigned = 0;
+
+        DB::transaction(function () use ($eligibleUsers, &$paidUsers, &$paidCount, &$totalAssigned) {
+            foreach ($eligibleUsers as $eligibleUser) {
+                $user = DB::table('t_user_info')
+                    ->select('user_id', 'points', 'tag', 'active')
+                    ->where('user_id', $eligibleUser->user_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$user || (int) $user->active !== 1) {
+                    continue;
+                }
+
+                $currentTag = trim((string) ($user->tag ?? ''));
+                $tagParts = array_filter(array_map('trim', explode(';', $currentTag)));
+
+                if (in_array('wel500ref', $tagParts, true)) {
+                    continue;
+                }
+
+                $newPoints = (int) $user->points + 500;
+                $tagParts[] = 'wel500ref';
+                $newTag = implode(';', array_unique($tagParts));
+                if ($newTag !== '') {
+                    $newTag .= ';';
+                }
+
+                DB::table('t_user_info')
+                    ->where('user_id', $user->user_id)
+                    ->update([
+                        'points' => $newPoints,
+                        'tag' => $newTag,
+                    ]);
+
+                DB::table('t_user_history')->insert([
+                    'user_id' => $user->user_id,
+                    'event_date' => now(),
+                    'event_type' => 'Bonus',
+                    'event_info' => 'Bonus welcom referall',
+                    'prev_level' => (int) $user->points,
+                    'new_level' => $newPoints,
+                    'pagato' => 0,
+                ]);
+
+                $paidUsers[] = [
+                    'user_id' => (string) $user->user_id,
+                    'points' => $newPoints,
+                    'tag' => $newTag,
+                ];
+
+                $paidCount++;
+                $totalAssigned += 500;
+            }
+        });
+
+        if ($paidCount === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nessun utente pagato: bonus già assegnato o dati aggiornati da un altro processo.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $paidCount === 1
+                ? 'Bonus welcome referral assegnato correttamente.'
+                : 'Bonus welcome referral assegnato agli utenti eleggibili.',
+            'paid_count' => $paidCount,
+            'total_assigned' => $totalAssigned,
+            'users' => $paidUsers,
+        ]);
+    }
+
 
 
 
@@ -580,7 +688,7 @@ class ReferralController extends Controller
         ]);
     }
 
-        private function evaluateReferralEmail(string $email, string $referrerEmail = ''): array
+    private function evaluateReferralEmail(string $email, string $referrerEmail = ''): array
     {
         $email = trim($email);
         $lower = Str::lower($email);
@@ -676,6 +784,30 @@ class ReferralController extends Controller
             'label' => 'OK',
             'is_valid' => true,
         ];
+    }
+
+    private function getWelcomeReferralEligibleUsers()
+    {
+        return DB::table('t_user_info as invited')
+            ->join('t_user_info as referrer', 'referrer.user_id', '=', 'invited.provenienza')
+            ->where('invited.active', 1)
+            ->whereNotNull('invited.provenienza')
+            ->where('invited.provenienza', '<>', '')
+            ->where(function ($query) {
+                $query->whereNull('invited.tag')
+                    ->orWhere('invited.tag', '=', '')
+                    ->orWhere('invited.tag', 'not like', '%wel500ref%');
+            })
+            ->orderBy('invited.user_id')
+            ->select([
+                'invited.user_id',
+                'invited.email',
+                'invited.provenienza',
+                'invited.points',
+                'invited.tag',
+                'referrer.email as referrer_email',
+            ])
+            ->get();
     }
 
 }

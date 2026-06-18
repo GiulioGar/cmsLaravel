@@ -51,6 +51,13 @@
                     >
                         <i class="bi bi-arrow-repeat me-1"></i>Aggiorna maturato
                     </button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-success"
+                        id="btnCheckWelcomeReferral"
+                    >
+                        <i class="bi bi-gift me-1"></i>Verifica bonus welcome
+                    </button>
 
                 </div>
             </div>
@@ -439,6 +446,55 @@
     </div>
 </div>
 
+<div class="modal fade" id="welcomeReferralBonusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title">Bonus welcome referral</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-light border mb-3">
+                    <div><strong>Utenti da pagare:</strong> <span id="welcomeReferralEligibleCount">0</span></div>
+                    <div><strong>Totale punti:</strong> <span id="welcomeReferralEligiblePoints">0</span></div>
+                </div>
+
+                <div id="welcomeReferralBonusMessage" class="mb-3"></div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>User ID</th>
+                                <th>Email</th>
+                                <th>Referrer</th>
+                                <th>Email referrer</th>
+                                <th>Points attuali</th>
+                            </tr>
+                        </thead>
+                        <tbody id="welcomeReferralBonusTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    Premi "Verifica bonus welcome" per caricare gli utenti eleggibili.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                <button type="button" class="btn btn-outline-dark" id="btnExportWelcomeReferral" disabled>
+                    <i class="bi bi-download me-1"></i>Esporta email;bytes
+                </button>
+                <button type="button" class="btn btn-success" id="btnPayWelcomeReferral" disabled>
+                    <i class="bi bi-cash-coin me-1"></i>Paga bonus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 2000">
     <div id="referralToastContainer"></div>
 </div>
@@ -491,6 +547,211 @@ document.addEventListener('DOMContentLoaded', () => {
     const removeUrl = @json(route('referral.remove'));
     const assignBonusUrl = @json(route('referral.assignBonus'));
     const recalculateMaturatoUrl = @json(route('referral.recalculateMaturato'));
+    const checkWelcomeReferralBonusUrl = @json(route('referral.welcomeBonus.check'));
+    const payWelcomeReferralBonusUrl = @json(route('referral.welcomeBonus.pay'));
+    let welcomeReferralEligibleUsers = [];
+    let welcomeReferralPaidUsers = [];
+
+    const welcomeReferralModalEl = document.getElementById('welcomeReferralBonusModal');
+    const welcomeReferralModalInstance = welcomeReferralModalEl
+        ? new bootstrap.Modal(welcomeReferralModalEl)
+        : null;
+    const welcomeReferralBonusTableBody = document.getElementById('welcomeReferralBonusTableBody');
+    const welcomeReferralEligibleCountEl = document.getElementById('welcomeReferralEligibleCount');
+    const welcomeReferralEligiblePointsEl = document.getElementById('welcomeReferralEligiblePoints');
+    const welcomeReferralBonusMessageEl = document.getElementById('welcomeReferralBonusMessage');
+    const payWelcomeReferralBtn = document.getElementById('btnPayWelcomeReferral');
+    const exportWelcomeReferralBtn = document.getElementById('btnExportWelcomeReferral');
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderWelcomeReferralEligibleUsers(users, totalPoints) {
+        const rows = Array.isArray(users) ? users : [];
+
+        if (welcomeReferralEligibleCountEl) {
+            welcomeReferralEligibleCountEl.textContent = rows.length;
+        }
+
+        if (welcomeReferralEligiblePointsEl) {
+            welcomeReferralEligiblePointsEl.textContent = totalPoints || 0;
+        }
+
+        if (payWelcomeReferralBtn) {
+            payWelcomeReferralBtn.disabled = rows.length === 0;
+        }
+
+        if (!welcomeReferralBonusTableBody) {
+            return;
+        }
+
+        if (rows.length === 0) {
+            welcomeReferralBonusTableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        Nessun utente eleggibile trovato.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        welcomeReferralBonusTableBody.innerHTML = rows.map(function (user) {
+            return `
+                <tr>
+                    <td>${escapeHtml(user.user_id)}</td>
+                    <td>${escapeHtml(user.email || '-')}</td>
+                    <td>${escapeHtml(user.provenienza || '-')}</td>
+                    <td>${escapeHtml(user.referrer_email || '-')}</td>
+                    <td>${parseInt(user.points || 0, 10)}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function setWelcomeReferralMessage(message, type) {
+        if (!welcomeReferralBonusMessageEl) {
+            return;
+        }
+
+        if (!message) {
+            welcomeReferralBonusMessageEl.innerHTML = '';
+            return;
+        }
+
+        const alertClass = type === 'error'
+            ? 'alert-danger'
+            : type === 'warning'
+                ? 'alert-warning'
+                : 'alert-success';
+
+        welcomeReferralBonusMessageEl.innerHTML = `
+            <div class="alert ${alertClass} py-2 mb-0">${escapeHtml(message)}</div>
+        `;
+    }
+
+    function refreshWelcomeReferralExportState() {
+        if (!exportWelcomeReferralBtn) {
+            return;
+        }
+
+        exportWelcomeReferralBtn.disabled = welcomeReferralPaidUsers.length === 0;
+    }
+
+    function exportWelcomeReferralPaidUsers() {
+        if (welcomeReferralPaidUsers.length === 0) {
+            showReferralToast('Nessun pagamento disponibile da esportare.', 'warning');
+            return;
+        }
+
+        const lines = ['email;bytes'];
+
+        welcomeReferralPaidUsers.forEach(function (user) {
+            if (!user || !user.email) {
+                return;
+            }
+
+            lines.push(user.email + ';500');
+        });
+
+        const csvContent = "\uFEFF" + lines.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = 'welcome_referral_bonus_' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '') + '.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    }
+
+    function checkWelcomeReferralBonus() {
+        return fetch(checkWelcomeReferralBonusUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({})
+        })
+        .then(async response => {
+            let data = null;
+
+            try {
+                data = await response.json();
+            } catch (e) {
+                throw new Error('Risposta non valida dal server.');
+            }
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Errore durante la verifica del bonus welcome referral.');
+            }
+
+            welcomeReferralPaidUsers = [];
+            refreshWelcomeReferralExportState();
+            welcomeReferralEligibleUsers = Array.isArray(data.users) ? data.users : [];
+            renderWelcomeReferralEligibleUsers(welcomeReferralEligibleUsers, parseInt(data.total_points || 0, 10));
+
+            if (welcomeReferralEligibleUsers.length > 0) {
+                setWelcomeReferralMessage('Utenti eleggibili trovati. Puoi procedere con il pagamento.', 'success');
+            } else {
+                setWelcomeReferralMessage('Nessun utente eleggibile da pagare.', 'warning');
+            }
+
+            if (welcomeReferralModalInstance) {
+                welcomeReferralModalInstance.show();
+            }
+
+            return data;
+        });
+    }
+
+    function payWelcomeReferralBonus() {
+        return fetch(payWelcomeReferralBonusUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({})
+        })
+        .then(async response => {
+            let data = null;
+
+            try {
+                data = await response.json();
+            } catch (e) {
+                throw new Error('Risposta non valida dal server.');
+            }
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Errore durante il pagamento del bonus welcome referral.');
+            }
+
+            welcomeReferralPaidUsers = Array.isArray(data.users)
+                ? data.users.filter(function (user) {
+                    return !!(user && user.email);
+                })
+                : [];
+            welcomeReferralEligibleUsers = [];
+            renderWelcomeReferralEligibleUsers([], 0);
+            refreshWelcomeReferralExportState();
+            setWelcomeReferralMessage(data.message || 'Bonus welcome referral assegnato correttamente.', 'success');
+            showReferralToast(data.message || 'Bonus welcome referral assegnato correttamente.', 'success');
+
+            return data;
+        });
+    }
 
 
     function initReferralTable() {
@@ -1092,6 +1353,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const checkAllEl = document.getElementById('referral-check-all');
     const bulkAssignBtn = document.getElementById('btnAssignSelected');
     const recalculateMaturatoBtn = document.getElementById('btnRecalculateMaturato');
+    const checkWelcomeReferralBtn = document.getElementById('btnCheckWelcomeReferral');
 
     if (checkAllEl) {
         checkAllEl.addEventListener('change', () => {
@@ -1155,7 +1417,55 @@ document.addEventListener('DOMContentLoaded', () => {
                 .finally(() => {
                     recalculateMaturatoBtn.disabled = false;
                     recalculateMaturatoBtn.innerHTML = originalHtml;
+            });
+        });
+    }
+
+    if (checkWelcomeReferralBtn) {
+        checkWelcomeReferralBtn.addEventListener('click', () => {
+            const originalHtml = checkWelcomeReferralBtn.innerHTML;
+            checkWelcomeReferralBtn.disabled = true;
+            checkWelcomeReferralBtn.innerHTML = '<i class="bi bi-search me-1"></i>Verifica...';
+            setWelcomeReferralMessage('', 'success');
+
+            checkWelcomeReferralBonus()
+                .catch(error => {
+                    setWelcomeReferralMessage(error.message || 'Errore durante la verifica del bonus welcome referral.', 'error');
+                    showReferralToast(error.message || 'Errore durante la verifica del bonus welcome referral.', 'error');
+                })
+                .finally(() => {
+                    checkWelcomeReferralBtn.disabled = false;
+                    checkWelcomeReferralBtn.innerHTML = originalHtml;
                 });
+        });
+    }
+
+    if (payWelcomeReferralBtn) {
+        payWelcomeReferralBtn.addEventListener('click', () => {
+            if (welcomeReferralEligibleUsers.length === 0) {
+                showReferralToast('Nessun utente eleggibile da pagare.', 'warning');
+                return;
+            }
+
+            if (!confirm(`Pagare 500 punti a ${welcomeReferralEligibleUsers.length} utenti?`)) {
+                return;
+            }
+
+            const originalHtml = payWelcomeReferralBtn.innerHTML;
+            payWelcomeReferralBtn.disabled = true;
+            payWelcomeReferralBtn.innerHTML = '<i class="bi bi-cash-coin me-1"></i>Pagamento...';
+
+            payWelcomeReferralBonus()
+                .finally(() => {
+                    payWelcomeReferralBtn.innerHTML = originalHtml;
+                    payWelcomeReferralBtn.disabled = welcomeReferralEligibleUsers.length === 0;
+                });
+        });
+    }
+
+    if (exportWelcomeReferralBtn) {
+        exportWelcomeReferralBtn.addEventListener('click', () => {
+            exportWelcomeReferralPaidUsers();
         });
     }
 
@@ -1178,6 +1488,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setActiveReferralFilterButton(currentFilterMode);
     applyReferralFilters();
     updateVisibleCount();
+    refreshWelcomeReferralExportState();
 
     detailModalEl.addEventListener('hidden.bs.modal', () => {
         currentOpenRef = null;
