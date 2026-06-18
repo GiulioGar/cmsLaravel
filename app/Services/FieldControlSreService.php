@@ -344,11 +344,14 @@ class FieldControlSreService
             'Ultima domanda da sistema'
         );
 
-        $fileQuestionHtml = $this->buildQuestionTooltipHtml(
-            (int) ($interview['last_file_question_code'] ?? 0),
-            $questionMap,
-            'Ultima domanda nel File Dati'
-        );
+        $lastFileQuestionCode = (int) ($interview['last_file_question_code'] ?? 0);
+        $fileQuestionHtml = $lastFileQuestionCode > 0
+            ? $this->buildQuestionTooltipHtml(
+                $lastFileQuestionCode,
+                $questionMap,
+                'Ultima domanda nel File Dati'
+            )
+            : 'empty';
 
         $logData[] = [
             'iid' => $interview['iid'],

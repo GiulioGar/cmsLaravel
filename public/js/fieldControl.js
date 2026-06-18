@@ -58,6 +58,8 @@ function initCharts() {
     }
 
     const maxVisibleFiltrateRows = 7;
+    const minPercentageForDenseLabels = 1;
+    const denseLabelsThreshold = 6;
     const rowHeight = 44;
     const chartVerticalPadding = 36;
 
@@ -101,6 +103,7 @@ function initCharts() {
 
             return (value / totalFiltrate) * 100;
         });
+        const hasDenseBars = labels.length > denseLabelsThreshold;
 
         const canvasId = 'chart-panel-' + buildPanelSlug(panelName);
         const canvas = document.getElementById(canvasId);
@@ -228,28 +231,40 @@ function initCharts() {
                     },
                     datalabels: {
                         display: function (context) {
-                            return context.dataset.data[context.dataIndex] > 0;
+                            const value = Number(context.dataset.data[context.dataIndex] || 0);
+                            const percentage = context.dataset.percentages
+                                ? Number(context.dataset.percentages[context.dataIndex] || 0)
+                                : 0;
+
+                            if (value <= 0) {
+                                return false;
+                            }
+
+                            if (hasDenseBars) {
+                                return percentage > minPercentageForDenseLabels;
+                            }
+
+                            return true;
                         },
-                        anchor: 'end',
-                        align: 'end',
-                        offset: -2,
+                        anchor: 'center',
+                        align: 'right',
+                        offset: -8,
                         clamp: true,
-                        clip: false,
-                        color: function (context) {
-                            return context.dataIndex % 2 === 0 ? '#111827' : '#15803d';
-                        },
+                        clip: true,
+                        color: '#1f2937',
+                        textAlign: 'right',
                         font: {
                             weight: '700',
                             size: 9
                         },
-                    formatter: function (value, context) {
-                        const dataset = context.dataset;
-                        const percentage = dataset.percentages
-                            ? dataset.percentages[context.dataIndex]
-                            : 0;
+                        formatter: function (value, context) {
+                            const dataset = context.dataset;
+                            const percentage = dataset.percentages
+                                ? dataset.percentages[context.dataIndex]
+                                : 0;
 
-                        return percentage.toFixed(1) + '% ';
-                    }
+                            return percentage.toFixed(1) + '%';
+                        }
                     }
                 },
                 scales: {

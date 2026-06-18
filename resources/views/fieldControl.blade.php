@@ -1380,5 +1380,5 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-<script src="{{ asset('js/fieldControl.js') }}"></script>
+<script src="{{ asset('js/fieldControl.js') }}?v={{ @filemtime(public_path('js/fieldControl.js')) }}"></script>
 @endsection
