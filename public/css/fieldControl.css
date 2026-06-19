@@ -279,6 +279,19 @@ h3 {font-size: 15px!important;}
     font-size: 12px; /* Riduce la dimensione del testo */
 }
 
+.fc-log-status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+    line-height: 1;
+}
+
+.fc-log-status-icon i {
+    font-size: 1.2rem;
+}
+
 .sticky-header-log th {
     position: sticky;
     top: 0;

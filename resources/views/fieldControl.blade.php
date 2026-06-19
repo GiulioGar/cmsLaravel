@@ -1105,27 +1105,27 @@
                                         </td>
                                         <td class="small">
                                             @if ($log['stato'] === 'Completa')
-                                                <span data-bs-toggle="tooltip" title="Completa">
+                                                <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="Completa">
                                                     <i class="fas fa-check-circle text-success"></i>
                                                 </span>
                                             @elseif ($log['stato'] === 'Non in target')
-                                                <span data-bs-toggle="tooltip" title="Non in target">
+                                                <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="Non in target">
                                                     <i class="fas fa-times-circle text-danger"></i>
                                                 </span>
                                             @elseif ($log['stato'] === 'Quotafull')
-                                                <span data-bs-toggle="tooltip" title="Quotafull">
+                                                <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="Quotafull">
                                                     <i class="fas fa-exclamation-triangle text-warning"></i>
                                                 </span>
                                             @elseif ($log['stato'] === 'In Corso')
-                                                <span data-bs-toggle="tooltip" title="In Corso">
+                                                <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="In Corso">
                                                     <i class="fas fa-hourglass-half text-primary"></i>
                                                 </span>
                                             @elseif ($log['stato'] === 'Bloccata')
-                                                <span data-bs-toggle="tooltip" title="Bloccata">
+                                                <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="Bloccata">
                                                     <i class="fas fa-ban text-dark"></i>
                                                 </span>
                                             @else
-                                                <span data-bs-toggle="tooltip" title="{{ $log['stato'] }}">
+                                                <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="{{ $log['stato'] }}">
                                                     <i class="fas fa-circle text-secondary"></i>
                                                 </span>
                                             @endif

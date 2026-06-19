@@ -4,8 +4,8 @@
 
 .project-link {
     font-weight: 600;
-    font-size: 0.95rem;
-    line-height: 1.3;
+    font-size: 0.86rem;
+    line-height: 1.15;
     color: #212529;
     text-decoration: none;
     position: relative;
@@ -47,6 +47,59 @@ body {
 .project-row:hover {
     background-color: #f8f9fa;
     cursor: pointer;
+}
+
+#tblProjects td,
+#tblProjects th {
+    padding-top: 0.42rem;
+    padding-bottom: 0.42rem;
+}
+
+.project-meta {
+    font-size: 0.68rem;
+    line-height: 1.05;
+    margin-top: 0.12rem;
+}
+
+.project-open-link {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.project-status-box {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 84px;
+    padding: 0.45rem 0.7rem;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #fbfcfe 0%, #f3f6fa 100%);
+    border: 1px solid #e4eaf1;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.project-status-current {
+    font-size: 0.95rem;
+    line-height: 1;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.project-status-separator {
+    font-size: 0.62rem;
+    line-height: 1;
+    color: #94a3b8;
+    margin: 0.16rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.project-status-target {
+    font-size: 0.84rem;
+    line-height: 1;
+    font-weight: 600;
+    color: #2563eb;
 }
 
 </style>
@@ -147,15 +200,15 @@ $defaultColor = '#9DCE6B';
                 {{ $row->sur_id }} - {{ $row->description ?: 'N.D.' }}
             </a>
 
-                <div class="text-muted small mt-1">
+                <div class="text-muted project-meta">
                     ({{ $prj }} - {{ $row->cliente ?? 'N.D.' }})
                 </div>
         </div>
 
         <a href="{{ $fieldUrl }}"
-           class="text-primary ms-2 flex-shrink-0"
+           class="text-primary ms-2 flex-shrink-0 project-open-link"
            title="Apri Field Control">
-            <i class="bi bi-folder-symlink fs-3"></i>
+            <i class="bi bi-folder-symlink"></i>
         </a>
     </div>
 </td>
@@ -175,13 +228,12 @@ $defaultColor = '#9DCE6B';
 
 {{-- COMPLETE / GOAL --}}
 <td class="text-center align-middle">
-    <div class="d-inline-flex flex-column align-items-center justify-content-center px-3 py-2 rounded-3"
-         style="background: #f8f9fa; min-width: 95px; border: 1px solid #e9ecef;">
-        <span class="fw-bold" style="font-size: 1rem; line-height: 1;">
+    <div class="project-status-box">
+        <span class="project-status-current">
             {{ number_format($row->complete ?? 0) }}
         </span>
-        <span class="text-muted small my-1">di</span>
-        <span class="fw-semibold text-primary" style="font-size: 0.95rem; line-height: 1;">
+        <span class="project-status-separator">di</span>
+        <span class="project-status-target">
             {{ number_format($row->goal ?? 0) }}
         </span>
     </div>
@@ -279,7 +331,7 @@ $defaultColor = '#9DCE6B';
                                             </div>
 
                                             <div class="chart-container" style="position: relative; width: 100%; height: 300px;">
-                                                <canvas id="ageChart"></canvas>
+                                                <div id="ageChart" style="width: 100%; height: 100%;"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -302,7 +354,7 @@ $defaultColor = '#9DCE6B';
                                             </div>
 
                                             <div class="chart-container" style="position: relative; width: 100px; height: 100px; margin: auto;">
-                                                <canvas id="genderChart"></canvas>
+                                                <div id="genderChart" style="width: 100%; height: 100%;"></div>
                                             </div>
 
                                             <div class="mt-3 text-center">
@@ -334,7 +386,7 @@ $defaultColor = '#9DCE6B';
                                             </div>
 
                                             <div class="chart-container" style="position: relative; width: 100%; height: 217px;">
-                                                <canvas id="areaChart"></canvas>
+                                                <div id="areaChart" style="width: 100%; height: 100%;"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -355,14 +407,14 @@ $defaultColor = '#9DCE6B';
                             <div class="card-body py-3">
                                 {{-- Grafico Registrazioni Mensili --}}
                                 <div class="chart-container" style="position: relative; width: 100%; height: 202px;">
-                                    <canvas id="registrationsChart"></canvas>
+                                    <div id="registrationsChart" style="width: 100%; height: 100%;"></div>
                                 </div>
                                 <hr>
                                 {{-- Grafico Attività ultimi 5 anni --}}
                                 <h5 class="card-title mb-0">Attività Utenti ultimi 5 anni</h5>
                                 <br/>
                                 <div class="chart-container" style="position: relative; width: 100%; height: 202px;">
-                                    <canvas id="userActivityChart"></canvas>
+                                    <div id="userActivityChart" style="width: 100%; height: 100%;"></div>
                                 </div>
                             </div>
                         </div>
@@ -382,14 +434,14 @@ $defaultColor = '#9DCE6B';
                             <div class="card-body py-3">
                                 {{-- Grafico Registrazioni Mensili --}}
                                 <div class="chart-container" style="position: relative; width: 100%; height: 202px;">
-                                    <canvas id="completesChart"></canvas>
+                                    <div id="completesChart" style="width: 100%; height: 100%;"></div>
                                 </div>
                                 <hr>
                                 {{-- Grafico Attività ultimi 5 anni --}}
                                 <h5 class="card-title mb-0">Progetti Aperti - {{ $currentYear }}</h5>
                                 <br/>
                                 <div class="chart-container" style="position: relative; width: 100%; height: 202px;">
-                                    <canvas id="projectsChart"></canvas>
+                                    <div id="projectsChart" style="width: 100%; height: 100%;"></div>
                                 </div>
                             </div>
                         </div>
@@ -510,357 +562,426 @@ $defaultColor = '#9DCE6B';
 
 @section('scripts')
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        console.log("DOM fully loaded, starting chart setup...");
-
-        // ========== 1) CHART DISTRIBUZIONE ETA' ==========
-        let ageData = @json($ageGroups);
-        console.log("ageData:", ageData);
-
-        let ageCtx = document.getElementById('ageChart')?.getContext('2d');
-        console.log("ageChart Canvas:", ageCtx);
-
-        if (ageCtx) {
-            new Chart(ageCtx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(ageData),
-                    datasets: [{
-                        label: 'Numero Utenti',
-                        data: Object.values(ageData),
-                        backgroundColor: [
-                        "rgba(255, 99, 132, 0.7)", // Rosso
-                        "rgba(54, 162, 235, 0.7)", // Blu
-                        "rgba(255, 206, 86, 0.7)", // Giallo
-                        "rgba(75, 192, 192, 0.7)", // Verde
-                        "rgba(255, 159, 64, 0.7)", // Arancione
-                        "rgba(153, 102, 255, 0.7)", // Viola
-                        "rgba(201, 203, 207, 0.7)"  // Grigio
-                    ],
-                    borderRadius: 10, // Angoli arrotondati
-                    borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    legend: {
-                        display: false // Nasconde la legenda
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-            console.log("ageChart created successfully!");
-        } else {
-            console.warn("ageChart canvas not found in the DOM.");
-        }
-
-        // ========== 2) CHART GENERE ==========
-        let menPercentage = {{ $totalMen }};
-        let womenPercentage = {{ $totalWomen }};
-
-        console.log("menPercentage:", menPercentage, "womenPercentage:", womenPercentage);
-
-        let genderCtx = document.getElementById('genderChart')?.getContext('2d');
-        console.log("genderChart Canvas:", genderCtx);
-
-        if (genderCtx) {
-            new Chart(genderCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ["Uomini", "Donne"],
-                    datasets: [{
-                        data: [menPercentage, womenPercentage],
-                        backgroundColor: ["rgba(54, 162, 235, 0.7)", "rgba(255, 99, 132, 0.7)"],
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    legend: {
-                           display: false
-                           },
-                    cutout: '80%'
-                }
-            });
-            console.log("genderChart created successfully!");
-        } else {
-            console.warn("genderChart canvas not found in the DOM.");
-        }
-
-        // ========== 3) CHART DISTRIBUZIONE PER AREA ==========
-        let areaData = @json($areaGroups);
-        console.log("areaData:", areaData);
-
-        let areaCtx = document.getElementById('areaChart')?.getContext('2d');
-        console.log("areaChart Canvas:", areaCtx);
-
-        if (areaCtx) {
-            new Chart(areaCtx, {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(areaData),
-                    datasets: [{
-                        data: Object.values(areaData),
-                        backgroundColor: ['rgba(201, 203, 207, 0.7)', 'rgba(75, 192, 192, 0.7)','rgba(255, 206, 86, 0.7)', 'rgba(54, 162, 235, 0.7)']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-            console.log("areaChart created successfully!");
-        } else {
-            console.warn("areaChart canvas not found in the DOM.");
-        }
-
-        // ========== 4) CHART REGISTRAZIONI MENSILI ==========
-        let monthlyRegistrations = @json($monthlyRegistrations);
-        let monthlyActiveRegistrations = @json($monthlyActiveRegistrations);
-        console.log("monthlyRegistrations:", monthlyRegistrations);
-        console.log("monthlyActiveRegistrations:", monthlyActiveRegistrations);
-
-        let months = Object.keys(monthlyRegistrations);
-        let monthNames = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
-                          "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
-        let monthLabels = months.map(m => monthNames[m - 1]);
-
-        let regCtx = document.getElementById('registrationsChart')?.getContext('2d');
-        console.log("registrationsChart Canvas:", regCtx);
-
-        if (regCtx) {
-            new Chart(regCtx, {
-                type: 'line',
-                data: {
-                    labels: monthLabels,
-                    datasets: [
-                        {
-                            label: 'Registrati',
-                            data: Object.values(monthlyRegistrations),
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            borderColor: 'rgba(75, 192, 192, 0.7)',
-                            fill: true
-                        },
-                        {
-                            label: 'Attivi',
-                            data: Object.values(monthlyActiveRegistrations),
-                            backgroundColor: 'rgba(255, 159, 64, 0.2)',
-                            borderColor: 'rgba(255, 159, 64, 0.7)',
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-            console.log("registrationsChart created successfully!");
-        } else {
-            console.warn("registrationsChart canvas not found in the DOM.");
-        }
-
-        // ========== 5) CHART ATTIVITA' ULTIMI 5 ANNI ==========
-        let userActivityData = @json($activeUsersPerYear);
-        console.log("userActivityData:", userActivityData);
-
-        let userActivityCtx = document.getElementById('userActivityChart')?.getContext('2d');
-        console.log("userActivityChart Canvas:", userActivityCtx);
-
-        if (userActivityCtx) {
-            new Chart(userActivityCtx, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(userActivityData),
-                    datasets: [{
-                        label: 'Utenti Attivi',
-                        data: Object.values(userActivityData),
-                        backgroundColor: [
-                        "rgba(255, 99, 132, 0.7)", // Rosso
-                        "rgba(54, 162, 235, 0.7)", // Blu
-                        "rgba(255, 206, 86, 0.7)", // Giallo
-                        "rgba(75, 192, 192, 0.7)", // Verde
-                        "rgba(255, 159, 64, 0.7)", // Arancione
-                        "rgba(153, 102, 255, 0.7)", // Viola
-                        "rgba(201, 203, 207, 0.7)"  // Grigio
-                    ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    legend: {
-                        display: false // Nasconde la legenda
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-            console.log("userActivityChart created successfully!");
-        } else {
-            console.warn("userActivityChart canvas not found in the DOM.");
-        }
-
-    });
-</script>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    let monthlyCompleteMillebytes = @json($monthlyCompleteMillebytes);
-    let monthlyCompleteCint = @json($monthlyCompleteCint);
-
-    let months = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu",
-                  "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
-
-    let completesCanvas = document.getElementById('completesChart');
-let ctx = completesCanvas ? completesCanvas.getContext('2d') : null;
-
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: months,
-                datasets: [
-                    {
-                        label: 'Millebytes',
-                        data: Object.values(monthlyCompleteMillebytes),
-                        borderColor: 'rgba(255, 159, 64, 1)', // Blu
-                        backgroundColor: 'rgba(255, 159, 64, 0.7)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3 // Linea leggermente curva
-                    },
-                    {
-                        label: 'Cint',
-                        data: Object.values(monthlyCompleteCint),
-                        borderColor: 'rgba(54, 162, 235, 1)', // Rosso
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.3 // Linea leggermente curva
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    }
-});
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    if (typeof window.echarts === 'undefined') {
+        return;
+    }
 
+    const monthNames = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+    const ageData = @json($ageGroups);
+    const areaData = @json($areaGroups);
+    const monthlyRegistrations = @json($monthlyRegistrations);
+    const monthlyActiveRegistrations = @json($monthlyActiveRegistrations);
+    const userActivityData = @json($activeUsersPerYear);
+    const monthlyCompleteMillebytes = @json($monthlyCompleteMillebytes);
+    const monthlyCompleteCint = @json($monthlyCompleteCint);
     const monthlyOpenProjects = @json($monthlyOpenProjects);
+    const totalMen = {{ (int) $totalMen }};
+    const totalWomen = {{ (int) $totalWomen }};
 
-    const months = ["Gen","Feb","Mar","Apr","Mag","Giu",
-                    "Lug","Ago","Set","Ott","Nov","Dic"];
+    const dashboardCharts = [];
 
-    // Costruiamo valori in modo sicuro 1..12
-    const values = months.map((_, i) => {
+    function registerChart(elementId, option) {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            return;
+        }
+
+        const chart = echarts.init(element);
+        chart.setOption(option);
+        dashboardCharts.push(chart);
+    }
+
+    const commonAxisLabel = {
+        color: '#64748b',
+        fontSize: 11
+    };
+
+    const commonGridLine = {
+        lineStyle: {
+            color: '#edf2f7'
+        }
+    };
+
+    registerChart('ageChart', {
+        animationDuration: 700,
+        color: ['#4f46e5', '#0ea5e9', '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#94a3b8'],
+        grid: {
+            top: 18,
+            right: 12,
+            bottom: 28,
+            left: 34
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            }
+        },
+        xAxis: {
+            type: 'category',
+            data: Object.keys(ageData),
+            axisTick: {
+                show: false
+            },
+            axisLabel: commonAxisLabel,
+            axisLine: {
+                lineStyle: {
+                    color: '#d7dee7'
+                }
+            }
+        },
+        yAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLabel: commonAxisLabel,
+            splitLine: commonGridLine
+        },
+        series: [{
+            name: 'Utenti',
+            type: 'bar',
+            barMaxWidth: 34,
+            data: Object.values(ageData),
+            itemStyle: {
+                borderRadius: [10, 10, 4, 4]
+            }
+        }]
+    });
+
+    registerChart('genderChart', {
+        animationDuration: 700,
+        color: ['#2563eb', '#f43f5e'],
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: <b>{c}</b> ({d}%)'
+        },
+        series: [{
+            type: 'pie',
+            radius: ['58%', '82%'],
+            avoidLabelOverlap: true,
+            label: {
+                show: false
+            },
+            labelLine: {
+                show: false
+            },
+            itemStyle: {
+                borderColor: '#ffffff',
+                borderWidth: 3
+            },
+            data: [
+                { value: totalMen, name: 'Uomini' },
+                { value: totalWomen, name: 'Donne' }
+            ]
+        }]
+    });
+
+    registerChart('areaChart', {
+        animationDuration: 700,
+        color: ['#0f766e', '#0891b2', '#eab308', '#7c3aed', '#f97316'],
+        tooltip: {
+            trigger: 'item',
+            formatter: '{b}: <b>{c}</b> ({d}%)'
+        },
+        series: [{
+            name: 'Area',
+            type: 'pie',
+            radius: ['36%', '74%'],
+            center: ['50%', '52%'],
+            label: {
+                color: '#475569',
+                fontSize: 11
+            },
+            labelLine: {
+                length: 12,
+                length2: 8
+            },
+            itemStyle: {
+                borderColor: '#ffffff',
+                borderWidth: 2
+            },
+            data: Object.keys(areaData).map(function (label) {
+                return {
+                    name: label,
+                    value: areaData[label]
+                };
+            })
+        }]
+    });
+
+    const registrationMonths = Object.keys(monthlyRegistrations);
+    const registrationLabels = registrationMonths.map(function (month) {
+        return monthNames[month - 1];
+    });
+
+    registerChart('registrationsChart', {
+        animationDuration: 700,
+        color: ['#14b8a6', '#f59e0b'],
+        tooltip: {
+            trigger: 'axis'
+        },
+        legend: {
+            top: 0,
+            textStyle: {
+                color: '#64748b'
+            }
+        },
+        grid: {
+            top: 34,
+            right: 14,
+            bottom: 24,
+            left: 34
+        },
+        xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: registrationLabels,
+            axisLabel: commonAxisLabel,
+            axisLine: {
+                lineStyle: {
+                    color: '#d7dee7'
+                }
+            }
+        },
+        yAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLabel: commonAxisLabel,
+            splitLine: commonGridLine
+        },
+        series: [
+            {
+                name: 'Registrati',
+                type: 'line',
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 7,
+                areaStyle: {
+                    opacity: 0.18
+                },
+                lineStyle: {
+                    width: 3
+                },
+                data: Object.values(monthlyRegistrations)
+            },
+            {
+                name: 'Attivi',
+                type: 'line',
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 7,
+                areaStyle: {
+                    opacity: 0.12
+                },
+                lineStyle: {
+                    width: 3
+                },
+                data: Object.values(monthlyActiveRegistrations)
+            }
+        ]
+    });
+
+    registerChart('userActivityChart', {
+        animationDuration: 700,
+        color: ['#2563eb'],
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            }
+        },
+        grid: {
+            top: 18,
+            right: 12,
+            bottom: 24,
+            left: 34
+        },
+        xAxis: {
+            type: 'category',
+            data: Object.keys(userActivityData),
+            axisTick: {
+                show: false
+            },
+            axisLabel: commonAxisLabel,
+            axisLine: {
+                lineStyle: {
+                    color: '#d7dee7'
+                }
+            }
+        },
+        yAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLabel: commonAxisLabel,
+            splitLine: commonGridLine
+        },
+        series: [{
+            name: 'Utenti attivi',
+            type: 'bar',
+            barMaxWidth: 44,
+            data: Object.values(userActivityData),
+            itemStyle: {
+                borderRadius: [10, 10, 4, 4],
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: '#60a5fa' },
+                    { offset: 1, color: '#2563eb' }
+                ])
+            }
+        }]
+    });
+
+    registerChart('completesChart', {
+        animationDuration: 700,
+        color: ['#f59e0b', '#0ea5e9'],
+        tooltip: {
+            trigger: 'axis'
+        },
+        legend: {
+            top: 0,
+            textStyle: {
+                color: '#64748b'
+            }
+        },
+        grid: {
+            top: 34,
+            right: 14,
+            bottom: 24,
+            left: 34
+        },
+        xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: monthNames,
+            axisLabel: commonAxisLabel,
+            axisLine: {
+                lineStyle: {
+                    color: '#d7dee7'
+                }
+            }
+        },
+        yAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLabel: commonAxisLabel,
+            splitLine: commonGridLine
+        },
+        series: [
+            {
+                name: 'Millebytes',
+                type: 'line',
+                smooth: true,
+                symbolSize: 7,
+                lineStyle: {
+                    width: 3
+                },
+                areaStyle: {
+                    opacity: 0.15
+                },
+                data: Object.values(monthlyCompleteMillebytes)
+            },
+            {
+                name: 'Cint',
+                type: 'line',
+                smooth: true,
+                symbolSize: 7,
+                lineStyle: {
+                    width: 3
+                },
+                areaStyle: {
+                    opacity: 0.1
+                },
+                data: Object.values(monthlyCompleteCint)
+            }
+        ]
+    });
+
+    const projectValues = monthNames.map(function (_, i) {
         const monthIndex = i + 1;
         return monthlyOpenProjects[monthIndex] ?? 0;
     });
 
-    // 🎨 Sfumature personalizzate tra #404044 e #9DCE6B
-    const colors = [
-        "#404044", // Gen
-        "#4C4F4F",
-        "#585A5A",
-        "#646565",
-        "#707070",
-        "#7C7B7B",
-        "#889687",
-        "#93A27C",
-        "#9DCE6B", // Set
-        "#8BBE5F",
-        "#79AD53",
-        "#679C47"
-    ];
-
-    const canvas = document.getElementById('projectsChart');
-    const ctx = canvas ? canvas.getContext('2d') : null;
-    if (!ctx || typeof window.Chart === 'undefined') return;
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: months,
-            datasets: [{
-                label: 'Progetti Aperti',
-                data: values,
-                backgroundColor: colors,
-                borderRadius: 6,
-                borderWidth: 0
-            }]
+    registerChart('projectsChart', {
+        animationDuration: 700,
+        grid: {
+            top: 18,
+            right: 8,
+            bottom: 24,
+            left: 34
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true }
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
             },
-            plugins: {
-                legend: { display: false }
+            backgroundColor: '#1f2937',
+            borderWidth: 0,
+            textStyle: {
+                color: '#f8fafc'
+            },
+            formatter: function (params) {
+                const item = params && params[0] ? params[0] : null;
+                if (!item) {
+                    return '';
+                }
+
+                return item.axisValue + '<br>Progetti aperti: <b>' + item.value + '</b>';
             }
-        }
-    });
-});
-</script>
-
-    <script>
-document.addEventListener("DOMContentLoaded", function() {
-    // Grafico per i Progetti per Cliente
-    let clientData = @json($clientStats);
-    let clientLabels = Object.keys(clientData);
-    let clientValues = Object.values(clientData);
-
-   let clientCanvas = document.getElementById('clientChart');
-    if (clientCanvas) {
-        let clientCtx = clientCanvas.getContext('2d');
-        new Chart(clientCtx, {
-            type: 'bar',
-            data: {
-                labels: clientLabels,
-                datasets: [{
-                    label: "Progetti",
-                    data: clientValues,
-                    backgroundColor: [
-                        "rgba(255, 99, 132, 0.7)", // Rosso
-                        "rgba(54, 162, 235, 0.7)", // Blu
-                        "rgba(255, 206, 86, 0.7)", // Giallo
-                        "rgba(75, 192, 192, 0.7)", // Verde
-                        "rgba(255, 159, 64, 0.7)", // Arancione
-                        "rgba(153, 102, 255, 0.7)", // Viola
-                        "rgba(201, 203, 207, 0.7)"  // Grigio
-                    ],
-                }]
+        },
+        xAxis: {
+            type: 'category',
+            data: monthNames,
+            axisTick: {
+                show: false
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                legend: {
-                           display: false
-                           },
-                scales: {
-                    y: { beginAtZero: true }
+            axisLine: {
+                lineStyle: {
+                    color: '#d7dee7'
+                }
+            },
+            axisLabel: commonAxisLabel
+        },
+        yAxis: {
+            type: 'value',
+            minInterval: 1,
+            axisLine: {
+                show: false
+            },
+            axisTick: {
+                show: false
+            },
+            splitLine: commonGridLine,
+            axisLabel: {
+                color: '#94a3b8',
+                fontSize: 11
+            }
+        },
+        series: [{
+            name: 'Progetti aperti',
+            type: 'bar',
+            data: projectValues,
+            barWidth: '48%',
+            itemStyle: {
+                borderRadius: [8, 8, 3, 3],
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: '#9DCE6B' },
+                    { offset: 1, color: '#4F7A46' }
+                ])
+            },
+            emphasis: {
+                itemStyle: {
+                    color: '#7fb857'
                 }
             }
+        }]
+    });
+
+    window.addEventListener('resize', function () {
+        dashboardCharts.forEach(function (chart) {
+            chart.resize();
         });
-    }
+    });
 });
 </script>
 
@@ -967,4 +1088,3 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 @endsection
-

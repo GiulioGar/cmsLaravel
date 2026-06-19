@@ -68,6 +68,8 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     }
     unset($panel);
 
+    $panelCounts = $this->sortPanelsForDisplay($panelCounts);
+
 
     /*
     |--------------------------------------------------------------------------
@@ -93,6 +95,7 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
 
     $filtrateCountsByPanel = $sreService->buildFiltrateCountsFromInterviews($interviews, $questionMap);
+    $filtrateCountsByPanel = $this->sortPanelsForDisplay($filtrateCountsByPanel);
 
     $hasFiltrate = false;
     foreach ($filtrateCountsByPanel as $panel => $rows) {
@@ -109,6 +112,7 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     */
     $logData = $sreService->buildLogDataFromInterviews($interviews, $questionMap);
     $dataSummaryByPanel = $sreService->buildDataSummaryByDateFromInterviews($interviews);
+    $dataSummaryByPanel = $this->sortPanelsForDisplay($dataSummaryByPanel);
 
     /*
     |--------------------------------------------------------------------------
@@ -443,6 +447,37 @@ private function getUtentiDisponibili($sid, $panelTarget)
                 ->where('t_respint.sid', $sid);
         })
         ->count();
+}
+
+private function sortPanelsForDisplay(array $panels): array
+{
+    if (empty($panels)) {
+        return $panels;
+    }
+
+    $sortedPanels = [];
+
+    if (array_key_exists('Interactive', $panels)) {
+        $sortedPanels['Interactive'] = $panels['Interactive'];
+        unset($panels['Interactive']);
+    }
+
+    $daLista = null;
+
+    if (array_key_exists('Da lista', $panels)) {
+        $daLista = $panels['Da lista'];
+        unset($panels['Da lista']);
+    }
+
+    foreach ($panels as $panelName => $panelData) {
+        $sortedPanels[$panelName] = $panelData;
+    }
+
+    if ($daLista !== null) {
+        $sortedPanels['Da lista'] = $daLista;
+    }
+
+    return $sortedPanels;
 }
 
 private function calcolaMediaRedPanel()

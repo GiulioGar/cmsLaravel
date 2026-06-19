@@ -485,7 +485,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
                 <button type="button" class="btn btn-outline-dark" id="btnExportWelcomeReferral" disabled>
-                    <i class="bi bi-download me-1"></i>Esporta email;bytes
+                    <i class="bi bi-download me-1"></i>Esporta
                 </button>
                 <button type="button" class="btn btn-success" id="btnPayWelcomeReferral" disabled>
                     <i class="bi bi-cash-coin me-1"></i>Paga bonus
@@ -641,23 +641,27 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        exportWelcomeReferralBtn.disabled = welcomeReferralPaidUsers.length === 0;
+        exportWelcomeReferralBtn.disabled = welcomeReferralEligibleUsers.length === 0;
     }
 
-    function exportWelcomeReferralPaidUsers() {
-        if (welcomeReferralPaidUsers.length === 0) {
-            showReferralToast('Nessun pagamento disponibile da esportare.', 'warning');
+    function exportWelcomeReferralEligibleUsers() {
+        if (welcomeReferralEligibleUsers.length === 0) {
+            showReferralToast('Nessun utente disponibile da esportare.', 'warning');
             return;
         }
 
-        const lines = ['email;bytes'];
+        const lines = ['email;firstName;bytes'];
 
-        welcomeReferralPaidUsers.forEach(function (user) {
+        welcomeReferralEligibleUsers.forEach(function (user) {
             if (!user || !user.email) {
                 return;
             }
 
-            lines.push(user.email + ';500');
+            lines.push([
+                user.email,
+                user.firstName || '',
+                '500'
+            ].join(';'));
         });
 
         const csvContent = "\uFEFF" + lines.join('\n');
@@ -696,9 +700,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.message || 'Errore durante la verifica del bonus welcome referral.');
             }
 
+            welcomeReferralEligibleUsers = Array.isArray(data.users) ? data.users : [];
             welcomeReferralPaidUsers = [];
             refreshWelcomeReferralExportState();
-            welcomeReferralEligibleUsers = Array.isArray(data.users) ? data.users : [];
             renderWelcomeReferralEligibleUsers(welcomeReferralEligibleUsers, parseInt(data.total_points || 0, 10));
 
             if (welcomeReferralEligibleUsers.length > 0) {
@@ -1465,7 +1469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (exportWelcomeReferralBtn) {
         exportWelcomeReferralBtn.addEventListener('click', () => {
-            exportWelcomeReferralPaidUsers();
+            exportWelcomeReferralEligibleUsers();
         });
     }
 

@@ -33,3 +33,12 @@ Premi panel:
 - Il valore CSV puo' arrivare come `EUR 2,00` e viene convertito in intero.
 - I codici importati devono entrare con `status = disponibile`, `user = null`, `pagamento = null`.
 - I duplicati non devono essere inseriti e vanno segnalati.
+
+Memoria operativa recente:
+- FieldControl: nel grafico `Analisi filtrate` vengono mostrati solo record con quota `> 1%`; `Da lista` va sempre ordinato per ultimo, con `Interactive` sempre per primo.
+- FieldControl: nel log attivita' le icone stato sono state aumentate di dimensione con classe CSS dedicata.
+- Referral: nel modal bonus welcome il bottone export usa gli utenti eleggibili trovati in verifica, con CSV `email;firstName;bytes`; il bottone ora si chiama `Esporta`.
+- Premi Panel: export `Email non disponibili` Paypal corretto per MySQL strict usando `groupBy` + `MAX(h.id)` invece di `distinct` + `order by h.id`.
+- User Profile: nella modale anagrafica esiste il reset password forzato; la password impostata e' il prefisso della email e viene salvata in `md5`, coerente con il login attuale.
+- User Profile: nella sezione `Attivita'` c'e' il contatore `Amici invitati iscritti`, letto da `t_user_info.provenienza`.
+- Dashboard `index`: i grafici principali sono stati migrati a `Apache ECharts`; al momento resta in Chart.js solo il mini doughnut `Andamento` nella tabella `Progetti in corso`.

@@ -50,6 +50,11 @@ class UserProfileController extends Controller
 
     $inviti = $userInvites->invites ?? 0;
 
+    $amiciIscritti = DB::table('t_user_info')
+        ->where('provenienza', $uid)
+        ->where('active', 1)
+        ->count();
+
     // ===============================
     // 3) ULTIMA ATTIVITÀ
     // ===============================
@@ -95,6 +100,7 @@ class UserProfileController extends Controller
         'user' => $user,
         'attivita' => [
             'inviti' => $inviti,
+            'amici_iscritti' => $amiciIscritti,
             'ultima_attivita' => $ultimaAttivita,
         ],
         'premi' => [
@@ -179,17 +185,41 @@ public function updateAnagrafica(Request $request, $user_id)
     $validated = $request->validate([
         'email' => 'required|email',
         'paypalEmail' => 'nullable|email',
+        'resetPassword' => 'nullable|boolean',
     ]);
 
     try {
+        $updateData = [
+            'email' => $validated['email'],
+            'paypalEmail' => $validated['paypalEmail'],
+        ];
+
+        $resetPassword = (bool) ($validated['resetPassword'] ?? false);
+
+        if ($resetPassword) {
+            $emailParts = explode('@', (string) $validated['email'], 2);
+            $passwordPlain = trim((string) ($emailParts[0] ?? ''));
+
+            if ($passwordPlain === '') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Impossibile generare la password dalla email inserita.',
+                ], 422);
+            }
+
+            $updateData['password'] = md5($passwordPlain);
+        }
+
         DB::table('t_user_info')
             ->where('user_id', $user_id)
-            ->update([
-                'email' => $validated['email'],
-                'paypalEmail' => $validated['paypalEmail'],
-            ]);
+            ->update($updateData);
 
-        return response()->json(['success' => true, 'message' => 'Anagrafica aggiornata con successo.']);
+        return response()->json([
+            'success' => true,
+            'message' => $resetPassword
+                ? 'Anagrafica aggiornata e password reimpostata con successo.'
+                : 'Anagrafica aggiornata con successo.'
+        ]);
     } catch (\Exception $e) {
         Log::error('Errore aggiornamento anagrafica: ' . $e->getMessage());
         return response()->json(['success' => false, 'message' => 'Errore durante il salvataggio.']);

@@ -72,6 +72,7 @@ function initCharts() {
         const labels = [];
         const values = [];
         const questionTooltips = [];
+        const filteredEntries = [];
         let totalFiltrate = 0;
 
         if (!panelRows) {
@@ -103,7 +104,36 @@ function initCharts() {
 
             return (value / totalFiltrate) * 100;
         });
-        const hasDenseBars = labels.length > denseLabelsThreshold;
+        const minPercentageForVisibleRows = 1;
+
+        labels.forEach(function (label, index) {
+            if (percentages[index] > minPercentageForVisibleRows) {
+                filteredEntries.push({
+                    label: label,
+                    value: values[index],
+                    percentage: percentages[index],
+                    questionTooltip: questionTooltips[index]
+                });
+            }
+        });
+
+        if (!filteredEntries.length) {
+            return;
+        }
+
+        const visibleLabels = filteredEntries.map(function (entry) {
+            return entry.label;
+        });
+        const visibleValues = filteredEntries.map(function (entry) {
+            return entry.value;
+        });
+        const visiblePercentages = filteredEntries.map(function (entry) {
+            return entry.percentage;
+        });
+        const visibleQuestionTooltips = filteredEntries.map(function (entry) {
+            return entry.questionTooltip;
+        });
+        const hasDenseBars = visibleLabels.length > denseLabelsThreshold;
 
         const canvasId = 'chart-panel-' + buildPanelSlug(panelName);
         const canvas = document.getElementById(canvasId);
@@ -113,13 +143,13 @@ function initCharts() {
         }
 
         const canvasWrapper = canvas.parentElement;
-        const visibleRows = Math.min(labels.length || 1, maxVisibleFiltrateRows);
+        const visibleRows = Math.min(visibleLabels.length || 1, maxVisibleFiltrateRows);
         const canvasHeight = Math.max(220, (visibleRows * rowHeight) + chartVerticalPadding);
-        const scrollHeight = (labels.length * rowHeight) + chartVerticalPadding;
+        const scrollHeight = (visibleLabels.length * rowHeight) + chartVerticalPadding;
 
         if (canvasWrapper) {
             canvasWrapper.style.height = canvasHeight + 'px';
-            canvasWrapper.style.overflowY = labels.length > maxVisibleFiltrateRows ? 'auto' : 'hidden';
+            canvasWrapper.style.overflowY = visibleLabels.length > maxVisibleFiltrateRows ? 'auto' : 'hidden';
         }
 
         canvas.height = scrollHeight;
@@ -127,15 +157,15 @@ function initCharts() {
         new Chart(canvas, {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: visibleLabels,
                 datasets: [{
                     label: 'Filtrate',
-                    data: values,
+                    data: visibleValues,
                     backgroundColor: '#7bd87d',
                     borderColor: '#2E7D32',
                     borderWidth: 1,
-                    percentages: percentages,
-                    questionTooltips: questionTooltips
+                    percentages: visiblePercentages,
+                    questionTooltips: visibleQuestionTooltips
                 }]
             },
             options: {

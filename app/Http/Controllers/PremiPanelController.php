@@ -979,6 +979,7 @@ public function exportPaypalMissingEmail(Request $request)
         ->select([
             'h.user_id',
             'u.email',
+            DB::raw('MAX(h.id) as last_id'),
         ])
         ->where('h.event_type', 'withdraw')
         ->where('h.pagato', $status)
@@ -988,8 +989,8 @@ public function exportPaypalMissingEmail(Request $request)
             $query->whereNull('u.paypalEmail')
                   ->orWhere('u.paypalEmail', '');
         })
-        ->orderBy('h.id', 'desc')
-        ->distinct()
+        ->groupBy('h.user_id', 'u.email')
+        ->orderByDesc('last_id')
         ->get();
 
     $lines = [];

@@ -450,6 +450,7 @@ class ReferralController extends Controller
                 return [
                     'user_id' => (string) $user->user_id,
                     'email' => (string) ($user->email ?? ''),
+                    'firstName' => (string) ($user->firstName ?? ''),
                     'provenienza' => (string) ($user->provenienza ?? ''),
                     'referrer_email' => (string) ($user->referrer_email ?? ''),
                     'points' => (int) ($user->points ?? 0),
@@ -802,6 +803,7 @@ class ReferralController extends Controller
             ->select([
                 'invited.user_id',
                 'invited.email',
+                'invited.first_name as firstName',
                 'invited.provenienza',
                 'invited.points',
                 'invited.tag',

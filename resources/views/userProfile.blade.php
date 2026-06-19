@@ -136,7 +136,7 @@
         <div class="row g-3">
 
     {{-- Inviti totali --}}
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-3">
         <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
             <div class="kpi-icon text-secondary mb-2">
                 <i class="bi bi-envelope-paper fs-3"></i>
@@ -147,7 +147,7 @@
     </div>
 
     {{-- Bytes totali + Bonus/Malus --}}
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-3">
         <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
             <div class="kpi-icon text-primary mb-2">
                 <i class="bi bi-coin fs-3"></i>
@@ -164,7 +164,7 @@
     </div>
 
     {{-- Ultima attività --}}
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-3">
         <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
             <div class="kpi-icon text-success mb-2">
                 <i class="bi bi-clock-history fs-3"></i>
@@ -176,8 +176,16 @@
         </div>
     </div>
 
+    <div class="col-12 col-md-3">
+        <div class="kpi-box d-flex flex-column justify-content-center align-items-center border rounded-3 shadow-sm bg-white h-100 p-3 text-center">
+            <div class="kpi-icon text-warning mb-2">
+                <i class="bi bi-people fs-3"></i>
+            </div>
+            <div class="kpi-value fs-4 fw-bold">{{ $attivita['amici_iscritti'] ?? 0 }}</div>
+            <div class="kpi-label text-muted small">Amici invitati iscritti</div>
+        </div>
+    </div>
 </div>
-
     </div>
 </div>
 
@@ -406,6 +414,21 @@
                         <label class="form-label">PayPal Email</label>
                         <input type="email" name="paypalEmail" id="editPaypalEmail" class="form-control"
                                value="{{ $user->paypalEmail ?? '' }}">
+                    </div>
+                    <div class="border rounded-3 p-3 bg-light">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="editResetPassword">
+                            <label class="form-check-label fw-semibold" for="editResetPassword">
+                                Forza reset password
+                            </label>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            Se attivo, la nuova password sarà il testo prima della `@` nell'email inserita.
+                        </div>
+                        <div>
+                            <label class="form-label mb-1">Password impostata</label>
+                            <input type="text" id="editPasswordPreview" class="form-control" readonly value="">
+                        </div>
                     </div>
                 </form>
             </div>
@@ -666,6 +689,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnSaveAnagrafica')?.addEventListener('click', () => {
         const email = document.getElementById('editEmail').value.trim();
         const paypalEmail = document.getElementById('editPaypalEmail').value.trim();
+        const resetPassword = document.getElementById('editResetPassword').checked;
+
+        if (resetPassword && !extractEmailPrefix(email)) {
+            showToast('Impossibile generare la password dalla email inserita.', 'warning');
+            return;
+        }
 
         fetch(userUpdateInfoUrl, {
             method: 'POST',
@@ -674,7 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ email, paypalEmail })
+            body: JSON.stringify({ email, paypalEmail, resetPassword })
         })
         .then(res => res.json())
         .then(data => {
@@ -693,6 +722,32 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(() => showToast('Errore di connessione.', 'error'));
     });
+
+    function extractEmailPrefix(email) {
+        const normalizedEmail = String(email || '').trim();
+        const atIndex = normalizedEmail.indexOf('@');
+
+        if (atIndex <= 0) {
+            return '';
+        }
+
+        return normalizedEmail.substring(0, atIndex).trim();
+    }
+
+    function refreshPasswordPreview() {
+        const email = document.getElementById('editEmail')?.value || '';
+        const previewEl = document.getElementById('editPasswordPreview');
+
+        if (!previewEl) {
+            return;
+        }
+
+        previewEl.value = extractEmailPrefix(email);
+    }
+
+    document.getElementById('editEmail')?.addEventListener('input', refreshPasswordPreview);
+    document.getElementById('editResetPassword')?.addEventListener('change', refreshPasswordPreview);
+    refreshPasswordPreview();
 
     // ===========================
     // 🔹 BONUS / MALUS
