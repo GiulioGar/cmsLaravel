@@ -1239,7 +1239,7 @@ h3 {font-size: 15px!important;}
   height: 280px;          /* stabile */
   position: relative;
   overflow-y: hidden;
-  overflow-x: hidden;
+  overflow-x: visible;
   padding-right: .2rem;
 }
 
@@ -1932,4 +1932,101 @@ h3 {font-size: 15px!important;}
     background: linear-gradient(135deg, rgba(245,158,11,.14), rgba(59,130,246,.10));
     color: #b45309;
     border-color: rgba(245,158,11,.22);
+}
+
+.fc-echart-tooltip{
+    max-width: 360px;
+    white-space: normal;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.28);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.fc-echart-tooltip-card{
+    min-width: 260px;
+    max-width: 360px;
+}
+
+.fc-echart-tooltip-head{
+    padding: .8rem .95rem .55rem;
+    background: linear-gradient(135deg, rgba(125, 216, 125, 0.2), rgba(56, 189, 248, 0.12));
+}
+
+.fc-echart-tooltip-kicker{
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #bfdbfe;
+    margin-bottom: .2rem;
+}
+
+.fc-echart-tooltip-code{
+    font-size: .95rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.fc-echart-tooltip-body{
+    padding: .7rem .95rem .9rem;
+}
+
+.fc-echart-tooltip-question{
+    color: #e5e7eb;
+    font-size: .8rem;
+    line-height: 1.45;
+}
+
+.fc-echart-tooltip-question-line + .fc-echart-tooltip-question-line{
+    margin-top: .12rem;
+}
+
+.fc-echart-tooltip-divider{
+    height: 1px;
+    margin: .7rem 0;
+    background: rgba(148, 163, 184, 0.24);
+}
+
+.fc-echart-tooltip-metrics{
+    display: grid;
+    gap: .45rem;
+}
+
+.fc-echart-tooltip-metric{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .8rem;
+    padding: .45rem .55rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.fc-echart-tooltip-metric-label{
+    color: #cbd5e1;
+    font-size: .74rem;
+    font-weight: 600;
+}
+
+.fc-echart-tooltip-metric-value{
+    color: #ffffff;
+    font-size: .82rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.fc-echart-tooltip-metric.is-count .fc-echart-tooltip-metric-value{
+    color: #bbf7d0;
+}
+
+.fc-echart-tooltip-metric.is-percentage .fc-echart-tooltip-metric-value{
+    color: #fde68a;
+}
+
+@media (max-width: 576px){
+    .fc-echart-tooltip,
+    .fc-echart-tooltip-card{
+        min-width: 0;
+        max-width: 280px;
+    }
 }

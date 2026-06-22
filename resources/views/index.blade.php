@@ -242,13 +242,12 @@ $defaultColor = '#9DCE6B';
 {{-- ANDAMENTO --}}
 <td class="align-middle">
     <div class="d-flex justify-content-center align-items-center" style="height:70px;">
-        <canvas
+        <div
             class="row-doughnut"
             id="chart-{{ $row->sur_id }}"
-            width="120"
-            height="70"
-            data-andamento="{{ $andamento }}">
-        </canvas>
+            data-andamento="{{ $andamento }}"
+            style="width: 120px; height: 70px;">
+        </div>
     </div>
 </td>
 
@@ -1000,89 +999,87 @@ document.addEventListener("DOMContentLoaded", function () {
 
 <script>
 (function () {
-
-    const centerTextPlugin = {
-        id: 'centerText',
-        afterDraw(chart) {
-            const text = chart.$centerText || '';
-            if (!text) return;
-
-            const ctx = chart.ctx;
-
-            // calcolo centro: compatibile v2 e v3/v4
-            const x = chart.width / 2;
-            const y = chart.height / 2;
-
-            ctx.save();
-            ctx.font = '700 13px Inter, Arial, sans-serif';
-            ctx.fillStyle = '#333';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(text, x, y);
-            ctx.restore();
-        }
-    };
-
     function initRowDoughnuts() {
-        const canvases = document.querySelectorAll('canvas[id^="chart-"]');
+        const elements = document.querySelectorAll('.row-doughnut[id^="chart-"]');
 
-        if (typeof window.Chart === 'undefined') {
-            setTimeout(initRowDoughnuts, 300);
+        if (typeof window.echarts === 'undefined') {
             return;
         }
 
-        const isV2 = !!(Chart.defaults && Chart.defaults.global);
-
-        canvases.forEach(function (canvas) {
-            const andamento = parseInt(canvas.dataset.andamento || "0", 10);
-            const ctx = canvas.getContext('2d');
-
-            if (canvas._chartInstance && typeof canvas._chartInstance.destroy === 'function') {
-                canvas._chartInstance.destroy();
-            }
-
-            // 🔥 testo: nascondi per 0 e 100 come richiesto
-            const centerText = ( andamento === 100) ? '' : (andamento + '%');
-
-            const chart = new Chart(ctx, {
-                type: "doughnut",
-                data: {
-                    datasets: [{
-                        data: [andamento, 100 - andamento],
-                        backgroundColor: ["#4CAF50", "#E0E0E0"],
-                        borderWidth: 0
-                    }]
-                },
-                options: isV2 ? {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    cutoutPercentage: 65,
-                    legend: { display: false },
-                    tooltips: { enabled: false }
-                } : {
-                    responsive: false,
-                    maintainAspectRatio: false,
-                    cutout: '65%',
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: false }
-                    }
-                },
-                plugins: [centerTextPlugin]
+        elements.forEach(function (element) {
+            const andamento = parseInt(element.dataset.andamento || "0", 10);
+            const completato = Math.max(0, Math.min(andamento, 100));
+            const restante = Math.max(0, 100 - completato);
+            const chart = echarts.getInstanceByDom(element) || echarts.init(element, null, {
+                renderer: 'canvas'
             });
 
-            // ✅ passiamo il testo al plugin in modo compatibile v2/v3/v4
-            chart.$centerText = centerText;
-
-            // update per assicurarsi che venga disegnato subito
-            chart.update();
-
-            canvas._chartInstance = chart;
+            chart.setOption({
+                animationDuration: 500,
+                title: {
+                    text: (completato === 0 || completato === 100) ? '' : completato + '%',
+                    left: 'center',
+                    top: 'center',
+                    textStyle: {
+                        color: '#333333',
+                        fontFamily: 'Inter, Arial, sans-serif',
+                        fontSize: 13,
+                        fontWeight: 700
+                    }
+                },
+                tooltip: {
+                    show: false
+                },
+                series: [{
+                    type: 'pie',
+                    radius: ['65%', '88%'],
+                    center: ['50%', '50%'],
+                    silent: true,
+                    label: {
+                        show: false
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: [
+                        {
+                            value: completato,
+                            itemStyle: {
+                                color: '#4CAF50'
+                            }
+                        },
+                        {
+                            value: restante,
+                            itemStyle: {
+                                color: '#E0E0E0'
+                            }
+                        }
+                    ]
+                }]
+            });
         });
     }
 
-    document.addEventListener("DOMContentLoaded", initRowDoughnuts);
+    if (document.readyState === 'loading') {
+        document.addEventListener("DOMContentLoaded", initRowDoughnuts);
+    } else {
+        initRowDoughnuts();
+    }
+
     window.addEventListener("load", initRowDoughnuts);
+    window.addEventListener("resize", function () {
+        if (typeof window.echarts === 'undefined') {
+            return;
+        }
+
+        document.querySelectorAll('.row-doughnut[id^="chart-"]').forEach(function (element) {
+            const chart = echarts.getInstanceByDom(element);
+
+            if (chart) {
+                chart.resize();
+            }
+        });
+    });
 
 })();
 </script>

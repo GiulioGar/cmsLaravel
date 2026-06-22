@@ -52,286 +52,330 @@
             .replace(/(^-|-$)/g, '');
     }
 
-function initCharts() {
-    if (typeof Chart === 'undefined') {
-        return;
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 
-    const maxVisibleFiltrateRows = 7;
-    const minPercentageForDenseLabels = 1;
-    const denseLabelsThreshold = 6;
-    const rowHeight = 44;
-    const chartVerticalPadding = 36;
-
-    if (typeof ChartDataLabels !== 'undefined') {
-        Chart.register(ChartDataLabels);
-    }
-
-    Object.keys(chartsData).forEach(function (panelName) {
-        const panelRows = chartsData[panelName];
-        const labels = [];
-        const values = [];
-        const questionTooltips = [];
-        const filteredEntries = [];
-        let totalFiltrate = 0;
-
-        if (!panelRows) {
+    function initCharts() {
+        if (typeof echarts === 'undefined') {
             return;
         }
 
-        Object.entries(panelRows).forEach(function (entry) {
-            const question = entry[0];
-            const count = Number(entry[1] || 0);
+        const maxVisibleFiltrateRows = 7;
+        const minPercentageForDenseLabels = 1;
+        const denseLabelsThreshold = 6;
+        const rowHeight = 44;
+        const chartVerticalPadding = 36;
 
-            const parts = question.split(' - ');
-            const questionCode = parts[0] || 'N/A';
-            const questionText = parts.slice(1).join(' - ') || 'Testo non disponibile';
+        Object.keys(chartsData).forEach(function (panelName) {
+            const panelRows = chartsData[panelName];
+            const labels = [];
+            const values = [];
+            const questionTooltips = [];
+            const filteredEntries = [];
+            let totalFiltrate = 0;
 
-            labels.push(questionCode);
-            values.push(count);
-            questionTooltips.push({
-                code: questionCode,
-                text: questionText
+            if (!panelRows) {
+                return;
+            }
+
+            Object.entries(panelRows).forEach(function (entry) {
+                const question = entry[0];
+                const count = Number(entry[1] || 0);
+
+                const parts = question.split(' - ');
+                const questionCode = parts[0] || 'N/A';
+                const questionText = parts.slice(1).join(' - ') || 'Testo non disponibile';
+
+                labels.push(questionCode);
+                values.push(count);
+                questionTooltips.push({
+                    code: questionCode,
+                    text: questionText
+                });
+
+                totalFiltrate += count;
             });
 
-            totalFiltrate += count;
-        });
+            const percentages = values.map(function (value) {
+                if (totalFiltrate <= 0) {
+                    return 0;
+                }
 
-        const percentages = values.map(function (value) {
-            if (totalFiltrate <= 0) {
-                return 0;
+                return (value / totalFiltrate) * 100;
+            });
+            const minPercentageForVisibleRows = 1;
+
+            labels.forEach(function (label, index) {
+                if (percentages[index] > minPercentageForVisibleRows) {
+                    filteredEntries.push({
+                        label: label,
+                        value: values[index],
+                        percentage: percentages[index],
+                        questionTooltip: questionTooltips[index]
+                    });
+                }
+            });
+
+            filteredEntries.sort(function (left, right) {
+                if (right.percentage !== left.percentage) {
+                    return right.percentage - left.percentage;
+                }
+
+                return right.value - left.value;
+            });
+
+            if (!filteredEntries.length) {
+                return;
             }
 
-            return (value / totalFiltrate) * 100;
-        });
-        const minPercentageForVisibleRows = 1;
+            const visibleLabels = filteredEntries.map(function (entry) {
+                return entry.label;
+            });
+            const visibleValues = filteredEntries.map(function (entry) {
+                return entry.value;
+            });
+            const visiblePercentages = filteredEntries.map(function (entry) {
+                return entry.percentage;
+            });
+            const visibleQuestionTooltips = filteredEntries.map(function (entry) {
+                return entry.questionTooltip;
+            });
+            const hasDenseBars = visibleLabels.length > denseLabelsThreshold;
 
-        labels.forEach(function (label, index) {
-            if (percentages[index] > minPercentageForVisibleRows) {
-                filteredEntries.push({
-                    label: label,
-                    value: values[index],
-                    percentage: percentages[index],
-                    questionTooltip: questionTooltips[index]
+            const canvasId = 'chart-panel-' + buildPanelSlug(panelName);
+            const chartElement = document.getElementById(canvasId);
+
+            if (!chartElement) {
+                return;
+            }
+
+            const canvasWrapper = chartElement.parentElement;
+            const visibleRows = Math.min(visibleLabels.length || 1, maxVisibleFiltrateRows);
+            const canvasHeight = Math.max(220, (visibleRows * rowHeight) + chartVerticalPadding);
+            const scrollHeight = (visibleLabels.length * rowHeight) + chartVerticalPadding;
+
+            if (canvasWrapper) {
+                canvasWrapper.style.height = canvasHeight + 'px';
+                canvasWrapper.style.overflowY = visibleLabels.length > maxVisibleFiltrateRows ? 'auto' : 'hidden';
+            }
+
+            chartElement.style.height = scrollHeight + 'px';
+
+            function wrapText(text, maxLineLength, maxLines) {
+                if (!text) {
+                    return [];
+                }
+
+                var words = String(text).split(/\s+/);
+                var wrapped = [];
+                var currentLine = '';
+
+                words.forEach(function (word) {
+                    var testLine = currentLine ? (currentLine + ' ' + word) : word;
+
+                    if (testLine.length <= maxLineLength) {
+                        currentLine = testLine;
+                        return;
+                    }
+
+                    if (currentLine) {
+                        wrapped.push(currentLine);
+                    }
+
+                    currentLine = word;
                 });
+
+                if (currentLine) {
+                    wrapped.push(currentLine);
+                }
+
+                if (wrapped.length > maxLines) {
+                    var limited = wrapped.slice(0, maxLines);
+                    limited[maxLines - 1] = limited[maxLines - 1].replace(/\s*\.*$/, '') + '...';
+                    return limited;
+                }
+
+                return wrapped;
             }
-        });
 
-        if (!filteredEntries.length) {
-            return;
-        }
+            function formatTooltipMetric(label, value, extraClass) {
+                var metricClass = extraClass ? (' fc-echart-tooltip-metric ' + extraClass) : ' fc-echart-tooltip-metric';
 
-        const visibleLabels = filteredEntries.map(function (entry) {
-            return entry.label;
-        });
-        const visibleValues = filteredEntries.map(function (entry) {
-            return entry.value;
-        });
-        const visiblePercentages = filteredEntries.map(function (entry) {
-            return entry.percentage;
-        });
-        const visibleQuestionTooltips = filteredEntries.map(function (entry) {
-            return entry.questionTooltip;
-        });
-        const hasDenseBars = visibleLabels.length > denseLabelsThreshold;
+                return '<div class="' + metricClass + '">' +
+                    '<span class="fc-echart-tooltip-metric-label">' + escapeHtml(label) + '</span>' +
+                    '<span class="fc-echart-tooltip-metric-value">' + escapeHtml(value) + '</span>' +
+                    '</div>';
+            }
 
-        const canvasId = 'chart-panel-' + buildPanelSlug(panelName);
-        const canvas = document.getElementById(canvasId);
+            var chart = echarts.getInstanceByDom(chartElement) || echarts.init(chartElement, null, {
+                renderer: 'canvas'
+            });
 
-        if (!canvas) {
-            return;
-        }
-
-        const canvasWrapper = canvas.parentElement;
-        const visibleRows = Math.min(visibleLabels.length || 1, maxVisibleFiltrateRows);
-        const canvasHeight = Math.max(220, (visibleRows * rowHeight) + chartVerticalPadding);
-        const scrollHeight = (visibleLabels.length * rowHeight) + chartVerticalPadding;
-
-        if (canvasWrapper) {
-            canvasWrapper.style.height = canvasHeight + 'px';
-            canvasWrapper.style.overflowY = visibleLabels.length > maxVisibleFiltrateRows ? 'auto' : 'hidden';
-        }
-
-        canvas.height = scrollHeight;
-
-        new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels: visibleLabels,
-                datasets: [{
-                    label: 'Filtrate',
-                    data: visibleValues,
-                    backgroundColor: '#7bd87d',
-                    borderColor: '#2E7D32',
+            chart.setOption({
+                animationDuration: 500,
+                grid: {
+                    top: 28,
+                    right: hasDenseBars ? 60 : 44,
+                    bottom: 12,
+                    left: 52,
+                    containLabel: false
+                },
+                legend: {
+                    top: 0,
+                    right: 0,
+                    textStyle: {
+                        color: '#374151',
+                        fontSize: 11
+                    },
+                    data: ['Filtrate']
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    confine: false,
+                    appendToBody: true,
+                    renderMode: 'html',
+                    className: 'fc-echart-tooltip',
+                    backgroundColor: 'rgba(15, 23, 42, 0.96)',
+                    borderColor: 'rgba(148, 163, 184, 0.28)',
                     borderWidth: 1,
-                    percentages: visiblePercentages,
-                    questionTooltips: visibleQuestionTooltips
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: {
-                    padding: {
-                        top: 28
+                    padding: 0,
+                    textStyle: {
+                        color: '#f8fafc',
+                        fontSize: 12,
+                        lineHeight: 18
+                    },
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function (params) {
+                        var item = params && params[0] ? params[0] : null;
+                        var questionData;
+                        var questionCode = 'N/A';
+                        var questionText = 'Testo non disponibile';
+                        var wrappedText = [];
+                        var percentageValue = '0.0%';
+
+                        if (!item) {
+                            return '';
+                        }
+
+                        questionData = visibleQuestionTooltips[item.dataIndex] || null;
+                        percentageValue = visiblePercentages[item.dataIndex].toFixed(1) + '%';
+
+                        if (questionData) {
+                            questionCode = questionData.code;
+                            questionText = questionData.text;
+                        }
+
+                        wrappedText = wrapText(questionText, 44, 5);
+
+                        return '' +
+                            '<div class="fc-echart-tooltip-card">' +
+                                '<div class="fc-echart-tooltip-head">' +
+                                    '<div class="fc-echart-tooltip-kicker">Domanda di screenout</div>' +
+                                    '<div class="fc-echart-tooltip-code">' + escapeHtml(questionCode) + '</div>' +
+                                '</div>' +
+                                '<div class="fc-echart-tooltip-body">' +
+                                    '<div class="fc-echart-tooltip-question">' + wrappedText.map(function (line) {
+                                        return '<div class="fc-echart-tooltip-question-line">' + escapeHtml(line) + '</div>';
+                                    }).join('') + '</div>' +
+                                    '<div class="fc-echart-tooltip-divider"></div>' +
+                                    '<div class="fc-echart-tooltip-metrics">' +
+                                        formatTooltipMetric('Filtrate', String(item.value), 'is-count') +
+                                        formatTooltipMetric('% sul totale', percentageValue, 'is-percentage') +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>';
                     }
                 },
-                plugins: {
-                    legend: {
-                        display: true
+                xAxis: {
+                    type: 'value',
+                    minInterval: 1,
+                    axisLabel: {
+                        color: '#4b5563',
+                        fontSize: 11
                     },
-                    tooltip: {
-                        callbacks: {
-                            title: function (items) {
-                                if (!items || !items.length) {
-                                    return '';
-                                }
-
-                                const dataIndex = items[0].dataIndex;
-                                const dataset = items[0].dataset;
-                                const questionData = dataset.questionTooltips
-                                    ? dataset.questionTooltips[dataIndex]
-                                    : null;
-
-                                return questionData ? questionData.code : '';
-                            },
-                            label: function (context) {
-                                const dataIndex = context.dataIndex;
-                                const dataset = context.dataset;
-                                const questionData = dataset.questionTooltips
-                                    ? dataset.questionTooltips[dataIndex]
-                                    : null;
-
-                                const lines = [];
-
-                                function wrapText(text, maxLineLength, maxLines) {
-                                    if (!text) {
-                                        return [];
-                                    }
-
-                                    const words = String(text).split(/\s+/);
-                                    const wrapped = [];
-                                    let currentLine = '';
-
-                                    words.forEach(function (word) {
-                                        const testLine = currentLine ? (currentLine + ' ' + word) : word;
-
-                                        if (testLine.length <= maxLineLength) {
-                                            currentLine = testLine;
-                                            return;
-                                        }
-
-                                        if (currentLine) {
-                                            wrapped.push(currentLine);
-                                        }
-
-                                        currentLine = word;
-                                    });
-
-                                    if (currentLine) {
-                                        wrapped.push(currentLine);
-                                    }
-
-                                    if (wrapped.length > maxLines) {
-                                        const limited = wrapped.slice(0, maxLines);
-                                        limited[maxLines - 1] = limited[maxLines - 1].replace(/\s*\.*$/, '') + '...';
-                                        return limited;
-                                    }
-
-                                    return wrapped;
-                                }
-
-                                if (questionData) {
-                                    const wrappedQuestionText = wrapText(questionData.text, 38, 4);
-                                    lines.push.apply(lines, wrappedQuestionText);
-                                }
-
-                                lines.push('Filtrate: ' + context.raw);
-
-                                const percentage = dataset.percentages
-                                    ? dataset.percentages[dataIndex]
-                                    : 0;
-
-                                lines.push('% sul totale filtrate: ' + percentage.toFixed(1) + '%');
-
-                                return lines;
-                            }
+                    splitLine: {
+                        lineStyle: {
+                            color: '#edf2f7'
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    inverse: true,
+                    data: visibleLabels,
+                    axisTick: {
+                        show: false
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: '#d7dee7'
                         }
                     },
-                    datalabels: {
-                        display: function (context) {
-                            const value = Number(context.dataset.data[context.dataIndex] || 0);
-                            const percentage = context.dataset.percentages
-                                ? Number(context.dataset.percentages[context.dataIndex] || 0)
-                                : 0;
+                    axisLabel: {
+                        color: '#1f2937',
+                        fontSize: 11
+                    }
+                },
+                series: [{
+                    name: 'Filtrate',
+                    type: 'bar',
+                    data: visibleValues,
+                    barMaxWidth: 24,
+                    label: {
+                        show: true,
+                        position: 'right',
+                        color: '#1f2937',
+                        fontSize: 9,
+                        fontWeight: 700,
+                        formatter: function (params) {
+                            var value = Number(params.value || 0);
+                            var percentage = Number(visiblePercentages[params.dataIndex] || 0);
 
                             if (value <= 0) {
-                                return false;
+                                return '';
                             }
 
-                            if (hasDenseBars) {
-                                return percentage > minPercentageForDenseLabels;
+                            if (hasDenseBars && percentage <= minPercentageForDenseLabels) {
+                                return '';
                             }
-
-                            return true;
-                        },
-                        anchor: 'center',
-                        align: 'right',
-                        offset: -8,
-                        clamp: true,
-                        clip: true,
-                        color: '#1f2937',
-                        textAlign: 'right',
-                        font: {
-                            weight: '700',
-                            size: 9
-                        },
-                        formatter: function (value, context) {
-                            const dataset = context.dataset;
-                            const percentage = dataset.percentages
-                                ? dataset.percentages[context.dataIndex]
-                                : 0;
 
                             return percentage.toFixed(1) + '%';
                         }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
                     },
-                    x: {
-                        ticks: {
-                            autoSkip: false,
-                            maxRotation: 0,
-                            minRotation: 0,
-                            callback: function (value, index) {
-                                return labels[index] || '';
-                            }
-                        }
+                    itemStyle: {
+                        color: '#7bd87d',
+                        borderColor: '#2E7D32',
+                        borderWidth: 1,
+                        borderRadius: [0, 6, 6, 0]
                     }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        ticks: {
-                            precision: 0
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            autoSkip: false
-                        }
-                    }
-                }
+                }]
+            });
+
+            chart.resize();
+        });
+    }
+
+    function resizeVisibleCharts() {
+        if (typeof echarts === 'undefined') {
+            return;
+        }
+
+        document.querySelectorAll('.fc-chart-canvas > div[id^="chart-panel-"]').forEach(function (chartElement) {
+            var chart = echarts.getInstanceByDom(chartElement);
+
+            if (chart) {
+                chart.resize();
             }
         });
-    });
-}
+    }
 
     function closeSurvey(prjValue, sidValue) {
         if (!confirm('Sei sicuro di voler chiudere questa ricerca?')) {
@@ -460,11 +504,19 @@ function initDropdowns() {
 }
 
     document.addEventListener('DOMContentLoaded', function () {
-    initTooltips();
-    initDropdowns();
-    initProgressBars();
-    initCharts();
-    bindResetBloccate();
-    exposeGlobalActions();
+        initTooltips();
+        initDropdowns();
+        initProgressBars();
+        initCharts();
+        bindResetBloccate();
+        exposeGlobalActions();
+
+        document.querySelectorAll('[data-bs-toggle="pill"]').forEach(function (trigger) {
+            trigger.addEventListener('shown.bs.tab', function () {
+                resizeVisibleCharts();
+            });
+        });
+
+        window.addEventListener('resize', resizeVisibleCharts);
     });
 })();

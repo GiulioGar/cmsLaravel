@@ -900,7 +900,7 @@
 
                             <div class="fc-chart-body">
                                 <div class="fc-chart-canvas">
-                                    <canvas id="chart-panel-{{ \Illuminate\Support\Str::slug($panelName, '-') }}"></canvas>
+                                    <div id="chart-panel-{{ \Illuminate\Support\Str::slug($panelName, '-') }}" style="width: 100%; height: 100%;"></div>
                                 </div>
                             </div>
                         </div>
@@ -1378,7 +1378,6 @@
     };
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@6/dist/echarts.min.js"></script>
 <script src="{{ asset('js/fieldControl.js') }}?v={{ @filemtime(public_path('js/fieldControl.js')) }}"></script>
 @endsection
