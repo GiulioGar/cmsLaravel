@@ -538,8 +538,17 @@ private function calcolaMediaRedPanel()
         $parts = explode('_', $quotaName);
 
         if (count($parts) === 2) {
+            $baseKey = $parts[0];
+
             if (isset($quotaConfig['target_details'][$quotaName])) {
                 return $quotaConfig['target_details'][$quotaName];
+            }
+
+            if (isset($quotaConfig['target_details'][$baseKey])) {
+                $baseDetail = $quotaConfig['target_details'][$baseKey];
+                $baseDetail['label'] = $this->formatSimpleQuotaLabel($parts[0], $parts[1], $quotaName);
+
+                return $baseDetail;
             }
 
             return [
@@ -704,7 +713,7 @@ private function calcolaMediaRedPanel()
         if (isset($legGroups[$legIndex])) {
             return [
                 'label' => 'Interviste totali - ' . $legGroups[$legIndex]['label'],
-                'tooltip' => null,
+                'tooltip' => $legGroups[$legIndex]['tooltip'] ?? null,
             ];
         }
 
@@ -801,10 +810,13 @@ private function calcolaMediaRedPanel()
             }
 
             $tooltip = null;
+            $options = [];
+            $questionText = '';
 
             if ($questionId > 0 && isset($questionMap[$questionId])) {
                 $question = $questionMap[$questionId];
                 $options = is_array($question['options'] ?? null) ? $question['options'] : [];
+                $questionText = trim((string) ($question['text'] ?? ''));
                 $optionLabels = [];
 
                 if (is_array($optionIds)) {
@@ -816,8 +828,6 @@ private function calcolaMediaRedPanel()
                         }
                     }
                 }
-
-                $questionText = trim((string) ($question['text'] ?? ''));
 
                 if ($questionText !== '' || !empty($optionLabels)) {
                     $tooltip = '<div class="quota-tooltip-card">';
@@ -846,6 +856,41 @@ private function calcolaMediaRedPanel()
                 'label' => $label,
                 'tooltip' => $tooltip,
             ];
+
+            // Per target con più option_id, genera sub-entry pers_0, pers_1 ecc.
+            // così formatQuotaName le trova direttamente senza usare il tooltip aggregato
+            if ($questionId > 0 && isset($questionMap[$questionId]) && is_array($optionIds) && count($optionIds) > 1) {
+                foreach ($optionIds as $idx => $optionId) {
+                    $optionIndex = (int) $optionId;
+                    $optionText = isset($options[$optionIndex]) ? trim((string) $options[$optionIndex]) : null;
+
+                    $subLabel = $this->formatSimpleQuotaLabel($prefix, (string) $idx, $name . '_' . $idx);
+
+                    $subTooltip = null;
+                    if ($questionText !== '' || ($optionText !== null && $optionText !== '')) {
+                        $subTooltip = '<div class="quota-tooltip-card">';
+
+                        if ($questionText !== '') {
+                            $subTooltip .= '<div class="quota-tooltip-question">' . e($questionText) . '</div>';
+                        }
+
+                        if ($questionText !== '' && $optionText !== null && $optionText !== '') {
+                            $subTooltip .= '<div class="quota-tooltip-divider"></div>';
+                        }
+
+                        if ($optionText !== null && $optionText !== '') {
+                            $subTooltip .= '<div class="quota-tooltip-option">' . e($optionText) . '</div>';
+                        }
+
+                        $subTooltip .= '</div>';
+                    }
+
+                    $details[$name . '_' . $idx] = [
+                        'label' => $subLabel,
+                        'tooltip' => $subTooltip,
+                    ];
+                }
+            }
         }
 
         return $details;
