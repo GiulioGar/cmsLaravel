@@ -396,51 +396,55 @@
         <div class="row mt-5">
 
             <div class="col-md-6">
-                <div class="d-flex custom-tab-container fc-split">
-                    <div class="custom-nav-container fc-side">
-                        <ul class="nav flex-column nav-pills custom-nav-pills fc-side-nav" id="menu-tabs">
-                            <!-- Tab Home (sempre presente e attivo) -->
+                <div class="custom-tab-container fc-panel-shell">
+                    <div class="fc-panel-topbar">
+                        <div class="fc-panel-topbar-head">
+                            <div class="fc-panel-topbar-eyebrow">Vista panel</div>
+                            <div class="fc-panel-topbar-title">Riepilogo interviste</div>
+                        </div>
+
+                        <ul class="nav nav-pills fc-panel-tabs" id="menu-tabs">
                             <li class="nav-item">
-                                <a class="nav-link active fc-side-link" id="tab1-tab" data-bs-toggle="pill" href="#tab1">
-                                    <i class="fas fa-home me-2"></i> Totale
+                                <a class="nav-link active fc-panel-tab-link" id="tab1-tab" data-bs-toggle="pill" href="#tab1">
+                                    <span class="fc-panel-tab-icon fc-panel-total">
+                                        <i class="fas fa-home"></i>
+                                    </span>
+                                    <span class="fc-panel-tab-label">Totale</span>
                                 </a>
                             </li>
 
-                            <!-- Generazione dinamica dei tab per i panel -->
                             @if(count($panelCounts) > 1)
-                            @foreach ($panelCounts as $panelName => $panelData)
-                                <li class="nav-item">
-                                    <a class="nav-link fc-side-link" id="tab{{ $loop->index + 2 }}-tab" data-bs-toggle="pill" href="#tab{{ $loop->index + 2 }}" title="{{ $panelName }}">
-                                       @if($panelName === 'Interactive')
-                                        <span class="fc-panel-tab-icon fc-panel-interactive">
-                                            <i class="fa-solid fa-users"></i>
-                                        </span>
-                                        <span class="fc-side-link-label">{{ $panelName }}</span>
-                                    @elseif($panelName === 'Da lista')
-                                        <span class="fc-panel-tab-icon fc-panel-lista"
-                                            data-bs-toggle="tooltip"
-                                            title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
-                                            <i class="fa-solid fa-list-ul"></i>
-                                        </span>
-                                        <span class="fc-side-link-label" data-bs-toggle="tooltip"
-                                            title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
-                                            {{ $panelName }}
-                                        </span>
-                                    @else
-                                        <span class="fc-panel-tab-icon fc-panel-external">
-                                            <i class="fa-solid fa-building-user"></i>
-                                        </span>
-                                        <span class="fc-side-link-label">{{ $panelName }}</span>
-                                    @endif
-                                    </a>
-                                </li>
-                            @endforeach
-                        @endif
-
+                                @foreach ($panelCounts as $panelName => $panelData)
+                                    <li class="nav-item">
+                                        <a class="nav-link fc-panel-tab-link" id="tab{{ $loop->index + 2 }}-tab" data-bs-toggle="pill" href="#tab{{ $loop->index + 2 }}" title="{{ $panelName }}">
+                                            @if($panelName === 'Interactive')
+                                                <span class="fc-panel-tab-icon fc-panel-interactive">
+                                                    <i class="fa-solid fa-users"></i>
+                                                </span>
+                                                <span class="fc-panel-tab-label">{{ $panelName }}</span>
+                                            @elseif($panelName === 'Da lista')
+                                                <span class="fc-panel-tab-icon fc-panel-lista"
+                                                    data-bs-toggle="tooltip"
+                                                    title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
+                                                    <i class="fa-solid fa-list-ul"></i>
+                                                </span>
+                                                <span class="fc-panel-tab-label" data-bs-toggle="tooltip"
+                                                    title="Interviste con uid da lista, uid GUEST o non classificate con nessun panel">
+                                                    {{ $panelName }}
+                                                </span>
+                                            @else
+                                                <span class="fc-panel-tab-icon fc-panel-external">
+                                                    <i class="fa-solid fa-building-user"></i>
+                                                </span>
+                                                <span class="fc-panel-tab-label">{{ $panelName }}</span>
+                                            @endif
+                                        </a>
+                                    </li>
+                                @endforeach
+                            @endif
                         </ul>
                     </div>
 
-                    <!-- Contenuto della tab -->
                     <div class="tab-content custom-tab-content fc-tab-area">
                         <!-- Tab Home - Totale -->
                     <div class="tab-pane fade show active" id="tab1">
@@ -1092,7 +1096,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($logData as $log)
+                                @forelse ($logData as $log)
                                     <tr class="align-middle">
                                         <td class="small">{{ $log['iid'] }}</td>
                                         <td class="small">{{ $log['uid'] }}</td>
@@ -1132,7 +1136,19 @@
                                         </td>
                                         <td class="small">{{ $log['durata'] }}</td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="p-0 border-0">
+                                            <div class="fc-empty-state fc-empty-state--compact">
+                                                <div class="fc-empty-robot">
+                                                    <i class="fa-solid fa-robot"></i>
+                                                </div>
+                                                <div class="fc-empty-title">Log attività ancora vuoto</div>
+                                                <div class="fc-empty-subtitle">Al momento non ci sono interviste da conteggiare.</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -1154,30 +1170,42 @@
         <div class="col-md-12">
             <div class="custom-tab-container-modern">
                 <!-- Nav Tabs -->
-                <ul class="nav custom-nav-tabs-modern" id="date-nav">
-                    @if(count($panelCounts) == 1)
-                        <li class="nav-item">
-                            <a class="nav-link active modern-tab-link" id="tot-date-tab" data-bs-toggle="pill" href="#tot-date">
-                                <i class="fas fa-calendar-alt me-2"></i> TOT
-                            </a>
-                        </li>
-                    @else
-                        @foreach ($dataSummaryByPanel as $panelName => $summaryData)
+                @if(!empty($dataSummaryByPanel))
+                    <ul class="nav custom-nav-tabs-modern" id="date-nav">
+                        @if(count($panelCounts) == 1)
                             <li class="nav-item">
-                                <a class="nav-link modern-tab-link {{ $loop->first ? 'active' : '' }}"
-                                   id="tab-date-{{ $loop->index }}-nav"
-                                   data-bs-toggle="pill"
-                                   href="#tab-date-{{ $loop->index }}">
-                                    <i class="fas fa-calendar-day me-2"></i> {{ $panelName }}
+                                <a class="nav-link active modern-tab-link" id="tot-date-tab" data-bs-toggle="pill" href="#tot-date">
+                                    <i class="fas fa-calendar-alt me-2"></i> TOT
                                 </a>
                             </li>
-                        @endforeach
-                    @endif
-                </ul>
+                        @else
+                            @foreach ($dataSummaryByPanel as $panelName => $summaryData)
+                                <li class="nav-item">
+                                    <a class="nav-link modern-tab-link {{ $loop->first ? 'active' : '' }}"
+                                       id="tab-date-{{ $loop->index }}-nav"
+                                       data-bs-toggle="pill"
+                                       href="#tab-date-{{ $loop->index }}">
+                                        <i class="fas fa-calendar-day me-2"></i> {{ $panelName }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        @endif
+                    </ul>
+                @endif
 
                 <!-- Tab Content -->
                 <div class="tab-content custom-tab-content-modern">
                     <br/>
+                    @if(empty($dataSummaryByPanel))
+                        <div class="fc-empty-state fc-empty-state--report">
+                            <div class="fc-empty-robot">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+                            <div class="fc-empty-title">Report giornaliero in attesa</div>
+                            <div class="fc-empty-subtitle">Al momento non ci sono interviste da conteggiare.</div>
+                        </div>
+                    @endif
+
                     @foreach ($dataSummaryByPanel as $panelName => $summaryData)
                         <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
                              id="tab-date-{{ $loop->index }}">
@@ -1204,7 +1232,7 @@
                                         $rowKeys = array_keys($rows);
                                     @endphp
 
-                                    @foreach ($rowKeys as $i => $date)
+                                    @forelse ($rowKeys as $i => $date)
                                         @php
                                             $stats = $rows[$date];
 
@@ -1284,7 +1312,19 @@
                                                 @endif
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    @empty
+                                        <tr>
+                                            <td colspan="8" class="p-0 border-0">
+                                                <div class="fc-empty-state fc-empty-state--compact">
+                                                    <div class="fc-empty-robot">
+                                                        <i class="fa-solid fa-robot"></i>
+                                                    </div>
+                                                    <div class="fc-empty-title">Nessun dato giornaliero disponibile</div>
+                                                    <div class="fc-empty-subtitle">Al momento non ci sono interviste da conteggiare.</div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                     </tbody>
                                 </table>
                             </div>

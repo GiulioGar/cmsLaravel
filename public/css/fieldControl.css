@@ -292,6 +292,58 @@ h3 {font-size: 15px!important;}
     font-size: 1.2rem;
 }
 
+.fc-empty-state {
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 28px 20px;
+    text-align: center;
+    background: radial-gradient(circle at top, rgba(157,206,108,.18), rgba(64,64,68,.03) 58%, rgba(255,255,255,1) 100%);
+    border: 1px dashed rgba(64,64,68,.18);
+    border-radius: 16px;
+}
+
+.fc-empty-state--compact {
+    min-height: 240px;
+    margin: 8px;
+}
+
+.fc-empty-state--report {
+    min-height: 320px;
+}
+
+.fc-empty-robot {
+    width: 74px;
+    height: 74px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #404044 0%, #6b7280 100%);
+    color: #fff;
+    box-shadow: 0 12px 28px rgba(64,64,68,.16);
+}
+
+.fc-empty-robot i {
+    font-size: 2rem;
+}
+
+.fc-empty-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #2f3640;
+}
+
+.fc-empty-subtitle {
+    max-width: 420px;
+    font-size: .92rem;
+    line-height: 1.5;
+    color: #6b7280;
+}
+
 .sticky-header-log th {
     position: sticky;
     top: 0;
@@ -1038,10 +1090,10 @@ h3 {font-size: 15px!important;}
 }
 
 .fc-side{
-  min-width: 138px;
-  max-width: 148px;
+  min-width: 172px;
+  max-width: 188px;
   border-right: 1px solid rgba(0,0,0,.06);
-  padding: .65rem .35rem;
+  padding: .7rem .45rem;
 }
 
 .fc-side-nav{
@@ -1055,14 +1107,14 @@ h3 {font-size: 15px!important;}
 .fc-side-link{
   display: flex;
   align-items: flex-start;
-  gap: .45rem;
+  gap: .55rem;
   width: 100%;
   border-radius: 10px !important;
-  padding: .48rem .55rem !important;
+  padding: .55rem .65rem !important;
   font-weight: 800;
   font-size: .84rem;
   line-height: 1.2;
-  padding-right: .8rem !important;
+  padding-right: 1rem !important;
 }
 
 .fc-side-link .fc-panel-tab-icon{
@@ -1072,6 +1124,11 @@ h3 {font-size: 15px!important;}
 
 .fc-side-link-label{
   min-width: 0;
+  flex: 1 1 auto;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -1124,6 +1181,117 @@ h3 {font-size: 15px!important;}
 @media (max-width: 992px){
   .fc-split{ flex-direction: column; }
   .fc-side{ min-width: 100%; max-width: 100%; }
+}
+
+.fc-panel-shell{
+  display: block;
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15,23,42,.08);
+}
+
+.fc-panel-topbar{
+  padding: 14px 16px 12px;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  border-bottom: 1px solid rgba(15,23,42,.08);
+}
+
+.fc-panel-topbar-head{
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.fc-panel-topbar-eyebrow{
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.fc-panel-topbar-title{
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fc-panel-tabs{
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.fc-panel-tabs::-webkit-scrollbar{
+  height: 6px;
+}
+
+.fc-panel-tabs::-webkit-scrollbar-thumb{
+  background: rgba(148,163,184,.5);
+  border-radius: 999px;
+}
+
+.fc-panel-tab-link{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: .6rem .9rem !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(148,163,184,.24);
+  background: #fff;
+  color: #334155 !important;
+  font-weight: 700;
+  line-height: 1.15;
+  transition: transform .16s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.fc-panel-tab-link:hover{
+  transform: translateY(-1px);
+  background: #f8fafc;
+  border-color: rgba(59,130,246,.28);
+}
+
+.fc-panel-tab-link.active{
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
+  color: #0f172a !important;
+  border-color: rgba(59,130,246,.28);
+  box-shadow: 0 8px 18px rgba(59,130,246,.12);
+}
+
+.fc-panel-tab-label{
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 150px;
+  text-align: left;
+}
+
+.fc-panel-total{
+  background: rgba(59,130,246,.16);
+  color: #1d4ed8;
+}
+
+.fc-panel-shell .custom-tab-content{
+  display: block;
+  padding: 0;
+  background: transparent;
+  min-height: 0;
+}
+
+.fc-panel-shell .fc-tab-area{
+  display: block;
+  width: 100%;
+  padding: 16px;
+  background: #fff;
 }
 
 /* ===== STEP 4: Filtrate charts (scoped fc-) ===== */

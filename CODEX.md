@@ -37,8 +37,12 @@ Premi panel:
 Memoria operativa recente:
 - FieldControl: nel grafico `Analisi filtrate` vengono mostrati solo record con quota `> 1%`; `Da lista` va sempre ordinato per ultimo, con `Interactive` sempre per primo.
 - FieldControl: nel log attivita' le icone stato sono state aumentate di dimensione con classe CSS dedicata.
+- FieldControl: nei box `Log Attivita'` e `Report giornaliero`, quando non ci sono interviste, viene mostrato un empty state con icona robottino e messaggio `Al momento non ci sono interviste da conteggiare.`.
+- FieldControl: il blocco `Riepilogo interviste` usa la scelta panel in alto con stile dedicato, distinta dalle tabs di `Analisi filtrate`.
 - Referral: nel modal bonus welcome il bottone export usa gli utenti eleggibili trovati in verifica, con CSV `email;firstName;bytes`; il bottone ora si chiama `Esporta`.
 - Premi Panel: export `Email non disponibili` Paypal corretto per MySQL strict usando `groupBy` + `MAX(h.id)` invece di `distinct` + `order by h.id`.
 - User Profile: nella modale anagrafica esiste il reset password forzato; la password impostata e' il prefisso della email e viene salvata in `md5`, coerente con il login attuale.
 - User Profile: nella sezione `Attivita'` c'e' il contatore `Amici invitati iscritti`, letto da `t_user_info.provenienza`.
 - Dashboard `index`: i grafici principali sono stati migrati a `Apache ECharts`; al momento resta in Chart.js solo il mini doughnut `Andamento` nella tabella `Progetti in corso`.
+- Select SID: esiste un componente riusabile `search-select` in `public/js/search-select.js` + `public/css/search-select.css`, gia' usato in `surveys` (`+ Nuovo progetto`) e `autotest`.
+- Ordinamento SID: i SID che iniziano con `R` e hanno una parte numerica iniziale, anche con suffissi tipo `NO` o `IT`, vanno ordinati per la parte numerica iniziale e non come puro testo.

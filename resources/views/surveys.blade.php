@@ -3,6 +3,7 @@
 @section('content')
 
 <link rel="stylesheet" href="{{ asset('css/surveys.css') }}">
+<link rel="stylesheet" href="{{ asset('css/search-select.css') }}">
 
 <main class="content">
 
@@ -210,9 +211,28 @@
                     <div class="input-group-prepend">
                       <span class="input-group-text">Codice SID Progetto:</span>
                     </div>
-                    <select required class="custom-select" name="sid" id="sid">
-                      <!-- popolato via AJAX -->
-                    </select>
+                    <div class="flex-grow-1">
+                      <div class="search-select" data-target-select="#sid">
+                        <button type="button" class="search-select-toggle">
+                          <span class="search-select-label">-- Seleziona SID --</span>
+                          <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="search-select-dropdown" style="display:none;">
+                          <div class="search-select-box">
+                            <input
+                              type="text"
+                              class="search-select-input"
+                              placeholder="Cerca SID..."
+                              autocomplete="off"
+                            >
+                          </div>
+                          <div class="search-select-options"></div>
+                        </div>
+                      </div>
+                      <select required class="custom-select d-none" name="sid" id="sid">
+                        <option value="">-- Seleziona SID --</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 <div class="col-6">
@@ -465,6 +485,7 @@
 @section('scripts')
     <!-- jQuery (necessario per DataTables) -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="{{ asset('js/search-select.js') }}"></script>
 
     <!-- DataTables base + Bootstrap 5 style -->
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
@@ -591,16 +612,26 @@ $(document).ready(function() {
     $('#btnOpenCreateModal').on('click', function() {
         // Svuota i campi
         $('#createSurveyForm')[0].reset();
+        $('#sid').html('<option value="">-- Seleziona SID --</option>');
 
         $.ajax({
             url: '{{ route('surveys.available-sids') }}',
             method: 'GET',
             success: function(response) {
-                $('#sid').empty();
-
                 response.forEach(function(item) {
                     $('#sid').append('<option value="' + item.sid + '">' + item.sid + '</option>');
                 });
+
+                var sidSelect = document.getElementById('sid');
+                var sidSearch = document.querySelector('.search-select[data-target-select="#sid"]');
+
+                if (sidSelect) {
+                    sidSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                if (sidSearch) {
+                    sidSearch.dispatchEvent(new Event('search-select:refresh'));
+                }
 
                 $('#panel').trigger('change');
                 $('#createSurveyModal').modal('show');
@@ -761,4 +792,3 @@ initBootstrapTooltips();
 });
 </script>
 @endsection
-

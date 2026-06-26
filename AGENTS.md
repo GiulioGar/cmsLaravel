@@ -25,6 +25,10 @@ File .sre:
 - La prima colonna può contenere versione tipo 2.0.
 - Se presente, gli indici dei campi vanno scalati.
 - Campi principali: prj, sid, iid, uid, data inizio, data fine, durata, status, ultima domanda.
+- Nel log fieldControl conviene distinguere tra `ultima domanda da sistema` e `ultima domanda nel File Dati`.
+- L'ultima domanda nel File Dati può essere letta scorrendo l'ultima riga utile del file `.sre` e prendendo il secondo campo.
+- In `Ultimo Update`, se presente timezone `CET/CEST`, va rimossa in visualizzazione; preferire data sopra e ora sotto.
+- Per tooltip Bootstrap con HTML custom, evitare stili inline nel `title`: usare `data-bs-custom-class` e CSS dedicato, altrimenti la sanitizzazione rimuove la formattazione.
 
 Premi panel:
 - La tabella premi Amazon e' `t_premidb`.
@@ -68,3 +72,10 @@ Premi panel:
 - Prefer bullet points.
 - Do not generate long reports unless requested.
 - Summarize findings in less than 10 bullet points when possible.
+
+## Memoria operativa recente
+
+- FieldControl: nei box `Log Attivita'` e `Report giornaliero`, se non ci sono interviste conviene mostrare un empty state con icona robottino invece di lasciare tabelle vuote.
+- FieldControl: nel blocco `Riepilogo interviste` la navigazione panel e' stata portata in alto con stile distinto dalle tabs di `Analisi filtrate`.
+- Select SID: per select ricercabili esiste un componente condiviso `search-select` in `public/js/search-select.js` + `public/css/search-select.css`.
+- Ordinamento SID: valori tipo `R2604069NO` o `R2604069IT` vanno trattati come SID numerici sulla parte iniziale dopo `R`, non come puro testo.

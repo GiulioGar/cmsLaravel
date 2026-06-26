@@ -527,13 +527,13 @@ class SurveyController extends Controller
                     ->whereNotIn('sid', $usedSurIds)
                      ->orderByRaw("
                 CASE
-                    WHEN sid REGEXP '^R[0-9]+$' THEN 1
+                    WHEN sid REGEXP '^R[0-9]+' THEN 1
                     ELSE 0
                 END DESC
             ")
             ->orderByRaw("
                 CASE
-                    WHEN sid REGEXP '^R[0-9]+$' THEN CAST(SUBSTRING(sid, 2) AS UNSIGNED)
+                    WHEN sid REGEXP '^R[0-9]+' THEN CAST(SUBSTRING(sid, 2) AS UNSIGNED)
                     ELSE NULL
                 END DESC
             ")

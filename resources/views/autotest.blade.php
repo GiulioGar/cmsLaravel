@@ -1,6 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
+<link rel="stylesheet" href="{{ asset('css/search-select.css') }}">
 <div class="container-fluid px-3">
 <div class="row g-3">
   <!-- SINISTRA ~60% -->
@@ -15,7 +16,24 @@
           @csrf
           <div class="col-md-6">
             <label class="form-label">SID</label>
-            <select id="sid" name="sid" class="form-select" onchange="updatePrj(this.value)" required>
+            <div class="search-select" data-target-select="#sid">
+              <button type="button" class="search-select-toggle">
+                <span class="search-select-label">-- Seleziona --</span>
+                <i class="fa-solid fa-chevron-down"></i>
+              </button>
+              <div class="search-select-dropdown" style="display:none;">
+                <div class="search-select-box">
+                  <input
+                    type="text"
+                    class="search-select-input"
+                    placeholder="Cerca SID..."
+                    autocomplete="off"
+                  >
+                </div>
+                <div class="search-select-options"></div>
+              </div>
+            </div>
+            <select id="sid" name="sid" class="form-select d-none" onchange="updatePrj(this.value)" required>
               <option value="">-- Seleziona --</option>
               @foreach($surveys as $s)
                 <option value="{{ $s->sid }}">{{ $s->sid }}</option>
@@ -116,6 +134,7 @@
 @endsection
 
 @section('scripts')
+<script src="{{ asset('js/search-select.js') }}"></script>
 <script>
 // Dati survey dal controller
 const surveys = @json($surveys);
