@@ -77,5 +77,7 @@ Premi panel:
 
 - FieldControl: nei box `Log Attivita'` e `Report giornaliero`, se non ci sono interviste conviene mostrare un empty state con icona robottino invece di lasciare tabelle vuote.
 - FieldControl: nel blocco `Riepilogo interviste` la navigazione panel e' stata portata in alto con stile distinto dalle tabs di `Analisi filtrate`.
+- FieldControl `Controllo Quote`: le righe aggregate `Interviste totali - ...` possono essere arricchite leggendo `quota.total_by_leg` da `resources/config.json`.
+- FieldControl `Controllo Quote`: per target come `gdo_muffin_0` o `auto_donut_4` la label non deve mostrare `Risposta X`; il tooltip va invece sulle righe target dettagliate, con domanda sopra e opzione sotto, recuperando `question_id` e `option_id` dal `config.json`.
 - Select SID: per select ricercabili esiste un componente condiviso `search-select` in `public/js/search-select.js` + `public/css/search-select.css`.
 - Ordinamento SID: valori tipo `R2604069NO` o `R2604069IT` vanno trattati come SID numerici sulla parte iniziale dopo `R`, non come puro testo.

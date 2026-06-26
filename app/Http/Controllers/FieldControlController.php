@@ -20,9 +20,11 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     $sid = $request->query('sid');
 
     $panelData = PanelControl::where('sur_id', $sid)->first();
-    $quotaData = $this->getQuotaData($sid);
 
     $directory = $sreService->resolveResultsDirectory($prj, $sid);
+
+    $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
+    $quotaData = $this->getQuotaData($prj, $sid, $sreService, $questionMap);
 
     // 👇 NON SERVE PIÙ PER LA CLASSIFICAZIONE
     // $panelNames = $this->getPanelNamesMap();
@@ -92,8 +94,6 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     | QUESTION MAP + FILTRATE
     |--------------------------------------------------------------------------
     */
-    $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
-
     $filtrateCountsByPanel = $sreService->buildFiltrateCountsFromInterviews($interviews, $questionMap);
     $filtrateCountsByPanel = $this->sortPanelsForDisplay($filtrateCountsByPanel);
 
@@ -504,43 +504,351 @@ private function calcolaMediaRedPanel()
         return max(0, round($stimaInterviste));
     }
 
-    private function getQuotaData($sid)
+    private function getQuotaData($prj, $sid, FieldControlSreService $sreService, array $questionMap = [])
     {
+        $quotaConfig = $this->getQuotaConfig($prj, $sid, $sreService, $questionMap);
+
         return DB::table('t_quota_status')
             ->where('survey_id', $sid)
             ->orderBy('id', 'asc')
             ->select('target_name as quota', 'target_value as totale', 'current_value as entrate')
             ->get()
-            ->map(function ($item) {
+            ->map(function ($item) use ($quotaConfig, $questionMap) {
                 $item->missing = max(0, $item->totale - $item->entrate);
-                $item->quota = $this->formatQuotaName($item->quota);
+                $quotaMeta = $this->formatQuotaName($item->quota, $quotaConfig, $questionMap);
+                $item->quota = $quotaMeta['label'];
+                $item->quota_tooltip = $quotaMeta['tooltip'];
                 return $item;
             });
     }
 
-    private function formatQuotaName($quotaName)
+    private function formatQuotaName($quotaName, array $quotaConfig = [], array $questionMap = [])
     {
         if ($quotaName === 'source_panel') {
-            return 'Totale Panel Esterno';
+            return [
+                'label' => 'Totale panel esterno',
+                'tooltip' => null,
+            ];
         }
 
         if (strpos($quotaName, 'total_interviews') === 0) {
-            return ($quotaName === 'total_interviews')
-                ? 'Interviste Totali'
-                : 'Totale Cella ' . str_replace('total_interviews_', '', $quotaName);
+            return $this->resolveTotalInterviewsQuotaMeta($quotaName, $quotaConfig, $questionMap);
         }
 
         $parts = explode('_', $quotaName);
 
-        if (count($parts) == 2) {
-            return ucfirst($parts[0]) . ' - Risposta ' . ((int) $parts[1] + 1);
+        if (count($parts) === 2) {
+            if (isset($quotaConfig['target_details'][$quotaName])) {
+                return $quotaConfig['target_details'][$quotaName];
+            }
+
+            return [
+                'label' => $this->formatSimpleQuotaLabel($parts[0], $parts[1], $quotaName),
+                'tooltip' => null,
+            ];
         }
 
-        if (count($parts) == 3) {
-            return ucfirst($parts[0]) . ' - Risposta ' . ((int) $parts[1] + 1) . ' - Cella ' . $parts[2];
+        if (count($parts) === 3) {
+            $targetKey = $parts[0] . '_' . $parts[1];
+
+            if (isset($quotaConfig['target_details'][$targetKey])) {
+                return $quotaConfig['target_details'][$targetKey];
+            }
+
+            return [
+                'label' => $this->formatThreePartQuotaLabel($parts, $quotaName),
+                'tooltip' => null,
+            ];
         }
 
-        return ucfirst($quotaName);
+        return [
+            'label' => $this->humanizeQuotaToken($quotaName),
+            'tooltip' => null,
+        ];
+    }
+
+    private function formatSimpleQuotaLabel($prefix, $rawValue, $fallbackName)
+    {
+        $label = $this->getQuotaPrefixLabel($prefix);
+
+        if (is_numeric($rawValue)) {
+            return $label . ' - Risposta ' . ((int) $rawValue + 1);
+        }
+
+        return $label . ' - ' . $this->humanizeQuotaToken($rawValue);
+    }
+
+    private function formatThreePartQuotaLabel(array $parts, $fallbackName)
+    {
+        $prefix = $parts[0];
+        $middle = $parts[1];
+        $last = $parts[2];
+        $label = $this->getQuotaPrefixLabel($prefix);
+
+        if (is_numeric($middle) && is_numeric($last)) {
+            return $label
+                . ' - Risposta ' . ((int) $middle + 1)
+                . ' - Cella ' . $last;
+        }
+
+        if (!is_numeric($middle) && is_numeric($last)) {
+            return $label
+                . ' - ' . $this->humanizeQuotaToken($middle)
+                . ' - Risposta ' . ((int) $last + 1);
+        }
+
+        return $label
+            . ' - ' . $this->humanizeQuotaToken($middle)
+            . ' - ' . $this->humanizeQuotaToken($last);
+    }
+
+    private function getQuotaPrefixLabel($prefix)
+    {
+        $map = [
+            'sesso' => 'Sesso',
+            'eta' => 'Età',
+            'pers' => 'Personaggio',
+            'reg' => 'Regione',
+            'gdo' => 'Target GDO',
+            'auto' => 'Target Autogrill',
+            'bar' => 'Target Bar',
+        ];
+
+        $normalized = strtolower((string) $prefix);
+
+        if (isset($map[$normalized])) {
+            return $map[$normalized];
+        }
+
+        return $this->humanizeQuotaToken($prefix);
+    }
+
+    private function humanizeQuotaToken($value)
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return '';
+        }
+
+        $value = str_replace(['_', '-'], ' ', $value);
+        $value = preg_replace('/\s+/', ' ', $value);
+
+        return ucwords(strtolower($value));
+    }
+
+    private function getQuotaConfig($prj, $sid, FieldControlSreService $sreService, array $questionMap = []): array
+    {
+        if (empty($prj) || empty($sid)) {
+            return [];
+        }
+
+        $resourcesDirectory = $sreService->resolveResourcesDirectory($prj, $sid);
+
+        if (!$resourcesDirectory) {
+            return [];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return [];
+        }
+
+        $content = @file_get_contents($configPath);
+
+        if ($content === false || trim($content) === '') {
+            return [];
+        }
+
+        $config = json_decode($content, true);
+
+        if (!is_array($config)) {
+            return [];
+        }
+
+        $variableName = trim((string) data_get($config, 'quota.total_by_leg.variable_name', ''));
+        $legGroups = $this->buildQuotaLegGroupsFromConfig(data_get($config, 'quota.targets', []));
+        $targetDetails = $this->buildQuotaTargetDetailsFromConfig(data_get($config, 'quota.targets', []), $questionMap);
+
+        return [
+            'total_by_leg_variable_name' => $variableName !== '' ? $variableName : null,
+            'total_by_leg_groups' => $legGroups,
+            'target_details' => $targetDetails,
+        ];
+    }
+
+    private function resolveTotalInterviewsQuotaMeta($quotaName, array $quotaConfig, array $questionMap): array
+    {
+        if ($quotaName === 'total_interviews') {
+            return [
+                'label' => 'Interviste totali',
+                'tooltip' => null,
+            ];
+        }
+
+        $suffix = str_replace('total_interviews_', '', $quotaName);
+        $legVariableName = $quotaConfig['total_by_leg_variable_name'] ?? null;
+        $legGroups = $quotaConfig['total_by_leg_groups'] ?? [];
+        $fallbackLabel = 'Interviste totali - ' . ($legVariableName ? $legVariableName . ' ' : 'Cella ') . $suffix;
+
+        if (!is_numeric($suffix)) {
+            return [
+                'label' => $fallbackLabel,
+                'tooltip' => null,
+            ];
+        }
+
+        $legIndex = (string) $suffix;
+
+        if (isset($legGroups[$legIndex])) {
+            return [
+                'label' => 'Interviste totali - ' . $legGroups[$legIndex]['label'],
+                'tooltip' => null,
+            ];
+        }
+
+        return [
+            'label' => $fallbackLabel,
+            'tooltip' => null,
+        ];
+    }
+
+    private function buildQuotaLegGroupsFromConfig($targets): array
+    {
+        if (!is_array($targets) || empty($targets)) {
+            return [];
+        }
+
+        $grouped = [];
+
+        foreach ($targets as $target) {
+            if (!is_array($target)) {
+                continue;
+            }
+
+            $name = trim((string) ($target['name'] ?? ''));
+            $description = trim((string) ($target['description'] ?? ''));
+
+            if ($name === '') {
+                continue;
+            }
+
+            $nameParts = explode('_', $name);
+            $groupKey = strtolower(trim((string) ($nameParts[0] ?? '')));
+
+            if ($groupKey === '') {
+                continue;
+            }
+
+            if (!isset($grouped[$groupKey])) {
+                $grouped[$groupKey] = [
+                    'label' => $this->getQuotaPrefixLabel($groupKey),
+                    'descriptions' => [],
+                ];
+            }
+
+            if ($description !== '') {
+                $grouped[$groupKey]['descriptions'][] = $description;
+            }
+        }
+
+        $legs = [];
+        $index = 1;
+
+        foreach ($grouped as $group) {
+            $legs[(string) $index] = [
+                'label' => $group['label'],
+                'tooltip' => !empty($group['descriptions'])
+                    ? implode(' | ', $group['descriptions'])
+                    : null,
+            ];
+            $index++;
+        }
+
+        return $legs;
+    }
+
+    private function buildQuotaTargetDetailsFromConfig($targets, array $questionMap): array
+    {
+        if (!is_array($targets) || empty($targets)) {
+            return [];
+        }
+
+        $details = [];
+
+        foreach ($targets as $target) {
+            if (!is_array($target)) {
+                continue;
+            }
+
+            $name = trim((string) ($target['name'] ?? ''));
+            $description = trim((string) ($target['description'] ?? ''));
+            $questionId = isset($target['question_id']) ? (int) $target['question_id'] : 0;
+            $optionIds = $target['option_id'] ?? [];
+
+            if ($name === '') {
+                continue;
+            }
+
+            $parts = explode('_', $name);
+            $prefix = $parts[0] ?? '';
+            $suffix = isset($parts[1]) ? $this->humanizeQuotaToken($parts[1]) : '';
+
+            $label = $this->getQuotaPrefixLabel($prefix);
+            if ($suffix !== '') {
+                $label .= ' - ' . $suffix;
+            }
+
+            $tooltip = null;
+
+            if ($questionId > 0 && isset($questionMap[$questionId])) {
+                $question = $questionMap[$questionId];
+                $options = is_array($question['options'] ?? null) ? $question['options'] : [];
+                $optionLabels = [];
+
+                if (is_array($optionIds)) {
+                    foreach ($optionIds as $optionId) {
+                        $optionIndex = (int) $optionId;
+
+                        if (isset($options[$optionIndex])) {
+                            $optionLabels[] = trim((string) $options[$optionIndex]);
+                        }
+                    }
+                }
+
+                $questionText = trim((string) ($question['text'] ?? ''));
+
+                if ($questionText !== '' || !empty($optionLabels)) {
+                    $tooltip = '<div class="quota-tooltip-card">';
+
+                    if ($questionText !== '') {
+                        $tooltip .= '<div class="quota-tooltip-question">' . e($questionText) . '</div>';
+                    }
+
+                    if ($questionText !== '' && !empty($optionLabels)) {
+                        $tooltip .= '<div class="quota-tooltip-divider"></div>';
+                    }
+
+                    if (!empty($optionLabels)) {
+                        $tooltip .= '<div class="quota-tooltip-option">' . e(implode(' | ', $optionLabels)) . '</div>';
+                    }
+
+                    $tooltip .= '</div>';
+                }
+            }
+
+            if ($tooltip === null && $description !== '') {
+                $tooltip = $description;
+            }
+
+            $details[$name] = [
+                'label' => $label,
+                'tooltip' => $tooltip,
+            ];
+        }
+
+        return $details;
     }
 
     private function buildQuestionMap(PrimisApiService $primis, $prj, $sid): array
@@ -564,6 +872,7 @@ private function calcolaMediaRedPanel()
                 $questionMap[$question['id']] = [
                     'code' => $question['code'] ?? 'Codice Sconosciuto',
                     'text' => $question['text'] ?? 'Testo non disponibile',
+                    'options' => $question['options'] ?? [],
                 ];
             }
 

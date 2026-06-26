@@ -1023,7 +1023,18 @@
         <tr class="quota-row {{ $isTotalRow ? 'quota-row-total' : '' }}">
             <td>
                 <div class="quota-name-wrap">
-                    <div class="quota-name">{{ $quotaLabel }}</div>
+                    <div class="quota-name">
+                        <span>{{ $quotaLabel }}</span>
+                        @if(!empty($quota->quota_tooltip))
+                            <span class="quota-name-help"
+                                data-bs-toggle="tooltip"
+                                data-bs-html="true"
+                                data-bs-custom-class="quota-tooltip"
+                                title="{{ $quota->quota_tooltip }}">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </span>
+                        @endif
+                    </div>
                 </div>
             </td>
 

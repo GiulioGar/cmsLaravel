@@ -1956,6 +1956,55 @@ h3 {font-size: 15px!important;}
   line-height: 1.15;
 }
 
+.quota-name-help{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  color: #64748b;
+  cursor: pointer;
+  font-size: .78rem;
+}
+
+.quota-tooltip .tooltip-inner{
+  max-width: 280px;
+  padding: 0;
+  background: #2b2f36;
+  color: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 10px 24px rgba(15,23,42,.22);
+}
+
+.quota-tooltip .tooltip-arrow::before{
+  border-top-color: #2b2f36 !important;
+  border-bottom-color: #2b2f36 !important;
+}
+
+.quota-tooltip-card{
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.quota-tooltip-question{
+  color: #facc15;
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.quota-tooltip-divider{
+  height: 1px;
+  margin: 8px 0 7px;
+  background: rgba(255,255,255,.16);
+}
+
+.quota-tooltip-option{
+  color: #e5e7eb;
+  font-size: .75rem;
+  line-height: 1.35;
+}
+
 .quota-total-pill{
   display: inline-flex;
   align-items: center;

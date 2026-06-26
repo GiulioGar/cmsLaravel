@@ -39,6 +39,8 @@ Memoria operativa recente:
 - FieldControl: nel log attivita' le icone stato sono state aumentate di dimensione con classe CSS dedicata.
 - FieldControl: nei box `Log Attivita'` e `Report giornaliero`, quando non ci sono interviste, viene mostrato un empty state con icona robottino e messaggio `Al momento non ci sono interviste da conteggiare.`.
 - FieldControl: il blocco `Riepilogo interviste` usa la scelta panel in alto con stile dedicato, distinta dalle tabs di `Analisi filtrate`.
+- FieldControl `Controllo Quote`: per le righe `Interviste totali - ...` si puo' leggere `quota.total_by_leg` da `resources/config.json`; per survey come `FER / R2605087` le celle aggregate sono rese come `Target GDO`, `Target Autogrill`, `Target Bar`.
+- FieldControl `Controllo Quote`: per target tipo `gdo_muffin_0` o `auto_donut_4` la label va resa senza suffisso `Risposta X`, usando `config.json > quota.targets`; il tooltip va costruito con HTML Bootstrap custom mostrando domanda sopra e opzione sotto, recuperando `question_id` e `option_id`.
 - Referral: nel modal bonus welcome il bottone export usa gli utenti eleggibili trovati in verifica, con CSV `email;firstName;bytes`; il bottone ora si chiama `Esporta`.
 - Premi Panel: export `Email non disponibili` Paypal corretto per MySQL strict usando `groupBy` + `MAX(h.id)` invece di `distinct` + `order by h.id`.
 - User Profile: nella modale anagrafica esiste il reset password forzato; la password impostata e' il prefisso della email e viene salvata in `md5`, coerente con il login attuale.
