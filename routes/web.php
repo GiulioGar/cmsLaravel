@@ -156,6 +156,13 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/fieldControl/targetField/assignTarget', [TargetFieldController::class, 'assignTarget'])->name('targetField.assignTarget');
 
     // ============================================
+    // QUOTA TARGETS (stima avanzata)
+    // ============================================
+    Route::post('/fieldControl/quota-targets', [FieldControlController::class, 'storeQuotaTarget'])->name('fieldControl.quotaTargets.store');
+    Route::put('/fieldControl/quota-targets/{id}', [FieldControlController::class, 'updateQuotaTarget'])->name('fieldControl.quotaTargets.update');
+    Route::delete('/fieldControl/quota-targets/{id}', [FieldControlController::class, 'destroyQuotaTarget'])->name('fieldControl.quotaTargets.destroy');
+
+    // ============================================
     // PREMI PANEL
     // ============================================
 

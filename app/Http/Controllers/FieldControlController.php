@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\PanelControl;
+use App\Models\PanelControlQuotaTarget;
 use App\Services\PrimisApiService;
 use App\Services\FieldControlSreService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -21,10 +22,16 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
 
     $panelData = PanelControl::where('sur_id', $sid)->first();
 
+    $quotaTargetsAvanzati = \App\Models\PanelControlQuotaTarget::where('sur_id', $sid)
+        ->where('enabled', 1)
+        ->get();
+
     $directory = $sreService->resolveResultsDirectory($prj, $sid);
 
     $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
     $quotaData = $this->getQuotaData($prj, $sid, $sreService, $questionMap);
+    $quotaStatusOptions  = $this->getQuotaStatusOptions($sid);
+    $quotaTargetsPreview = $this->prepareQuotaTargetsPreview($quotaTargetsAvanzati, $quotaStatusOptions);
 
     // 👇 NON SERVE PIÙ PER LA CLASSIFICAZIONE
     // $panelNames = $this->getPanelNamesMap();
@@ -79,6 +86,8 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     |--------------------------------------------------------------------------
     */
     $utentiDisponibili = $this->getUtentiDisponibili($sid, $panelData);
+    $disponibiliQuoteAvanzate = $this->calcolaDisponibiliPerQuoteAvanzate($sid, $quotaTargetsAvanzati);
+    $disponibiliQuoteAvanzate = $this->arricchisciQuoteConQuotaStatus($sid, $disponibiliQuoteAvanzate);
     $mediaRedPanel = $this->calcolaMediaRedPanel();
 
     $stimaInterviste = ((int) $panelValueFromDB === 1)
@@ -113,6 +122,14 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     $logData = $sreService->buildLogDataFromInterviews($interviews, $questionMap);
     $dataSummaryByPanel = $sreService->buildDataSummaryByDateFromInterviews($interviews);
     $dataSummaryByPanel = $this->sortPanelsForDisplay($dataSummaryByPanel);
+
+    $irPonderatoData    = $this->calcolaIrPonderato($redemption, $dataSummaryByPanel);
+    $stimaAvanzataQuote = $this->calcolaStimaAvanzata(
+        $utentiDisponibili, $disponibiliQuoteAvanzate, $irPonderatoData['ir_ponderato'], $mediaRedPanel
+    );
+    $stimaQuoteDettaglio = $this->preparaStimaQuoteDettaglio(
+        $disponibiliQuoteAvanzate, $irPonderatoData, $mediaRedPanel
+    );
 
     /*
     |--------------------------------------------------------------------------
@@ -153,8 +170,194 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'logData',
         'dataSummaryByPanel',
         'ricercheInCorso',
-        'primisSurveyStatus'
+        'primisSurveyStatus',
+        'quotaTargetsAvanzati',
+        'stimaAvanzataQuote',
+        'irPonderatoData',
+        'mediaRedPanel',
+        'quotaStatusOptions',
+        'quotaTargetsPreview',
+        'stimaQuoteDettaglio'
     ));
+}
+
+public function storeQuotaTarget(Request $request)
+{
+    $dimension = $request->input('quota_dimension');
+
+    $rules = [
+        'panel_control_id' => 'nullable|integer',
+        'sur_id'           => 'required|string',
+        'prj'              => 'required|string',
+        'quota_dimension'  => 'required|in:gender,age,area',
+        'quota_label'      => 'nullable|string|max:100',
+        'target_percent'   => 'nullable|numeric|min:0|max:100',
+        'quota_status_id'  => 'required|integer',
+        'gender'           => 'nullable|integer|in:1,2',
+        'age_min'          => 'nullable|integer|min:0|max:120',
+        'age_max'          => 'nullable|integer|min:0|max:120',
+        'area'             => 'nullable|integer',
+    ];
+
+    if ($dimension === 'gender') {
+        $rules['gender'] = 'required|integer|in:1,2';
+    } elseif ($dimension === 'age') {
+        $rules['age_min'] = 'required|integer|min:0|max:120';
+        $rules['age_max'] = 'required|integer|min:0|max:120';
+    } elseif ($dimension === 'area') {
+        $rules['area'] = 'required|integer';
+    }
+
+    $validated = $request->validate($rules);
+
+    $sid = $validated['sur_id'];
+
+    $quotaStatusExists = DB::table('t_quota_status')
+        ->where('id', $validated['quota_status_id'])
+        ->where('survey_id', $sid)
+        ->exists();
+
+    if (!$quotaStatusExists) {
+        return back()
+            ->withErrors(['quota_status_id' => 'Quota collegata non valida per questa ricerca.'])
+            ->withInput();
+    }
+
+    $quotaLabel = !empty($validated['quota_label']) ? $validated['quota_label'] : null;
+    if ($quotaLabel === null) {
+        if ($dimension === 'gender') {
+            $quotaLabel = ((int) $validated['gender'] === 1) ? 'Uomo' : 'Donna';
+        } elseif ($dimension === 'age') {
+            $quotaLabel = ($validated['age_min'] ?? '?') . '-' . ($validated['age_max'] ?? '?');
+        } elseif ($dimension === 'area') {
+            $quotaLabel = 'Area ' . ($validated['area'] ?? '?');
+        }
+    }
+
+    $gender = null;
+    $ageMin = null;
+    $ageMax = null;
+    $area   = null;
+
+    if ($dimension === 'gender') {
+        $gender = (int) $validated['gender'];
+    } elseif ($dimension === 'age') {
+        $ageMin = (int) $validated['age_min'];
+        $ageMax = (int) $validated['age_max'];
+    } elseif ($dimension === 'area') {
+        $area = (int) $validated['area'];
+    }
+
+    PanelControlQuotaTarget::create([
+        'panel_control_id' => !empty($validated['panel_control_id']) ? (int) $validated['panel_control_id'] : null,
+        'sur_id'           => $validated['sur_id'],
+        'prj'              => $validated['prj'],
+        'quota_dimension'  => $dimension,
+        'quota_label'      => $quotaLabel,
+        'gender'           => $gender,
+        'age_min'          => $ageMin,
+        'age_max'          => $ageMax,
+        'area'             => $area,
+        'target_percent'   => isset($validated['target_percent']) ? (float) $validated['target_percent'] : null,
+        'quota_status_id'  => (int) $validated['quota_status_id'],
+        'enabled'          => 1,
+    ]);
+
+    return back()->with('success', 'Quota aggiunta correttamente.');
+}
+
+public function updateQuotaTarget(Request $request, $id)
+{
+    $quota = PanelControlQuotaTarget::findOrFail($id);
+    $sid   = $request->input('sur_id');
+
+    if ($quota->sur_id !== $sid) {
+        abort(403);
+    }
+
+    $dimension = $request->input('quota_dimension');
+
+    $rules = [
+        'sur_id'          => 'required|string',
+        'quota_dimension' => 'required|in:gender,age,area',
+        'quota_label'     => 'nullable|string|max:100',
+        'target_percent'  => 'nullable|numeric|min:0|max:100',
+        'quota_status_id' => 'required|integer',
+        'gender'          => 'nullable|integer|in:1,2',
+        'age_min'         => 'nullable|integer|min:0|max:120',
+        'age_max'         => 'nullable|integer|min:0|max:120',
+        'area'            => 'nullable|integer',
+    ];
+
+    if ($dimension === 'gender') {
+        $rules['gender'] = 'required|integer|in:1,2';
+    } elseif ($dimension === 'age') {
+        $rules['age_min'] = 'required|integer|min:0|max:120';
+        $rules['age_max'] = 'required|integer|min:0|max:120';
+    } elseif ($dimension === 'area') {
+        $rules['area'] = 'required|integer';
+    }
+
+    $validated = $request->validate($rules);
+
+    $quotaStatusExists = DB::table('t_quota_status')
+        ->where('id', $validated['quota_status_id'])
+        ->where('survey_id', $sid)
+        ->exists();
+
+    if (!$quotaStatusExists) {
+        return back()
+            ->withErrors(['quota_status_id' => 'Quota collegata non valida per questa ricerca.'])
+            ->withInput();
+    }
+
+    $quotaLabel = !empty($validated['quota_label']) ? $validated['quota_label'] : null;
+    if ($quotaLabel === null) {
+        if ($dimension === 'gender') {
+            $quotaLabel = ((int) $validated['gender'] === 1) ? 'Uomo' : 'Donna';
+        } elseif ($dimension === 'age') {
+            $quotaLabel = ($validated['age_min'] ?? '?') . '-' . ($validated['age_max'] ?? '?');
+        } elseif ($dimension === 'area') {
+            $quotaLabel = 'Area ' . ($validated['area'] ?? '?');
+        }
+    }
+
+    $gender = null; $ageMin = null; $ageMax = null; $area = null;
+    if ($dimension === 'gender') {
+        $gender = (int) $validated['gender'];
+    } elseif ($dimension === 'age') {
+        $ageMin = (int) $validated['age_min'];
+        $ageMax = (int) $validated['age_max'];
+    } elseif ($dimension === 'area') {
+        $area = (int) $validated['area'];
+    }
+
+    $quota->update([
+        'quota_dimension' => $dimension,
+        'quota_label'     => $quotaLabel,
+        'gender'          => $gender,
+        'age_min'         => $ageMin,
+        'age_max'         => $ageMax,
+        'area'            => $area,
+        'target_percent'  => isset($validated['target_percent']) ? (float) $validated['target_percent'] : null,
+        'quota_status_id' => (int) $validated['quota_status_id'],
+    ]);
+
+    return back()->with('success', 'Quota aggiornata correttamente.');
+}
+
+public function destroyQuotaTarget(Request $request, $id)
+{
+    $quota = PanelControlQuotaTarget::findOrFail($id);
+    $sid   = $request->input('sur_id');
+
+    if ($quota->sur_id !== $sid) {
+        abort(403);
+    }
+
+    $quota->update(['enabled' => 0]);
+
+    return back()->with('success', 'Quota rimossa correttamente.');
 }
 
 public function downloadCSV(Request $request, FieldControlSreService $sreService)
@@ -449,6 +652,328 @@ private function getUtentiDisponibili($sid, $panelTarget)
         ->count();
 }
 
+private function calcolaDisponibiliPerQuoteAvanzate($sid, $quotaTargetsAvanzati)
+{
+    if ($quotaTargetsAvanzati->isEmpty()) {
+        return [];
+    }
+
+    $annoCorrente = (int) date('Y');
+
+    $baseQuery = DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotExists(function ($query) use ($sid) {
+            $query->select(DB::raw(1))
+                ->from('t_respint')
+                ->whereRaw('t_respint.uid = t_user_info.user_id')
+                ->where('t_respint.sid', $sid);
+        });
+
+    $risultati = [];
+
+    foreach ($quotaTargetsAvanzati as $quota) {
+        $q = clone $baseQuery;
+
+        $gender = (int) ($quota->gender ?? 0);
+        if ($gender === 1) {
+            $q->where('gender', 1);
+        } elseif ($gender === 2) {
+            $q->where('gender', 2);
+        }
+
+        if ($quota->age_min !== null && $quota->age_max !== null) {
+            $q->whereRaw('YEAR(birth_date) BETWEEN ? AND ?', [
+                $annoCorrente - (int) $quota->age_max,
+                $annoCorrente - (int) $quota->age_min,
+            ]);
+        }
+
+        if ($quota->area !== null) {
+            $q->where('area', $quota->area);
+        }
+
+        $risultati[] = [
+            'quota_id'           => $quota->id,
+            'quota_dimension'    => $quota->quota_dimension,
+            'quota_label'        => $quota->quota_label,
+            'gender'             => $quota->gender,
+            'age_min'            => $quota->age_min,
+            'age_max'            => $quota->age_max,
+            'area'               => $quota->area,
+            'target_percent'     => $quota->target_percent,
+            'target_value'        => $quota->target_value,
+            'quota_status_id'     => $quota->quota_status_id ?? null,
+            'quota_status_name'   => $quota->quota_status_name,
+            'utenti_disponibili'  => $q->count(),
+        ];
+    }
+
+    return $risultati;
+}
+
+private function arricchisciQuoteConQuotaStatus($sid, array $disponibiliQuoteAvanzate)
+{
+    if (empty($disponibiliQuoteAvanzate)) {
+        return $disponibiliQuoteAvanzate;
+    }
+
+    $idsDaCercare   = array_values(array_filter(array_column($disponibiliQuoteAvanzate, 'quota_status_id')));
+
+    $nomiDaCercare  = [];
+    foreach ($disponibiliQuoteAvanzate as $q) {
+        if (empty($q['quota_status_id']) && !empty($q['quota_status_name'])) {
+            $nomiDaCercare[] = $q['quota_status_name'];
+        }
+    }
+    $nomiDaCercare = array_values(array_unique($nomiDaCercare));
+
+    if (empty($idsDaCercare) && empty($nomiDaCercare)) {
+        foreach ($disponibiliQuoteAvanzate as &$quota) {
+            $quota['current_value']            = null;
+            $quota['quota_status_target_value'] = null;
+            $quota['target_residuo']            = null;
+        }
+        unset($quota);
+        return $disponibiliQuoteAvanzate;
+    }
+
+    $quotaStatusById = collect();
+    if (!empty($idsDaCercare)) {
+        $quotaStatusById = DB::table('t_quota_status')
+            ->where('survey_id', $sid)
+            ->whereIn('id', $idsDaCercare)
+            ->select('id', 'current_value', 'target_value')
+            ->get()
+            ->keyBy('id');
+    }
+
+    $quotaStatusByName = collect();
+    if (!empty($nomiDaCercare)) {
+        $quotaStatusByName = DB::table('t_quota_status')
+            ->where('survey_id', $sid)
+            ->whereIn('target_name', $nomiDaCercare)
+            ->select('target_name', 'current_value', 'target_value')
+            ->get()
+            ->keyBy('target_name');
+    }
+
+    foreach ($disponibiliQuoteAvanzate as &$quota) {
+        $statusRow = null;
+
+        if (!empty($quota['quota_status_id'])) {
+            $statusRow = $quotaStatusById->get($quota['quota_status_id']);
+        }
+
+        if ($statusRow === null && !empty($quota['quota_status_name'])) {
+            $statusRow = $quotaStatusByName->get($quota['quota_status_name']);
+        }
+
+        if ($statusRow === null) {
+            $quota['current_value']            = null;
+            $quota['quota_status_target_value'] = null;
+            $quota['target_residuo']            = null;
+            continue;
+        }
+
+        $currentValue = (int) $statusRow->current_value;
+
+        $targetValueEffettivo = ($statusRow->target_value !== null)
+            ? (int) $statusRow->target_value
+            : ($quota['target_value'] !== null ? (int) $quota['target_value'] : null);
+
+        $quota['current_value']            = $currentValue;
+        $quota['quota_status_target_value'] = $statusRow->target_value !== null ? (int) $statusRow->target_value : null;
+        $quota['target_residuo']            = $targetValueEffettivo !== null
+            ? max($targetValueEffettivo - $currentValue, 0)
+            : null;
+    }
+    unset($quota);
+
+    return $disponibiliQuoteAvanzate;
+}
+
+private function getQuotaStatusOptions($sid)
+{
+    return DB::table('t_quota_status')
+        ->where('survey_id', $sid)
+        ->orderBy('target_name')
+        ->select('id', 'target_name', 'current_value', 'target_value')
+        ->get();
+}
+
+private function prepareQuotaTargetsPreview($quotaTargetsAvanzati, $quotaStatusOptions)
+{
+    $statusMap = $quotaStatusOptions->keyBy('id');
+    $preview   = [];
+
+    foreach ($quotaTargetsAvanzati as $qt) {
+        if ($qt->quota_dimension === 'gender') {
+            $tipo = 'Sesso';
+        } elseif ($qt->quota_dimension === 'age') {
+            $tipo = 'Età';
+        } elseif ($qt->quota_dimension === 'area') {
+            $tipo = 'Area';
+        } else {
+            $tipo = $qt->quota_dimension ?? 'N/D';
+        }
+
+        if (!empty($qt->quota_label)) {
+            $valore = $qt->quota_label;
+        } elseif ($qt->quota_dimension === 'gender') {
+            $g = (int) ($qt->gender ?? 0);
+            $valore = $g === 1 ? 'Uomo' : ($g === 2 ? 'Donna' : 'Entrambi');
+        } elseif ($qt->quota_dimension === 'age') {
+            $valore = ($qt->age_min ?? '?') . '–' . ($qt->age_max ?? '?');
+        } elseif ($qt->quota_dimension === 'area') {
+            $valore = 'Area ' . ($qt->area ?? '?');
+        } else {
+            $valore = '-';
+        }
+
+        $quotaCollegata = '-';
+        $stato          = '-';
+
+        if (!empty($qt->quota_status_id) && $statusMap->has($qt->quota_status_id)) {
+            $statusRow      = $statusMap->get($qt->quota_status_id);
+            $quotaCollegata = $statusRow->target_name;
+            $stato          = $statusRow->current_value . ' / ' . $statusRow->target_value;
+        } elseif (!empty($qt->quota_status_name)) {
+            $quotaCollegata = $qt->quota_status_name;
+        }
+
+        $preview[] = [
+            'id'              => $qt->id,
+            'tipo'            => $tipo,
+            'valore'          => $valore,
+            'percentuale'     => $qt->target_percent,
+            'quota_collegata' => $quotaCollegata,
+            'stato'           => $stato,
+        ];
+    }
+
+    return $preview;
+}
+
+private function preparaStimaQuoteDettaglio(array $disponibiliQuoteAvanzate, array $irPonderatoData, $mediaRedPanel)
+{
+    $irUsato = $irPonderatoData['ir_ponderato'] ?? 0;
+
+    if ($irUsato <= 0 || $mediaRedPanel <= 0 || empty($disponibiliQuoteAvanzate)) {
+        return null;
+    }
+
+    $fattore    = ($irUsato / 100) * ($mediaRedPanel / 100);
+    $dimLabels  = ['gender' => 'Sesso', 'age' => 'Età', 'area' => 'Area'];
+    $dimensioni = [];
+
+    foreach ($disponibiliQuoteAvanzate as $quota) {
+        $udisponibili = (int) ($quota['utenti_disponibili'] ?? 0);
+
+        $dim = $quota['quota_dimension'] ?? null;
+        if (empty($dim)) {
+            if ($quota['gender'] !== null)   { $dim = 'gender'; }
+            elseif ($quota['age_min'] !== null) { $dim = 'age'; }
+            elseif ($quota['area'] !== null) { $dim = 'area'; }
+            else { continue; }
+        }
+
+        $maxStimabile = (int) round($udisponibili * $fattore);
+
+        $targetResiduo   = $quota['target_residuo'] ?? null;
+        $stimabileResiduo = ($targetResiduo !== null)
+            ? min($maxStimabile, $targetResiduo)
+            : $maxStimabile;
+
+        $currentValue = $quota['current_value'] ?? null;
+        $targetValue  = $quota['quota_status_target_value'] ?? $quota['target_value'] ?? null;
+
+        $label = !empty($quota['quota_label']) ? $quota['quota_label'] : null;
+        if ($label === null) {
+            if ($dim === 'gender') {
+                $g = (int) ($quota['gender'] ?? 0);
+                $label = $g === 1 ? 'Uomo' : ($g === 2 ? 'Donna' : 'N/D');
+            } elseif ($dim === 'age') {
+                $label = ($quota['age_min'] ?? '?') . '–' . ($quota['age_max'] ?? '?');
+            } elseif ($dim === 'area') {
+                $label = 'Area ' . ($quota['area'] ?? '?');
+            } else {
+                $label = 'N/D';
+            }
+        }
+
+        if (!isset($dimensioni[$dim])) {
+            $dimensioni[$dim] = [
+                'label'             => $dimLabels[$dim] ?? $dim,
+                'max_stimabile'     => 0,
+                'stimabile_residuo' => 0,
+                'tot_mancano'       => 0,
+                'has_mancano'       => false,
+                'quote'             => [],
+            ];
+        }
+
+        $dimensioni[$dim]['max_stimabile']     += $maxStimabile;
+        $dimensioni[$dim]['stimabile_residuo'] += $stimabileResiduo;
+        if ($targetResiduo !== null) {
+            $dimensioni[$dim]['tot_mancano'] += $targetResiduo;
+            $dimensioni[$dim]['has_mancano']  = true;
+        }
+        $dimensioni[$dim]['quote'][] = [
+            'label'              => $label,
+            'target'             => $targetValue,
+            'attuali'            => $currentValue,
+            'mancano'            => $targetResiduo,
+            'utenti_disponibili' => $udisponibili,
+            'max_stimabile'      => $maxStimabile,
+            'stimabile_residuo'  => $stimabileResiduo,
+        ];
+    }
+
+    if (empty($dimensioni)) {
+        return null;
+    }
+
+    // Calcola "tutte" per dimensione e rimuovi il flag temporaneo
+    foreach ($dimensioni as $dim => &$dimData) {
+        if (!$dimData['has_mancano'] || $dimData['tot_mancano'] <= 0) {
+            $dimData['tot_mancano'] = null;
+            $dimData['tutte']       = false;
+        } else {
+            $dimData['tutte'] = ($dimData['stimabile_residuo'] >= $dimData['tot_mancano']);
+        }
+        unset($dimData['has_mancano']);
+    }
+    unset($dimData);
+
+    // Totale prudenziale = min tra dimensioni; "tutte" dal collo di bottiglia
+    $totMaxStimabile     = min(array_column($dimensioni, 'max_stimabile'));
+    $totStimabileResiduo = min(array_column($dimensioni, 'stimabile_residuo'));
+
+    $bottleneck = null;
+    $minVal     = PHP_INT_MAX;
+    foreach ($dimensioni as $k => $d) {
+        if ($d['stimabile_residuo'] < $minVal) {
+            $minVal     = $d['stimabile_residuo'];
+            $bottleneck = $k;
+        }
+    }
+    $totTutte = ($bottleneck !== null) ? $dimensioni[$bottleneck]['tutte'] : false;
+
+    return [
+        'fattore'         => round($fattore * 100, 2),
+        'ir_usato'        => $irUsato,
+        'media_red_panel' => $mediaRedPanel,
+        'totali'          => [
+            'max_stimabile'     => $totMaxStimabile,
+            'stimabile_residuo' => $totStimabileResiduo,
+            'n_dimensioni'      => count($dimensioni),
+            'tutte'             => $totTutte,
+        ],
+        'dimensioni'      => $dimensioni,
+    ];
+}
+
 private function sortPanelsForDisplay(array $panels): array
 {
     if (empty($panels)) {
@@ -482,13 +1007,13 @@ private function sortPanelsForDisplay(array $panels): array
 
 private function calcolaMediaRedPanel()
 {
-    return Cache::remember('fieldcontrol_media_red_panel', now()->addMinutes(30), function () {
-        $dueAnniFa = now()->subYears(2);
+    return Cache::remember('fieldcontrol_media_red_panel_v2', now()->addMinutes(30), function () {
+        $unAnnoFa = now()->subYear();
 
         return DB::table('t_panel_control')
             ->where('panel', 1)
-            ->whereBetween('red_panel', [7, 29])
-            ->where('sur_date', '>=', $dueAnniFa)
+            ->whereBetween('red_panel', [5, 20])
+            ->where('sur_date', '>=', $unAnnoFa)
             ->avg('red_panel') ?? 0;
     });
 }
@@ -502,6 +1027,157 @@ private function calcolaMediaRedPanel()
         $stimaInterviste = $step1 * $percentualeMediaRedPanel;
 
         return max(0, round($stimaInterviste));
+    }
+
+    private function calcolaIrPonderato($irTotale, $dataSummaryByPanel)
+    {
+        $ultimaData = null;
+
+        foreach ($dataSummaryByPanel as $panelData) {
+            foreach ($panelData as $dayKey => $dayData) {
+                if ($ultimaData === null || $dayKey > $ultimaData) {
+                    $ultimaData = $dayKey;
+                }
+            }
+        }
+
+        $irUltimoGiorno   = null;
+        $pesoUltimoGiorno = 0.0;
+        $baseUltimoGiorno = 0;
+
+        if ($ultimaData !== null) {
+            $completeGiorno  = 0;
+            $nonTargetGiorno = 0;
+
+            foreach ($dataSummaryByPanel as $panelData) {
+                if (isset($panelData[$ultimaData])) {
+                    $completeGiorno  += $panelData[$ultimaData]['complete'];
+                    $nonTargetGiorno += $panelData[$ultimaData]['non_target'];
+                }
+            }
+
+            // Coerente con formula globale: contatti_utili = contatti - sospese - bloccate - over_quota = complete + non_target
+            $contattiUtili    = $completeGiorno + $nonTargetGiorno;
+            $baseUltimoGiorno = $contattiUtili;
+
+            if ($contattiUtili >= 10) {
+                $irUltimoGiorno   = round(($completeGiorno / $contattiUtili) * 100, 2);
+                $pesoUltimoGiorno = ($contattiUtili >= 30) ? 0.30 : 0.15;
+            }
+        }
+
+        $irPonderato = ($irUltimoGiorno !== null)
+            ? round($irTotale * (1 - $pesoUltimoGiorno) + $irUltimoGiorno * $pesoUltimoGiorno, 4)
+            : $irTotale;
+
+        return [
+            'ir_totale'          => $irTotale,
+            'ir_ultimo_giorno'   => $irUltimoGiorno,
+            'ir_ponderato'       => $irPonderato,
+            'peso_ultimo_giorno' => $pesoUltimoGiorno,
+            'base_ultimo_giorno' => $baseUltimoGiorno,
+        ];
+    }
+
+    private function calcolaStimaAvanzata($utentiDisponibili, $disponibiliQuoteAvanzate, $irUsato, $mediaRedPanel)
+    {
+        if ($irUsato <= 0 || $mediaRedPanel <= 0 || $utentiDisponibili === null) {
+            return null;
+        }
+
+        $fattore = ($irUsato / 100) * ($mediaRedPanel / 100);
+
+        $quoteValide = array_values(array_filter($disponibiliQuoteAvanzate, function ($q) {
+            return $q['utenti_disponibili'] !== null;
+        }));
+
+        if (!empty($quoteValide)) {
+            $quoteCalcolate = [];
+            $totale         = 0;
+
+            foreach ($quoteValide as $quota) {
+                $disponibili   = $quota['utenti_disponibili'];
+                $stimaLorda    = $disponibili * $fattore;
+                $targetResiduo = $quota['target_residuo'] ?? null;
+
+                $stimaFinale = ($targetResiduo !== null)
+                    ? min($stimaLorda, (float) $targetResiduo)
+                    : $stimaLorda;
+
+                $quoteCalcolate[] = [
+                    'quota_id'                  => $quota['quota_id'],
+                    'target_value'              => $quota['target_value'],
+                    'quota_status_target_value' => $quota['quota_status_target_value'] ?? null,
+                    'current_value'             => $quota['current_value'] ?? null,
+                    'target_residuo'            => $targetResiduo,
+                    'utenti_disponibili'        => $disponibili,
+                    'stima_lorda'               => round($stimaLorda, 2),
+                    'stima_finale'              => round($stimaFinale, 2),
+                ];
+
+                $totale += $stimaFinale;
+            }
+
+            return [
+                'totale' => (int) round($totale),
+                'metodo' => 'quote',
+                'quote'  => $quoteCalcolate,
+            ];
+        }
+
+        return [
+            'totale' => (int) round($utentiDisponibili * $fattore),
+            'metodo' => 'totale',
+            'quote'  => [],
+        ];
+    }
+
+    private function calcolaStimaAvanzataPerQuote($disponibiliQuoteAvanzate, $redemption, $mediaRedPanel)
+    {
+        if (empty($disponibiliQuoteAvanzate) || $redemption <= 0 || $mediaRedPanel <= 0) {
+            return null;
+        }
+
+        $fattore = ($redemption / 100) * ($mediaRedPanel / 100);
+        $quoteCalcolate = [];
+        $totale = 0;
+
+        foreach ($disponibiliQuoteAvanzate as $quota) {
+            $disponibili = $quota['utenti_disponibili'];
+
+            if ($disponibili === null) {
+                continue;
+            }
+
+            $stimaLorda    = $disponibili * $fattore;
+            $targetResiduo = $quota['target_residuo'] ?? null;
+
+            $stimaFinale = ($targetResiduo !== null)
+                ? min($stimaLorda, (float) $targetResiduo)
+                : $stimaLorda;
+
+            $quoteCalcolate[] = [
+                'quota_id'                  => $quota['quota_id'],
+                'target_value'              => $quota['target_value'],
+                'quota_status_target_value' => $quota['quota_status_target_value'] ?? null,
+                'current_value'             => $quota['current_value'] ?? null,
+                'target_residuo'            => $targetResiduo,
+                'utenti_disponibili'        => $disponibili,
+                'stima_lorda'               => round($stimaLorda, 2),
+                'stima_finale'              => round($stimaFinale, 2),
+            ];
+
+            $totale += $stimaFinale;
+        }
+
+        if (empty($quoteCalcolate)) {
+            return null;
+        }
+
+        return [
+            'totale' => (int) round($totale),
+            'quote'  => $quoteCalcolate,
+        ];
     }
 
     private function getQuotaData($prj, $sid, FieldControlSreService $sreService, array $questionMap = [])
