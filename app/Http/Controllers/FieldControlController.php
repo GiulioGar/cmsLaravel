@@ -14,7 +14,7 @@ class FieldControlController extends Controller
 {
 public function index(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
 {
-    ini_set('memory_limit', '256M');
+    ini_set('memory_limit', '512M');
 
     $prj = $request->query('prj');
     $sid = $request->query('sid');
@@ -691,7 +691,7 @@ private function calcolaMediaRedPanel()
     {
         if ($quotaName === 'total_interviews') {
             return [
-                'label' => 'Interviste totali',
+                'label' => 'Interviste Totali',
                 'tooltip' => null,
             ];
         }

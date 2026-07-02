@@ -965,7 +965,7 @@
                         <tr>
                             <th>Quota</th>
                             <th class="text-center">Totale</th>
-                            <th class="text-center">Entrate / Impatto</th>
+                            <th class="text-center">Entrate / IR</th>
                             <th class="text-center">Missing</th>
                         </tr>
                     </thead>
@@ -988,14 +988,7 @@
                         </tr>
                     @else
     @php
-        $totaleIntervisteGenerale = 0;
-
-        foreach ($quotaData as $quotaRow) {
-            if ($quotaRow->quota === 'Interviste Totali') {
-                $totaleIntervisteGenerale = (int) $quotaRow->entrate;
-                break;
-            }
-        }
+        $totaleContatti = (int) ($counts['contatti'] ?? 0);
     @endphp
 
     @foreach ($quotaData as $quota)
@@ -1007,16 +1000,14 @@
 
             $isTotalRow = $quotaLabel === 'Interviste Totali';
 
-            $denominator = $totaleIntervisteGenerale;
-            $impactPercent = 0;
-
-            if ($entrate > 0 && $denominator > 0) {
-                $impactPercent = round(($entrate / $denominator) * 100, 1);
+            $irPercent = 0;
+            if ($entrate > 0 && $totaleContatti > 0) {
+                $irPercent = round(($entrate / $totaleContatti) * 100, 1);
             }
 
             $ratioText = '';
-            if ($entrate > 0 && $denominator > 0) {
-                $ratioText = "({$entrate}/{$denominator})";
+            if ($entrate > 0 && $totaleContatti > 0) {
+                $ratioText = "({$entrate}/{$totaleContatti})";
             }
         @endphp
 
@@ -1056,7 +1047,7 @@
                     </span>
 
                     <span class="quota-entrate-percent-pill {{ $entrate > 0 ? 'is-positive' : 'is-zero' }}">
-                        {{ $impactPercent > 0 ? number_format($impactPercent, 1) : '0' }}%
+                        {{ $irPercent > 0 ? number_format($irPercent, 1) : '0' }}%
                     </span>
                 </div>
             </td>

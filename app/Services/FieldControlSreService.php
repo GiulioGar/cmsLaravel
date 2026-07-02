@@ -180,14 +180,18 @@ class FieldControlSreService
 
             $pan = $this->extractPanFromRaw($parsed['raw']);
 
+            $uidInteractive = null;
             if ($pan === null) {
-                $uid = $this->extractUidSafe($parsed);
-                if ($uid !== null) {
-                    $uidsToCheck[$uid] = true;
+                $uidInteractive = $this->extractUidSafe($parsed);
+                if ($uidInteractive !== null) {
+                    $uidsToCheck[$uidInteractive] = true;
                 }
             }
 
+            unset($parsed['raw']);
+
             $parsed['pan'] = $pan;
+            $parsed['_uid_interactive'] = $uidInteractive;
             $parsedList[] = $parsed;
         }
 
@@ -246,8 +250,8 @@ class FieldControlSreService
             if ($parsed['pan'] !== null) {
                 $panel = $panelNames[$parsed['pan']] ?? 'Altro Panel';
             } else {
-                // 2. fallback UID
-                $uid = $this->extractUidSafe($parsed);
+                // 2. fallback UID (già estratto nel 1° loop)
+                $uid = $parsed['_uid_interactive'];
 
                 if ($uid !== null && isset($validInteractiveUids[$uid])) {
                     $panel = 'Interactive';
@@ -256,10 +260,13 @@ class FieldControlSreService
                 }
             }
 
+            unset($parsed['_uid_interactive']);
             $parsed['panel'] = $panel;
 
             $interviews[] = $parsed;
         }
+
+        unset($parsedList, $validInteractiveUids);
 
         return $interviews;
     }
@@ -333,6 +340,8 @@ class FieldControlSreService
     usort($interviews, function ($a, $b) {
         return $b['file_number'] <=> $a['file_number'];
     });
+
+    $interviews = array_slice($interviews, 0, 1000);
 
     $statusMap = $this->getInterviewStatusMap();
     $logData = [];
