@@ -1071,6 +1071,28 @@ h3 {font-size: 15px!important;}
   grid-column: 1 / -1;
 }
 
+.fc-kpi-section-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:.68rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#94a3b8;
+  border-top:1px solid rgba(0,0,0,.08);
+  padding-top:.55rem;
+  margin-top:.15rem;
+}
+.fc-kpi-section-header a{
+  font-size:.85em;
+  opacity:.6;
+  transition:opacity .15s;
+}
+.fc-kpi-section-header a:hover{
+  opacity:1;
+}
+
 .fc-kpi-note{
   font-size:.9rem;
   color:#64748b;

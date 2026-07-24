@@ -196,12 +196,6 @@
                             <span class="badge bg-secondary ms-1">{{ count($quotaTargetsPreview) }}</span>
                         @endif
                     </a>
-                    @if($stimaQuoteDettaglio !== null)
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalStimaDettaglio"
-                           class="btn btn-sm btn-outline-primary w-100">
-                            <i class="fas fa-table me-1"></i>Dettaglio stima
-                        </a>
-                    @endif
                 </div>
             </div>
         </div>
@@ -629,57 +623,58 @@
                                         <div class="fc-kpi-value">{{ $utentiDisponibili }}</div>
                                     </div>
 
+                                    @php
+                                        $irTooltip1 = 'IR: ' . number_format($irPonderatoData['ir_ponderato'], 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
+                                        $irTooltip1 .= $irPonderatoData['ir_ultimo_giorno'] !== null
+                                            ? '<br>Tot: ' . number_format($irPonderatoData['ir_totale'], 1) . '% — Giorno: ' . number_format($irPonderatoData['ir_ultimo_giorno'], 1) . '% su ' . $irPonderatoData['base_ultimo_giorno'] . ' casi'
+                                            : '<br>Ultimo giorno: dati insufficienti';
+                                    @endphp
+                                    <div class="fc-kpi-section-header fc-wide">
+                                        <span>
+                                            <i class="fas fa-calculator me-1"></i>Stima interviste
+                                            <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                                               title="{!! $irTooltip1 !!}" style="opacity:.45; font-size:.9em"></i>
+                                        </span>
+                                        <a href="#" class="text-secondary" data-bs-toggle="modal" data-bs-target="#modalQuoteStima"
+                                           title="Configura quote stima"><i class="fas fa-sliders-h"></i></a>
+                                    </div>
+
                                     @if($stimaQuoteDettaglio !== null)
                                     <div class="fc-kpi-extra-item">
                                         <div class="d-flex align-items-center gap-1 mb-1">
                                             <div class="fc-kpi-label mb-0">Max stimabile</div>
                                             <i class="fas fa-info-circle text-secondary"
                                                data-bs-toggle="tooltip"
-                                               title="Stima massima ottenibile dagli utenti disponibili per quota, senza vincolo di residuo"></i>
+                                               title="Capacità massima del panel"></i>
                                         </div>
                                         <div class="fc-kpi-value text-primary fw-bold">{{ $stimaQuoteDettaglio['totali']['max_stimabile'] }}</div>
                                     </div>
 
+                                    @if(!empty($stimaQuoteDettaglio['dimensioni']))
                                     <div class="fc-kpi-extra-item">
                                         <div class="d-flex align-items-center gap-1 mb-1">
-                                            <div class="fc-kpi-label mb-0">Su mancanti</div>
+                                            <div class="fc-kpi-label mb-0">Per chiusura field</div>
                                             <i class="fas fa-info-circle text-secondary"
                                                data-bs-toggle="tooltip"
-                                               title="Stima capped sui casi mancanti per completare le quote — 'TUTTE' se la stima copre l'intero residuo"></i>
+                                               title="Stima casi disponibili per completare le quote e chiudere il field"></i>
                                         </div>
                                         @if($stimaQuoteDettaglio['totali']['tutte'])
-                                            <div class="fc-kpi-value text-success fw-bold">
-                                                TUTTE <i class="fas fa-check-circle ms-1" style="font-size:.85em"></i>
+                                            <div class="fc-kpi-value text-success fw-bold" style="font-size:.95em">
+                                                Quote raggiungibili <i class="fas fa-check-circle ms-1" style="font-size:.8em"></i>
                                             </div>
                                         @else
                                             <div class="fc-kpi-value text-warning fw-bold">{{ $stimaQuoteDettaglio['totali']['stimabile_residuo'] }}</div>
+                                            <div class="text-muted" style="font-size:.65em; margin-top:.1rem">Non raggiungibili</div>
                                         @endif
                                     </div>
-                                    @endif
-
-                                    <div class="fc-kpi-extra-item fc-wide">
-                                        @php
-                                            $irPonderato = $irPonderatoData['ir_ponderato'];
-                                            $irGiorno    = $irPonderatoData['ir_ultimo_giorno'];
-                                            $pesoGiorno  = $irPonderatoData['peso_ultimo_giorno'];
-                                            $baseGiorno  = $irPonderatoData['base_ultimo_giorno'];
-                                            $irLineaPrimaria = 'IR: ' . number_format($irPonderato, 1) . '% · Media red: ' . number_format($mediaRedPanel, 1) . '%';
-                                            if ($irGiorno !== null) {
-                                                $irLineaSecondaria = 'Tot: ' . number_format($irPonderatoData['ir_totale'], 1) . '% — Giorno: ' . number_format($irGiorno, 1) . '% su ' . $baseGiorno . ' casi';
-                                            } else {
-                                                $irLineaSecondaria = 'Ultimo giorno: base insufficiente';
-                                            }
-                                        @endphp
-                                        <div class="d-flex align-items-center gap-1 mb-1">
-                                            <div class="fc-kpi-label mb-0">Parametri stima</div>
-                                            <a href="#" class="ms-1 text-primary" style="font-size:.8em"
-                                               data-bs-toggle="modal" data-bs-target="#modalStimaDettaglio">
-                                                <i class="fas fa-table"></i>
-                                            </a>
-                                        </div>
-                                        <div class="text-muted small">{{ $irLineaPrimaria }}</div>
-                                        <div class="text-muted small">{{ $irLineaSecondaria }}</div>
+                                    <div class="fc-wide mt-1">
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalStimaDettaglio"
+                                           class="btn btn-sm btn-outline-primary w-100">
+                                            <i class="fas fa-table me-1"></i>Dettaglio stima
+                                        </a>
                                     </div>
+                                    @endif
+                                    @endif
                                 </div>
                             @endif
                         </div>
@@ -877,59 +872,58 @@
                                                 <div class="fc-kpi-value">{{ $utentiDisponibili }}</div>
                                             </div>
 
+                                            @php
+                                                $irTooltip2 = 'IR: ' . number_format($irPonderatoData['ir_ponderato'], 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
+                                                $irTooltip2 .= $irPonderatoData['ir_ultimo_giorno'] !== null
+                                                    ? '<br>Tot: ' . number_format($irPonderatoData['ir_totale'], 1) . '% — Giorno: ' . number_format($irPonderatoData['ir_ultimo_giorno'], 1) . '% su ' . $irPonderatoData['base_ultimo_giorno'] . ' casi'
+                                                    : '<br>Ultimo giorno: dati insufficienti';
+                                            @endphp
+                                            <div class="fc-kpi-section-header fc-wide">
+                                                <span>
+                                                    <i class="fas fa-calculator me-1"></i>Stima interviste
+                                                    <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                                                       title="{!! $irTooltip2 !!}" style="opacity:.45; font-size:.9em"></i>
+                                                </span>
+                                                <a href="#" class="text-secondary" data-bs-toggle="modal" data-bs-target="#modalQuoteStima"
+                                                   title="Configura quote stima"><i class="fas fa-sliders-h"></i></a>
+                                            </div>
+
                                             @if($stimaQuoteDettaglio !== null)
                                             <div class="fc-kpi-extra-item">
                                                 <div class="d-flex align-items-center gap-1 mb-1">
                                                     <div class="fc-kpi-label mb-0">Max stimabile</div>
                                                     <i class="fas fa-info-circle text-secondary"
                                                        data-bs-toggle="tooltip"
-                                                       title="Stima massima ottenibile dagli utenti disponibili per quota, senza vincolo di residuo"></i>
+                                                       title="Capacità massima del panel"></i>
                                                 </div>
                                                 <div class="fc-kpi-value text-primary fw-bold">{{ $stimaQuoteDettaglio['totali']['max_stimabile'] }}</div>
                                             </div>
 
+                                            @if(!empty($stimaQuoteDettaglio['dimensioni']))
                                             <div class="fc-kpi-extra-item">
                                                 <div class="d-flex align-items-center gap-1 mb-1">
-                                                    <div class="fc-kpi-label mb-0">Su mancanti</div>
+                                                    <div class="fc-kpi-label mb-0">Per chiusura field</div>
                                                     <i class="fas fa-info-circle text-secondary"
                                                        data-bs-toggle="tooltip"
-                                                       title="Stima capped sui casi mancanti — 'TUTTE' se copre l'intero residuo"></i>
+                                                       title="Stima casi disponibili per completare le quote e chiudere il field"></i>
                                                 </div>
                                                 @if($stimaQuoteDettaglio['totali']['tutte'])
-                                                    <div class="fc-kpi-value text-success fw-bold">
-                                                        TUTTE <i class="fas fa-check-circle ms-1" style="font-size:.85em"></i>
+                                                    <div class="fc-kpi-value text-success fw-bold" style="font-size:.95em">
+                                                        Quote raggiungibili <i class="fas fa-check-circle ms-1" style="font-size:.8em"></i>
                                                     </div>
                                                 @else
                                                     <div class="fc-kpi-value text-warning fw-bold">{{ $stimaQuoteDettaglio['totali']['stimabile_residuo'] }}</div>
+                                                    <div class="text-muted" style="font-size:.65em; margin-top:.1rem">Non raggiungibili</div>
                                                 @endif
                                             </div>
-                                            @endif
-
-                                            <div class="fc-kpi-extra-item fc-wide">
-                                                @php
-                                                    $irPonderato = $irPonderatoData['ir_ponderato'];
-                                                    $irGiorno    = $irPonderatoData['ir_ultimo_giorno'];
-                                                    $pesoGiorno  = $irPonderatoData['peso_ultimo_giorno'];
-                                                    $baseGiorno  = $irPonderatoData['base_ultimo_giorno'];
-                                                    $irLineaPrimaria = 'IR: ' . number_format($irPonderato, 1) . '% · Media red: ' . number_format($mediaRedPanel, 1) . '%';
-                                                    if ($irGiorno !== null) {
-                                                        $irLineaSecondaria = 'Tot: ' . number_format($irPonderatoData['ir_totale'], 1) . '% — Giorno: ' . number_format($irGiorno, 1) . '% su ' . $baseGiorno . ' casi';
-                                                    } else {
-                                                        $irLineaSecondaria = 'Ultimo giorno: base insufficiente';
-                                                    }
-                                                @endphp
-                                                <div class="d-flex align-items-center gap-1 mb-1">
-                                                    <div class="fc-kpi-label mb-0">Parametri stima</div>
-                                                    @if($stimaQuoteDettaglio !== null)
-                                                    <a href="#" class="ms-1 text-primary" style="font-size:.8em"
-                                                       data-bs-toggle="modal" data-bs-target="#modalStimaDettaglio">
-                                                        <i class="fas fa-table"></i>
-                                                    </a>
-                                                    @endif
-                                                </div>
-                                                <div class="text-muted small">{{ $irLineaPrimaria }}</div>
-                                                <div class="text-muted small">{{ $irLineaSecondaria }}</div>
+                                            <div class="fc-wide mt-1">
+                                                <a href="#" data-bs-toggle="modal" data-bs-target="#modalStimaDettaglio"
+                                                   class="btn btn-sm btn-outline-primary w-100">
+                                                    <i class="fas fa-table me-1"></i>Dettaglio stima
+                                                </a>
                                             </div>
+                                            @endif
+                                            @endif
                                         </div>
                                     @endif
 
@@ -1529,6 +1523,25 @@
                 </div>
 
                 {{-- Totali prudenziali --}}
+                @if(empty($stimaQuoteDettaglio['dimensioni']))
+                    {{-- Nessuna quota configurata: stima totale semplice --}}
+                    <div class="alert alert-info border-0 mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Nessuna quota configurata. La stima è calcolata sull'intero bacino di utenti disponibili.
+                        Usa il pulsante <strong>Quote Stima</strong> per aggiungere quote demografiche e ottenere una stima per coorte.
+                    </div>
+                    <div class="row g-3 mb-4 justify-content-center">
+                        <div class="col-6 col-md-4">
+                            <div class="card border-primary h-100">
+                                <div class="card-body text-center py-2">
+                                    <div class="text-muted small mb-1">Max stimabile</div>
+                                    <div class="fs-4 fw-bold text-primary">{{ $stimaQuoteDettaglio['totali']['max_stimabile'] }}</div>
+                                    <div class="text-muted" style="font-size:0.7rem">utenti disponibili × fattore stima</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @else
                 <div class="row g-3 mb-4">
                     <div class="col-6">
                         <div class="card border-primary h-100">
@@ -1571,6 +1584,7 @@
                         </tbody>
                     </table>
                 </div>
+                @endif
 
                 {{-- Dettaglio per singola quota, separato per dimensione --}}
                 @foreach($stimaQuoteDettaglio['dimensioni'] as $dim => $dimData)

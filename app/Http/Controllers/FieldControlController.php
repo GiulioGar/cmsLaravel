@@ -128,7 +128,7 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         $utentiDisponibili, $disponibiliQuoteAvanzate, $irPonderatoData['ir_ponderato'], $mediaRedPanel
     );
     $stimaQuoteDettaglio = $this->preparaStimaQuoteDettaglio(
-        $disponibiliQuoteAvanzate, $irPonderatoData, $mediaRedPanel
+        $disponibiliQuoteAvanzate, $irPonderatoData, $mediaRedPanel, (int) $utentiDisponibili
     );
 
     /*
@@ -855,15 +855,30 @@ private function prepareQuotaTargetsPreview($quotaTargetsAvanzati, $quotaStatusO
     return $preview;
 }
 
-private function preparaStimaQuoteDettaglio(array $disponibiliQuoteAvanzate, array $irPonderatoData, $mediaRedPanel)
+private function preparaStimaQuoteDettaglio(array $disponibiliQuoteAvanzate, array $irPonderatoData, $mediaRedPanel, int $utentiDisponibili = 0)
 {
     $irUsato = $irPonderatoData['ir_ponderato'] ?? 0;
 
-    if ($irUsato <= 0 || $mediaRedPanel <= 0 || empty($disponibiliQuoteAvanzate)) {
+    if ($irUsato <= 0 || $mediaRedPanel <= 0) {
         return null;
     }
 
-    $fattore    = ($irUsato / 100) * ($mediaRedPanel / 100);
+    $fattore = ($irUsato / 100) * ($mediaRedPanel / 100);
+
+    if (empty($disponibiliQuoteAvanzate)) {
+        return [
+            'fattore'         => round($fattore * 100, 2),
+            'ir_usato'        => $irUsato,
+            'media_red_panel' => $mediaRedPanel,
+            'totali'          => [
+                'max_stimabile'     => (int) round($utentiDisponibili * $fattore),
+                'stimabile_residuo' => null,
+                'n_dimensioni'      => 0,
+                'tutte'             => null,
+            ],
+            'dimensioni'      => [],
+        ];
+    }
     $dimLabels  = ['gender' => 'Sesso', 'age' => 'Età', 'area' => 'Area'];
     $dimensioni = [];
 
