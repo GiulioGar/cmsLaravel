@@ -1,0 +1,123 @@
+/* =========================================================
+   Field Quality — stili specifici della pagina (prefix fq-)
+   Nessuna classe condivisa con altre pagine.
+   ========================================================= */
+
+/* --- Score block: contenitore principale punteggio --- */
+.fq-score-block {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    min-width: 100px;
+}
+
+.fq-score-num {
+    font-size: .95rem;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.fq-score-denom {
+    font-size: .65rem;
+    font-weight: 400;
+    opacity: .65;
+}
+
+.fq-stars {
+    font-size: .68rem;
+    letter-spacing: 1px;
+}
+
+.fq-score-label {
+    font-size: .6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    opacity: .75;
+}
+
+/* --- Colori per fascia qualità --- */
+.fq-q-excellent { background: #d1fadf; color: #166534; }
+.fq-q-good      { background: #ecfccb; color: #3a5a00; }
+.fq-q-warning   { background: #fef9c3; color: #713f12; }
+.fq-q-bad       { background: #ffedd5; color: #7c2d12; }
+.fq-q-critical  { background: #fee2e2; color: #7f1d1d; }
+
+/* --- Score non valutabile --- */
+.fq-q-unknown   { background: #f1f3f5; color: #6c757d; }
+
+/* --- Badge copertura valutazione --- */
+.fq-coverage-badge {
+    font-size: .55rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    border-radius: 4px;
+    padding: 1px 4px;
+    margin-top: 2px;
+    display: inline-block;
+}
+
+/* Completa: discreta, non distrae */
+.fq-cov-complete {
+    background: transparent;
+    color: inherit;
+    opacity: .45;
+}
+
+/* Parziale: giallo — segnale moderato */
+.fq-cov-partial {
+    background: #fff3cd;
+    color: #856404;
+    opacity: 1;
+}
+
+/* Limitata: arancione — segnale forte */
+.fq-cov-limited {
+    background: #ffe5d0;
+    color: #7c3700;
+    opacity: 1;
+}
+
+/* Non valutabile: grigio neutro */
+.fq-cov-none {
+    background: #e2e3e5;
+    color: #383d41;
+    opacity: 1;
+}
+
+/* --- Colonna Rischio (ex Penalità) --- */
+.fq-risks {
+    font-size: .6rem;
+    color: #555;
+    white-space: nowrap;
+    line-height: 1.6;
+}
+
+/* --- Pulsante motivazioni --- */
+.fq-reasons-btn {
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    cursor: pointer;
+    color: #adb5bd;
+    font-size: .8rem;
+    transition: color .15s;
+    line-height: 1;
+}
+.fq-reasons-btn:hover,
+.fq-reasons-btn:focus {
+    color: #0d6efd;
+    outline: none;
+    box-shadow: none;
+}
+
+/* --- Min/Max score sotto la media --- */
+.fq-stat-minmax {
+    font-size: .68rem;
+    margin-top: 3px;
+    opacity: .8;
+}

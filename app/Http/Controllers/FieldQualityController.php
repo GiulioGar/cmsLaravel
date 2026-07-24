@@ -4,298 +4,289 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\PrimisApiService; // Adatta al tuo namespace
-use Illuminate\Support\Facades\Log; // In testa al file, se non c’è già
+use App\Services\PrimisApiService;
+use Illuminate\Support\Facades\Log;
 
 
 class FieldQualityController extends Controller
 {
+    private const LOI_MAX_SECONDS          = 2700;
+    private const LOI_ABSOLUTE_MIN_SECONDS = 60;
+
+    private const QUALITY_WEIGHTS = [
+        'open'  => 50,
+        'scale' => 30,
+        'loi'   => 20,
+    ];
+
+    private const COVERAGE_THRESHOLDS = [
+        'complete' => 70,
+        'partial'  => 40,
+    ];
+
+    // [ratio_minimo, risk] — risk da 0 a 100; ordinato dal meno rischioso
+    private const LOI_RISK_TABLE = [
+        [0.80,  0],
+        [0.70, 15],
+        [0.60, 30],
+        [0.50, 50],
+        [0.40, 70],
+        [0.30, 85],
+        // fallback (ratio < 0.30): risk = 100
+    ];
+
+    // [percentuale_fake_massima, risk] — risk da 0 a 100; applicato solo se fakeCount > 0
+    private const OPEN_RISK_TABLE = [
+        [10.0,  20],
+        [25.0,  40],
+        [50.0,  70],
+        // fallback (> 50%): risk = 100
+    ];
+
+    // [percentuale_cambi_massima, risk] — risk da 0 a 100; changes===0 gestito separatamente
+    private const SCALE_RISK_TABLE = [
+        [10.0, 75],
+        [20.0, 50],
+        [30.0, 25],
+        // fallback (> 30%): risk = 0
+    ];
+
+    private const SCALE_AGGRAVATION_RISK    = 15;
+    private const OPEN_SEVERE_FAKE_MIN_RISK = 50;
+
     public function index(Request $request, PrimisApiService $primis)
     {
-
-        // 1) Parametri GET
         $prj = $request->query('prj');
         $sid = $request->query('sid');
 
-        // 2) Path file .sre
         $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
-
         if (!is_dir($directory)) {
             $directory = "/var/imr/fields/{$prj}/{$sid}/results";
         }
 
-        // 3) Punteggio di partenza
-        $defaultScore = 6.0;
+        // 1) Parsing file .sre
+        $parsed             = $this->parseSreFiles($directory);
+        $completeInterviews = $parsed['interviews'];
+        $loiData            = $parsed['loiData'];
+        $openQuestionsData  = $parsed['openQuestions'];
+        $scaleData          = $parsed['scaleData'];
 
-        // 4) Array delle interviste complete
+        // 2) Singola chiamata API Primis (riusata per questionMap e questionsFromApi)
+        $apiResponse      = $primis->listQuestions($prj, $sid);
+        $questionsFromApi = $apiResponse['questions'] ?? [];
+        $questionMap      = $this->buildQuestionMap($apiResponse);
+
+        // 3) Arricchimento dati con codici domanda e flag fake
+        $this->populateOpenQuestionsDetails($openQuestionsData, $questionMap);
+        $this->populateScaleQuestionsDetails($scaleData, $questionMap);
+        $this->sortOpenQuestions($openQuestionsData);
+
+        // 4) Criteri di punteggio (popolano quality_criteria e quality_risks)
+        $loiMedianSec = $this->applyLoiCriterion($completeInterviews);
+        $this->applyOpenQuestionsCriterion($completeInterviews, $openQuestionsData);
+        $this->applyScaleChangesCriterion($completeInterviews, $scaleData);
+
+        // 5) Score qualità finale (0-100) basato su risk ponderati
+        $this->applyFinalQualityScore($completeInterviews);
+
+        // 6) Arricchimento presentazione: stelle, etichetta qualitativa, motivazioni
+        $this->applyQualityPresentationData($completeInterviews);
+
+        // 7) Statistiche e classificazione
+        $stats          = $this->computeScoreStats($completeInterviews);
+        $classification = $this->computeQualityClassification($completeInterviews);
+
+        // 8) Dati DB (navbar e panel)
+        $ricercheInCorso = DB::table('t_panel_control')
+            ->where('stato', 0)
+            ->orderBy('description', 'asc')
+            ->get(['sur_id', 'description', 'prj']);
+        $panelData = DB::table('t_panel_control')->where('sur_id', $sid)->first();
+
+        return view('fieldQuality', array_merge([
+            'prj'                => $prj,
+            'sid'                => $sid,
+            'panelData'          => $panelData,
+            'ricercheInCorso'    => $ricercheInCorso,
+            'averageScore'       => $stats['average'],
+            'maxScore'           => $stats['max'],
+            'minScore'           => $stats['min'],
+            'loiMediaFormatted'  => $this->formatLoiSec($loiMedianSec),
+            'completeInterviews' => $completeInterviews,
+            'loiData'            => $loiData,
+            'openQuestionsData'  => $openQuestionsData,
+            'scaleData'          => $scaleData,
+            'questionsFromApi'   => $questionsFromApi,
+        ], $classification));
+    }
+
+    // =========================================================================
+    // PARSING
+    // =========================================================================
+
+    private function parseSreFiles(string $directory): array
+    {
         $completeInterviews = [];
+        $loiData            = [];
+        $openQuestionsData  = [];
+        $scaleData          = [];
 
-        // 5) Per la seconda riga - colonna sinistra (LOI formattata)
-        $loiData = [];
-
-        // 6) Eventuali domande aperte
-        $openQuestionsData = [];
-
-        // 6b) Nuovo array per le scale
-      $scaleData = []; // Qui memorizzeremo la varianza delle scale singole
-
-        // 7) Lettura file .sre
-        if (is_dir($directory)) {
-            $files = glob($directory . "/*.sre");
-
-            foreach ($files as $file) {
-                $line = $this->readFirstLine($file);
-                if (!$line) {
-                    continue;
-                }
-
-                $data = explode(";", trim($line));
-
-                // Determina offset
-                $offset = (isset($data[0]) && $data[0] === '2.0') ? 0 : -1;
-
-                // Status
-                $statusIndex = 8 + $offset;
-                $status = isset($data[$statusIndex]) ? (int)$data[$statusIndex] : null;
-
-                // IID
-                $iid = $data[3 + $offset] ?? 'N/A';
-
-                // UID
-                $uid = $data[4 + $offset] ?? 'N/A';
-
-                // LOI sec
-                $loiIndex = 7 + $offset;
-                $loiSec = isset($data[$loiIndex]) ? (int)$data[$loiIndex] : 0;
-
-                $panelUsed = $this->detectPanel($data, /* se necessario $dbPanelValue */ );
-
-                // Se Completa
-                if ($status === 3) {
-                    // Salviamo
-                    $completeInterviews[] = [
-                        'iid'    => $iid,
-                        'uid'    => $uid,
-                        'panel'  => $panelUsed,
-                        'loiSec' => $loiSec,
-                        'score'  => $defaultScore
-                    ];
-
-                    // Per la tabella LOI (in min.sec)
-                    $minutes = floor($loiSec / 60);
-                    $seconds = $loiSec % 60;
-                    $loiFormatted = $minutes . '.' . str_pad($seconds, 2, '0', STR_PAD_LEFT);
-
-                    $loiData[] = [
-                        'iid' => $iid,
-                        'uid' => $uid,
-                        'loi' => $loiFormatted
-                    ];
-
-                    // *** LEGGIAMO TUTTE LE RIGHE open: ***
-                    $this->extractOpenQuestions($file, $iid, $uid,$panelUsed,$openQuestionsData);
-
-                    // Scale: estraiamo in un pass dedicato
-                    $this->extractScaleData($file, $iid, $uid, $panelUsed, $scaleData);
-                }
-            }
+        if (!is_dir($directory)) {
+            return [
+                'interviews'    => $completeInterviews,
+                'loiData'       => $loiData,
+                'openQuestions' => $openQuestionsData,
+                'scaleData'     => $scaleData,
+            ];
         }
 
-         // *** 1) Scarichiamo da Primis l'elenco domande e creiamo la questionMap ***
-         $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
-         $apiResponse = $primis->listQuestions($prj, $sid);
-         $questionsFromApi = $apiResponse['questions'] ?? [];
+        foreach (glob($directory . "/*.sre") as $file) {
+            $line = $this->readFirstLine($file);
+            if (!$line) {
+                continue;
+            }
 
-         // *** 2) Completiamo i dati in $openQuestionsData con "codice" e "text" da questionMap ***
-         $this->populateOpenQuestionsDetails($openQuestionsData, $questionMap);
-         $this->populateScaleQuestionsDetails($scaleData, $questionMap);
+            $data   = explode(";", trim($line));
+            $offset = (isset($data[0]) && $data[0] === '2.0') ? 0 : -1;
 
-         // *** 3) Ordiniamo $openQuestionsData per UID (e volendo per IID) ***
-         usort($openQuestionsData, function($a, $b) {
-            // 1) Prima ordiniamo per isFake = true => in alto
-            //    Possiamo trattare true come 1, false come 0, e vogliamo i "1" PRIMA
-            //    Quindi ordiniamo in modo DECRESCENTE su isFake
+            $status    = isset($data[8 + $offset]) ? (int) $data[8 + $offset] : null;
+            $iid       = $data[3 + $offset] ?? 'N/A';
+            $uid       = $data[4 + $offset] ?? 'N/A';
+            $loiSec    = isset($data[7 + $offset]) ? (int) $data[7 + $offset] : 0;
+            $panelUsed = $this->detectPanel($data);
+
+            if ($status !== 3) {
+                continue;
+            }
+
+            $completeInterviews[] = [
+                'iid'                => $iid,
+                'uid'                => $uid,
+                'panel'              => $panelUsed,
+                'loiSec'             => $loiSec,
+                'score'              => null,
+                'quality_criteria'   => [],
+                'quality_risks'      => [],
+                'quality_weights'    => [],
+                'quality_coverage'   => [],
+                'quality_risk_total' => null,
+            ];
+
+            $loiData[] = [
+                'iid' => $iid,
+                'uid' => $uid,
+                'loi' => $this->formatLoiSec($loiSec),
+            ];
+
+            $this->extractOpenQuestions($file, $iid, $uid, $panelUsed, $openQuestionsData);
+            $this->extractScaleData($file, $iid, $uid, $panelUsed, $scaleData);
+        }
+
+        return [
+            'interviews'    => $completeInterviews,
+            'loiData'       => $loiData,
+            'openQuestions' => $openQuestionsData,
+            'scaleData'     => $scaleData,
+        ];
+    }
+
+    private function formatLoiSec(float $loiSec): string
+    {
+        if ($loiSec <= 0) {
+            return '0.00';
+        }
+        $minutes = (int) floor($loiSec / 60);
+        $seconds = (int) $loiSec % 60;
+        return $minutes . '.' . str_pad((string) $seconds, 2, '0', STR_PAD_LEFT);
+    }
+
+    private function sortOpenQuestions(array &$data): void
+    {
+        usort($data, function ($a, $b) {
             $aFake = $a['isFake'] ? 1 : 0;
             $bFake = $b['isFake'] ? 1 : 0;
             if ($aFake !== $bFake) {
-                // Ritorna bFake - aFake per avere "true" prima di "false"
-                // (se vuoi false in alto, inverti)
                 return $bFake - $aFake;
             }
-
-            // 2) Se entrambi hanno lo stesso isFake,
-            //    prosegui con l'ordinamento secondario (uid, poi iid).
             if ($a['uid'] !== $b['uid']) {
                 return $a['uid'] <=> $b['uid'];
             }
             return $a['iid'] <=> $b['iid'];
         });
+    }
 
-        // 8a) Applichiamo Criterio LOI e otteniamo la LOI media (in secondi)
-        $loiMediaSec = $this->applyLoiCriterion($completeInterviews);
+    // =========================================================================
+    // STATISTICHE
+    // =========================================================================
 
-        // 8b) Applichiamo Criterio "Domande Aperte" (fake = -0.7, non fake = +0.2)
-        $this->applyOpenQuestionsCriterion($completeInterviews, $openQuestionsData);
+    private function computeScoreStats(array $interviews): array
+    {
+        $validScores = array_values(
+            array_filter(array_column($interviews, 'score'), fn($s) => $s !== null)
+        );
 
-        //// 8c) Criterio Scale Changes
-        $this->applyScaleChangesCriterion($completeInterviews, $scaleData);
-
-        // 9) Convertiamo la LOI media in "minuti.secondi"
-        $loiMediaFormatted = '0.00';
-        if ($loiMediaSec > 0) {
-            $minutes = floor($loiMediaSec / 60);
-            $seconds = $loiMediaSec % 60;
-            $loiMediaFormatted = $minutes . '.' . str_pad($seconds, 2, '0', STR_PAD_LEFT);
+        if (empty($validScores)) {
+            return ['average' => null, 'max' => null, 'min' => null];
         }
 
-        // 10) Calcolo statistiche punteggio
-        $count = count($completeInterviews);
-        $averageScore = 0;
-        $maxScore = 0;
-        $minScore = 0;
+        return [
+            'average' => round(array_sum($validScores) / count($validScores), 1),
+            'max'     => round(max($validScores), 1),
+            'min'     => round(min($validScores), 1),
+        ];
+    }
 
-        if ($count > 0) {
-            $scores = array_column($completeInterviews, 'score');
-            $averageScore = round(array_sum($scores) / $count, 1);
-            $maxScore = round(max($scores), 1);
-            $minScore = round(min($scores), 1);
-        }
+    private function computeQualityClassification(array $interviews): array
+    {
+        $total     = count($interviews);
+        $evaluable = array_values(
+            array_filter($interviews, fn($iv) => $iv['score'] !== null)
+        );
+        $evaluableCount = count($evaluable);
+        $notEvaluable   = $total - $evaluableCount;
 
-        // 11) Ricerche in corso (navbar)
-        $ricercheInCorso = DB::table('t_panel_control')
-            ->where('stato', 0)
-            ->orderBy('description', 'asc')
-            ->get(['sur_id', 'description', 'prj']);
+        $high   = count(array_filter($evaluable, fn($iv) => $iv['score'] >= 70));
+        $accept = count(array_filter($evaluable, fn($iv) => $iv['score'] >= 50 && $iv['score'] < 70));
+        $low    = $evaluableCount - $high - $accept;
 
-        // 12) Info base panel
-        $panelData = DB::table('t_panel_control')->where('sur_id', $sid)->first();
-
-        //stat generali
-
-        // 1) Numero totale di interviste
-        $totalInterviews = count($completeInterviews);
-
-        // 2) Classificazione per fascia di punteggio
-        $highCount = collect($completeInterviews)->filter(fn($iv) => $iv['score'] >= 6.4)->count();
-        $acceptCount = collect($completeInterviews)->filter(fn($iv) => $iv['score'] >= 5 && $iv['score'] < 6.4)->count();
-        $lowCount = $totalInterviews - $highCount - $acceptCount;
-
-        // 3) Percentuali (evita divisione per zero)
-        if ($totalInterviews > 0) {
-            $pctHigh = round($highCount / $totalInterviews * 100);
-            $pctAccept = round($acceptCount / $totalInterviews * 100);
-            $pctLow = 100 - $pctHigh - $pctAccept;
+        if ($evaluableCount > 0) {
+            $pctHigh   = round($high   / $evaluableCount * 100);
+            $pctAccept = round($accept / $evaluableCount * 100);
+            $pctLow    = 100 - $pctHigh - $pctAccept;
         } else {
             $pctHigh = $pctAccept = $pctLow = 0;
         }
 
-        // 4) Passa i nuovi valori alla view
-        $dataExtras = [
-            'totalInterviews' => $totalInterviews,
-            'pctHigh'         => $pctHigh,
-            'pctAccept'       => $pctAccept,
-            'pctLow'          => $pctLow,
+        $pctNotEvaluable = $total > 0 ? round($notEvaluable / $total * 100) : 0;
+
+        return [
+            'totalInterviews'        => $total,
+            'evaluableInterviews'    => $evaluableCount,
+            'notEvaluableInterviews' => $notEvaluable,
+            'pctHigh'                => $pctHigh,
+            'pctAccept'              => $pctAccept,
+            'pctLow'                 => $pctLow,
+            'pctNotEvaluable'        => $pctNotEvaluable,
         ];
-
-
-
-        // 13) Return view
-        return view('fieldQuality', [
-            'prj' => $prj,
-            'sid' => $sid,
-            'panelData' => $panelData,
-            'ricercheInCorso' => $ricercheInCorso,
-
-            // Statistiche punteggio
-            'averageScore' => $averageScore,
-            'maxScore'     => $maxScore,
-            'minScore'     => $minScore,
-
-            // <-- Aggiungiamo la LOI media formattata
-            'loiMediaFormatted' => $loiMediaFormatted,
-
-            // Prima riga - destra
-            'completeInterviews' => $completeInterviews,
-
-            // Seconda riga - sinistra
-            'loiData' => $loiData,
-
-            // Seconda riga - destra
-            'openQuestionsData' => $openQuestionsData,
-
-             // Terza riga - "Quality Scale"
-             'scaleData' => $scaleData,
-             'questionsFromApi' => $questionsFromApi,
-        ],$dataExtras);
-
     }
 
-   // *** FUNZIONE 1) Legge TUTTO il file .sre (oltre la prima linea) e cerca righe "open;...".
-    // Aggiunge i dati grezzi in $openQuestionsData.
-    // Ricordiamo: se la risposta open è SOLO numerica, la ignoriamo.
-    private function extractOpenQuestions(string $filePath, string $iid, string $uid,string $panelUsed, array &$openQuestionsData): void
+    // =========================================================================
+    // QUESTION MAP (Primis API)
+    // =========================================================================
+
+    private function buildQuestionMap(array $apiResponse): array
     {
-        // Apriamo di nuovo il file per leggere *tutte* le righe
-        // (la prima l'abbiamo già letta, ma la rileggeremo tranquillamente)
-        $handle = fopen($filePath, 'r');
-        if (!$handle) {
-            return;
-        }
-
-        while (($line = fgets($handle)) !== false) {
-            $line = trim($line);
-            $fields = explode(";", $line);
-
-            // Cerchiamo le righe che iniziano con "open"
-            // Il primo campo deve essere "open"
-            if (isset($fields[0]) && $fields[0] === 'open') {
-                // open;idDomanda;Risposta
-                $questionId   = $fields[1] ?? null;
-                $openResponse = $fields[2] ?? '';
-
-                // Se la risposta open è *solo* numerica => ignoriamo
-                // Esempio di check: ctype_digit per int, is_numeric per decimali
-                // Adegua se serve logica diversa
-                if (is_numeric($openResponse)) {
-                    continue;
-                }
-
-                // Salviamo in $openQuestionsData: non abbiamo ancora "codice" e "testo" => li gestiremo dopo
-                $openQuestionsData[] = [
-                    'iid'          => $iid,
-                    'uid'          => $uid,
-                    'panel'        => $panelUsed,
-                    'questionId'   => (int)$questionId,
-                    'openResponse' => $openResponse
-                ];
-            }
-        }
-
-        fclose($handle);
-    }
-
-    // *** FUNZIONE 2) Scarica da Primis la lista domande e crea la questionMap => [ id => [code, text] ]
-    private function buildQuestionMap(PrimisApiService $primis, string $prj, string $sid): array
-    {
-        // Chiamiamo la rotta ->listQuestions($prj, $sid)
-        $response = $primis->listQuestions($prj, $sid);
-
-
-
-
-        if (!isset($response['questions']) || !is_array($response['questions'])) {
-            // Nessuna domanda disponibile
+        if (!isset($apiResponse['questions']) || !is_array($apiResponse['questions'])) {
             return [];
         }
 
         $questionMap = [];
-        foreach ($response['questions'] as $q) {
-            // $q['id'], $q['code'], $q['text']
+        foreach ($apiResponse['questions'] as $q) {
             if (isset($q['id'])) {
-                $id = (int)$q['id'];
+                $id = (int) $q['id'];
                 $questionMap[$id] = [
                     'code' => $q['code'] ?? 'N/A',
-                    'text' => $q['text'] ?? 'No text'
+                    'text' => $q['text'] ?? 'No text',
                 ];
             }
         }
@@ -303,15 +294,74 @@ class FieldQualityController extends Controller
         return $questionMap;
     }
 
-    // *** FUNZIONE 3) Integra $openQuestionsData con i "codice" e "testo" presi dalla questionMap.
+    // =========================================================================
+    // ESTRAZIONE DATI DA FILE .SRE
+    // =========================================================================
+
+    private function extractOpenQuestions(string $filePath, string $iid, string $uid, string $panelUsed, array &$openQuestionsData): void
+    {
+        $handle = fopen($filePath, 'r');
+        if (!$handle) {
+            return;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            $line   = trim($line);
+            $fields = explode(";", $line);
+
+            if (!isset($fields[0]) || $fields[0] !== 'open') {
+                continue;
+            }
+
+            $questionId   = $fields[1] ?? null;
+            $openResponse = $fields[2] ?? '';
+
+            if (is_numeric($openResponse)) {
+                continue;
+            }
+
+            $openQuestionsData[] = [
+                'iid'          => $iid,
+                'uid'          => $uid,
+                'panel'        => $panelUsed,
+                'questionId'   => (int) $questionId,
+                'openResponse' => $openResponse,
+            ];
+        }
+
+        fclose($handle);
+    }
+
+    private function extractScaleData(string $filePath, string $iid, string $uid, string $panelUsed, array &$scaleData): void
+    {
+        $handle = fopen($filePath, 'r');
+        if (!$handle) {
+            return;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            $parsed = $this->parseScaleLine(trim($line));
+            if ($parsed !== null) {
+                $parsed['iid']   = $iid;
+                $parsed['uid']   = $uid;
+                $parsed['panel'] = $panelUsed;
+                $scaleData[]     = $parsed;
+            }
+        }
+
+        fclose($handle);
+    }
+
+    // =========================================================================
+    // ARRICCHIMENTO CON QUESTION MAP
+    // =========================================================================
+
     private function populateOpenQuestionsDetails(array &$openData, array $questionMap): void
     {
-        // Supponendo di avere whiteList e blackList da JSON
         $whiteList = $this->loadWhiteList();
         $blackList = $this->loadBlackList();
 
         foreach ($openData as &$row) {
-            // Codice e tooltip
             $id = $row['questionId'];
             if (isset($questionMap[$id])) {
                 $row['codice']  = $questionMap[$id]['code'];
@@ -321,144 +371,596 @@ class FieldQualityController extends Controller
                 $row['tooltip'] = 'Domanda non presente';
             }
 
-            // *** Check se fake ***
-            $row['isFake'] = $this->isSuspiciousResponse($row['openResponse'], $whiteList, $blackList);
+            $classification  = $this->classifyOpenResponse($row['openResponse'], $whiteList, $blackList);
+            $row['isFake']   = $classification['is_fake'];
+            $row['is_severe'] = $classification['is_severe'];
+            $row['reason']    = $classification['reason'];
         }
         unset($row);
     }
 
-    // *** Criterio LOI (come prima)
+    private function populateScaleQuestionsDetails(array &$scaleData, array $questionMap): void
+    {
+        foreach ($scaleData as &$row) {
+            $qId = $row['questionId'] ?? null;
+            if (isset($questionMap[$qId])) {
+                $row['code']    = $questionMap[$qId]['code'];
+                $row['tooltip'] = $questionMap[$qId]['text'];
+            } else {
+                $row['code']    = 'unknown';
+                $row['tooltip'] = 'Domanda non presente';
+            }
+        }
+        unset($row);
+    }
+
+    // =========================================================================
+    // CRITERI DI PUNTEGGIO
+    // =========================================================================
+
     private function applyLoiCriterion(array &$interviews): float
     {
-        // 1) LOI media su chi ha <2700s
         $loiEligible = [];
         foreach ($interviews as $iv) {
-            if ($iv['loiSec'] > 0 && $iv['loiSec'] < 2700) {
-                $loiEligible[] = $iv['loiSec'];
+            if ($iv['loiSec'] > 0 && $iv['loiSec'] < self::LOI_MAX_SECONDS) {
+                $loiEligible[] = (float) $iv['loiSec'];
             }
         }
 
-        $loiMediaSec = 0;
-        if (count($loiEligible) > 0) {
-            $loiMediaSec = array_sum($loiEligible) / count($loiEligible);
-        }
+        $medianLoi = count($loiEligible) > 0 ? $this->calculateMedian($loiEligible) : 0.0;
+        $available = $medianLoi > 0.0;
 
-        // 2) bonus/malus
         foreach ($interviews as &$iv) {
-            if ($loiMediaSec <= 0) {
+            $loiSec = (int) $iv['loiSec'];
+
+            if (!$available) {
+                $iv['quality_criteria']['loi'] = [
+                    'available'                  => false,
+                    'seconds'                    => $loiSec,
+                    'median_seconds'             => 0,
+                    'ratio'                      => null,
+                    'absolute_minimum_triggered' => false,
+                    'risk'                       => null,
+                ];
+                // chiave 'loi' assente da quality_risks (non disponibile)
                 continue;
             }
-            $loiSingle = $iv['loiSec'];
 
-            if ($loiSingle >= $loiMediaSec) {
-                continue; // 0
-            }
+            $ratio                = $loiSec / $medianLoi;
+            $absoluteMinTriggered = $loiSec > 0 && $loiSec < self::LOI_ABSOLUTE_MIN_SECONDS;
 
-            $diff = ($loiMediaSec - $loiSingle) / $loiMediaSec;
-
-            if ($diff >= 0.7) {
-                $iv['score'] -= 0.8;
-            } elseif ($diff >= 0.5) {
-                $iv['score'] -= 0.5;
-            } elseif ($diff >= 0.3) {
-                $iv['score'] -= 0.3;
+            if ($absoluteMinTriggered) {
+                $risk = 100;
             } else {
-                $iv['score'] += 0.4;
+                $risk = 100; // fallback ratio < 0.30
+                foreach (self::LOI_RISK_TABLE as [$minRatio, $tableRisk]) {
+                    if ($ratio >= $minRatio) {
+                        $risk = $tableRisk;
+                        break;
+                    }
+                }
             }
+
+            $risk = (int) min(100, max(0, $risk));
+
+            $iv['quality_criteria']['loi'] = [
+                'available'                  => true,
+                'seconds'                    => $loiSec,
+                'median_seconds'             => $medianLoi,
+                'ratio'                      => round($ratio, 4),
+                'absolute_minimum_triggered' => $absoluteMinTriggered,
+                'risk'                       => $risk,
+            ];
+            $iv['quality_risks']['loi'] = $risk;
         }
         unset($iv);
 
-        return $loiMediaSec;
+        return $medianLoi;
     }
+
+    private function calculateMedian(array $values): float
+    {
+        if (empty($values)) {
+            return 0.0;
+        }
+        sort($values);
+        $count = count($values);
+        $mid   = (int) floor($count / 2);
+        if ($count % 2 === 1) {
+            return (float) $values[$mid];
+        }
+        return ($values[$mid - 1] + $values[$mid]) / 2.0;
+    }
+
+    private function applyOpenQuestionsCriterion(array &$completeInterviews, array $openQuestionsData): void
+    {
+        $openByInterview = [];
+        foreach ($openQuestionsData as $open) {
+            $iid = $open['iid'] ?? null;
+            if ($iid !== null) {
+                $openByInterview[$iid][] = $open;
+            }
+        }
+
+        foreach ($completeInterviews as &$iv) {
+            $iid      = $iv['iid'];
+            $answers  = $openByInterview[$iid] ?? [];
+            $analyzed = count($answers);
+
+            if ($analyzed === 0) {
+                $iv['quality_criteria']['open'] = [
+                    'available'           => false,
+                    'analyzed_answers'    => 0,
+                    'fake_answers'        => 0,
+                    'severe_fake_answers' => 0,
+                    'fake_percentage'     => 0.0,
+                    'severe_fake'         => false,
+                    'risk'                => null,
+                ];
+                // chiave 'open' assente da quality_risks (non disponibile)
+                continue;
+            }
+
+            $fakeCount       = 0;
+            $severeFakeCount = 0;
+            foreach ($answers as $a) {
+                if (!empty($a['isFake'])) {
+                    $fakeCount++;
+                    if (!empty($a['is_severe'])) {
+                        $severeFakeCount++;
+                    }
+                }
+            }
+
+            $fakePct = round(($fakeCount / $analyzed) * 100, 1);
+
+            if ($fakeCount === 0) {
+                $risk = 0;
+            } else {
+                $risk = 100; // fallback > 50%
+                foreach (self::OPEN_RISK_TABLE as [$maxPct, $tableRisk]) {
+                    if ($fakePct <= $maxPct) {
+                        $risk = $tableRisk;
+                        break;
+                    }
+                }
+            }
+
+            $severeFake = $severeFakeCount > 0;
+            if ($severeFake) {
+                $risk = max($risk, self::OPEN_SEVERE_FAKE_MIN_RISK);
+            }
+
+            $risk = (int) min(100, max(0, $risk));
+
+            $iv['quality_criteria']['open'] = [
+                'available'           => true,
+                'analyzed_answers'    => $analyzed,
+                'fake_answers'        => $fakeCount,
+                'severe_fake_answers' => $severeFakeCount,
+                'fake_percentage'     => $fakePct,
+                'severe_fake'         => $severeFake,
+                'risk'                => $risk,
+            ];
+            $iv['quality_risks']['open'] = $risk;
+        }
+        unset($iv);
+    }
+
+    private function applyScaleChangesCriterion(array &$completeInterviews, array $scaleData): void
+    {
+        $scaleByInterview = [];
+        foreach ($scaleData as $scale) {
+            $iid = $scale['iid'] ?? null;
+            if ($iid !== null) {
+                $scaleByInterview[$iid][] = $scale;
+            }
+        }
+
+        foreach ($completeInterviews as &$iv) {
+            $iid    = $iv['iid'];
+            $scales = $scaleByInterview[$iid] ?? [];
+
+            if (empty($scales)) {
+                $iv['quality_criteria']['scale'] = ['available' => false];
+                // chiave 'scale' assente da quality_risks (non disponibile)
+                continue;
+            }
+
+            $details = [];
+            foreach ($scales as $scale) {
+                $validAnswers    = count($scale['answers']);
+                $possibleChanges = $validAnswers - 1;
+                $changes         = $scale['changes'];
+                $changePct       = $possibleChanges > 0
+                    ? round(($changes / $possibleChanges) * 100, 1)
+                    : 0.0;
+
+                if ($changes === 0) {
+                    $gRisk = 100;
+                } elseif ($changePct > 30.0) {
+                    $gRisk = 0;
+                } else {
+                    $gRisk = 25; // fallback intermedio (>20–30%)
+                    foreach (self::SCALE_RISK_TABLE as [$maxPct, $tableRisk]) {
+                        if ($changePct <= $maxPct) {
+                            $gRisk = $tableRisk;
+                            break;
+                        }
+                    }
+                }
+
+                $details[] = [
+                    'question_id'       => $scale['questionId'],
+                    'valid_answers'     => $validAnswers,
+                    'possible_changes'  => $possibleChanges,
+                    'changes'           => $changes,
+                    'change_percentage' => $changePct,
+                    'risk'              => $gRisk,
+                ];
+            }
+
+            $analyzedCount  = count($details);
+            $baseRisk       = array_sum(array_column($details, 'risk')) / $analyzedCount;
+            $lowChangeCount = count(array_filter($details, fn($d) => $d['change_percentage'] <= 10.0));
+            $aggravation    = ($lowChangeCount / $analyzedCount >= 0.5) ? self::SCALE_AGGRAVATION_RISK : 0;
+            $risk           = (int) min(100, max(0, round($baseRisk + $aggravation)));
+
+            $iv['quality_criteria']['scale'] = [
+                'available'          => true,
+                'analyzed_scales'    => $analyzedCount,
+                'critical_scales'    => $lowChangeCount,
+                'base_risk'          => round($baseRisk, 1),
+                'repeat_aggravation' => $aggravation,
+                'risk'               => $risk,
+                'details'            => $details,
+            ];
+            $iv['quality_risks']['scale'] = $risk;
+        }
+        unset($iv);
+    }
+
+    private function applyFinalQualityScore(array &$completeInterviews): void
+    {
+        $criteria = ['open', 'scale', 'loi'];
+
+        foreach ($completeInterviews as &$iv) {
+            $numerator       = 0;
+            $availableWeight = 0;
+
+            foreach ($criteria as $key) {
+                if (!empty($iv['quality_criteria'][$key]['available'])) {
+                    $risk            = (int) min(100, max(0, (int) ($iv['quality_risks'][$key] ?? 0)));
+                    $weight          = self::QUALITY_WEIGHTS[$key];
+                    $numerator      += $risk * $weight;
+                    $availableWeight += $weight;
+                }
+            }
+
+            $iv['quality_weights'] = [
+                'open'            => self::QUALITY_WEIGHTS['open'],
+                'scale'           => self::QUALITY_WEIGHTS['scale'],
+                'loi'             => self::QUALITY_WEIGHTS['loi'],
+                'available_total' => $availableWeight,
+            ];
+
+            if ($availableWeight === 0) {
+                $iv['score']              = null;
+                $iv['quality_risk_total'] = null;
+                $iv['quality_coverage']   = [
+                    'percentage' => 0,
+                    'level'      => 'none',
+                    'label'      => 'Non valutabile',
+                ];
+            } else {
+                $totalRisk                = (int) round($numerator / $availableWeight);
+                $iv['score']              = max(0, min(100, 100 - $totalRisk));
+                $iv['quality_risk_total'] = $totalRisk;
+
+                $pct = $availableWeight;
+                if ($pct >= self::COVERAGE_THRESHOLDS['complete']) {
+                    $level = 'complete';
+                    $label = 'Valutazione completa';
+                } elseif ($pct >= self::COVERAGE_THRESHOLDS['partial']) {
+                    $level = 'partial';
+                    $label = 'Valutazione parziale';
+                } else {
+                    $level = 'limited';
+                    $label = 'Valutazione limitata';
+                }
+
+                $iv['quality_coverage'] = [
+                    'percentage' => $pct,
+                    'level'      => $level,
+                    'label'      => $label,
+                ];
+            }
+        }
+        unset($iv);
+    }
+
+    private function applyQualityPresentationData(array &$completeInterviews): void
+    {
+        foreach ($completeInterviews as &$iv) {
+            if ($iv['score'] === null) {
+                $iv['stars']                = null;
+                $iv['rating_label']         = 'Non valutabile';
+                $iv['rating_context_label'] = null;
+            } else {
+                $rating             = $this->convertScoreToRating((int) $iv['score']);
+                $iv['stars']        = $rating['stars'];
+                $iv['rating_label'] = $rating['label'];
+
+                $coverageLevel = $iv['quality_coverage']['level'] ?? 'complete';
+                if ($coverageLevel === 'partial') {
+                    $iv['rating_context_label'] = $rating['label'] . ' sui criteri disponibili';
+                } elseif ($coverageLevel === 'limited') {
+                    $iv['rating_context_label'] = $rating['label'] . ' (valutazione limitata)';
+                } else {
+                    $iv['rating_context_label'] = $rating['label'];
+                }
+            }
+
+            $iv['quality_reasons'] = $this->buildQualityReasons($iv);
+        }
+        unset($iv);
+    }
+
+    private function convertScoreToRating(int $score): array
+    {
+        $score = max(0, min(100, $score));
+
+        if ($score >= 90) { return ['stars' => 5.0, 'label' => 'Ottima']; }
+        if ($score >= 80) { return ['stars' => 4.5, 'label' => 'Molto buona']; }
+        if ($score >= 70) { return ['stars' => 4.0, 'label' => 'Buona']; }
+        if ($score >= 60) { return ['stars' => 3.5, 'label' => 'Accettabile']; }
+        if ($score >= 50) { return ['stars' => 3.0, 'label' => 'Da verificare']; }
+        if ($score >= 40) { return ['stars' => 2.5, 'label' => 'Sospetta']; }
+        if ($score >= 30) { return ['stars' => 2.0, 'label' => 'Scarsa']; }
+        if ($score >= 20) { return ['stars' => 1.5, 'label' => 'Molto scarsa']; }
+        if ($score >= 10) { return ['stars' => 1.0, 'label' => 'Probabile fake']; }
+        return ['stars' => 0.5, 'label' => 'Fortemente inattendibile'];
+    }
+
+    private function buildQualityReasons(array $interview): array
+    {
+        $open  = $interview['quality_criteria']['open']  ?? null;
+        $scale = $interview['quality_criteria']['scale'] ?? null;
+        $loi   = $interview['quality_criteria']['loi']   ?? null;
+
+        $hasAnyCriterion = (!empty($open['available']))
+            || (!empty($scale['available']))
+            || (!empty($loi['available']));
+
+        if (!$hasAnyCriterion) {
+            return ['Nessun criterio disponibile per la valutazione'];
+        }
+
+        $reasons = [];
+
+        // Domande aperte
+        if ($open && !empty($open['available'])) {
+            $fakeCount = (int) ($open['fake_answers'] ?? 0);
+            if ($fakeCount > 0) {
+                if (!empty($open['severe_fake'])) {
+                    $reasons[] = 'Presente almeno una risposta aperta palesemente casuale';
+                } else {
+                    $total  = (int) ($open['analyzed_answers'] ?? 0);
+                    $parola = $fakeCount === 1 ? 'risposta aperta sospetta' : 'risposte aperte sospette';
+                    $reasons[] = "{$fakeCount} {$parola} su {$total} analizzate";
+                }
+            }
+        }
+
+        // Griglie
+        if ($scale && !empty($scale['available'])) {
+            $critical = (int) ($scale['critical_scales'] ?? 0);
+            if ($critical > 0) {
+                $analyzed = (int) ($scale['analyzed_scales'] ?? 0);
+                $parola   = $critical === 1 ? 'griglia' : 'griglie';
+                $reason   = "{$critical} {$parola} con risposte quasi tutte identiche su {$analyzed} analizzate";
+                if (!empty($scale['repeat_aggravation'])) {
+                    $reason .= ', comportamento ripetuto su almeno metà delle griglie';
+                }
+                $reasons[] = $reason;
+            }
+        }
+
+        // LOI
+        if ($loi && !empty($loi['available']) && ($loi['risk'] ?? 0) > 0) {
+            if (!empty($loi['absolute_minimum_triggered'])) {
+                $reasons[] = 'Intervista completata in meno di 60 secondi';
+            } else {
+                $pct       = (int) round(($loi['ratio'] ?? 0) * 100);
+                $reasons[] = "LOI pari al {$pct}% della mediana del progetto";
+            }
+        }
+
+        return empty($reasons) ? ['Nessuna anomalia rilevata'] : $reasons;
+    }
+
+    // =========================================================================
+    // FAKE DETECTION
+    // =========================================================================
 
     /**
- * Applica un bonus/malus basato sulle domande aperte:
- * - Se la domanda è FAKE => -0.7
- * - Se la domanda NON è FAKE => +0.2
- *
- * Nota: Un'intervista può avere più domande aperte. Ciascuna incide cumulativamente.
- */
-private function applyOpenQuestionsCriterion(array &$completeInterviews, array $openQuestionsData): void
-{
-    // Creiamo una mappa veloce di interview (chiave = iid)
-    // così possiamo aggiornare il punteggio senza dover ciclare ogni volta
-    $indexedInterviews = [];
-    foreach ($completeInterviews as &$iv) {
-        $indexedInterviews[$iv['iid']] = &$iv;
+     * Classifica una risposta aperta restituendo is_fake, is_severe e reason.
+     *
+     * Criteri severe (segnali forti e deterministici):
+     *   blacklist, excess_repeats, random_alphanumeric, illegal_sequence
+     *   (illegal_sequence: solo sequenze da tastiera riconoscibili — qwerty, asdfgh, zxcvbn, abcdef, 123456…)
+     *
+     * Criteri normali (segnali più deboli, potrebbero includere falsi positivi):
+     *   too_short, contains_url, suspicious_consonants
+     */
+    private function classifyOpenResponse(string $resp, array $whiteList, array $blackList): array
+    {
+        $respTrim       = trim($resp);
+        $respLower      = mb_strtolower($respTrim);
+        $whiteListLower = array_map('mb_strtolower', $whiteList);
+        $blackListLower = array_map('mb_strtolower', $blackList);
+
+        // 1. Whitelist → valida
+        if (in_array($respLower, $whiteListLower, true)) {
+            return ['is_fake' => false, 'is_severe' => false, 'reason' => null];
+        }
+
+        // 2. Blacklist → fake grave (match esplicito su risposta nota come spazzatura)
+        if (in_array($respLower, $blackListLower, true)) {
+            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'blacklist'];
+        }
+
+        // 3. Troppo corta → fake normale (potrebbe essere "ok", "sì", ecc.)
+        if (mb_strlen($respTrim) < 3) {
+            return ['is_fake' => true, 'is_severe' => false, 'reason' => 'too_short'];
+        }
+
+        // 4. Contiene URL → fake normale
+        if (preg_match('/(http:\/\/|https:\/\/|www\.)|(\.(com|it)(\s|\/|$))/i', $respTrim)) {
+            return ['is_fake' => true, 'is_severe' => false, 'reason' => 'contains_url'];
+        }
+
+        // 5. Caratteri ripetuti in eccesso → fake grave ("aaaaaaa", "!!!!!!")
+        if ($this->hasExcessRepeats($respTrim)) {
+            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'excess_repeats'];
+        }
+
+        // 6. Tutte le parole combinano lettere e numeri casualmente → fake grave ("abc123 xyz456")
+        if ($this->allWordsHaveRandomLetterNumberCombo($respTrim)) {
+            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'random_alphanumeric'];
+        }
+
+        // 7. Parola singola con sequenza deterministica da tastiera → fake grave
+        // (qwerty, asdfgh, zxcvbn, abcdef, 123456 e sottostringhe di almeno 4 caratteri)
+        if ($this->isSingleWordWithIllegalSequence($respTrim)) {
+            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'illegal_sequence'];
+        }
+
+        // 8. Tutte le parole hanno pattern consonantici sospetti → fake normale
+        // (copertura ampia: potrebbe includere abbreviazioni o typo)
+        if ($this->hasOnlySuspiciousWords($respTrim)) {
+            return ['is_fake' => true, 'is_severe' => false, 'reason' => 'suspicious_consonants'];
+        }
+
+        return ['is_fake' => false, 'is_severe' => false, 'reason' => null];
     }
-    unset($iv); // buona pratica quando si usa & (reference)
 
-    // Ora iteriamo su tutte le "open" e aggiorniamo il punteggio
-    foreach ($openQuestionsData as $open) {
-        $iid = $open['iid'] ?? null;
-        if (!$iid) {
-            continue; // se manca iid, saltiamo
-        }
-
-        // Cerchiamo l'intervista corrispondente
-        if (!isset($indexedInterviews[$iid])) {
-            continue; // se non c'è match, skip
-        }
-
-        // Se "isFake" = true => -0.7, altrimenti => +0.2
-        if (!empty($open['isFake']) && $open['isFake'] === true) {
-            $indexedInterviews[$iid]['score'] -= 0.7;
-        } else {
-            $indexedInterviews[$iid]['score'] += 0.2;
-        }
+    private function hasExcessRepeats(string $resp, int $threshold = 5): bool
+    {
+        return (bool) preg_match('/(.)\1{' . ($threshold - 1) . ',}/u', $resp);
     }
-}
 
-/**
- * Applica bonus/malus per la varianza delle scale (changesPct) al punteggio dell'intervista.
- * Logica:
- *  0%        => -0.2
- *  1-20%     => -0.1
- *  21-65%    =>  0
- *  66%-100%  => +0.1
- */
-private function applyScaleChangesCriterion(array &$completeInterviews, array $scaleData): void
-{
-    // Creiamo una mappa intervista [iid => &...] come reference
-    $indexedInterviews = [];
-    foreach ($completeInterviews as &$iv) {
-        // Usiamo iid come chiave, come avviene altrove
-        $indexedInterviews[$iv['iid']] = &$iv;
+    private function allWordsHaveRandomLetterNumberCombo(string $resp): bool
+    {
+        $words = preg_split('/\s+/', $resp);
+        foreach ($words as $word) {
+            if (!preg_match('/[A-Za-z]+[0-9]+|[0-9]+[A-Za-z]+/', $word)) {
+                return false;
+            }
+        }
+        return true;
     }
-    unset($iv);
 
-    // Ora scansioniamo le scale
-    foreach ($scaleData as $scale) {
-        $iid = $scale['iid'] ?? null;
-        if (!$iid) {
-            continue; // Se manca iid, skip
+    private function hasOnlySuspiciousWords(string $resp): bool
+    {
+        $words = preg_split('/\s+/', $resp);
+        foreach ($words as $word) {
+            if (
+                !$this->isClearlyRandomWord($word) &&
+                !preg_match('/[bcdfghjklmnpqrstvwxyz]{5,}/i', $word) &&
+                !$this->isShortWordWithoutVowels($word) &&
+                !$this->isShortSuspiciousWord($word)
+            ) {
+                return false;
+            }
         }
-        if (!isset($indexedInterviews[$iid])) {
-            continue; // Non c'è corrispondenza con un'intervista
-        }
-
-        // Leggiamo changesPct
-        $pct = $scale['changesPct'] ?? 0;
-
-        // Applichiamo la logica
-        if ($pct === 0) {
-            // -0.2
-            $indexedInterviews[$iid]['score'] -= 0.2;
-        } elseif ($pct >= 1 && $pct <= 20) {
-            // -0.1
-            $indexedInterviews[$iid]['score'] -= 0.1;
-        } elseif ($pct >= 21 && $pct <= 65) {
-            // 0 => nessuna modifica
-            // $indexedInterviews[$iid]['score'] += 0;
-        } else {
-            // 66%-100% => +0.1
-            $indexedInterviews[$iid]['score'] += 0.1;
-        }
+        return true;
     }
-}
 
+    private function isShortWordWithoutVowels(string $word): bool
+    {
+        $word = trim(mb_strtolower($word));
+        return mb_strlen($word) >= 3 && mb_strlen($word) <= 5 && !preg_match('/[aeiou]/i', $word);
+    }
 
-    private function readFirstLine($filePath)
+    private function isShortSuspiciousWord(string $word): bool
+    {
+        $word = mb_strtolower(trim($word));
+        return mb_strlen($word) >= 2 && mb_strlen($word) <= 3 && !preg_match('/[aeiou]/i', $word);
+    }
+
+    private function isSingleWordWithIllegalSequence(string $resp): bool
+    {
+        $resp  = mb_strtolower(trim($resp));
+        $words = preg_split('/\s+/', $resp);
+
+        if (count($words) !== 1) {
+            return false;
+        }
+
+        // Solo sequenze deterministiche da tastiera o alfabetiche (soglia: 4 char consecutivi)
+        $references = [
+            'qwertyuiop', 'poiuytrewq',
+            'asdfghjkl',  'lkjhgfdsa',
+            'zxcvbnm',    'mnbvcxz',
+            'abcdefghijklmnopqrstuvwxyz', 'zyxwvutsrqponmlkjihgfedcba',
+            '0123456789', '9876543210',
+        ];
+
+        foreach ($references as $ref) {
+            $refLen = mb_strlen($ref);
+            for ($start = 0; $start <= $refLen - 4; $start++) {
+                if (mb_strpos($resp, mb_substr($ref, $start, 4)) !== false) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function isClearlyRandomWord(string $word): bool
+    {
+        $word = mb_strtolower(trim($word));
+        if (mb_strlen($word) < 6) {
+            return false;
+        }
+        if (preg_match('/[aeiou]{4,}/i', $word)) {
+            return true;
+        }
+        if (preg_match('/([jkqwxy][aeiou]){3,}/i', $word)) {
+            return true;
+        }
+        return false;
+    }
+
+    // =========================================================================
+    // WHITELIST / BLACKLIST
+    // =========================================================================
+
+    private function loadWhiteList(): array
+    {
+        $path = public_path('json/whitelist.json');
+        if (!file_exists($path)) {
+            return [];
+        }
+        return json_decode(file_get_contents($path), true) ?? [];
+    }
+
+    private function loadBlackList(): array
+    {
+        $path = public_path('json/blacklist.json');
+        if (!file_exists($path)) {
+            return [];
+        }
+        return json_decode(file_get_contents($path), true) ?? [];
+    }
+
+    // =========================================================================
+    // UTILITY
+    // =========================================================================
+
+    private function readFirstLine(string $filePath): ?string
     {
         $handle = fopen($filePath, 'r');
         if (!$handle) {
@@ -466,12 +968,11 @@ private function applyScaleChangesCriterion(array &$completeInterviews, array $s
         }
         $line = fgets($handle);
         fclose($handle);
-        return $line;
+        return $line ?: null;
     }
 
     private function detectPanel(array $data, ?int $dbPanelValue = null): string
     {
-        // Esempio di ricodifica
         $panelNames = [
             1 => 'Cint',
             2 => 'Dynata',
@@ -484,430 +985,62 @@ private function applyScaleChangesCriterion(array &$completeInterviews, array $s
             9 => 'Altro Panel',
         ];
 
-        // Default
-        $foundPanelName = 'Interactive';
-
-        // 1) Se troviamo "pan= X" nella riga
         foreach ($data as $element) {
             if (strpos($element, 'pan=') !== false) {
-                $val = (int)str_replace('pan=', '', $element);
-                $foundPanelName = $panelNames[$val] ?? 'Altro Panel';
-                break;
+                $val = (int) str_replace('pan=', '', $element);
+                return $panelNames[$val] ?? 'Altro Panel';
             }
         }
 
-        // 2) Se non trovato e "dbPanelValue" indica 1 => "Interactive"
-        //    Se dbPanelValue=2,3,... => potresti restituire un default, dipende
-        return $foundPanelName;
+        return 'Interactive';
     }
 
-
-private function isSuspiciousResponse(string $resp, array $whiteList, array $blackList): bool
-{
-    $respTrim = trim($resp);
-
-    // Convertiamo $respTrim in minuscolo
-    $respLower = mb_strtolower($respTrim);
-
-    // Creiamo due array di liste convertite in minuscolo
-    // in modo da fare confronti case-insensitive
-    $whiteListLower = array_map('mb_strtolower', $whiteList);
-    $blackListLower = array_map('mb_strtolower', $blackList);
-
-    // 1) Se la risposta corrisponde (case-insensitive) a una voce della whiteList,
-    //    consideriamola NON fake (false).
-    if (in_array($respLower, $whiteListLower, true)) {
-        return false;
-    }
-
-    // 2) Se la risposta corrisponde (case-insensitive) a una voce della blackList,
-    //    consideriamola SEMPRE fake (true).
-    if (in_array($respLower, $blackListLower, true)) {
-        //Log::info("Blacklist matched: {$respTrim}");
-        return true;
-    }
-
-    // 3) Se lunghezza <3
-    if (mb_strlen($respTrim) < 3) {
-        //Log::info("Too short response: {$respTrim}");
-        return true;
-    }
-
-    // 4) Se contiene URL
-    if (preg_match('/(http:\/\/|https:\/\/|www\.)|(\.(com|it)(\s|\/|$))/i', $respTrim)) {
-        //Log::info("URL detected in response: {$respTrim}");
-        return true;
-    }
-
-    // 5) Se c'è eccesso di caratteri ripetuti
-    if ($this->hasExcessRepeats($respTrim)) {
-        //Log::info("Excess repeats detected in response: {$respTrim}");
-        return true;
-    }
-
-    // 6) Se combina numeri e lettere in modo random
-    if ($this->allWordsHaveRandomLetterNumberCombo($respTrim)) {
-        //Log::info("All words contain random numbers and letters combo: {$respTrim}");
-        return true;
-    }
-
-  // 7) Sequenze di almeno 4 consonanti
-    if ($this->hasOnlySuspiciousWords($respTrim)) {
-        //Log::info("Consecutive consonants detected: {$respTrim}");
-        return true;
-    }
-
-// 8) Controllo parole singole con sequenze illegali
-if ($this->isSingleWordWithIllegalSequence($respTrim)) {
-    return true;
-}
-
-    // Se nessuno di questi criteri => NON fake
-    return false;
-}
-
-
-private function hasExcessRepeats(string $resp, int $threshold = 5): bool
-{
-    // Esempio di regex: (.)\1{4,} cerca 5 ripetizioni consecutive
-    // Se threshold=5, la pattern è {4,} perché la prima cattura +4 repliche = 5 totali
-    $pattern = '/(.)\1{'.($threshold-1).',}/u';
-
-    if (preg_match($pattern, $resp)) {
-        return true;
-    }
-    return false;
-}
-
-
-
-private function hasOnlySuspiciousWords(string $resp): bool
-{
-    $words = preg_split('/\s+/', $resp);
-
-    foreach ($words as $word) {
-        // Se trovi almeno una parola che non è chiaramente random, la risposta è valida
-        if (!$this->isClearlyRandomWord($word) &&
-            !preg_match('/[bcdfghjklmnpqrstvwxyz]{5,}/i', $word) &&
-            !$this->isShortWordWithoutVowels($word) &&
-            !$this->isShortSuspiciousWord($word)) {
-            return false;
-        }
-    }
-
-    // Se tutte le parole risultano sospette, allora la frase è sospetta
-    return true;
-}
-
-private function allWordsHaveRandomLetterNumberCombo(string $resp): bool
-{
-    $words = preg_split('/\s+/', $resp);
-
-    foreach ($words as $word) {
-        // Se troviamo almeno una parola senza combinazioni numeri/lettere, la frase NON è fake
-        if (!preg_match('/[A-Za-z]+[0-9]+|[0-9]+[A-Za-z]+/', $word)) {
-            return false; // trovata parola normale
-        }
-    }
-
-    // Tutte le parole hanno numeri e lettere combinate
-    return true;
-}
-
-
-private function isShortWordWithoutVowels(string $word): bool
-{
-    $word = trim(mb_strtolower($word));
-
-    // Lunghezza da 3 a 5 caratteri e assenza di vocali
-    if (mb_strlen($word) >= 3 && mb_strlen($word) <= 5 && !preg_match('/[aeiou]/i', $word)) {
-        return true;
-    }
-
-    return false;
-}
-
-private function isShortSuspiciousWord(string $word): bool
-{
-    $word = mb_strtolower(trim($word));
-
-    // Parole da 2 a 3 lettere formate solo da consonanti
-    if (mb_strlen($word) >= 2 && mb_strlen($word) <= 3 && !preg_match('/[aeiou]/i', $word)) {
-        return true;
-    }
-
-    return false;
-}
-
-
-private function isSingleWordWithIllegalSequence(string $resp): bool
-{
-    $resp = mb_strtolower(trim($resp));
-
-    // Dividiamo la risposta in parole
-    $words = preg_split('/\s+/', $resp);
-
-    // Procediamo SOLO se c'è esattamente una parola
-    if (count($words) !== 1) {
-        return false; // Più di una parola, non considerare questo controllo
-    }
-
-    // Lista sequenze illegali (da estendere nel tempo)
-    $illegalPatterns = [
-        'dfy', 'fyu', 'efg', 'fgu', 'drt', 'dgu', 'guu', 'dyu', 'xgu',
-        'fgi', 'zfg', 'waq', 'iuy', 'dty', 'tyu', 'rtt', 'dgy', 'gyu',
-            'qya', 'qop', 'qen', 'aqk', 'ojd', 'ejk', 'axq', 'exkz',
-            'uuu', 'iii', 'jjj', 'abg', 'obm', 'apk', 'atk', 'xxz'
-    ];
-
-    // Controllo sequenze illegali nella parola singola
-    foreach ($illegalPatterns as $pattern) {
-        if (strpos($resp, $pattern) !== false) {
-            return true; // Trovata sequenza illegale
-        }
-    }
-
-    return false; // Nessuna sequenza illegale trovata
-}
-
-private function isClearlyRandomWord(string $word): bool
-{
-    $word = mb_strtolower(trim($word));
-
-    // Lunghezza minima per valutare parole casuali (almeno 6 lettere)
-    if (mb_strlen($word) < 6) {
-        return false;
-    }
-
-    // Controllo semplice e poco impattante di almeno 4 vocali consecutive (molto raro)
-    if (preg_match('/[aeiou]{4,}/i', $word)) {
-        return true;
-    }
-
-    // Controllo alternanza insolita di consonanti molto rare e vocali
-    if (preg_match('/([jkqwxy][aeiou]){3,}/i', $word)) {
-        return true;
-    }
-
-    return false; // Nessun altro controllo più aggressivo
-}
-
-
-
-private function loadWhiteList(): array
-{
-    // Se i file JSON sono in public/json/whitelist.json:
-    $path = public_path('json/whitelist.json');
-
-    if (!file_exists($path)) {
-        return [];
-    }
-    $rawContent = file_get_contents($path);
-    $decoded = json_decode($rawContent, true);
-    if (is_null($decoded)) {
-        return [];
-    }
-
-    return $decoded;
-}
-
-
-
-private function loadBlackList(): array
-{
-    $path = public_path('json/blacklist.json');
-    if (!file_exists($path)) {
-        return [];
-    }
-    return json_decode(file_get_contents($path), true) ?? [];
-}
-
-
-public function addToWhiteList(Request $request)
-{
-    $text = trim($request->input('text', ''));
-    if ($text === '') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Testo vuoto o non fornito.'
-        ], 400);
-    }
-
-    // Carica file JSON
-    $path = public_path('json/whitelist.json');
-    $list = [];
-    if (file_exists($path)) {
-        $list = json_decode(file_get_contents($path), true) ?? [];
-    }
-
-    // Confronto case-insensitive o no?
-    // Se vuoi ignorare case, potresti scorrere e controllare in minuscolo
-    $lowerList = array_map('mb_strtolower', $list);
-    $lowerText = mb_strtolower($text);
-
-    // Aggiungiamo solo se non già presente
-    if (!in_array($lowerText, $lowerList, true)) {
-        $list[] = $text; // Salva con il suo case originario, oppure in minuscolo
-        file_put_contents($path, json_encode($list, JSON_PRETTY_PRINT));
-    }
-
-    return response()->json(['success' => true]);
-}
-
-public function addToBlackList(Request $request)
-{
-    $text = trim($request->input('text', ''));
-    if ($text === '') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Testo vuoto o non fornito.'
-        ], 400);
-    }
-
-    // Carica file JSON
-    $path = public_path('json/blacklist.json');
-    $list = [];
-    if (file_exists($path)) {
-        $list = json_decode(file_get_contents($path), true) ?? [];
-    }
-
-    // Confronto case-insensitive
-    $lowerList = array_map('mb_strtolower', $list);
-    $lowerText = mb_strtolower($text);
-
-    // Aggiungiamo solo se non già presente
-    if (!in_array($lowerText, $lowerList, true)) {
-        $list[] = $text;
-        file_put_contents($path, json_encode($list, JSON_PRETTY_PRINT));
-    }
-
-    return response()->json(['success' => true]);
-}
-
-/**
-     * Legge TUTTE le righe del file .sre per trovare righe "scale;...."
-     * e calcolare varianza (cambi consecutivi).
-     */
-    private function extractScaleData(string $filePath, string $iid, string $uid,string $panelUsed, array &$scaleData): void
+    private function parseScaleLine(string $line): ?array
     {
-        $handle = fopen($filePath, 'r');
-        if (!$handle) {
-            return;
+        $fields = explode(";", $line);
+
+        if (empty($fields[0]) || $fields[0] !== 'scale') {
+            return null;
+        }
+        if (!isset($fields[1], $fields[2], $fields[3])) {
+            return null;
         }
 
-        while (($line = fgets($handle)) !== false) {
-            $line = trim($line);
-            // parseScaleLine restituisce un array con info se è scale singola, altrimenti null
-            $parsed = $this->parseScaleLine($line);
-            if ($parsed !== null) {
-                // Aggiungiamo i campi iid, uid, panel ecc. se servono
-                $parsed['iid'] = $iid;
-                $parsed['uid'] = $uid;
-                $parsed['panel'] = $panelUsed;
+        $questionId = (int) $fields[1];
+        $nRows      = (int) $fields[2];
+        $nCols      = (int) $fields[3];
 
-                // Salviamo
-                $scaleData[] = $parsed;
-            }
+        $lastField = end($fields);
+        if (preg_match('/^[01]+$/', $lastField) && strlen($lastField) > 5) {
+            return null;
         }
-        fclose($handle);
-    }
 
-
-/**
- * Controlla se la riga indica una scale singola da considerare.
- * Se sì, calcola varianza (numero di cambi consecutivi) e %.
- * Ritorna array con questionId, changes, changesPct, answers, ecc., altrimenti null.
- */
-private function parseScaleLine(string $line): ?array
-{
-    $fields = explode(";", trim($line));
-
-    // 1) Deve iniziare con "scale"
-    if (empty($fields[0]) || $fields[0] !== 'scale') {
-        return null;
-    }
-
-    // L'indicazione "terzo dato deve essere superiore a 7" non è più
-    // un check iniziale, lo faremo dopo aver filtrato i -1 effettivi.
-
-    // Per sicurezza, controlliamo se esistono i campi [1,2,3] => questionId, nRows, nCols
-    if (!isset($fields[1], $fields[2], $fields[3])) {
-        return null;
-    }
-
-    $questionId = (int)$fields[1];
-    // $nRows = (int)$fields[2];  // Non lo usiamo più per la soglia, lo useremo come informativo
-    // $nCols = (int)$fields[3];  // Idem, lo lasciamo come info
-
-    $nRows = (int)$fields[2];
-    $nCols = (int)$fields[3];
-
-    // 2) Distinguere scale multiple (l'ultimo campo se blocco 0/1 lungo => skip)
-    $lastField = end($fields);
-    if (preg_match('/^[01]+$/', $lastField) && strlen($lastField) > 5) {
-        // E' multi-scale => scartiamo
-        return null;
-    }
-
-    // 3) Le risposte partono da index=4 in poi
-    $answersRaw = array_slice($fields, 4);
-    if (empty($answersRaw)) {
-        return null; // nessuna risposta => skip
-    }
-
-    // Convertiamo in int
-    $allAnswers = array_map('intval', $answersRaw);
-
-    // 4) Filtriamo i -1 (non conteggiamo come risposte valide)
-    $filteredAnswers = array_filter($allAnswers, function($val) {
-        return $val !== -1;
-    });
-    $countValid = count($filteredAnswers);
-
-    // 5) Se dopo aver escluso i -1 restano 7 o meno risposte, scartiamo
-    if ($countValid <= 7) {
-        return null;
-    }
-
-    // 6) Calcoliamo la varianza = numero di cambi consecutivi
-    //    NB: usiamo $filteredAnswers
-    $changes = $this->countSequentialChanges(array_values($filteredAnswers));
-    $totalAnswers = $countValid;
-    $changesPct = 0;
-    if ($totalAnswers > 0) {
-        $changesPct = (int) round(($changes / $totalAnswers) * 100);
-    }
-
-    // 7) Ritorniamo i dati
-    return [
-        'questionId' => $questionId,
-        'nRows'      => $nRows,
-        'nCols'      => $nCols,
-        'answers'    => array_values($filteredAnswers), // se vuoi memorizzare quelle "valide"
-        'changes'    => $changes,
-        'changesPct' => $changesPct,
-    ];
-}
-
-private function populateScaleQuestionsDetails(array &$scaleData, array $questionMap): void
-{
-    foreach ($scaleData as &$row) {
-        $qId = $row['questionId'] ?? null;
-        if (isset($questionMap[$qId])) {
-            $row['code']    = $questionMap[$qId]['code'];
-            $row['tooltip'] = $questionMap[$qId]['text'];
-        } else {
-            $row['code']    = 'unknown';
-            $row['tooltip'] = 'Domanda non presente';
+        $answersRaw = array_slice($fields, 4);
+        if (empty($answersRaw)) {
+            return null;
         }
+
+        $allAnswers      = array_map('intval', $answersRaw);
+        $filteredAnswers = array_values(array_filter($allAnswers, fn($v) => $v !== -1));
+        $countValid      = count($filteredAnswers);
+
+        if ($countValid <= 7) {
+            return null;
+        }
+
+        $changes    = $this->countSequentialChanges($filteredAnswers);
+        $changesPct = (int) round(($changes / $countValid) * 100);
+
+        return [
+            'questionId' => $questionId,
+            'nRows'      => $nRows,
+            'nCols'      => $nCols,
+            'answers'    => $filteredAnswers,
+            'changes'    => $changes,
+            'changesPct' => $changesPct,
+        ];
     }
-    unset($row);
-}
 
-
-    /**
-     * Conta i cambi consecutivi nella sequenza di risposte.
-     */
     private function countSequentialChanges(array $answers): int
     {
         $count = count($answers);
@@ -923,25 +1056,62 @@ private function populateScaleQuestionsDetails(array &$scaleData, array $questio
         return $changes;
     }
 
-    public function saveFilter(Request $request)
+    // =========================================================================
+    // ENDPOINT PUBBLICI
+    // =========================================================================
+
+    public function addToWhiteList(Request $request)
     {
-        // Esempio di lettura parametri
-        $question1 = $request->input('question1');
-        $operator1 = $request->input('operator1');
-        $answer1   = $request->input('answer1');
-        $logicalOperator = $request->input('logicalOperator');
-        $question2 = $request->input('question2');
-        $operator2 = $request->input('operator2');
-        $answer2   = $request->input('answer2');
+        $text = trim($request->input('text', ''));
+        if ($text === '') {
+            return response()->json(['success' => false, 'message' => 'Testo vuoto o non fornito.'], 400);
+        }
 
-        // Log o salvataggio su DB...
-        Log::info("Salvataggio Filtro: ", compact(
-            'question1','operator1','answer1','logicalOperator','question2','operator2','answer2'
-        ));
+        $path      = public_path('json/whitelist.json');
+        $list      = file_exists($path) ? (json_decode(file_get_contents($path), true) ?? []) : [];
+        $lowerList = array_map('mb_strtolower', $list);
 
-        // Esempio di JSON response
+        if (!in_array(mb_strtolower($text), $lowerList, true)) {
+            $list[] = $text;
+            file_put_contents($path, json_encode($list, JSON_PRETTY_PRINT));
+        }
+
         return response()->json(['success' => true]);
     }
 
+    public function addToBlackList(Request $request)
+    {
+        $text = trim($request->input('text', ''));
+        if ($text === '') {
+            return response()->json(['success' => false, 'message' => 'Testo vuoto o non fornito.'], 400);
+        }
 
+        $path      = public_path('json/blacklist.json');
+        $list      = file_exists($path) ? (json_decode(file_get_contents($path), true) ?? []) : [];
+        $lowerList = array_map('mb_strtolower', $list);
+
+        if (!in_array(mb_strtolower($text), $lowerList, true)) {
+            $list[] = $text;
+            file_put_contents($path, json_encode($list, JSON_PRETTY_PRINT));
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function saveFilter(Request $request)
+    {
+        $question1       = $request->input('question1');
+        $operator1       = $request->input('operator1');
+        $answer1         = $request->input('answer1');
+        $logicalOperator = $request->input('logicalOperator');
+        $question2       = $request->input('question2');
+        $operator2       = $request->input('operator2');
+        $answer2         = $request->input('answer2');
+
+        Log::info("Salvataggio Filtro: ", compact(
+            'question1', 'operator1', 'answer1', 'logicalOperator', 'question2', 'operator2', 'answer2'
+        ));
+
+        return response()->json(['success' => true]);
+    }
 }

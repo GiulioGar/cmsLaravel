@@ -1,8 +1,8 @@
 @extends('layouts.main')
 
 @section('content')
-    <!-- Importa lo stile personalizzato già usato in fieldControl -->
     <link rel="stylesheet" href="{{ asset('css/fieldControl.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/fieldQuality.css') }}">
 
     <div class="container field-control-container">
 
@@ -112,34 +112,38 @@
       <!-- Totale Interviste -->
 <div class="col-12 col-sm-6">
   <div class="stat-card p-3 text-center">
-    <!-- Icona -->
     <div class="stat-icon mb-2">
       <i class="fas fa-users"></i>
     </div>
-    <!-- Valore -->
     <div class="stat-value">{{ $totalInterviews }}</div>
-    <!-- Label -->
     <div class="stat-label">Interviste</div>
   </div>
 </div>
       <!-- Punteggio Medio -->
       <div class="col-12 col-sm-6">
         <div class="stat-card p-3">
-<div class="stat-icon mb-2">
-  <i class="fas fa-star"></i>
-</div>
-<div class="stat-value">{{ $averageScore }}</div>
-<div class="stat-label">Score Medio</div>
+          <div class="stat-icon mb-2">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="stat-value">{{ $averageScore ?? '—' }}</div>
+          <div class="stat-label">Score Medio (0–100)</div>
+          @if($maxScore !== null && $minScore !== null)
+          <div class="fq-stat-minmax text-center">
+            <small class="text-success">▲ {{ $maxScore }}</small>
+            <small class="text-muted"> · </small>
+            <small class="text-danger">▼ {{ $minScore }}</small>
+          </div>
+          @endif
         </div>
       </div>
-      <!-- LOI Media -->
+      <!-- LOI Mediana -->
       <div class="col-12 col-sm-6">
         <div class="stat-card p-3">
 <div class="stat-icon mb-2">
   <i class="fas fa-clock"></i>
 </div>
 <div class="stat-value">{{ $loiMediaFormatted }}</div>
-<div class="stat-label">LOI Media (min)</div>
+<div class="stat-label">LOI Mediana (min)</div>
         </div>
       </div>
       <!-- Interviste di qualità -->
@@ -148,9 +152,12 @@
             <div class="stat-icon mb-2">
             <i class="fas fa-chart-pie"></i>
             </div>
-          <span class="badge bg-success">Ottime: {{ $pctHigh }}%</span><br/>
-          <span class="badge bg-warning text-dark mt-1">Accettabili: {{ $pctAccept }}%</span><br/>
-          <span class="badge bg-danger mt-1">Pessime: {{ $pctLow }}% </span>
+          <span class="badge bg-success">Alta qualità: {{ $pctHigh }}%</span><br/>
+          <span class="badge bg-warning text-dark mt-1">Accettabile: {{ $pctAccept }}%</span><br/>
+          <span class="badge bg-danger mt-1">Bassa qualità: {{ $pctLow }}%</span>
+          @if($notEvaluableInterviews > 0)
+          <br/><span class="badge bg-secondary mt-1">Non valutabili: {{ $pctNotEvaluable }}%</span>
+          @endif
         </div>
       </div>
     </div>
@@ -171,18 +178,85 @@
                                 <table class="table table-hover quality-table-interviews">
                                     <thead>
                                         <tr>
-                                            <th>IID</th>
-                                            <th>UID</th>
-                                            <th>Punteggio</th>
+                                            <th class="small">IID</th>
+                                            <th class="small">UID</th>
+                                            <th class="small" style="min-width:120px">Score</th>
+                                            <th class="small" style="min-width:80px">Rischio</th>
+                                            <th class="small" style="width:32px"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach($completeInterviews as $interview)
+                                        @php
+                                            $ivScore    = $interview['score'];
+                                            $ivHasScore = $ivScore !== null;
+                                            $ivSc       = $ivHasScore ? (int) $ivScore : null;
+
+                                            if      (!$ivHasScore) $ivCls = 'fq-q-unknown';
+                                            elseif  ($ivSc >= 90)  $ivCls = 'fq-q-excellent';
+                                            elseif  ($ivSc >= 70)  $ivCls = 'fq-q-good';
+                                            elseif  ($ivSc >= 50)  $ivCls = 'fq-q-warning';
+                                            elseif  ($ivSc >= 30)  $ivCls = 'fq-q-bad';
+                                            else                   $ivCls = 'fq-q-critical';
+
+                                            $ivStars  = $interview['stars'] !== null ? (float) $interview['stars'] : null;
+                                            $ivFullS  = $ivStars !== null ? (int) floor($ivStars) : 0;
+                                            $ivHalfS  = $ivStars !== null && ($ivStars - $ivFullS) >= 0.5;
+                                            $ivEmptyS = $ivStars !== null ? (5 - $ivFullS - ($ivHalfS ? 1 : 0)) : 0;
+
+                                            $ivCovLevel = $interview['quality_coverage']['level'] ?? 'none';
+                                            $ivCovLabel = $interview['quality_coverage']['label'] ?? 'Non valutabile';
+
+                                            $ivOpenAvail  = !empty($interview['quality_criteria']['open']['available']);
+                                            $ivScaleAvail = !empty($interview['quality_criteria']['scale']['available']);
+                                            $ivLoiAvail   = !empty($interview['quality_criteria']['loi']['available']);
+
+                                            $ivOpenRisk  = $ivOpenAvail  ? ($interview['quality_risks']['open']  ?? null) : null;
+                                            $ivScaleRisk = $ivScaleAvail ? ($interview['quality_risks']['scale'] ?? null) : null;
+                                            $ivLoiRisk   = $ivLoiAvail   ? ($interview['quality_risks']['loi']   ?? null) : null;
+                                        @endphp
                                             <tr>
-                                                <td>{{ $interview['iid'] }}</td>
-                                                <td>{{ $interview['uid'] }}</td>
-                                                <!-- punteggio con decimale fisso -->
-                                                <td>{{ number_format($interview['score'], 1) }}</td>
+                                                <td class="small">{{ $interview['iid'] }}</td>
+                                                <td class="small">{{ $interview['uid'] }}</td>
+
+                                                <!-- Score: numero / stelle / etichetta / copertura -->
+                                                <td>
+                                                    <div class="fq-score-block {{ $ivCls }}">
+                                                        @if($ivHasScore)
+                                                            <div class="fq-score-num">
+                                                                {{ $ivSc }}<span class="fq-score-denom"> / 100</span>
+                                                            </div>
+                                                            <div class="fq-stars">
+                                                                @for($si = 0; $si < $ivFullS; $si++)<i class="fas fa-star"></i>@endfor
+                                                                @if($ivHalfS)<i class="fas fa-star-half-alt"></i>@endif
+                                                                @for($si = 0; $si < $ivEmptyS; $si++)<i class="far fa-star"></i>@endfor
+                                                            </div>
+                                                            <div class="fq-score-label">{{ $interview['rating_context_label'] ?? $interview['rating_label'] }}</div>
+                                                        @else
+                                                            <div class="fq-score-num">—</div>
+                                                            <div class="fq-score-label">Non valutabile</div>
+                                                        @endif
+                                                        <div class="fq-coverage-badge fq-cov-{{ $ivCovLevel }}">{{ $ivCovLabel }}</div>
+                                                    </div>
+                                                </td>
+
+                                                <!-- Rischio: aperte / griglie / LOI (0-100, senza segno meno) -->
+                                                <td class="fq-risks">
+                                                    Aperte: {{ $ivOpenAvail  ? $ivOpenRisk  : 'N/D' }}<br>
+                                                    Griglie: {{ $ivScaleAvail ? $ivScaleRisk : 'N/D' }}<br>
+                                                    LOI: {{ $ivLoiAvail   ? $ivLoiRisk   : 'N/D' }}
+                                                </td>
+
+                                                <!-- Note: popover motivazioni -->
+                                                <td class="text-center align-middle">
+                                                    <button type="button" class="fq-reasons-btn"
+                                                        data-bs-toggle="popover"
+                                                        data-bs-trigger="focus"
+                                                        data-bs-placement="auto"
+                                                        data-fq-reasons="{{ json_encode($interview['quality_reasons'] ?? []) }}">
+                                                        <i class="fas fa-info-circle"></i>
+                                                    </button>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -220,13 +294,8 @@
                         <tbody>
                             @foreach($loiData as $item)
                                 <tr>
-                                   <!-- IID -->
                                     <td class="small">{{ $item['iid'] }}</td>
-
-                                    <!-- UID -->
                                     <td class="small">{{ $item['uid'] }}</td>
-
-                                    <!-- LOI (minuti.secondi) -->
                                     <td class="small">{{ $item['loi'] }} min.</td>
                                 </tr>
                             @endforeach
@@ -248,7 +317,7 @@
                     <table class="table table-hover quality-table-lower">
                         <thead>
                             <tr>
-                                <th class="small">+</th> <!-- Colonna modale 3 puntini -->
+                                <th class="small">+</th>
                                 <th class="small">IID</th>
                                 <th class="small">UID</th>
                                 <th class="small">Panel</th>
@@ -260,14 +329,11 @@
                         <tbody>
                             @foreach($openQuestionsData as $index => $open)
                                 @php
-                                    // Un ID univoco per la modale
                                     $modalId = "modalOpen_{$open['iid']}_{$index}";
                                 @endphp
 
                                 <tr>
-                                    <!-- Colonna con 3 puntini che apre la modale -->
                                     <td class="small">
-                                        <!-- Link che apre modale -->
                                         <a href="#" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">
                                             <i class="fas fa-ellipsis-v"></i>
                                         </a>
@@ -306,7 +372,6 @@
 
                                                 <hr/>
 
-                                                <!-- Bottoni per whitelist e blacklist -->
                                                 <div class="d-grid gap-2">
                                                     <button class="btn"
                                                     style="background-color: white; color: black; border:1px solid #ccc"
@@ -341,7 +406,6 @@
 
 <!-- TERZA RIGA -->
 <div class="row">
-    <!-- COLONNA SINISTRA (50%) -->
     <div class="col-md-12">
         <div class="quality-card shadow-sm mb-4">
             <div class="quality-card-header quality-header-left">
@@ -349,7 +413,6 @@
             </div>
             <div class="quality-card-body p-0">
                 @if(count($scaleData) > 0)
-                    <!-- Contenitore con scroll e font ridotto -->
                     <div class="quality-table-container" style="max-height: 350px; overflow-y: auto;">
                         <table class="table table-hover quality-table-lower">
                             <thead>
@@ -359,7 +422,6 @@
                                     <th class="small">Panel</th>
                                     <th class="small">Domanda</th>
                                     <th class="small">Changes %</th>
-                                    <!-- RIMOSSA colonna #Changes -->
                                     <th class="small">Tot Risposte</th>
                                 </tr>
                             </thead>
@@ -369,26 +431,15 @@
                                         $totAnswers = count($scale['answers']);
                                     @endphp
                                     <tr>
-                                        <!-- IID -->
                                         <td class="small">{{ $scale['iid'] }}</td>
-
-                                        <!-- UID -->
                                         <td class="small">{{ $scale['uid'] }}</td>
-
-                                        <!-- Panel -->
                                         <td class="small">{{ $scale['panel'] }}</td>
-
-                                        <!-- Codice con tooltip -->
                                         <td class="small">
                                             <span data-bs-toggle="tooltip" title="{{ $scale['tooltip'] }}">
                                                 {{ $scale['code'] }}
                                             </span>
                                         </td>
-
-                                        <!-- Changes % -->
                                         <td class="small">{{ $scale['changesPct'] }}%</td>
-
-                                        <!-- Totale risposte -->
                                         <td class="small">{{ $totAnswers }}</td>
                                     </tr>
                                 @endforeach
@@ -418,24 +469,36 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-            var dropdownElements = document.querySelectorAll('.dropdown-toggle');
+        // Dropdown
+        document.querySelectorAll('.dropdown-toggle').forEach(function (el) {
+            new bootstrap.Dropdown(el);
+        });
+        document.body.addEventListener("click", function (event) {
+            if (event.target.classList.contains("dropdown-toggle")) {
+                bootstrap.Dropdown.getOrCreateInstance(event.target).show();
+            }
+        });
 
-            // Inizializza tutti i dropdown
-            dropdownElements.forEach(function (dropdown) {
-                new bootstrap.Dropdown(dropdown);
-            });
-
-            console.log("✅ Bootstrap Dropdown inizializzato correttamente.");
-
-            // Aggiungiamo un event listener globale ai dropdown-toggle
-            document.body.addEventListener("click", function (event) {
-                if (event.target.classList.contains("dropdown-toggle")) {
-                    var dropdown = bootstrap.Dropdown.getOrCreateInstance(event.target);
-                    dropdown.show();
-                }
+        // Popover motivazioni interviste
+        document.querySelectorAll('.fq-reasons-btn').forEach(function (el) {
+            var reasons = [];
+            try { reasons = JSON.parse(el.dataset.fqReasons || '[]'); } catch(e) {}
+            var html = '<ul class="mb-0 ps-3" style="font-size:.78rem;min-width:200px">'
+                + reasons.map(function(r) {
+                    return '<li>' + r.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</li>';
+                }).join('')
+                + '</ul>';
+            new bootstrap.Popover(el, {
+                html: true,
+                content: html,
+                trigger: 'focus',
+                placement: 'auto',
+                title: '<small class="fw-semibold">Motivazioni</small>',
+                sanitize: false
             });
         });
-    </script>
+    });
+</script>
 
 <script>
     function addToWhiteList(responseText) {
@@ -504,8 +567,8 @@
 }
 /* Icone */
 .stat-icon i {
-  font-size: 1.75rem;      /* dimensione icona */
-  color: #078107;          /* blu “primary” di Bootstrap */
+  font-size: 1.75rem;
+  color: #078107;
 }
 
 /* Allinea icona, valore e label verticalmente */
@@ -517,7 +580,7 @@
   width: 100%;
 }
 
-/* Spazio sotto l’icona */
+/* Spazio sotto l'icona */
 .stat-icon {
   display: flex;
   align-items: center;
@@ -528,7 +591,6 @@
 .stat-card .badge {
   font-size: 0.85rem;
   padding: 0.4em 0.6em;
-
 }
 
 
