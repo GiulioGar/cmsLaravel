@@ -27,20 +27,52 @@ class FieldQualityController extends Controller
     // [ratio_minimo, risk] — risk da 0 a 100; ordinato dal meno rischioso
     private const LOI_RISK_TABLE = [
         [0.80,  0],
-        [0.70, 15],
-        [0.60, 30],
-        [0.50, 50],
-        [0.40, 70],
-        [0.30, 85],
-        // fallback (ratio < 0.30): risk = 100
+        [0.70, 10],
+        [0.60, 20],
+        [0.50, 35],
+        [0.40, 50],
+        [0.30, 65],
+        // fallback (ratio < 0.30, LOI >= 60s): risk = 80
     ];
 
-    // [percentuale_fake_massima, risk] — risk da 0 a 100; applicato solo se fakeCount > 0
-    private const OPEN_RISK_TABLE = [
-        [10.0,  20],
-        [25.0,  40],
-        [50.0,  70],
-        // fallback (> 50%): risk = 100
+    // Categoria di affidabilità per ciascuna regola di classificazione risposta aperta
+    private const OPEN_SIGNAL_CATEGORIES = [
+        'blacklist'             => 'strong',
+        'excess_repeats'        => 'strong',
+        'random_alphanumeric'   => 'strong',
+        'illegal_sequence'      => 'strong',
+        'suspicious_consonants' => 'medium',
+        'too_short'             => 'weak',
+        'contains_url'          => 'weak',
+    ];
+
+    // Unità di evidenza per categoria: strong=10, non-strong cumulati con cap = strong-1 = 9
+    private const OPEN_CATEGORY_UNIT = [
+        'strong' => 10,
+        'medium' =>  2,
+        'weak'   =>  1,
+    ];
+
+    // Curva risk unica: [evidence_score_massimo, risk]; fallback oltre l'ultima soglia: 97
+    private const OPEN_RISK_CURVE = [
+        [ 1,  8],
+        [ 2, 18],
+        [ 4, 30],
+        [ 6, 42],
+        [ 9, 52],
+        [10, 62],
+        [15, 70],
+        [20, 80],
+        [30, 93],
+    ];
+
+    // Confidence: [n_min, n_max, factor] — modula il peso effettivo del criterio Open
+    private const OPEN_CONFIDENCE_TABLE = [
+        [0, 0,           0.00],
+        [1, 2,           0.30],
+        [3, 4,           0.55],
+        [5, 8,           0.80],
+        [9, PHP_INT_MAX, 1.00],
     ];
 
     // [percentuale_cambi_massima, risk] — risk da 0 a 100; changes===0 gestito separatamente
@@ -51,8 +83,7 @@ class FieldQualityController extends Controller
         // fallback (> 30%): risk = 0
     ];
 
-    private const SCALE_AGGRAVATION_RISK    = 15;
-    private const OPEN_SEVERE_FAKE_MIN_RISK = 50;
+    private const SCALE_AGGRAVATION_RISK = 15;
 
     public function index(Request $request, PrimisApiService $primis)
     {
@@ -371,10 +402,11 @@ class FieldQualityController extends Controller
                 $row['tooltip'] = 'Domanda non presente';
             }
 
-            $classification  = $this->classifyOpenResponse($row['openResponse'], $whiteList, $blackList);
-            $row['isFake']   = $classification['is_fake'];
+            $classification   = $this->classifyOpenResponse($row['openResponse'], $whiteList, $blackList);
+            $row['isFake']    = $classification['is_fake'];
             $row['is_severe'] = $classification['is_severe'];
             $row['reason']    = $classification['reason'];
+            $row['category']  = $classification['category'];
         }
         unset($row);
     }
@@ -432,7 +464,7 @@ class FieldQualityController extends Controller
             if ($absoluteMinTriggered) {
                 $risk = 100;
             } else {
-                $risk = 100; // fallback ratio < 0.30
+                $risk = 80; // fallback ratio < 0.30, LOI >= 60s
                 foreach (self::LOI_RISK_TABLE as [$minRatio, $tableRisk]) {
                     if ($ratio >= $minRatio) {
                         $risk = $tableRisk;
@@ -483,64 +515,83 @@ class FieldQualityController extends Controller
         }
 
         foreach ($completeInterviews as &$iv) {
-            $iid      = $iv['iid'];
-            $answers  = $openByInterview[$iid] ?? [];
-            $analyzed = count($answers);
+            $iid     = $iv['iid'];
+            $answers = $openByInterview[$iid] ?? [];
 
-            if ($analyzed === 0) {
-                $iv['quality_criteria']['open'] = [
-                    'available'           => false,
-                    'analyzed_answers'    => 0,
-                    'fake_answers'        => 0,
-                    'severe_fake_answers' => 0,
-                    'fake_percentage'     => 0.0,
-                    'severe_fake'         => false,
-                    'risk'                => null,
-                ];
-                // chiave 'open' assente da quality_risks (non disponibile)
+            if (count($answers) === 0) {
+                $iv['quality_criteria']['open'] = ['available' => false];
                 continue;
             }
 
-            $fakeCount       = 0;
-            $severeFakeCount = 0;
+            // Conta per categoria
+            $strongCount  = 0;
+            $mediumCount  = 0;
+            $weakCount    = 0;
+            $correctCount = 0;
+
             foreach ($answers as $a) {
-                if (!empty($a['isFake'])) {
-                    $fakeCount++;
-                    if (!empty($a['is_severe'])) {
-                        $severeFakeCount++;
-                    }
-                }
+                $cat = $a['category'] ?? null;
+                if ($cat === 'strong')       { $strongCount++; }
+                elseif ($cat === 'medium')   { $mediumCount++; }
+                elseif ($cat === 'weak')     { $weakCount++; }
+                else                         { $correctCount++; }
             }
 
-            $fakePct = round(($fakeCount / $analyzed) * 100, 1);
+            $fakeCount = $strongCount + $mediumCount + $weakCount;
+            $totalAnswers = $correctCount + $fakeCount;
 
-            if ($fakeCount === 0) {
+            // Evidence score: segnali forti illimitati; non-forti cumulati con cap = strong_unit - 1
+            $nonStrongCap       = self::OPEN_CATEGORY_UNIT['strong'] - 1;
+            $nonStrongRaw       = ($mediumCount * self::OPEN_CATEGORY_UNIT['medium'])
+                                + ($weakCount   * self::OPEN_CATEGORY_UNIT['weak']);
+            $nonStrongEvidence  = min($nonStrongRaw, $nonStrongCap);
+            $evidenceScore      = ($strongCount * self::OPEN_CATEGORY_UNIT['strong']) + $nonStrongEvidence;
+
+            // Risk dalla curva unica
+            if ($evidenceScore === 0) {
                 $risk = 0;
             } else {
-                $risk = 100; // fallback > 50%
-                foreach (self::OPEN_RISK_TABLE as [$maxPct, $tableRisk]) {
-                    if ($fakePct <= $maxPct) {
-                        $risk = $tableRisk;
+                $risk = 97; // fallback oltre l'ultima soglia
+                foreach (self::OPEN_RISK_CURVE as [$maxEvidence, $curveRisk]) {
+                    if ($evidenceScore <= $maxEvidence) {
+                        $risk = $curveRisk;
                         break;
                     }
                 }
             }
-
-            $severeFake = $severeFakeCount > 0;
-            if ($severeFake) {
-                $risk = max($risk, self::OPEN_SEVERE_FAKE_MIN_RISK);
-            }
-
             $risk = (int) min(100, max(0, $risk));
 
+            // Confidence: basata sul totale delle risposte valutabili
+            $confidenceFactor = 0.0;
+            $confidenceLevel  = 'nessuna';
+            foreach (self::OPEN_CONFIDENCE_TABLE as [$nMin, $nMax, $factor]) {
+                if ($totalAnswers >= $nMin && $totalAnswers <= $nMax) {
+                    $confidenceFactor = $factor;
+                    $confidenceLevel  = $factor >= 1.0 ? 'alta'
+                        : ($factor >= 0.80 ? 'sufficiente'
+                        : ($factor >= 0.55 ? 'bassa'
+                        : ($factor >= 0.30 ? 'limitata' : 'nessuna')));
+                    break;
+                }
+            }
+            $effectiveWeight = (int) round(self::QUALITY_WEIGHTS['open'] * $confidenceFactor);
+
             $iv['quality_criteria']['open'] = [
-                'available'           => true,
-                'analyzed_answers'    => $analyzed,
-                'fake_answers'        => $fakeCount,
-                'severe_fake_answers' => $severeFakeCount,
-                'fake_percentage'     => $fakePct,
-                'severe_fake'         => $severeFake,
-                'risk'                => $risk,
+                'available'        => true,
+                'analyzed_answers' => $totalAnswers,
+                'correct_count'    => $correctCount,
+                'fake_answers'     => $fakeCount,
+                'weak_count'       => $weakCount,
+                'medium_count'     => $mediumCount,
+                'strong_count'     => $strongCount,
+                'evidence_score'   => $evidenceScore,
+                'fake_percentage'  => $totalAnswers > 0
+                    ? round(($fakeCount / $totalAnswers) * 100, 1) : 0.0,
+                'severe_fake'      => $strongCount > 0,
+                'risk'             => $risk,
+                'confidence_level' => $confidenceLevel,
+                'confidence_factor'=> $confidenceFactor,
+                'effective_weight' => $effectiveWeight,
             ];
             $iv['quality_risks']['open'] = $risk;
         }
@@ -630,8 +681,11 @@ class FieldQualityController extends Controller
 
             foreach ($criteria as $key) {
                 if (!empty($iv['quality_criteria'][$key]['available'])) {
-                    $risk            = (int) min(100, max(0, (int) ($iv['quality_risks'][$key] ?? 0)));
-                    $weight          = self::QUALITY_WEIGHTS[$key];
+                    $risk   = (int) min(100, max(0, (int) ($iv['quality_risks'][$key] ?? 0)));
+                    // Il criterio Open usa il peso effettivo modulato dalla Confidence
+                    $weight = ($key === 'open')
+                        ? (int) ($iv['quality_criteria']['open']['effective_weight'] ?? self::QUALITY_WEIGHTS['open'])
+                        : self::QUALITY_WEIGHTS[$key];
                     $numerator      += $risk * $weight;
                     $availableWeight += $weight;
                 }
@@ -740,13 +794,15 @@ class FieldQualityController extends Controller
 
         // Domande aperte
         if ($open && !empty($open['available'])) {
-            $fakeCount = (int) ($open['fake_answers'] ?? 0);
+            $fakeCount   = (int) ($open['fake_answers']  ?? 0);
+            $strongCount = (int) ($open['strong_count']  ?? 0);
+            $total       = (int) ($open['analyzed_answers'] ?? 0);
             if ($fakeCount > 0) {
-                if (!empty($open['severe_fake'])) {
-                    $reasons[] = 'Presente almeno una risposta aperta palesemente casuale';
+                if ($strongCount > 0) {
+                    $parola    = $strongCount === 1 ? 'risposta aperta palesemente casuale' : 'risposte aperte palesemente casuali';
+                    $reasons[] = "Presente {$strongCount} {$parola}";
                 } else {
-                    $total  = (int) ($open['analyzed_answers'] ?? 0);
-                    $parola = $fakeCount === 1 ? 'risposta aperta sospetta' : 'risposte aperte sospette';
+                    $parola    = $fakeCount === 1 ? 'risposta aperta sospetta' : 'risposte aperte sospette';
                     $reasons[] = "{$fakeCount} {$parola} su {$total} analizzate";
                 }
             }
@@ -802,47 +858,49 @@ class FieldQualityController extends Controller
 
         // 1. Whitelist → valida
         if (in_array($respLower, $whiteListLower, true)) {
-            return ['is_fake' => false, 'is_severe' => false, 'reason' => null];
+            return ['is_fake' => false, 'is_severe' => false, 'reason' => null, 'category' => null];
         }
 
         // 2. Blacklist → fake grave (match esplicito su risposta nota come spazzatura)
         if (in_array($respLower, $blackListLower, true)) {
-            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'blacklist'];
+            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'blacklist', 'category' => 'strong'];
         }
 
-        // 3. Troppo corta → fake normale (potrebbe essere "ok", "sì", ecc.)
+        // 3. Troppo corta → fake debole (potrebbe essere "ok", "sì", ecc.)
         if (mb_strlen($respTrim) < 3) {
-            return ['is_fake' => true, 'is_severe' => false, 'reason' => 'too_short'];
+            return ['is_fake' => true, 'is_severe' => false, 'reason' => 'too_short', 'category' => 'weak'];
         }
 
-        // 4. Contiene URL → fake normale
-        if (preg_match('/(http:\/\/|https:\/\/|www\.)|(\.(com|it)(\s|\/|$))/i', $respTrim)) {
-            return ['is_fake' => true, 'is_severe' => false, 'reason' => 'contains_url'];
+        // 4. Contiene URL o dominio reale → fake debole
+        // Richiede un prefisso alfanumerico prima del TLD per evitare FP su testo inglese
+        // ("I did it. It was" non ha .[tld] preceduto da chars di dominio validi)
+        if (preg_match('/https?:\/\/|www\.|\b[a-zA-Z0-9][a-zA-Z0-9-]*\.(com|it)(\/|\s|$)/i', $respTrim)) {
+            return ['is_fake' => true, 'is_severe' => false, 'reason' => 'contains_url', 'category' => 'weak'];
         }
 
-        // 5. Caratteri ripetuti in eccesso → fake grave ("aaaaaaa", "!!!!!!")
+        // 5. Caratteri ripetuti in eccesso → fake forte ("aaaaaaa", "!!!!!!")
         if ($this->hasExcessRepeats($respTrim)) {
-            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'excess_repeats'];
+            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'excess_repeats', 'category' => 'strong'];
         }
 
-        // 6. Tutte le parole combinano lettere e numeri casualmente → fake grave ("abc123 xyz456")
+        // 6. Tutte le parole combinano lettere e numeri casualmente → fake forte ("abc123 xyz456")
         if ($this->allWordsHaveRandomLetterNumberCombo($respTrim)) {
-            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'random_alphanumeric'];
+            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'random_alphanumeric', 'category' => 'strong'];
         }
 
-        // 7. Parola singola con sequenza deterministica da tastiera → fake grave
+        // 7. Parola singola con sequenza deterministica da tastiera → fake forte
         // (qwerty, asdfgh, zxcvbn, abcdef, 123456 e sottostringhe di almeno 4 caratteri)
         if ($this->isSingleWordWithIllegalSequence($respTrim)) {
-            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'illegal_sequence'];
+            return ['is_fake' => true, 'is_severe' => true, 'reason' => 'illegal_sequence', 'category' => 'strong'];
         }
 
-        // 8. Tutte le parole hanno pattern consonantici sospetti → fake normale
+        // 8. Tutte le parole hanno pattern consonantici sospetti → fake medio
         // (copertura ampia: potrebbe includere abbreviazioni o typo)
         if ($this->hasOnlySuspiciousWords($respTrim)) {
-            return ['is_fake' => true, 'is_severe' => false, 'reason' => 'suspicious_consonants'];
+            return ['is_fake' => true, 'is_severe' => false, 'reason' => 'suspicious_consonants', 'category' => 'medium'];
         }
 
-        return ['is_fake' => false, 'is_severe' => false, 'reason' => null];
+        return ['is_fake' => false, 'is_severe' => false, 'reason' => null, 'category' => null];
     }
 
     private function hasExcessRepeats(string $resp, int $threshold = 5): bool

@@ -214,6 +214,10 @@
                                             $ivOpenRisk  = $ivOpenAvail  ? ($interview['quality_risks']['open']  ?? null) : null;
                                             $ivScaleRisk = $ivScaleAvail ? ($interview['quality_risks']['scale'] ?? null) : null;
                                             $ivLoiRisk   = $ivLoiAvail   ? ($interview['quality_risks']['loi']   ?? null) : null;
+
+                                            $ivOpenEvidence = $ivOpenAvail ? ($interview['quality_criteria']['open']['evidence_score']    ?? null) : null;
+                                            $ivOpenConf     = $ivOpenAvail ? ($interview['quality_criteria']['open']['confidence_level']   ?? null) : null;
+                                            $ivOpenEw       = $ivOpenAvail ? ($interview['quality_criteria']['open']['effective_weight']   ?? null) : null;
                                         @endphp
                                             <tr>
                                                 <td class="small">{{ $interview['iid'] }}</td>
@@ -242,9 +246,15 @@
 
                                                 <!-- Rischio: aperte / griglie / LOI (0-100, senza segno meno) -->
                                                 <td class="fq-risks">
-                                                    Aperte: {{ $ivOpenAvail  ? $ivOpenRisk  : 'N/D' }}<br>
+                                                    Aperte: {{ $ivOpenAvail ? $ivOpenRisk : 'N/D' }}
+                                                    @if($ivOpenAvail && $ivOpenConf !== null)
+                                                        <small class="text-muted d-block" style="font-size:0.7em">
+                                                            ev:{{ $ivOpenEvidence }} &middot; conf:{{ ucfirst($ivOpenConf) }} &middot; w:{{ $ivOpenEw }}
+                                                        </small>
+                                                    @endif
+                                                    <br>
                                                     Griglie: {{ $ivScaleAvail ? $ivScaleRisk : 'N/D' }}<br>
-                                                    LOI: {{ $ivLoiAvail   ? $ivLoiRisk   : 'N/D' }}
+                                                    LOI: {{ $ivLoiAvail ? $ivLoiRisk : 'N/D' }}
                                                 </td>
 
                                                 <!-- Note: popover motivazioni -->
@@ -323,7 +333,7 @@
                                 <th class="small">Panel</th>
                                 <th class="small">Codice</th>
                                 <th class="small">Testo</th>
-                                <th class="small">Check</th>
+                                <th class="small">Segnale</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -350,7 +360,17 @@
                                     <td class="small">{{ $open['openResponse'] }}</td>
                                     <td class="small">
                                         @if(!empty($open['isFake']) && $open['isFake'] === true)
-                                           <b> <span class="fas fa-exclamation" style="color: red;" title="Risposta dubbia"></span></b>
+                                            @php
+                                                $openCat    = $open['category'] ?? 'weak';
+                                                $openReason = $open['reason']   ?? '';
+                                                $openBadge  = $openCat === 'strong' ? 'danger'
+                                                    : ($openCat === 'medium' ? 'warning text-dark' : 'secondary');
+                                                $openLabel  = $openCat === 'strong' ? 'Forte'
+                                                    : ($openCat === 'medium' ? 'Medio' : 'Debole');
+                                            @endphp
+                                            <span class="badge bg-{{ $openBadge }}"
+                                                  data-bs-toggle="tooltip"
+                                                  title="{{ $openReason }}">{{ $openLabel }}</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -369,6 +389,22 @@
                                             <div class="modal-body">
                                                 <p><strong>Testo:</strong></p>
                                                 <p>{{ $open['openResponse'] }}</p>
+
+                                                @if(!empty($open['isFake']) && $open['isFake'] === true)
+                                                <div class="alert alert-light border py-2 px-3 mb-2" style="font-size:0.85em">
+                                                    @php
+                                                        $mCat    = $open['category'] ?? 'weak';
+                                                        $mReason = $open['reason']   ?? '—';
+                                                        $mBadge  = $mCat === 'strong' ? 'danger'
+                                                            : ($mCat === 'medium' ? 'warning text-dark' : 'secondary');
+                                                        $mLabel  = $mCat === 'strong' ? 'Forte'
+                                                            : ($mCat === 'medium' ? 'Medio' : 'Debole');
+                                                    @endphp
+                                                    <strong>Classificazione:</strong>
+                                                    <span class="badge bg-{{ $mBadge }} ms-1">{{ $mLabel }}</span>
+                                                    &nbsp;<span class="text-muted">{{ $mReason }}</span>
+                                                </div>
+                                                @endif
 
                                                 <hr/>
 
