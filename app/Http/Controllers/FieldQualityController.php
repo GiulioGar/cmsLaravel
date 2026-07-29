@@ -35,37 +35,6 @@ class FieldQualityController extends Controller
         // fallback (ratio < 0.30, LOI >= 60s): risk = 80
     ];
 
-    // Categoria di affidabilità per ciascuna regola di classificazione risposta aperta
-    private const OPEN_SIGNAL_CATEGORIES = [
-        'blacklist'             => 'strong',
-        'excess_repeats'        => 'strong',
-        'random_alphanumeric'   => 'strong',
-        'illegal_sequence'      => 'strong',
-        'suspicious_consonants' => 'medium',
-        'too_short'             => 'weak',
-        'contains_url'          => 'weak',
-    ];
-
-    // Unità di evidenza per categoria: strong=10, non-strong cumulati con cap = strong-1 = 9
-    private const OPEN_CATEGORY_UNIT = [
-        'strong' => 10,
-        'medium' =>  2,
-        'weak'   =>  1,
-    ];
-
-    // Curva risk unica: [evidence_score_massimo, risk]; fallback oltre l'ultima soglia: 97
-    private const OPEN_RISK_CURVE = [
-        [ 1,  8],
-        [ 2, 18],
-        [ 4, 30],
-        [ 6, 42],
-        [ 9, 52],
-        [10, 62],
-        [15, 70],
-        [20, 80],
-        [30, 93],
-    ];
-
     // Confidence: [n_min, n_max, factor] — modula il peso effettivo del criterio Open
     private const OPEN_CONFIDENCE_TABLE = [
         [0, 0,           0.00],
@@ -210,6 +179,7 @@ class FieldQualityController extends Controller
             ];
 
             $this->extractOpenQuestions($file, $iid, $uid, $panelUsed, $openQuestionsData);
+            $this->extractChoiceOpenComponents($file, $iid, $uid, $panelUsed, $openQuestionsData);
             $this->extractScaleData($file, $iid, $uid, $panelUsed, $scaleData);
         }
 
@@ -363,6 +333,62 @@ class FieldQualityController extends Controller
         fclose($handle);
     }
 
+    private function extractChoiceOpenComponents(string $filePath, string $iid, string $uid, string $panelUsed, array &$openQuestionsData): void
+    {
+        $handle = fopen($filePath, 'r');
+        if (!$handle) {
+            return;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            $line   = trim($line);
+            $fields = explode(';', $line);
+
+            if (($fields[0] ?? '') !== 'choice') {
+                continue;
+            }
+
+            $questionId = isset($fields[1]) ? (int) $fields[1] : null;
+            if ($questionId === null) {
+                continue;
+            }
+
+            // fields[0..4]: type, questionId, ?, ?, ?
+            // fields[5..]: compX:testo (posizione e numerazione non garantite)
+            for ($i = 5; $i < count($fields); $i++) {
+                $part = trim($fields[$i]);
+                if ($part === '') {
+                    continue;
+                }
+
+                if (!preg_match('/^(comp(\d+)):(.+)$/i', $part, $m)) {
+                    continue;
+                }
+
+                $component      = $m[1];        // "comp0"
+                $componentIndex = (int) $m[2];  // 0
+                $answer         = trim($m[3]);   // "Palette occhi"
+
+                if ($answer === '' || is_numeric($answer)) {
+                    continue;
+                }
+
+                $openQuestionsData[] = [
+                    'iid'             => $iid,
+                    'uid'             => $uid,
+                    'panel'           => $panelUsed,
+                    'questionId'      => $questionId,
+                    'openResponse'    => $answer,
+                    'question_type'   => 'choice_open',
+                    'component'       => $component,
+                    'component_index' => $componentIndex,
+                ];
+            }
+        }
+
+        fclose($handle);
+    }
+
     private function extractScaleData(string $filePath, string $iid, string $uid, string $panelUsed, array &$scaleData): void
     {
         $handle = fopen($filePath, 'r');
@@ -393,13 +419,19 @@ class FieldQualityController extends Controller
         $blackList = $this->loadBlackList();
 
         foreach ($openData as &$row) {
-            $id = $row['questionId'];
-            if (isset($questionMap[$id])) {
-                $row['codice']  = $questionMap[$id]['code'];
-                $row['tooltip'] = $questionMap[$id]['text'];
+            $id             = $row['questionId'];
+            $isChoiceOpen   = ($row['question_type'] ?? '') === 'choice_open';
+            $qCode          = $questionMap[$id]['code'] ?? null;
+            $qText          = $questionMap[$id]['text'] ?? 'Domanda non presente';
+
+            if ($isChoiceOpen) {
+                $row['tipologia']  = 'Specifica';
+                $row['codice']     = $qCode ?? "Domanda {$id}";
+                $row['tooltip']    = $qText;
             } else {
-                $row['codice']  = 'unknown';
-                $row['tooltip'] = 'Domanda non presente';
+                $row['tipologia']  = 'Open';
+                $row['codice']     = $qCode ?? 'unknown';
+                $row['tooltip']    = $qText;
             }
 
             $classification   = $this->classifyOpenResponse($row['openResponse'], $whiteList, $blackList);
@@ -523,45 +555,28 @@ class FieldQualityController extends Controller
                 continue;
             }
 
-            // Conta per categoria
-            $strongCount  = 0;
-            $mediumCount  = 0;
-            $weakCount    = 0;
+            $fakeCount    = 0;
             $correctCount = 0;
+            $hasSevere    = false;
 
             foreach ($answers as $a) {
-                $cat = $a['category'] ?? null;
-                if ($cat === 'strong')       { $strongCount++; }
-                elseif ($cat === 'medium')   { $mediumCount++; }
-                elseif ($cat === 'weak')     { $weakCount++; }
-                else                         { $correctCount++; }
-            }
-
-            $fakeCount = $strongCount + $mediumCount + $weakCount;
-            $totalAnswers = $correctCount + $fakeCount;
-
-            // Evidence score: segnali forti illimitati; non-forti cumulati con cap = strong_unit - 1
-            $nonStrongCap       = self::OPEN_CATEGORY_UNIT['strong'] - 1;
-            $nonStrongRaw       = ($mediumCount * self::OPEN_CATEGORY_UNIT['medium'])
-                                + ($weakCount   * self::OPEN_CATEGORY_UNIT['weak']);
-            $nonStrongEvidence  = min($nonStrongRaw, $nonStrongCap);
-            $evidenceScore      = ($strongCount * self::OPEN_CATEGORY_UNIT['strong']) + $nonStrongEvidence;
-
-            // Risk dalla curva unica
-            if ($evidenceScore === 0) {
-                $risk = 0;
-            } else {
-                $risk = 97; // fallback oltre l'ultima soglia
-                foreach (self::OPEN_RISK_CURVE as [$maxEvidence, $curveRisk]) {
-                    if ($evidenceScore <= $maxEvidence) {
-                        $risk = $curveRisk;
-                        break;
+                if (!empty($a['isFake'])) {
+                    $fakeCount++;
+                    if (!empty($a['is_severe'])) {
+                        $hasSevere = true;
                     }
+                } else {
+                    $correctCount++;
                 }
             }
-            $risk = (int) min(100, max(0, $risk));
 
-            // Confidence: basata sul totale delle risposte valutabili
+            $totalAnswers   = $correctCount + $fakeCount;
+            $fakePercentage = $totalAnswers > 0
+                ? round(($fakeCount / $totalAnswers) * 100, 2)
+                : 0.0;
+            $openRisk = $fakePercentage;
+
+            // Confidence: modula il peso del criterio Open nel punteggio totale
             $confidenceFactor = 0.0;
             $confidenceLevel  = 'nessuna';
             foreach (self::OPEN_CONFIDENCE_TABLE as [$nMin, $nMax, $factor]) {
@@ -577,23 +592,18 @@ class FieldQualityController extends Controller
             $effectiveWeight = (int) round(self::QUALITY_WEIGHTS['open'] * $confidenceFactor);
 
             $iv['quality_criteria']['open'] = [
-                'available'        => true,
-                'analyzed_answers' => $totalAnswers,
-                'correct_count'    => $correctCount,
-                'fake_answers'     => $fakeCount,
-                'weak_count'       => $weakCount,
-                'medium_count'     => $mediumCount,
-                'strong_count'     => $strongCount,
-                'evidence_score'   => $evidenceScore,
-                'fake_percentage'  => $totalAnswers > 0
-                    ? round(($fakeCount / $totalAnswers) * 100, 1) : 0.0,
-                'severe_fake'      => $strongCount > 0,
-                'risk'             => $risk,
-                'confidence_level' => $confidenceLevel,
-                'confidence_factor'=> $confidenceFactor,
-                'effective_weight' => $effectiveWeight,
+                'available'         => true,
+                'analyzed_answers'  => $totalAnswers,
+                'correct_count'     => $correctCount,
+                'fake_answers'      => $fakeCount,
+                'fake_percentage'   => $fakePercentage,
+                'severe_fake'       => $hasSevere,
+                'risk'              => $openRisk,
+                'confidence_level'  => $confidenceLevel,
+                'confidence_factor' => $confidenceFactor,
+                'effective_weight'  => $effectiveWeight,
             ];
-            $iv['quality_risks']['open'] = $risk;
+            $iv['quality_risks']['open'] = $openRisk;
         }
         unset($iv);
     }
@@ -614,7 +624,6 @@ class FieldQualityController extends Controller
 
             if (empty($scales)) {
                 $iv['quality_criteria']['scale'] = ['available' => false];
-                // chiave 'scale' assente da quality_risks (non disponibile)
                 continue;
             }
 
@@ -627,12 +636,13 @@ class FieldQualityController extends Controller
                     ? round(($changes / $possibleChanges) * 100, 1)
                     : 0.0;
 
+                // Vecchio risk (mantenuto per compatibilità con view e punteggio totale)
                 if ($changes === 0) {
                     $gRisk = 100;
                 } elseif ($changePct > 30.0) {
                     $gRisk = 0;
                 } else {
-                    $gRisk = 25; // fallback intermedio (>20–30%)
+                    $gRisk = 25;
                     foreach (self::SCALE_RISK_TABLE as [$maxPct, $tableRisk]) {
                         if ($changePct <= $maxPct) {
                             $gRisk = $tableRisk;
@@ -641,13 +651,19 @@ class FieldQualityController extends Controller
                     }
                 }
 
+                // Nuovo quality_score per griglia
+                $gridScore = $this->scoreScaleGrid($scale['answers']);
+
                 $details[] = [
                     'question_id'       => $scale['questionId'],
+                    'question_code'     => $scale['code'] ?? null,
                     'valid_answers'     => $validAnswers,
                     'possible_changes'  => $possibleChanges,
                     'changes'           => $changes,
                     'change_percentage' => $changePct,
                     'risk'              => $gRisk,
+                    'quality_score'     => $gridScore['quality_score'],
+                    'reasons'           => $gridScore['reasons'],
                 ];
             }
 
@@ -657,18 +673,73 @@ class FieldQualityController extends Controller
             $aggravation    = ($lowChangeCount / $analyzedCount >= 0.5) ? self::SCALE_AGGRAVATION_RISK : 0;
             $risk           = (int) min(100, max(0, round($baseRisk + $aggravation)));
 
+            // Punteggio qualità aggregato: media dei quality_score delle singole griglie
+            $gridScores          = array_column($details, 'quality_score');
+            $aggregateGridScore  = (int) round(array_sum($gridScores) / $analyzedCount);
+            $allGridReasons      = array_unique(array_merge(...array_column($details, 'reasons')));
+
             $iv['quality_criteria']['scale'] = [
-                'available'          => true,
-                'analyzed_scales'    => $analyzedCount,
-                'critical_scales'    => $lowChangeCount,
-                'base_risk'          => round($baseRisk, 1),
-                'repeat_aggravation' => $aggravation,
-                'risk'               => $risk,
-                'details'            => $details,
+                'available'              => true,
+                'analyzed_scales'        => $analyzedCount,
+                'critical_scales'        => $lowChangeCount,
+                'base_risk'              => round($baseRisk, 1),
+                'repeat_aggravation'     => $aggravation,
+                'risk'                   => $risk,
+                'aggregate_quality_score'=> $aggregateGridScore,
+                'aggregate_reasons'      => array_values($allGridReasons),
+                'details'                => $details,
             ];
             $iv['quality_risks']['scale'] = $risk;
         }
         unset($iv);
+    }
+
+    private function scoreScaleGrid(array $answers): array
+    {
+        $n       = count($answers);
+        $scores  = [];
+        $reasons = [];
+
+        // Check 1 & 2: valore dominante
+        $valueCounts  = array_count_values($answers);
+        $maxCount     = max($valueCounts);
+        $dominantFrac = $maxCount / $n;
+
+        if ($dominantFrac >= 1.0) {
+            $scores[]  = 0;
+            $reasons[] = 'Risposte tutte uguali';
+        } elseif ($dominantFrac >= 0.80) {
+            $scores[]  = 25;
+            $reasons[] = 'Risposte quasi tutte uguali';
+        }
+
+        // Check 3: pattern ciclico ripetuto (blocco di lunghezza 2, 3 o 4)
+        foreach ([2, 3, 4] as $len) {
+            if ($n < $len * 3) {
+                continue;
+            }
+            $block = array_slice($answers, 0, $len);
+            $reps  = 0;
+            for ($i = 0; $i + $len <= $n; $i += $len) {
+                if (array_slice($answers, $i, $len) === $block) {
+                    $reps++;
+                } else {
+                    break;
+                }
+            }
+            $coverage = ($reps * $len) / $n;
+            if ($reps >= 3 && $coverage >= 0.75) {
+                $scores[]  = 15;
+                $reasons[] = 'Pattern ciclico ripetuto';
+                break;
+            }
+        }
+
+        if (empty($scores)) {
+            return ['quality_score' => 100, 'reasons' => ['Nessuna anomalia evidente']];
+        }
+
+        return ['quality_score' => min($scores), 'reasons' => $reasons];
     }
 
     private function applyFinalQualityScore(array &$completeInterviews): void
@@ -681,7 +752,7 @@ class FieldQualityController extends Controller
 
             foreach ($criteria as $key) {
                 if (!empty($iv['quality_criteria'][$key]['available'])) {
-                    $risk   = (int) min(100, max(0, (int) ($iv['quality_risks'][$key] ?? 0)));
+                    $risk   = min(100.0, max(0.0, (float) ($iv['quality_risks'][$key] ?? 0)));
                     // Il criterio Open usa il peso effettivo modulato dalla Confidence
                     $weight = ($key === 'open')
                         ? (int) ($iv['quality_criteria']['open']['effective_weight'] ?? self::QUALITY_WEIGHTS['open'])
@@ -794,17 +865,11 @@ class FieldQualityController extends Controller
 
         // Domande aperte
         if ($open && !empty($open['available'])) {
-            $fakeCount   = (int) ($open['fake_answers']  ?? 0);
-            $strongCount = (int) ($open['strong_count']  ?? 0);
-            $total       = (int) ($open['analyzed_answers'] ?? 0);
+            $fakeCount = (int) ($open['fake_answers']    ?? 0);
+            $total     = (int) ($open['analyzed_answers'] ?? 0);
             if ($fakeCount > 0) {
-                if ($strongCount > 0) {
-                    $parola    = $strongCount === 1 ? 'risposta aperta palesemente casuale' : 'risposte aperte palesemente casuali';
-                    $reasons[] = "Presente {$strongCount} {$parola}";
-                } else {
-                    $parola    = $fakeCount === 1 ? 'risposta aperta sospetta' : 'risposte aperte sospette';
-                    $reasons[] = "{$fakeCount} {$parola} su {$total} analizzate";
-                }
+                $parola    = $fakeCount === 1 ? 'risposta aperta sospetta' : 'risposte aperte sospette';
+                $reasons[] = "{$fakeCount} {$parola} su {$total} analizzate";
             }
         }
 

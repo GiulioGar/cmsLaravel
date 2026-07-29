@@ -215,7 +215,7 @@
                                             $ivScaleRisk = $ivScaleAvail ? ($interview['quality_risks']['scale'] ?? null) : null;
                                             $ivLoiRisk   = $ivLoiAvail   ? ($interview['quality_risks']['loi']   ?? null) : null;
 
-                                            $ivOpenEvidence = $ivOpenAvail ? ($interview['quality_criteria']['open']['evidence_score']    ?? null) : null;
+                                            $ivOpenFakePct  = $ivOpenAvail ? ($interview['quality_criteria']['open']['fake_percentage']   ?? null) : null;
                                             $ivOpenConf     = $ivOpenAvail ? ($interview['quality_criteria']['open']['confidence_level']   ?? null) : null;
                                             $ivOpenEw       = $ivOpenAvail ? ($interview['quality_criteria']['open']['effective_weight']   ?? null) : null;
                                         @endphp
@@ -249,7 +249,7 @@
                                                     Aperte: {{ $ivOpenAvail ? $ivOpenRisk : 'N/D' }}
                                                     @if($ivOpenAvail && $ivOpenConf !== null)
                                                         <small class="text-muted d-block" style="font-size:0.7em">
-                                                            ev:{{ $ivOpenEvidence }} &middot; conf:{{ ucfirst($ivOpenConf) }} &middot; w:{{ $ivOpenEw }}
+                                                            fake:{{ $ivOpenFakePct }}% &middot; conf:{{ ucfirst($ivOpenConf) }} &middot; w:{{ $ivOpenEw }}
                                                         </small>
                                                     @endif
                                                     <br>
@@ -331,12 +331,26 @@
                                 <th class="small">IID</th>
                                 <th class="small">UID</th>
                                 <th class="small">Panel</th>
+                                <th class="small">Tipologia</th>
                                 <th class="small">Codice</th>
                                 <th class="small">Testo</th>
-                                <th class="small">Segnale</th>
+                                <th class="small">Fake %</th>
                             </tr>
                         </thead>
                         <tbody>
+                            @php
+                                $openFakeByIid = [];
+                                foreach ($openQuestionsData as $row) {
+                                    $iid = $row['iid'];
+                                    if (!isset($openFakeByIid[$iid])) {
+                                        $openFakeByIid[$iid] = ['fake' => 0, 'total' => 0];
+                                    }
+                                    $openFakeByIid[$iid]['total']++;
+                                    if (!empty($row['isFake'])) {
+                                        $openFakeByIid[$iid]['fake']++;
+                                    }
+                                }
+                            @endphp
                             @foreach($openQuestionsData as $index => $open)
                                 @php
                                     $modalId = "modalOpen_{$open['iid']}_{$index}";
@@ -352,25 +366,27 @@
                                     <td class="small">{{ $open['iid'] }}</td>
                                     <td class="small">{{ $open['uid'] }}</td>
                                     <td class="small">{{ $open['panel'] }}</td>
+                                    <td class="small text-muted">
+                                        {{ $open['tipologia'] }}
+                                    </td>
                                     <td class="small">
-                                        <span data-bs-toggle="tooltip" title="{{ $open['tooltip'] }}">
+                                        <span class="fq-codice-pop"
+                                              data-codice="{{ $open['codice'] }}"
+                                              data-qtext="{{ $open['tooltip'] }}"
+                                              style="cursor:pointer;text-decoration:underline dotted #aaa;text-underline-offset:3px">
                                             {{ $open['codice'] }}
                                         </span>
                                     </td>
                                     <td class="small">{{ $open['openResponse'] }}</td>
                                     <td class="small">
-                                        @if(!empty($open['isFake']) && $open['isFake'] === true)
-                                            @php
-                                                $openCat    = $open['category'] ?? 'weak';
-                                                $openReason = $open['reason']   ?? '';
-                                                $openBadge  = $openCat === 'strong' ? 'danger'
-                                                    : ($openCat === 'medium' ? 'warning text-dark' : 'secondary');
-                                                $openLabel  = $openCat === 'strong' ? 'Forte'
-                                                    : ($openCat === 'medium' ? 'Medio' : 'Debole');
-                                            @endphp
-                                            <span class="badge bg-{{ $openBadge }}"
-                                                  data-bs-toggle="tooltip"
-                                                  title="{{ $openReason }}">{{ $openLabel }}</span>
+                                        @php
+                                            $iidStats = $openFakeByIid[$open['iid']] ?? null;
+                                            $iFake    = $iidStats['fake']  ?? 0;
+                                            $iTotal   = $iidStats['total'] ?? 0;
+                                            $iPct     = $iTotal > 0 ? round($iFake / $iTotal * 100) : 0;
+                                        @endphp
+                                        @if($iFake > 0)
+                                            <span class="text-danger fw-bold">{{ $iFake }}</span>/{{ $iTotal }} ({{ $iPct }}%)
                                         @endif
                                     </td>
                                 </tr>
@@ -449,6 +465,14 @@
             </div>
             <div class="quality-card-body p-0">
                 @if(count($scaleData) > 0)
+                    @php
+                        $scaleQsByIidQid = [];
+                        foreach ($completeInterviews as $iv) {
+                            foreach ($iv['quality_criteria']['scale']['details'] ?? [] as $d) {
+                                $scaleQsByIidQid[$iv['iid']][$d['question_id']] = $d;
+                            }
+                        }
+                    @endphp
                     <div class="quality-table-container" style="max-height: 350px; overflow-y: auto;">
                         <table class="table table-hover quality-table-lower">
                             <thead>
@@ -457,26 +481,41 @@
                                     <th class="small">UID</th>
                                     <th class="small">Panel</th>
                                     <th class="small">Domanda</th>
-                                    <th class="small">Changes %</th>
-                                    <th class="small">Tot Risposte</th>
+                                    <th class="small">Qualità</th>
+                                    <th class="small">Motivazione</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($scaleData as $scale)
                                     @php
-                                        $totAnswers = count($scale['answers']);
+                                        $sqLabel  = ($scale['code'] !== 'unknown')
+                                            ? 'Domanda ' . $scale['code']
+                                            : 'Domanda ' . $scale['questionId'];
+                                        $sqDetail = $scaleQsByIidQid[$scale['iid']][$scale['questionId']] ?? null;
+                                        $sqScore  = $sqDetail['quality_score'] ?? null;
+                                        $sqReasons= $sqDetail['reasons'] ?? [];
+                                        $sqCls    = $sqScore === null ? 'text-muted'
+                                            : ($sqScore >= 80 ? 'text-success'
+                                            : ($sqScore >= 40 ? 'text-warning' : 'text-danger'));
                                     @endphp
                                     <tr>
                                         <td class="small">{{ $scale['iid'] }}</td>
                                         <td class="small">{{ $scale['uid'] }}</td>
                                         <td class="small">{{ $scale['panel'] }}</td>
                                         <td class="small">
-                                            <span data-bs-toggle="tooltip" title="{{ $scale['tooltip'] }}">
-                                                {{ $scale['code'] }}
+                                            <span class="fq-codice-pop"
+                                                  data-codice="{{ $sqLabel }}"
+                                                  data-qtext="{{ $scale['tooltip'] }}"
+                                                  style="cursor:pointer;text-decoration:underline dotted #aaa;text-underline-offset:3px">
+                                                {{ $sqLabel }}
                                             </span>
                                         </td>
-                                        <td class="small">{{ $scale['changesPct'] }}%</td>
-                                        <td class="small">{{ $totAnswers }}</td>
+                                        <td class="small {{ $sqCls }} fw-semibold">
+                                            {{ $sqScore !== null ? $sqScore . '/100' : 'N/D' }}
+                                        </td>
+                                        <td class="small text-muted">
+                                            {{ implode(' · ', $sqReasons) }}
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -513,6 +552,18 @@
             if (event.target.classList.contains("dropdown-toggle")) {
                 bootstrap.Dropdown.getOrCreateInstance(event.target).show();
             }
+        });
+
+        // Popover codice domanda (tabella open questions)
+        document.querySelectorAll('.fq-codice-pop').forEach(function (el) {
+            new bootstrap.Popover(el, {
+                html: true,
+                trigger: 'hover focus',
+                placement: 'auto',
+                sanitize: false,
+                title: '<span style="font-size:.8rem;font-weight:600">' + el.dataset.codice + '</span>',
+                content: '<span style="font-size:.78rem;color:#555">' + el.dataset.qtext + '</span>',
+            });
         });
 
         // Popover motivazioni interviste
