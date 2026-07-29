@@ -11,12 +11,13 @@ use Illuminate\Support\Facades\Log;
 class FieldQualityController extends Controller
 {
     private const LOI_MAX_SECONDS          = 2700;
-    private const LOI_ABSOLUTE_MIN_SECONDS = 60;
+    private const LOI_ABSOLUTE_MIN_SECONDS  = 60;
+    private const LOI_CRITICAL_SCORE_CAP   = 35;
 
     private const QUALITY_WEIGHTS = [
-        'open'  => 50,
-        'scale' => 30,
-        'loi'   => 20,
+        'open'  => 60,
+        'scale' => 10,
+        'loi'   => 30,
     ];
 
     private const COVERAGE_THRESHOLDS = [
@@ -536,6 +537,18 @@ class FieldQualityController extends Controller
         return ($values[$mid - 1] + $values[$mid]) / 2.0;
     }
 
+    private function calculateOpenRisk(float $fakePercentage): int
+    {
+        $pct = max(0.0, min(100.0, $fakePercentage));
+
+        if ($pct <= 0.0)  { return 0; }
+        if ($pct <= 20.0) { return 20; }
+        if ($pct <= 40.0) { return 45; }
+        if ($pct <= 60.0) { return 70; }
+        if ($pct <= 80.0) { return 90; }
+        return 100;
+    }
+
     private function applyOpenQuestionsCriterion(array &$completeInterviews, array $openQuestionsData): void
     {
         $openByInterview = [];
@@ -574,7 +587,7 @@ class FieldQualityController extends Controller
             $fakePercentage = $totalAnswers > 0
                 ? round(($fakeCount / $totalAnswers) * 100, 2)
                 : 0.0;
-            $openRisk = $fakePercentage;
+            $openRisk = $this->calculateOpenRisk($fakePercentage);
 
             // Confidence: modula il peso del criterio Open nel punteggio totale
             $confidenceFactor = 0.0;
@@ -651,7 +664,6 @@ class FieldQualityController extends Controller
                     }
                 }
 
-                // Nuovo quality_score per griglia
                 $gridScore = $this->scoreScaleGrid($scale['answers']);
 
                 $details[] = [
@@ -662,6 +674,7 @@ class FieldQualityController extends Controller
                     'changes'           => $changes,
                     'change_percentage' => $changePct,
                     'risk'              => $gRisk,
+                    'level'             => $gridScore['level'],
                     'quality_score'     => $gridScore['quality_score'],
                     'reasons'           => $gridScore['reasons'],
                 ];
@@ -671,51 +684,85 @@ class FieldQualityController extends Controller
             $baseRisk       = array_sum(array_column($details, 'risk')) / $analyzedCount;
             $lowChangeCount = count(array_filter($details, fn($d) => $d['change_percentage'] <= 10.0));
             $aggravation    = ($lowChangeCount / $analyzedCount >= 0.5) ? self::SCALE_AGGRAVATION_RISK : 0;
-            $risk           = (int) min(100, max(0, round($baseRisk + $aggravation)));
 
-            // Punteggio qualità aggregato: media dei quality_score delle singole griglie
-            $gridScores          = array_column($details, 'quality_score');
-            $aggregateGridScore  = (int) round(array_sum($gridScores) / $analyzedCount);
-            $allGridReasons      = array_unique(array_merge(...array_column($details, 'reasons')));
+            // Nuovo risk aggregato Scale
+            $gridRisksArr = [];
+            foreach ($details as $d) {
+                if (isset($d['quality_score']) && is_int($d['quality_score'])) {
+                    $gridRisksArr[] = 100 - max(0, min(100, $d['quality_score']));
+                }
+            }
+            $nValid      = count($gridRisksArr);
+            $averageRisk = $nValid > 0 ? round(array_sum($gridRisksArr) / $nValid, 2) : 0.0;
+            $worstRisk   = $nValid > 0 ? max($gridRisksArr) : 0;
+            $newScaleRisk = $this->calculateAggregateScaleRisk($details);
+
+            // aggregate_level mantenuto per compatibilità view (non usato nel punteggio)
+            $levelPriority  = ['Normale' => 0, 'Sospetta' => 1, 'Da Verificare' => 2];
+            $aggregateLevel = 'Normale';
+            foreach (array_column($details, 'level') as $lvl) {
+                if ($levelPriority[$lvl] > $levelPriority[$aggregateLevel]) {
+                    $aggregateLevel = $lvl;
+                }
+            }
+            $allGridReasons = array_values(array_unique(array_merge(...array_column($details, 'reasons'))));
 
             $iv['quality_criteria']['scale'] = [
-                'available'              => true,
-                'analyzed_scales'        => $analyzedCount,
-                'critical_scales'        => $lowChangeCount,
-                'base_risk'              => round($baseRisk, 1),
-                'repeat_aggravation'     => $aggravation,
-                'risk'                   => $risk,
-                'aggregate_quality_score'=> $aggregateGridScore,
-                'aggregate_reasons'      => array_values($allGridReasons),
-                'details'                => $details,
+                'available'       => true,
+                'analyzed_scales' => $analyzedCount,
+                'average_risk'    => $averageRisk,
+                'worst_risk'      => $worstRisk,
+                'risk'            => $newScaleRisk,
+                // legacy — letti da buildQualityReasons():
+                'critical_scales'    => $lowChangeCount,
+                'repeat_aggravation' => $aggravation,
+                'base_risk'          => round($baseRisk, 1),
+                // legacy — compatibilità view:
+                'aggregate_level'    => $aggregateLevel,
+                'aggregate_reasons'  => $allGridReasons,
+                'details'            => $details,
             ];
-            $iv['quality_risks']['scale'] = $risk;
+            $iv['quality_risks']['scale'] = $newScaleRisk;
         }
         unset($iv);
     }
 
-    private function scoreScaleGrid(array $answers): array
+    private function calculateAggregateScaleRisk(array $gridDetails): int
     {
-        $n       = count($answers);
-        $scores  = [];
-        $reasons = [];
-
-        // Check 1 & 2: valore dominante
-        $valueCounts  = array_count_values($answers);
-        $maxCount     = max($valueCounts);
-        $dominantFrac = $maxCount / $n;
-
-        if ($dominantFrac >= 1.0) {
-            $scores[]  = 0;
-            $reasons[] = 'Risposte tutte uguali';
-        } elseif ($dominantFrac >= 0.80) {
-            $scores[]  = 25;
-            $reasons[] = 'Risposte quasi tutte uguali';
+        $gridRisks = [];
+        foreach ($gridDetails as $d) {
+            if (!isset($d['quality_score']) || !is_int($d['quality_score'])) {
+                continue;
+            }
+            $gridRisks[] = 100 - max(0, min(100, $d['quality_score']));
         }
 
-        // Check 3: pattern ciclico ripetuto (blocco di lunghezza 2, 3 o 4)
+        if (empty($gridRisks)) {
+            return 0;
+        }
+
+        $n           = count($gridRisks);
+        $averageRisk = array_sum($gridRisks) / $n;
+        $worstRisk   = max($gridRisks);
+        $scaleRisk   = $averageRisk * 0.70 + $worstRisk * 0.30;
+
+        return (int) min(100, max(0, round($scaleRisk)));
+    }
+
+    private function scoreScaleGrid(array $answers): array
+    {
+        $n = count($answers);
+
+        $valueCounts  = array_count_values($answers);
+        $dominantFrac = max($valueCounts) / $n;
+
+        if ($dominantFrac >= 1.0) {
+            return ['level' => 'Da Verificare', 'quality_score' => 0, 'reasons' => ['Risposte tutte uguali']];
+        }
+
+        // Pattern ciclico: blocco len 2/3/4, minimo 4 ripetizioni consecutive
         foreach ([2, 3, 4] as $len) {
-            if ($n < $len * 3) {
+            if ($n < $len * 4) {
                 continue;
             }
             $block = array_slice($answers, 0, $len);
@@ -728,18 +775,12 @@ class FieldQualityController extends Controller
                 }
             }
             $coverage = ($reps * $len) / $n;
-            if ($reps >= 3 && $coverage >= 0.75) {
-                $scores[]  = 15;
-                $reasons[] = 'Pattern ciclico ripetuto';
-                break;
+            if ($reps >= 4 && $coverage >= 0.75) {
+                return ['level' => 'Sospetta', 'quality_score' => 50, 'reasons' => ['Pattern ciclico ripetuto']];
             }
         }
 
-        if (empty($scores)) {
-            return ['quality_score' => 100, 'reasons' => ['Nessuna anomalia evidente']];
-        }
-
-        return ['quality_score' => min($scores), 'reasons' => $reasons];
+        return ['level' => 'Normale', 'quality_score' => 100, 'reasons' => []];
     }
 
     private function applyFinalQualityScore(array &$completeInterviews): void
@@ -777,6 +818,11 @@ class FieldQualityController extends Controller
                     'level'      => 'none',
                     'label'      => 'Non valutabile',
                 ];
+                $iv['quality_score_cap']  = [
+                    'applied'       => false,
+                    'maximum_score' => null,
+                    'reason'        => null,
+                ];
             } else {
                 $totalRisk                = (int) round($numerator / $availableWeight);
                 $iv['score']              = max(0, min(100, 100 - $totalRisk));
@@ -799,6 +845,24 @@ class FieldQualityController extends Controller
                     'level'      => $level,
                     'label'      => $label,
                 ];
+
+                $loiAbsMin = !empty($iv['quality_criteria']['loi']['available'])
+                    && !empty($iv['quality_criteria']['loi']['absolute_minimum_triggered']);
+
+                if ($loiAbsMin) {
+                    $iv['quality_score_cap'] = [
+                        'applied'       => true,
+                        'maximum_score' => self::LOI_CRITICAL_SCORE_CAP,
+                        'reason'        => 'loi_below_absolute_minimum',
+                    ];
+                    $iv['score'] = min($iv['score'], self::LOI_CRITICAL_SCORE_CAP);
+                } else {
+                    $iv['quality_score_cap'] = [
+                        'applied'       => false,
+                        'maximum_score' => null,
+                        'reason'        => null,
+                    ];
+                }
             }
         }
         unset($iv);
@@ -1147,7 +1211,7 @@ class FieldQualityController extends Controller
         $filteredAnswers = array_values(array_filter($allAnswers, fn($v) => $v !== -1));
         $countValid      = count($filteredAnswers);
 
-        if ($countValid <= 7) {
+        if ($countValid < 10) {
             return null;
         }
 

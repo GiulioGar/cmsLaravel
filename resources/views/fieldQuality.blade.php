@@ -488,15 +488,15 @@
                             <tbody>
                                 @foreach($scaleData as $scale)
                                     @php
-                                        $sqLabel  = ($scale['code'] !== 'unknown')
+                                        $sqLabel   = ($scale['code'] !== 'unknown')
                                             ? 'Domanda ' . $scale['code']
                                             : 'Domanda ' . $scale['questionId'];
-                                        $sqDetail = $scaleQsByIidQid[$scale['iid']][$scale['questionId']] ?? null;
-                                        $sqScore  = $sqDetail['quality_score'] ?? null;
-                                        $sqReasons= $sqDetail['reasons'] ?? [];
-                                        $sqCls    = $sqScore === null ? 'text-muted'
-                                            : ($sqScore >= 80 ? 'text-success'
-                                            : ($sqScore >= 40 ? 'text-warning' : 'text-danger'));
+                                        $sqDetail  = $scaleQsByIidQid[$scale['iid']][$scale['questionId']] ?? null;
+                                        $sqLevel   = $sqDetail['level'] ?? null;
+                                        $sqReasons = $sqDetail['reasons'] ?? [];
+                                        $sqBadge = $sqLevel === 'Normale' ? 'success'
+                                            : ($sqLevel === 'Sospetta' ? 'warning'
+                                            : ($sqLevel === 'Da Verificare' ? 'danger' : 'secondary'));
                                     @endphp
                                     <tr>
                                         <td class="small">{{ $scale['iid'] }}</td>
@@ -506,12 +506,17 @@
                                             <span class="fq-codice-pop"
                                                   data-codice="{{ $sqLabel }}"
                                                   data-qtext="{{ $scale['tooltip'] }}"
+                                                  data-qid="{{ $scale['questionId'] }}"
                                                   style="cursor:pointer;text-decoration:underline dotted #aaa;text-underline-offset:3px">
                                                 {{ $sqLabel }}
                                             </span>
                                         </td>
-                                        <td class="small {{ $sqCls }} fw-semibold">
-                                            {{ $sqScore !== null ? $sqScore . '/100' : 'N/D' }}
+                                        <td class="small">
+                                            @if($sqLevel !== null)
+                                                <span class="badge bg-{{ $sqBadge }}">{{ $sqLevel }}</span>
+                                            @else
+                                                <span class="text-muted">N/D</span>
+                                            @endif
                                         </td>
                                         <td class="small text-muted">
                                             {{ implode(' · ', $sqReasons) }}
@@ -561,7 +566,8 @@
                 trigger: 'hover focus',
                 placement: 'auto',
                 sanitize: false,
-                title: '<span style="font-size:.8rem;font-weight:600">' + el.dataset.codice + '</span>',
+                title: '<span style="font-size:.8rem;font-weight:600">' + el.dataset.codice + '</span>'
+                     + (el.dataset.qid ? '<span style="font-size:.75rem;color:#888;font-weight:400;margin-left:6px">#' + el.dataset.qid + '</span>' : ''),
                 content: '<span style="font-size:.78rem;color:#555">' + el.dataset.qtext + '</span>',
             });
         });
