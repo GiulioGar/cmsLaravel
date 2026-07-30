@@ -818,14 +818,21 @@ class FieldQualityController extends Controller
                     'level'      => 'none',
                     'label'      => 'Non valutabile',
                 ];
-                $iv['quality_score_cap']  = [
+                $iv['quality_score_caps'] = [
+                    'applied'                 => false,
+                    'base_score'              => null,
+                    'final_score'             => null,
+                    'effective_maximum_score' => null,
+                    'rules'                   => [],
+                ];
+                $iv['quality_score_cap'] = [
                     'applied'       => false,
                     'maximum_score' => null,
                     'reason'        => null,
                 ];
             } else {
                 $totalRisk                = (int) round($numerator / $availableWeight);
-                $iv['score']              = max(0, min(100, 100 - $totalRisk));
+                $baseScore                = max(0, min(100, 100 - $totalRisk));
                 $iv['quality_risk_total'] = $totalRisk;
 
                 $pct = $availableWeight;
@@ -846,26 +853,168 @@ class FieldQualityController extends Controller
                     'label'      => $label,
                 ];
 
-                $loiAbsMin = !empty($iv['quality_criteria']['loi']['available'])
-                    && !empty($iv['quality_criteria']['loi']['absolute_minimum_triggered']);
+                $caps                     = $this->calculateQualityScoreCaps($iv, $baseScore);
+                $iv['score']              = $caps['final_score'];
+                $iv['quality_score_caps'] = $caps;
 
-                if ($loiAbsMin) {
-                    $iv['quality_score_cap'] = [
-                        'applied'       => true,
-                        'maximum_score' => self::LOI_CRITICAL_SCORE_CAP,
-                        'reason'        => 'loi_below_absolute_minimum',
-                    ];
-                    $iv['score'] = min($iv['score'], self::LOI_CRITICAL_SCORE_CAP);
-                } else {
-                    $iv['quality_score_cap'] = [
-                        'applied'       => false,
-                        'maximum_score' => null,
-                        'reason'        => null,
-                    ];
+                // Alias backward-compatible — punta al cap più restrittivo
+                $effectiveRule = null;
+                foreach ($caps['rules'] as $r) {
+                    if ($effectiveRule === null || $r['maximum_score'] < $effectiveRule['maximum_score']) {
+                        $effectiveRule = $r;
+                    }
                 }
+                $iv['quality_score_cap'] = [
+                    'applied'       => $caps['applied'],
+                    'maximum_score' => $caps['effective_maximum_score'],
+                    'reason'        => $effectiveRule !== null ? $effectiveRule['reason'] : null,
+                ];
             }
         }
         unset($iv);
+    }
+
+    private function calculateQualityScoreCaps(array $interview, int $baseScore): array
+    {
+        $open  = $interview['quality_criteria']['open']  ?? null;
+        $scale = $interview['quality_criteria']['scale'] ?? null;
+        $loi   = $interview['quality_criteria']['loi']   ?? null;
+
+        $openAvail  = !empty($open['available']);
+        $scaleAvail = !empty($scale['available']);
+        $loiAvail   = !empty($loi['available']);
+
+        $rules = [];
+
+        // 1. Cap Open per percentuale di fake estrema
+        if ($openAvail) {
+            $analyzedAnswers = (int) ($open['analyzed_answers'] ?? 0);
+            $fakeAnswers     = (int) ($open['fake_answers']     ?? 0);
+            $fakePct         = (float) ($open['fake_percentage'] ?? 0.0);
+
+            if ($analyzedAnswers >= 5) {
+                if ($fakeAnswers >= $analyzedAnswers) {
+                    $rules[] = ['reason' => 'open_all_fake', 'maximum_score' => 0];
+                } elseif ($fakePct >= 80.0) {
+                    $rules[] = ['reason' => 'open_fake_percentage_80', 'maximum_score' => 15];
+                } elseif ($fakePct >= 60.0) {
+                    $rules[] = ['reason' => 'open_fake_percentage_60', 'maximum_score' => 30];
+                } elseif ($fakePct >= 40.0) {
+                    $rules[] = ['reason' => 'open_fake_percentage_40', 'maximum_score' => 45];
+                }
+            }
+        }
+
+        // 2. Cap Scale per griglie con quality_score = 0
+        if ($scaleAvail) {
+            $details       = $scale['details'] ?? [];
+            $zeroQualCount = 0;
+            foreach ($details as $d) {
+                $qs = isset($d['quality_score']) ? (int) $d['quality_score'] : -1;
+                if ($qs === 0) {
+                    $zeroQualCount++;
+                }
+            }
+
+            if ($zeroQualCount >= 3) {
+                $rules[] = ['reason' => 'three_or_more_zero_quality_scales', 'maximum_score' => 40];
+            } elseif ($zeroQualCount >= 2) {
+                $rules[] = ['reason' => 'multiple_zero_quality_scales', 'maximum_score' => 55];
+            }
+        }
+
+        // 3. Cap progressivo LOI ratio + LOI assoluto
+        if ($loiAvail) {
+            $ratio  = isset($loi['ratio']) ? (float) $loi['ratio'] : null;
+            $absMin = !empty($loi['absolute_minimum_triggered']);
+
+            if ($ratio !== null) {
+                if ($ratio <= 0.40) {
+                    $rules[] = ['reason' => 'loi_ratio_below_040', 'maximum_score' => 45];
+                } elseif ($ratio <= 0.50) {
+                    $rules[] = ['reason' => 'loi_ratio_below_050', 'maximum_score' => 60];
+                } elseif ($ratio <= 0.60) {
+                    $rules[] = ['reason' => 'loi_ratio_below_060', 'maximum_score' => 75];
+                }
+            }
+
+            if ($absMin) {
+                $rules[] = ['reason' => 'loi_below_absolute_minimum', 'maximum_score' => self::LOI_CRITICAL_SCORE_CAP];
+            }
+        }
+
+        // 4. Attivazione multi-criterio
+        $openActive  = false;
+        $loiActive   = false;
+        $scaleActive = false;
+
+        if ($openAvail) {
+            $analyzedAnswers = (int) ($open['analyzed_answers'] ?? 0);
+            $fakeAnswers     = (int) ($open['fake_answers']     ?? 0);
+            $openRisk        = (int) ($open['risk']             ?? 0);
+
+            $openActive = ($analyzedAnswers >= 5)
+                ? $fakeAnswers >= 1
+                : $openRisk >= 70;
+        }
+
+        if ($loiAvail) {
+            $loiActive = (int) ($loi['risk'] ?? 0) >= 20;
+        }
+
+        if ($scaleAvail) {
+            $details = $scale['details'] ?? [];
+            foreach ($details as $d) {
+                $level = $d['level'] ?? '';
+                if ($level === 'Sospetta' || $level === 'Da Verificare') {
+                    $scaleActive = true;
+                    break;
+                }
+            }
+        }
+
+        $activeCriteria = ($openActive ? 1 : 0) + ($loiActive ? 1 : 0) + ($scaleActive ? 1 : 0);
+
+        if ($activeCriteria >= 3) {
+            $rules[] = ['reason' => 'all_anomalous_criteria', 'maximum_score' => 39];
+        } elseif ($activeCriteria >= 2) {
+            $rules[] = ['reason' => 'multiple_anomalous_criteria', 'maximum_score' => 59];
+        }
+
+        // 5. Combinazione grave Open + LOI
+        if ($openAvail && $loiAvail) {
+            $openRisk = (int) ($open['risk'] ?? 0);
+            $loiRisk  = (int) ($loi['risk']  ?? 0);
+            if ($openRisk >= 70 && $loiRisk >= 65) {
+                $rules[] = ['reason' => 'severe_open_and_loi', 'maximum_score' => 25];
+            }
+        }
+
+        // Calcola cap effettivo (il più restrittivo)
+        if (empty($rules)) {
+            return [
+                'applied'                 => false,
+                'base_score'              => $baseScore,
+                'final_score'             => $baseScore,
+                'effective_maximum_score' => null,
+                'rules'                   => [],
+            ];
+        }
+
+        $effectiveMax = PHP_INT_MAX;
+        foreach ($rules as $r) {
+            if ($r['maximum_score'] < $effectiveMax) {
+                $effectiveMax = $r['maximum_score'];
+            }
+        }
+
+        return [
+            'applied'                 => true,
+            'base_score'              => $baseScore,
+            'final_score'             => min($baseScore, $effectiveMax),
+            'effective_maximum_score' => $effectiveMax,
+            'rules'                   => $rules,
+        ];
     }
 
     private function applyQualityPresentationData(array &$completeInterviews): void
@@ -890,9 +1039,111 @@ class FieldQualityController extends Controller
                 }
             }
 
-            $iv['quality_reasons'] = $this->buildQualityReasons($iv);
+            $iv['quality_reasons']    = $this->buildQualityReasons($iv);
+            $iv['quality_motivation'] = $this->buildMotivationLines($iv);
         }
         unset($iv);
+    }
+
+    private function buildMotivationLines(array $interview): array
+    {
+        $open  = $interview['quality_criteria']['open']  ?? null;
+        $scale = $interview['quality_criteria']['scale'] ?? null;
+        $loi   = $interview['quality_criteria']['loi']   ?? null;
+
+        $lines = ['open' => null, 'scale' => null, 'loi' => null];
+
+        // ---- Domande aperte ----
+        if (!empty($open['available'])) {
+            $fakeCount  = (int)   ($open['fake_answers']      ?? 0);
+            $total      = (int)   ($open['analyzed_answers']  ?? 0);
+            $risk       = (int)   ($open['risk']              ?? 0);
+            $confFactor = (float) ($open['confidence_factor'] ?? 1.0);
+            $lowConf    = $confFactor < 0.55;
+            $rFake      = "{$fakeCount}/{$total}";
+
+            if ($risk === 0) {
+                $lines['open'] = $lowConf
+                    ? 'Nessuna anomalia nelle aperte (campione ridotto)'
+                    : 'Risposte aperte nella norma';
+            } elseif ($risk <= 20) {
+                $parola = $fakeCount === 1 ? 'risposta aperta sospetta' : 'risposte aperte sospette';
+                $lines['open'] = $lowConf
+                    ? 'Un lieve segnale nelle risposte aperte (pochi dati disponibili)'
+                    : "{$fakeCount} {$parola} su {$total} — segnale lieve";
+            } elseif ($risk <= 45) {
+                $parola = $fakeCount === 1 ? 'risposta aperta poco attendibile' : 'risposte aperte poco attendibili';
+                $lines['open'] = $lowConf
+                    ? 'Alcune risposte aperte sospette, ma dati limitati'
+                    : "{$fakeCount} {$parola} su {$total}";
+            } elseif ($risk <= 70) {
+                $lines['open'] = "Le risposte aperte risultano spesso inattendibili ({$rFake} sospette)";
+            } elseif ($risk <= 90) {
+                $lines['open'] = "La maggior parte delle risposte aperte è inattendibile ({$rFake})";
+            } else {
+                $lines['open'] = $fakeCount >= $total
+                    ? "Tutte le {$total} risposte aperte risultano false"
+                    : "Quasi tutte le risposte aperte sono inattendibili ({$rFake})";
+            }
+        }
+
+        // ---- Griglie ----
+        if (!empty($scale['available'])) {
+            $details  = $scale['details'] ?? [];
+            $analyzed = (int) ($scale['analyzed_scales'] ?? count($details));
+            $countDv  = 0;
+            $countSo  = 0;
+            foreach ($details as $d) {
+                $level = $d['level'] ?? '';
+                if ($level === 'Da Verificare') {
+                    $countDv++;
+                } elseif ($level === 'Sospetta') {
+                    $countSo++;
+                }
+            }
+
+            if ($countDv === 0 && $countSo === 0) {
+                $lines['scale'] = 'Le griglie non presentano anomalie';
+            } elseif ($countDv > 0 && $countSo === 0) {
+                $parola = $countDv === 1 ? 'griglia con risposte tutte uguali' : 'griglie con risposte tutte uguali';
+                $nota   = $countDv >= 3 ? ' — comportamento meccanico' : ' — sospetto';
+                $lines['scale'] = "{$countDv} {$parola} su {$analyzed}{$nota}";
+            } elseif ($countSo > 0 && $countDv === 0) {
+                $parola = $countSo === 1 ? 'griglia con pattern ciclico' : 'griglie con pattern ciclico ripetuto';
+                $lines['scale'] = "{$countSo} {$parola} su {$analyzed}";
+            } else {
+                $totAnom = $countDv + $countSo;
+                $lines['scale'] = "{$totAnom} griglie anomale su {$analyzed}: {$countDv} uniformi, {$countSo} con pattern ciclico";
+            }
+        }
+
+        // ---- LOI ----
+        if (!empty($loi['available'])) {
+            $risk   = (int)   ($loi['risk']  ?? 0);
+            $ratio  = (float) ($loi['ratio'] ?? 1.0);
+            $absMin = !empty($loi['absolute_minimum_triggered']);
+            $pct    = (int) round($ratio * 100);
+
+            if ($absMin) {
+                $lines['loi'] = "Intervista completata in meno di 60 secondi — altamente sospetto";
+            } elseif ($risk === 0) {
+                $lines['loi'] = "Durata dell'intervista nella norma";
+            } elseif ($risk <= 10) {
+                $lines['loi'] = "Intervista leggermente rapida ({$pct}% della mediana)";
+            } elseif ($risk <= 20) {
+                $lines['loi'] = "Intervista un po' rapida rispetto alla mediana ({$pct}%)";
+            } elseif ($risk <= 35) {
+                $lines['loi'] = "Durata inferiore alla mediana del progetto ({$pct}%)";
+            } elseif ($risk <= 50) {
+                $lines['loi'] = "LOI piuttosto bassa rispetto alla mediana ({$pct}%)";
+            } elseif ($risk <= 65) {
+                $lines['loi'] = "LOI decisamente bassa — al {$pct}% della mediana";
+            } else {
+                $lines['loi'] = "LOI estremamente bassa — al {$pct}% della mediana";
+            }
+        }
+
+        return $lines;
     }
 
     private function convertScoreToRating(int $score): array
@@ -939,15 +1190,19 @@ class FieldQualityController extends Controller
 
         // Griglie
         if ($scale && !empty($scale['available'])) {
-            $critical = (int) ($scale['critical_scales'] ?? 0);
-            if ($critical > 0) {
-                $analyzed = (int) ($scale['analyzed_scales'] ?? 0);
-                $parola   = $critical === 1 ? 'griglia' : 'griglie';
-                $reason   = "{$critical} {$parola} con risposte quasi tutte identiche su {$analyzed} analizzate";
-                if (!empty($scale['repeat_aggravation'])) {
-                    $reason .= ', comportamento ripetuto su almeno metà delle griglie';
-                }
-                $reasons[] = $reason;
+            $analyzed = (int) ($scale['analyzed_scales'] ?? 0);
+            $details  = $scale['details'] ?? [];
+
+            $countDv = count(array_filter($details, fn($d) => ($d['level'] ?? '') === 'Da Verificare'));
+            $countSo = count(array_filter($details, fn($d) => ($d['level'] ?? '') === 'Sospetta'));
+
+            if ($countDv > 0) {
+                $parola    = $countDv === 1 ? 'griglia' : 'griglie';
+                $reasons[] = "{$countDv} {$parola} da verificare su {$analyzed} (risposte tutte uguali)";
+            }
+            if ($countSo > 0) {
+                $parola    = $countSo === 1 ? 'griglia sospetta' : 'griglie sospette';
+                $reasons[] = "{$countSo} {$parola} su {$analyzed} (pattern ciclico)";
             }
         }
 
@@ -959,6 +1214,11 @@ class FieldQualityController extends Controller
                 $pct       = (int) round(($loi['ratio'] ?? 0) * 100);
                 $reasons[] = "LOI pari al {$pct}% della mediana del progetto";
             }
+        }
+
+        if (!empty($interview['quality_score_cap']['applied'])) {
+            $cap       = $interview['quality_score_cap']['maximum_score'];
+            $reasons[] = "Score limitato a {$cap}/100 (LOI inferiore al minuto)";
         }
 
         return empty($reasons) ? ['Nessuna anomalia rilevata'] : $reasons;

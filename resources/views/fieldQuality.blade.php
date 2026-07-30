@@ -173,15 +173,33 @@
                     </div>
                     <div class="quality-card-body p-0">
                         @if(count($completeInterviews) > 0)
+                            <!-- Filtri lista interviste -->
+                            <div class="fq-filter-bar">
+                                <input type="text" id="flt-iv-search" class="form-control form-control-sm" placeholder="Cerca IID / UID…">
+                                <select id="flt-iv-rating" class="form-select form-select-sm">
+                                    <option value="">Tutte le qualità</option>
+                                    <option>Ottima</option>
+                                    <option>Molto buona</option>
+                                    <option>Buona</option>
+                                    <option>Accettabile</option>
+                                    <option>Da verificare</option>
+                                    <option>Sospetta</option>
+                                    <option>Scarsa</option>
+                                    <option>Molto scarsa</option>
+                                    <option>Probabile fake</option>
+                                    <option>Fortemente inattendibile</option>
+                                    <option>Non valutabile</option>
+                                </select>
+                            </div>
                             <!-- Contenitore per scroll e header fisso -->
                             <div class="quality-table-container">
-                                <table class="table table-hover quality-table-interviews">
+                                <table id="tbl-interviews" class="table table-hover quality-table-interviews">
                                     <thead>
                                         <tr>
                                             <th class="small">IID</th>
                                             <th class="small">UID</th>
                                             <th class="small" style="min-width:120px">Score</th>
-                                            <th class="small" style="min-width:80px">Rischio</th>
+                                            <th class="small" style="min-width:200px">Motivazioni</th>
                                             <th class="small" style="width:32px"></th>
                                         </tr>
                                     </thead>
@@ -218,8 +236,11 @@
                                             $ivOpenFakePct  = $ivOpenAvail ? ($interview['quality_criteria']['open']['fake_percentage']   ?? null) : null;
                                             $ivOpenConf     = $ivOpenAvail ? ($interview['quality_criteria']['open']['confidence_level']   ?? null) : null;
                                             $ivOpenEw       = $ivOpenAvail ? ($interview['quality_criteria']['open']['effective_weight']   ?? null) : null;
+
+                                            $ivCapApplied   = !empty($interview['quality_score_cap']['applied']);
+                                            $ivCapMax       = $interview['quality_score_cap']['maximum_score'] ?? null;
                                         @endphp
-                                            <tr>
+                                            <tr data-iid="{{ $interview['iid'] }}" data-uid="{{ $interview['uid'] }}" data-rating="{{ $interview['rating_label'] ?? 'Non valutabile' }}">
                                                 <td class="small">{{ $interview['iid'] }}</td>
                                                 <td class="small">{{ $interview['uid'] }}</td>
 
@@ -236,6 +257,11 @@
                                                                 @for($si = 0; $si < $ivEmptyS; $si++)<i class="far fa-star"></i>@endfor
                                                             </div>
                                                             <div class="fq-score-label">{{ $interview['rating_context_label'] ?? $interview['rating_label'] }}</div>
+                                                            @if($ivCapApplied)
+                                                                <div class="fq-cap-badge">
+                                                                    <i class="fas fa-exclamation-triangle"></i> cap {{ $ivCapMax }}
+                                                                </div>
+                                                            @endif
                                                         @else
                                                             <div class="fq-score-num">—</div>
                                                             <div class="fq-score-label">Non valutabile</div>
@@ -244,17 +270,25 @@
                                                     </div>
                                                 </td>
 
-                                                <!-- Rischio: aperte / griglie / LOI (0-100, senza segno meno) -->
-                                                <td class="fq-risks">
-                                                    Aperte: {{ $ivOpenAvail ? $ivOpenRisk : 'N/D' }}
-                                                    @if($ivOpenAvail && $ivOpenConf !== null)
-                                                        <small class="text-muted d-block" style="font-size:0.7em">
-                                                            fake:{{ $ivOpenFakePct }}% &middot; conf:{{ ucfirst($ivOpenConf) }} &middot; w:{{ $ivOpenEw }}
-                                                        </small>
+                                                <!-- Motivazioni -->
+                                                <td class="fq-motivations">
+                                                    @php
+                                                        $mot      = $interview['quality_motivation'] ?? [];
+                                                        $motLines = array_values(array_filter([
+                                                            $mot['open']  ?? null,
+                                                            $mot['scale'] ?? null,
+                                                            $mot['loi']   ?? null,
+                                                        ]));
+                                                    @endphp
+                                                    @if(!empty($motLines))
+                                                        <ul class="fq-mot-list mb-0">
+                                                            @foreach($motLines as $line)
+                                                                <li>{{ $line }}</li>
+                                                            @endforeach
+                                                        </ul>
+                                                    @else
+                                                        <span class="text-muted fst-italic small">Nessun criterio disponibile</span>
                                                     @endif
-                                                    <br>
-                                                    Griglie: {{ $ivScaleAvail ? $ivScaleRisk : 'N/D' }}<br>
-                                                    LOI: {{ $ivLoiAvail ? $ivLoiRisk : 'N/D' }}
                                                 </td>
 
                                                 <!-- Note: popover motivazioni -->
@@ -283,6 +317,12 @@
         </div><!-- row -->
 
 
+@php
+    $loiRatioByIid = [];
+    foreach ($completeInterviews as $_iv) {
+        $loiRatioByIid[$_iv['iid']] = $_iv['quality_criteria']['loi']['ratio'] ?? null;
+    }
+@endphp
         <!-- SECONDA RIGA -->
 <div class="row">
     <!-- COLONNA SINISTRA (30%) -->
@@ -292,8 +332,13 @@
                 <h5 class="mb-0">Controllo LOI</h5>
             </div>
             <div class="quality-card-body">
+                <div class="fq-filter-bar">
+                    <button id="flt-loi-btn" class="btn btn-sm btn-outline-warning" type="button">
+                        <i class="fas fa-filter"></i> &lt; 50% mediana
+                    </button>
+                </div>
                 <div class="quality-table-container">
-                    <table class="table table-hover quality-table-lower">
+                    <table id="tbl-loi" class="table table-hover quality-table-lower">
                         <thead>
                             <tr>
                                 <th class="small">IID</th>
@@ -303,7 +348,7 @@
                         </thead>
                         <tbody>
                             @foreach($loiData as $item)
-                                <tr>
+                                <tr data-iid="{{ $item['iid'] }}" data-ratio="{{ $loiRatioByIid[$item['iid']] ?? '' }}">
                                     <td class="small">{{ $item['iid'] }}</td>
                                     <td class="small">{{ $item['uid'] }}</td>
                                     <td class="small">{{ $item['loi'] }} min.</td>
@@ -323,8 +368,11 @@
                 <h5 class="mb-0">Controllo Domande Aperte</h5>
             </div>
             <div class="quality-card-body">
+                <div class="fq-filter-bar">
+                    <input type="text" id="flt-open-search" class="form-control form-control-sm" placeholder="Cerca IID / UID…">
+                </div>
                 <div class="quality-table-container">
-                    <table class="table table-hover quality-table-lower">
+                    <table id="tbl-open" class="table table-hover quality-table-lower">
                         <thead>
                             <tr>
                                 <th class="small">+</th>
@@ -356,7 +404,7 @@
                                     $modalId = "modalOpen_{$open['iid']}_{$index}";
                                 @endphp
 
-                                <tr>
+                                <tr data-iid="{{ $open['iid'] }}" data-uid="{{ $open['uid'] }}">
                                     <td class="small">
                                         <a href="#" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">
                                             <i class="fas fa-ellipsis-v"></i>
@@ -473,8 +521,11 @@
                             }
                         }
                     @endphp
+                    <div class="fq-filter-bar">
+                        <input type="text" id="flt-scale-search" class="form-control form-control-sm" placeholder="Cerca IID / UID…">
+                    </div>
                     <div class="quality-table-container" style="max-height: 350px; overflow-y: auto;">
-                        <table class="table table-hover quality-table-lower">
+                        <table id="tbl-scale" class="table table-hover quality-table-lower">
                             <thead>
                                 <tr>
                                     <th class="small">IID</th>
@@ -498,7 +549,7 @@
                                             : ($sqLevel === 'Sospetta' ? 'warning'
                                             : ($sqLevel === 'Da Verificare' ? 'danger' : 'secondary'));
                                     @endphp
-                                    <tr>
+                                    <tr data-iid="{{ $scale['iid'] }}" data-uid="{{ $scale['uid'] }}">
                                         <td class="small">{{ $scale['iid'] }}</td>
                                         <td class="small">{{ $scale['uid'] }}</td>
                                         <td class="small">{{ $scale['panel'] }}</td>
@@ -620,6 +671,69 @@
         });
     }
 
+    // ---- Filtri tabelle ----
+
+    function filterRows(tableId, testFn) {
+        document.querySelectorAll('#' + tableId + ' tbody tr').forEach(function (row) {
+            row.style.display = testFn(row) ? '' : 'none';
+        });
+    }
+
+    function iidUidMatch(row, q) {
+        if (!q) return true;
+        return (row.dataset.iid || '').toLowerCase().includes(q)
+            || (row.dataset.uid || '').toLowerCase().includes(q);
+    }
+
+    // Lista interviste
+    var fltIvSearch = document.getElementById('flt-iv-search');
+    var fltIvRating = document.getElementById('flt-iv-rating');
+    function applyIvFilter() {
+        var q = fltIvSearch.value.trim().toLowerCase();
+        var r = fltIvRating.value.toLowerCase();
+        filterRows('tbl-interviews', function (row) {
+            return iidUidMatch(row, q)
+                && (!r || (row.dataset.rating || '').toLowerCase() === r);
+        });
+    }
+    if (fltIvSearch) fltIvSearch.addEventListener('input', applyIvFilter);
+    if (fltIvRating) fltIvRating.addEventListener('change', applyIvFilter);
+
+    // LOI < 50% mediana
+    var loiActive = false;
+    var loiBtn = document.getElementById('flt-loi-btn');
+    if (loiBtn) {
+        loiBtn.addEventListener('click', function () {
+            loiActive = !loiActive;
+            loiBtn.classList.toggle('active', loiActive);
+            loiBtn.classList.toggle('btn-warning', loiActive);
+            loiBtn.classList.toggle('btn-outline-warning', !loiActive);
+            filterRows('tbl-loi', function (row) {
+                if (!loiActive) return true;
+                var ratio = parseFloat(row.dataset.ratio);
+                return !isNaN(ratio) && ratio < 0.5;
+            });
+        });
+    }
+
+    // Domande aperte
+    var fltOpenSearch = document.getElementById('flt-open-search');
+    if (fltOpenSearch) {
+        fltOpenSearch.addEventListener('input', function () {
+            var q = fltOpenSearch.value.trim().toLowerCase();
+            filterRows('tbl-open', function (row) { return iidUidMatch(row, q); });
+        });
+    }
+
+    // Qualità griglia
+    var fltScaleSearch = document.getElementById('flt-scale-search');
+    if (fltScaleSearch) {
+        fltScaleSearch.addEventListener('input', function () {
+            var q = fltScaleSearch.value.trim().toLowerCase();
+            filterRows('tbl-scale', function (row) { return iidUidMatch(row, q); });
+        });
+    }
+
     function addToBlackList(responseText) {
         fetch("{{ route('fieldQuality.addToBlackList') }}", {
             method: "POST",
@@ -684,6 +798,47 @@
 .stat-card .badge {
   font-size: 0.85rem;
   padding: 0.4em 0.6em;
+}
+
+.fq-motivations {
+  vertical-align: middle;
+}
+
+.fq-mot-list {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.74rem;
+  color: #333;
+  line-height: 1.5;
+}
+
+.fq-mot-list li {
+  margin-bottom: 1px;
+}
+
+.fq-cap-badge {
+  font-size: 0.68rem;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-top: 3px;
+  display: inline-block;
+}
+
+.fq-filter-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 10px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+.fq-filter-bar .form-control-sm,
+.fq-filter-bar .form-select-sm {
+  font-size: 0.78rem;
+  max-width: 180px;
 }
 
 
