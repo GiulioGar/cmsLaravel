@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\PrimisApiService;
 use Illuminate\Support\Facades\Log;
+use App\Models\UserQuality;
 
 
 class FieldQualityController extends Controller
@@ -92,6 +93,9 @@ class FieldQualityController extends Controller
 
         // 6) Arricchimento presentazione: stelle, etichetta qualitativa, motivazioni
         $this->applyQualityPresentationData($completeInterviews);
+
+        // 7a) Persistenza score in t_user_quality (insert-only, skip se già presente)
+        $this->persistQualityScores($completeInterviews, $prj, $sid);
 
         // 7) Statistiche e classificazione
         $stats          = $this->computeScoreStats($completeInterviews);
@@ -1146,6 +1150,62 @@ class FieldQualityController extends Controller
         }
 
         return $lines;
+    }
+
+    private function persistQualityScores(array $interviews, string $prj, string $sid): void
+    {
+        if (empty($interviews) || empty($prj) || empty($sid)) {
+            return;
+        }
+
+        // Una sola query per recuperare tutti gli iid già salvati per questo prj+sid
+        $existingIids = array_flip(
+            UserQuality::where('prj', $prj)
+                ->where('sid', $sid)
+                ->pluck('iid')
+                ->all()
+        );
+
+        $now      = now()->toDateTimeString();
+        $toInsert = [];
+
+        foreach ($interviews as $iv) {
+            $iid   = (string) ($iv['iid'] ?? '');
+            $score = $iv['score'] ?? null;
+
+            if ($iid === '' || $score === null || isset($existingIids[$iid])) {
+                continue;
+            }
+
+            // Solo panel Interactive
+            if (($iv['panel'] ?? '') !== 'Interactive') {
+                continue;
+            }
+
+            $tier = null;
+            if ($score >= 70)      { $tier = 'alta'; }
+            elseif ($score >= 50)  { $tier = 'accettabile'; }
+            else                   { $tier = 'bassa'; }
+
+            $toInsert[] = [
+                'prj'                => $prj,
+                'sid'                => $sid,
+                'iid'                => $iid,
+                'uid'                => (string) ($iv['uid'] ?? ''),
+                'panel'              => $iv['panel'] ?? null,
+                'quality_score'      => (int) $score,
+                'quality_tier'       => $tier,
+                'quality_risk_total' => $iv['quality_risk_total'] ?? null,
+                'cap_applied'        => !empty($iv['quality_score_caps']['applied']) ? 1 : 0,
+                'computed_at'        => $now,
+                'created_at'         => $now,
+                'updated_at'         => $now,
+            ];
+        }
+
+        foreach (array_chunk($toInsert, 200) as $chunk) {
+            UserQuality::insert($chunk);
+        }
     }
 
     private function convertScoreToRating(int $score): array
