@@ -1008,10 +1008,12 @@ class FieldQualityController extends Controller
             }
         }
 
+        $finalScore = min($baseScore, $effectiveMax);
+
         return [
-            'applied'                 => true,
+            'applied'                 => $finalScore < $baseScore,  // true solo se il cap ha davvero ridotto lo score
             'base_score'              => $baseScore,
-            'final_score'             => min($baseScore, $effectiveMax),
+            'final_score'             => $finalScore,
             'effective_maximum_score' => $effectiveMax,
             'rules'                   => $rules,
         ];

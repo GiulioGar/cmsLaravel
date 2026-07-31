@@ -1,8 +1,10 @@
 @extends('layouts.main')
 
 @section('content')
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/fieldControl.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/fieldQuality.css') }}">
+    {{-- fieldQuality.css rimosso: sostituito dal design system dq-* inline --}}
 
     <div class="container field-control-container">
 
@@ -47,7 +49,6 @@
                 </a>
             </li>
 
-
             <!-- Controllo Qualità -->
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('fieldQuality.index', ['prj' => $prj, 'sid' => $sid]) }}">
@@ -57,12 +58,9 @@
 
             <!-- Download -->
             <li class="nav-item">
-<!-- Bottone Download -->
 <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#downloadModal">
     <i class="fas fa-download me-1"></i> Download
 </a>
-
-
             </li>
 
             <!-- Impostazioni con dropdown -->
@@ -98,585 +96,698 @@
 </nav>
 <!-- FINE NAVBAR -->
 
-
-        <!-- Contenuto principale della pagina -->
-        <div class="row">
-            <!-- COLONNA SINISTRA -->
-            <div class="col-md-5">
-<div class="card quality-card mb-4">
-  <div class="quality-card-header quality-header-left">
-    <h5 class="mb-0">Statistiche Generali</h5>
-  </div>
-  <div class="quality-card-body">
-    <div class="row text-center g-3">
-      <!-- Totale Interviste -->
-<div class="col-12 col-sm-6">
-  <div class="stat-card p-3 text-center">
-    <div class="stat-icon mb-2">
-      <i class="fas fa-users"></i>
-    </div>
-    <div class="stat-value">{{ $totalInterviews }}</div>
-    <div class="stat-label">Interviste</div>
-  </div>
-</div>
-      <!-- Punteggio Medio -->
-      <div class="col-12 col-sm-6">
-        <div class="stat-card p-3">
-          <div class="stat-icon mb-2">
-            <i class="fas fa-star"></i>
-          </div>
-          <div class="stat-value">{{ $averageScore ?? '—' }}</div>
-          <div class="stat-label">Score Medio (0–100)</div>
-          @if($maxScore !== null && $minScore !== null)
-          <div class="fq-stat-minmax text-center">
-            <small class="text-success">▲ {{ $maxScore }}</small>
-            <small class="text-muted"> · </small>
-            <small class="text-danger">▼ {{ $minScore }}</small>
-          </div>
-          @endif
-        </div>
-      </div>
-      <!-- LOI Mediana -->
-      <div class="col-12 col-sm-6">
-        <div class="stat-card p-3">
-<div class="stat-icon mb-2">
-  <i class="fas fa-clock"></i>
-</div>
-<div class="stat-value">{{ $loiMediaFormatted }}</div>
-<div class="stat-label">LOI Mediana (min)</div>
-        </div>
-      </div>
-      <!-- Interviste di qualità -->
-      <div class="col-12 col-sm-6">
-        <div class="stat-card p-3">
-            <div class="stat-icon mb-2">
-            <i class="fas fa-chart-pie"></i>
-            </div>
-          <span class="badge bg-success">Alta qualità: {{ $pctHigh }}%</span><br/>
-          <span class="badge bg-warning text-dark mt-1">Accettabile: {{ $pctAccept }}%</span><br/>
-          <span class="badge bg-danger mt-1">Bassa qualità: {{ $pctLow }}%</span>
-          @if($notEvaluableInterviews > 0)
-          <br/><span class="badge bg-secondary mt-1">Non valutabili: {{ $pctNotEvaluable }}%</span>
-          @endif
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-            </div>
-
-            <!-- COLONNA DESTRA -->
-            <div class="col-md-7">
-                <div class="card quality-card mb-4">
-                    <div class="quality-card-header quality-header-right">
-                        <h5 class="mb-0">Lista interviste (complete)</h5>
-                    </div>
-                    <div class="quality-card-body p-0">
-                        @if(count($completeInterviews) > 0)
-                            <!-- Filtri lista interviste -->
-                            <div class="fq-filter-bar">
-                                <input type="text" id="flt-iv-search" class="form-control form-control-sm" placeholder="Cerca IID / UID…">
-                                <select id="flt-iv-rating" class="form-select form-select-sm">
-                                    <option value="">Tutte le qualità</option>
-                                    <option>Ottima</option>
-                                    <option>Molto buona</option>
-                                    <option>Buona</option>
-                                    <option>Accettabile</option>
-                                    <option>Da verificare</option>
-                                    <option>Sospetta</option>
-                                    <option>Scarsa</option>
-                                    <option>Molto scarsa</option>
-                                    <option>Probabile fake</option>
-                                    <option>Fortemente inattendibile</option>
-                                    <option>Non valutabile</option>
-                                </select>
-                            </div>
-                            <!-- Contenitore per scroll e header fisso -->
-                            <div class="quality-table-container">
-                                <table id="tbl-interviews" class="table table-hover quality-table-interviews">
-                                    <thead>
-                                        <tr>
-                                            <th class="small">IID</th>
-                                            <th class="small">UID</th>
-                                            <th class="small" style="min-width:120px">Score</th>
-                                            <th class="small" style="min-width:200px">Motivazioni</th>
-                                            <th class="small" style="width:32px"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($completeInterviews as $interview)
-                                        @php
-                                            $ivScore    = $interview['score'];
-                                            $ivHasScore = $ivScore !== null;
-                                            $ivSc       = $ivHasScore ? (int) $ivScore : null;
-
-                                            if      (!$ivHasScore) $ivCls = 'fq-q-unknown';
-                                            elseif  ($ivSc >= 90)  $ivCls = 'fq-q-excellent';
-                                            elseif  ($ivSc >= 70)  $ivCls = 'fq-q-good';
-                                            elseif  ($ivSc >= 50)  $ivCls = 'fq-q-warning';
-                                            elseif  ($ivSc >= 30)  $ivCls = 'fq-q-bad';
-                                            else                   $ivCls = 'fq-q-critical';
-
-                                            $ivStars  = $interview['stars'] !== null ? (float) $interview['stars'] : null;
-                                            $ivFullS  = $ivStars !== null ? (int) floor($ivStars) : 0;
-                                            $ivHalfS  = $ivStars !== null && ($ivStars - $ivFullS) >= 0.5;
-                                            $ivEmptyS = $ivStars !== null ? (5 - $ivFullS - ($ivHalfS ? 1 : 0)) : 0;
-
-                                            $ivCovLevel = $interview['quality_coverage']['level'] ?? 'none';
-                                            $ivCovLabel = $interview['quality_coverage']['label'] ?? 'Non valutabile';
-
-                                            $ivOpenAvail  = !empty($interview['quality_criteria']['open']['available']);
-                                            $ivScaleAvail = !empty($interview['quality_criteria']['scale']['available']);
-                                            $ivLoiAvail   = !empty($interview['quality_criteria']['loi']['available']);
-
-                                            $ivOpenRisk  = $ivOpenAvail  ? ($interview['quality_risks']['open']  ?? null) : null;
-                                            $ivScaleRisk = $ivScaleAvail ? ($interview['quality_risks']['scale'] ?? null) : null;
-                                            $ivLoiRisk   = $ivLoiAvail   ? ($interview['quality_risks']['loi']   ?? null) : null;
-
-                                            $ivOpenFakePct  = $ivOpenAvail ? ($interview['quality_criteria']['open']['fake_percentage']   ?? null) : null;
-                                            $ivOpenConf     = $ivOpenAvail ? ($interview['quality_criteria']['open']['confidence_level']   ?? null) : null;
-                                            $ivOpenEw       = $ivOpenAvail ? ($interview['quality_criteria']['open']['effective_weight']   ?? null) : null;
-
-                                            $ivCapApplied   = !empty($interview['quality_score_cap']['applied']);
-                                            $ivCapMax       = $interview['quality_score_cap']['maximum_score'] ?? null;
-                                        @endphp
-                                            <tr data-iid="{{ $interview['iid'] }}" data-uid="{{ $interview['uid'] }}" data-rating="{{ $interview['rating_label'] ?? 'Non valutabile' }}">
-                                                <td class="small">{{ $interview['iid'] }}</td>
-                                                <td class="small">{{ $interview['uid'] }}</td>
-
-                                                <!-- Score: numero / stelle / etichetta / copertura -->
-                                                <td>
-                                                    <div class="fq-score-block {{ $ivCls }}">
-                                                        @if($ivHasScore)
-                                                            <div class="fq-score-num">
-                                                                {{ $ivSc }}<span class="fq-score-denom"> / 100</span>
-                                                            </div>
-                                                            <div class="fq-stars">
-                                                                @for($si = 0; $si < $ivFullS; $si++)<i class="fas fa-star"></i>@endfor
-                                                                @if($ivHalfS)<i class="fas fa-star-half-alt"></i>@endif
-                                                                @for($si = 0; $si < $ivEmptyS; $si++)<i class="far fa-star"></i>@endfor
-                                                            </div>
-                                                            <div class="fq-score-label">{{ $interview['rating_context_label'] ?? $interview['rating_label'] }}</div>
-                                                            @if($ivCapApplied)
-                                                                <div class="fq-cap-badge">
-                                                                    <i class="fas fa-exclamation-triangle"></i> cap {{ $ivCapMax }}
-                                                                </div>
-                                                            @endif
-                                                        @else
-                                                            <div class="fq-score-num">—</div>
-                                                            <div class="fq-score-label">Non valutabile</div>
-                                                        @endif
-                                                        <div class="fq-coverage-badge fq-cov-{{ $ivCovLevel }}">{{ $ivCovLabel }}</div>
-                                                    </div>
-                                                </td>
-
-                                                <!-- Motivazioni -->
-                                                <td class="fq-motivations">
-                                                    @php
-                                                        $mot      = $interview['quality_motivation'] ?? [];
-                                                        $motLines = array_values(array_filter([
-                                                            $mot['open']  ?? null,
-                                                            $mot['scale'] ?? null,
-                                                            $mot['loi']   ?? null,
-                                                        ]));
-                                                    @endphp
-                                                    @if(!empty($motLines))
-                                                        <ul class="fq-mot-list mb-0">
-                                                            @foreach($motLines as $line)
-                                                                <li>{{ $line }}</li>
-                                                            @endforeach
-                                                        </ul>
-                                                    @else
-                                                        <span class="text-muted fst-italic small">Nessun criterio disponibile</span>
-                                                    @endif
-                                                </td>
-
-                                                <!-- Note: popover motivazioni -->
-                                                <td class="text-center align-middle">
-                                                    <button type="button" class="fq-reasons-btn"
-                                                        data-bs-toggle="popover"
-                                                        data-bs-trigger="focus"
-                                                        data-bs-placement="auto"
-                                                        data-fq-reasons="{{ json_encode($interview['quality_reasons'] ?? []) }}">
-                                                        <i class="fas fa-info-circle"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <div class="p-3">
-                                <p class="text-muted">Nessuna intervista completa trovata.</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div><!-- row -->
-
-
 @php
+    /* ---- Panel stats per breakdown table ---- */
+    $panelStats = [];
+    foreach ($completeInterviews as $iv) {
+        $pKey = ($iv['panel'] ?: 'N/D');
+        if (!isset($panelStats[$pKey])) {
+            $panelStats[$pKey] = ['count'=>0,'scores'=>[],'lois'=>[],'high'=>0,'accept'=>0,'low'=>0];
+        }
+        $panelStats[$pKey]['count']++;
+        if (($iv['loiSec'] ?? 0) > 0) {
+            $panelStats[$pKey]['lois'][] = $iv['loiSec'];
+        }
+        if ($iv['score'] !== null) {
+            $panelStats[$pKey]['scores'][] = $iv['score'];
+            $s = (int) $iv['score'];
+            if      ($s >= 70) $panelStats[$pKey]['high']++;
+            elseif  ($s >= 50) $panelStats[$pKey]['accept']++;
+            else               $panelStats[$pKey]['low']++;
+        }
+    }
+    foreach ($panelStats as $pKey => &$ps) {
+        sort($ps['lois']);
+        $n = count($ps['lois']);
+        $ps['loiMedian'] = $n > 0
+            ? ($n % 2 === 0
+                ? ($ps['lois'][$n/2-1] + $ps['lois'][$n/2]) / 2
+                : $ps['lois'][($n-1)/2])
+            : 0;
+        $loiMin = floor($ps['loiMedian'] / 60);
+        $loiSec = (int)$ps['loiMedian'] % 60;
+        $ps['loiMedianFmt'] = $loiMin . '.' . str_pad((string)$loiSec, 2, '0', STR_PAD_LEFT) . ' min';
+        $ps['avgScore'] = count($ps['scores']) > 0
+            ? round(array_sum($ps['scores']) / count($ps['scores']), 1)
+            : null;
+        $ev = count($ps['scores']);
+        $ps['pctHigh']   = $ev > 0 ? round($ps['high']   / $ev * 100) : 0;
+        $ps['pctAccept'] = $ev > 0 ? round($ps['accept'] / $ev * 100) : 0;
+        $ps['pctLow']    = $ev > 0 ? 100 - $ps['pctHigh'] - $ps['pctAccept'] : 0;
+    }
+    unset($ps);
+
+    /* ---- Open: fake per IID + solo righe fake ---- */
+    $openFakeByIid = [];
+    foreach ($openQuestionsData as $row) {
+        $iid = $row['iid'];
+        if (!isset($openFakeByIid[$iid])) {
+            $openFakeByIid[$iid] = ['fake'=>0,'total'=>0];
+        }
+        $openFakeByIid[$iid]['total']++;
+        if (!empty($row['isFake'])) $openFakeByIid[$iid]['fake']++;
+    }
+    $fakeOpenRows = array_values(array_filter($openQuestionsData, fn($r) => !empty($r['isFake'])));
+    $allOpenRows  = array_values($openQuestionsData);
+
+    /* ---- Panel unici per dropdown filtri ---- */
+    $uniquePanels = array_unique(array_column($completeInterviews, 'panel'));
+    sort($uniquePanels);
+
+    /* ---- LOI lookup per IID ---- */
     $loiRatioByIid = [];
+    $loiSecByIid   = [];
     foreach ($completeInterviews as $_iv) {
         $loiRatioByIid[$_iv['iid']] = $_iv['quality_criteria']['loi']['ratio'] ?? null;
+        $loiSecByIid[$_iv['iid']]   = $_iv['loiSec'] ?? 0;
     }
+
+    /* ---- Scale details lookup ---- */
+    $scaleQsByIidQid = [];
+    foreach ($completeInterviews as $iv) {
+        foreach ($iv['quality_criteria']['scale']['details'] ?? [] as $d) {
+            $scaleQsByIidQid[$iv['iid']][$d['question_id']] = $d;
+        }
+    }
+
+    /* ---- Ordina tutte le tabelle per IID numerico ---- */
+    usort($completeInterviews, fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
+    usort($loiData,            fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
+    usort($fakeOpenRows,       fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
+    usort($allOpenRows,        fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
+    usort($scaleData,          fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
 @endphp
-        <!-- SECONDA RIGA -->
-<div class="row">
-    <!-- COLONNA SINISTRA (30%) -->
-    <div class="col-md-4">
-        <div class="quality-card shadow-sm mb-4">
-            <div class="quality-card-header quality-header-left">
-                <h5 class="mb-0">Controllo LOI</h5>
+
+<!-- ================================================================
+     DASHBOARD
+     ================================================================ -->
+<div class="dq-sections">
+
+    <div class="dq-page-header">
+        <div class="dq-page-header-inner">
+            <div>
+                <h1 class="dq-page-title">Dashboard Qualità Interviste</h1>
+                <p class="dq-page-sub">Monitoraggio qualità dati e controlli antifrode &middot; {{ $panelData->description ?? ($prj . '/' . $sid) }}</p>
             </div>
-            <div class="quality-card-body">
-                <div class="fq-filter-bar">
-                    <button id="flt-loi-btn" class="btn btn-sm btn-outline-warning" type="button">
-                        <i class="fas fa-filter"></i> &lt; 50% mediana
-                    </button>
-                </div>
-                <div class="quality-table-container">
-                    <table id="tbl-loi" class="table table-hover quality-table-lower">
-                        <thead>
-                            <tr>
-                                <th class="small">IID</th>
-                                <th class="small">UID</th>
-                                <th class="small">LOI</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($loiData as $item)
-                                <tr data-iid="{{ $item['iid'] }}" data-ratio="{{ $loiRatioByIid[$item['iid']] ?? '' }}">
-                                    <td class="small">{{ $item['iid'] }}</td>
-                                    <td class="small">{{ $item['uid'] }}</td>
-                                    <td class="small">{{ $item['loi'] }} min.</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <span class="dq-page-badge">{{ $totalInterviews }} interviste</span>
         </div>
     </div>
 
-    <!-- COLONNA DESTRA (70%) -->
-    <div class="col-md-8">
-        <div class="quality-card shadow-sm mb-4">
-            <div class="quality-card-header quality-header-right">
-                <h5 class="mb-0">Controllo Domande Aperte</h5>
+    <!-- ============================================================
+         1. VALUTAZIONE GENERALE
+         ============================================================ -->
+    <section id="sez-generale" class="dq-card dq-section" style="animation-delay:.02s;">
+        <div class="dq-card-header dq-border-blue">
+            <div class="dq-header-left">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.12 255)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+                <span class="dq-section-title">Valutazione generale</span>
             </div>
-            <div class="quality-card-body">
-                <div class="fq-filter-bar">
-                    <input type="text" id="flt-open-search" class="form-control form-control-sm" placeholder="Cerca IID / UID…">
-                </div>
-                <div class="quality-table-container">
-                    <table id="tbl-open" class="table table-hover quality-table-lower">
-                        <thead>
-                            <tr>
-                                <th class="small">+</th>
-                                <th class="small">IID</th>
-                                <th class="small">UID</th>
-                                <th class="small">Panel</th>
-                                <th class="small">Tipologia</th>
-                                <th class="small">Codice</th>
-                                <th class="small">Testo</th>
-                                <th class="small">Fake %</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $openFakeByIid = [];
-                                foreach ($openQuestionsData as $row) {
-                                    $iid = $row['iid'];
-                                    if (!isset($openFakeByIid[$iid])) {
-                                        $openFakeByIid[$iid] = ['fake' => 0, 'total' => 0];
-                                    }
-                                    $openFakeByIid[$iid]['total']++;
-                                    if (!empty($row['isFake'])) {
-                                        $openFakeByIid[$iid]['fake']++;
-                                    }
-                                }
-                            @endphp
-                            @foreach($openQuestionsData as $index => $open)
-                                @php
-                                    $modalId = "modalOpen_{$open['iid']}_{$index}";
-                                @endphp
-
-                                <tr data-iid="{{ $open['iid'] }}" data-uid="{{ $open['uid'] }}">
-                                    <td class="small">
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </a>
-                                    </td>
-
-                                    <td class="small">{{ $open['iid'] }}</td>
-                                    <td class="small">{{ $open['uid'] }}</td>
-                                    <td class="small">{{ $open['panel'] }}</td>
-                                    <td class="small text-muted">
-                                        {{ $open['tipologia'] }}
-                                    </td>
-                                    <td class="small">
-                                        <span class="fq-codice-pop"
-                                              data-codice="{{ $open['codice'] }}"
-                                              data-qtext="{{ $open['tooltip'] }}"
-                                              style="cursor:pointer;text-decoration:underline dotted #aaa;text-underline-offset:3px">
-                                            {{ $open['codice'] }}
-                                        </span>
-                                    </td>
-                                    <td class="small">{{ $open['openResponse'] }}</td>
-                                    <td class="small">
-                                        @php
-                                            $iidStats = $openFakeByIid[$open['iid']] ?? null;
-                                            $iFake    = $iidStats['fake']  ?? 0;
-                                            $iTotal   = $iidStats['total'] ?? 0;
-                                            $iPct     = $iTotal > 0 ? round($iFake / $iTotal * 100) : 0;
-                                        @endphp
-                                        @if($iFake > 0)
-                                            <span class="text-danger fw-bold">{{ $iFake }}</span>/{{ $iTotal }} ({{ $iPct }}%)
-                                        @endif
-                                    </td>
-                                </tr>
-
-                                <!-- Modale -->
-                                <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-labelledby="{{ $modalId }}Label" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-scrollable">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="{{ $modalId }}Label">
-                                                    Risposta Aperta (IID: {{ $open['iid'] }})
-                                                </h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-
-                                            <div class="modal-body">
-                                                <p><strong>Testo:</strong></p>
-                                                <p>{{ $open['openResponse'] }}</p>
-
-                                                @if(!empty($open['isFake']) && $open['isFake'] === true)
-                                                <div class="alert alert-light border py-2 px-3 mb-2" style="font-size:0.85em">
-                                                    @php
-                                                        $mCat    = $open['category'] ?? 'weak';
-                                                        $mReason = $open['reason']   ?? '—';
-                                                        $mBadge  = $mCat === 'strong' ? 'danger'
-                                                            : ($mCat === 'medium' ? 'warning text-dark' : 'secondary');
-                                                        $mLabel  = $mCat === 'strong' ? 'Forte'
-                                                            : ($mCat === 'medium' ? 'Medio' : 'Debole');
-                                                    @endphp
-                                                    <strong>Classificazione:</strong>
-                                                    <span class="badge bg-{{ $mBadge }} ms-1">{{ $mLabel }}</span>
-                                                    &nbsp;<span class="text-muted">{{ $mReason }}</span>
-                                                </div>
-                                                @endif
-
-                                                <hr/>
-
-                                                <div class="d-grid gap-2">
-                                                    <button class="btn"
-                                                    style="background-color: white; color: black; border:1px solid #ccc"
-                                                    onclick="addToWhiteList('{{ $open['openResponse'] }}')">
-                                                Aggiungi a Whitelist
-                                            </button>
-                                            <button class="btn"
-                                            style="background-color: black; color: white; border:1px solid #000"
-                                            onclick="addToBlackList('{{ $open['openResponse'] }}')">
-                                        Aggiungi a Blacklist
-                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Fine Modale -->
-
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <span class="dq-header-right">{{ $totalInterviews }} interviste totali</span>
         </div>
-    </div>
-</div>
-<!-- FINE SECONDA RIGA -->
 
-<!-- TERZA RIGA -->
-<div class="row">
-    <div class="col-md-12">
-        <div class="quality-card shadow-sm mb-4">
-            <div class="quality-card-header quality-header-left">
-                <h5 class="mb-0">Qualità domande a griglia singola</h5>
-            </div>
-            <div class="quality-card-body p-0">
-                @if(count($scaleData) > 0)
-                    @php
-                        $scaleQsByIidQid = [];
-                        foreach ($completeInterviews as $iv) {
-                            foreach ($iv['quality_criteria']['scale']['details'] ?? [] as $d) {
-                                $scaleQsByIidQid[$iv['iid']][$d['question_id']] = $d;
-                            }
-                        }
-                    @endphp
-                    <div class="fq-filter-bar">
-                        <input type="text" id="flt-scale-search" class="form-control form-control-sm" placeholder="Cerca IID / UID…">
-                    </div>
-                    <div class="quality-table-container" style="max-height: 350px; overflow-y: auto;">
-                        <table id="tbl-scale" class="table table-hover quality-table-lower">
-                            <thead>
-                                <tr>
-                                    <th class="small">IID</th>
-                                    <th class="small">UID</th>
-                                    <th class="small">Panel</th>
-                                    <th class="small">Domanda</th>
-                                    <th class="small">Qualità</th>
-                                    <th class="small">Motivazione</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($scaleData as $scale)
-                                    @php
-                                        $sqLabel   = ($scale['code'] !== 'unknown')
-                                            ? 'Domanda ' . $scale['code']
-                                            : 'Domanda ' . $scale['questionId'];
-                                        $sqDetail  = $scaleQsByIidQid[$scale['iid']][$scale['questionId']] ?? null;
-                                        $sqLevel   = $sqDetail['level'] ?? null;
-                                        $sqReasons = $sqDetail['reasons'] ?? [];
-                                        $sqBadge = $sqLevel === 'Normale' ? 'success'
-                                            : ($sqLevel === 'Sospetta' ? 'warning'
-                                            : ($sqLevel === 'Da Verificare' ? 'danger' : 'secondary'));
-                                    @endphp
-                                    <tr data-iid="{{ $scale['iid'] }}" data-uid="{{ $scale['uid'] }}">
-                                        <td class="small">{{ $scale['iid'] }}</td>
-                                        <td class="small">{{ $scale['uid'] }}</td>
-                                        <td class="small">{{ $scale['panel'] }}</td>
-                                        <td class="small">
-                                            <span class="fq-codice-pop"
-                                                  data-codice="{{ $sqLabel }}"
-                                                  data-qtext="{{ $scale['tooltip'] }}"
-                                                  data-qid="{{ $scale['questionId'] }}"
-                                                  style="cursor:pointer;text-decoration:underline dotted #aaa;text-underline-offset:3px">
-                                                {{ $sqLabel }}
-                                            </span>
-                                        </td>
-                                        <td class="small">
-                                            @if($sqLevel !== null)
-                                                <span class="badge bg-{{ $sqBadge }}">{{ $sqLevel }}</span>
-                                            @else
-                                                <span class="text-muted">N/D</span>
-                                            @endif
-                                        </td>
-                                        <td class="small text-muted">
-                                            {{ implode(' · ', $sqReasons) }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="p-3">
-                        <p class="text-muted">Nessuna scale da visualizzare.</p>
-                    </div>
+        <!-- 4 stat cards -->
+        <div class="dq-stat-grid">
+            <div class="dq-stat-cell">
+                <div class="dq-stat-label">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+                    Interviste
+                </div>
+                <div class="dq-stat-value">{{ $totalInterviews }}</div>
+                @if($notEvaluableInterviews > 0)
+                <div style="font-size:11px;color:oklch(55% 0.02 250);margin-top:4px;">{{ $notEvaluableInterviews }} non valutabili</div>
                 @endif
             </div>
+            <div class="dq-stat-cell">
+                <div class="dq-stat-label">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                    Score medio
+                </div>
+                <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px;">
+                    <div class="dq-stat-value" style="margin-top:0;">{{ $averageScore ?? '—' }}</div>
+                    @if($averageScore !== null)<div style="font-size:13px;color:oklch(45% 0.02 250);">/100</div>@endif
+                </div>
+                @if($averageScore !== null)
+                <div class="dq-progress-bar">
+                    <div class="dq-progress-fill" style="width:{{ $averageScore }}%;background:oklch(55% 0.13 150);"></div>
+                </div>
+                @endif
+                @if($maxScore !== null && $minScore !== null)
+                <div style="font-size:11px;color:oklch(55% 0.02 250);margin-top:6px;">
+                    <span style="color:oklch(45% 0.13 150);">▲ {{ $maxScore }}</span>
+                    &nbsp;·&nbsp;
+                    <span style="color:oklch(48% 0.16 25);">▼ {{ $minScore }}</span>
+                </div>
+                @endif
+            </div>
+            <div class="dq-stat-cell">
+                <div class="dq-stat-label">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    LOI mediana
+                </div>
+                <div style="display:flex;align-items:baseline;gap:4px;margin-top:8px;">
+                    <div class="dq-stat-value" style="margin-top:0;">{{ $loiMediaFormatted }}</div>
+                    <div style="font-size:14px;font-weight:600;color:oklch(45% 0.02 250);">min</div>
+                </div>
+            </div>
+            <div class="dq-stat-cell">
+                <div class="dq-stat-label">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    Distribuzione qualità
+                </div>
+                <div class="dq-distrib-bar">
+                    <div style="width:{{ $pctHigh }}%;background:oklch(55% 0.13 150);"></div>
+                    <div style="width:{{ $pctAccept }}%;background:oklch(58% 0.14 75);"></div>
+                    <div style="width:{{ $pctLow }}%;background:oklch(55% 0.17 25);"></div>
+                </div>
+                <div class="dq-distrib-legend">
+                    <div style="font-size:11px;color:oklch(45% 0.02 250);"><span class="dq-distrib-dot" style="background:oklch(55% 0.13 150);"></span>Alta {{ $pctHigh }}%</div>
+                    <div style="font-size:11px;color:oklch(45% 0.02 250);"><span class="dq-distrib-dot" style="background:oklch(58% 0.14 75);"></span>Acc. {{ $pctAccept }}%</div>
+                    <div style="font-size:11px;color:oklch(45% 0.02 250);"><span class="dq-distrib-dot" style="background:oklch(55% 0.17 25);"></span>Bassa {{ $pctLow }}%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dettaglio per panel -->
+        @if(!empty($panelStats))
+        <div class="dq-panel-wrap">
+            <div class="dq-panel-title">Dettaglio per panel</div>
+            <table class="dq-table">
+                <thead class="dq-thead">
+                    <tr>
+                        <th class="dq-th">Panel</th>
+                        <th class="dq-th">Interviste</th>
+                        <th class="dq-th">Score medio</th>
+                        <th class="dq-th">Alta qualità</th>
+                        <th class="dq-th">Accettabile</th>
+                        <th class="dq-th">Bassa qualità</th>
+                        <th class="dq-th">LOI mediana</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($panelStats as $pName => $ps)
+                    <tr class="dq-row">
+                        <td class="dq-td" style="font-weight:600;">{{ $pName }}</td>
+                        <td class="dq-td" style="font-variant-numeric:tabular-nums;">{{ $ps['count'] }}</td>
+                        <td class="dq-td" style="font-variant-numeric:tabular-nums;">{{ $ps['avgScore'] ?? '—' }}</td>
+                        <td class="dq-td dq-text-green">{{ $ps['pctHigh'] }}%</td>
+                        <td class="dq-td dq-text-amber">{{ $ps['pctAccept'] }}%</td>
+                        <td class="dq-td dq-text-red">{{ $ps['pctLow'] }}%</td>
+                        <td class="dq-td" style="font-variant-numeric:tabular-nums;">{{ $ps['loiMedianFmt'] }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        @endif
+    </section>
+
+    <!-- ============================================================
+         2. LISTA INTERVISTE
+         ============================================================ -->
+    <section id="sez-interviste" class="dq-card dq-section" style="animation-delay:.08s;">
+        <div class="dq-card-header dq-border-teal">
+            <div class="dq-header-left">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.12 190)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+                <span class="dq-section-title">Valutazione singole interviste</span>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <input id="flt-iv-search" placeholder="Cerca ID / UID…" class="dq-filter-input">
+                <select id="flt-iv-panel" class="dq-filter-select">
+                    <option value="">Tutti i panel</option>
+                    @foreach($uniquePanels as $p)
+                    <option value="{{ strtolower($p) }}">{{ $p }}</option>
+                    @endforeach
+                </select>
+                <select id="flt-iv-tier" class="dq-filter-select">
+                    <option value="">Tutte le qualità</option>
+                    <option value="alta">Alta qualità</option>
+                    <option value="accettabile">Accettabile</option>
+                    <option value="bassa">Bassa qualità</option>
+                </select>
+                <button class="dq-btn dq-btn-outline-teal" onclick="exportCsv('tbl-interviews', ['ID','UID','Panel','Score','Stato'])">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Esporta CSV
+                </button>
+            </div>
+        </div>
+
+        @if(count($completeInterviews) > 0)
+        <div class="dq-table-scroll">
+            <table id="tbl-interviews" class="dq-table" style="min-width:820px;">
+                <thead class="dq-thead">
+                    <tr>
+                        <th class="dq-th">ID</th>
+                        <th class="dq-th">UID</th>
+                        <th class="dq-th">Panel</th>
+                        <th class="dq-th">Score</th>
+                        <th class="dq-th">Stato</th>
+                        <th class="dq-th" style="width:40px;text-align:center;">Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach($completeInterviews as $interview)
+                @php
+                    $ivSc    = $interview['score'] !== null ? (int) $interview['score'] : null;
+                    $ivTier  = $ivSc === null ? 'na' : ($ivSc >= 70 ? 'alta' : ($ivSc >= 50 ? 'accettabile' : 'bassa'));
+                    $ivBadge = $ivTier === 'alta' ? 'dq-badge-high'
+                             : ($ivTier === 'accettabile' ? 'dq-badge-accept'
+                             : ($ivTier === 'bassa' ? 'dq-badge-low' : 'dq-badge-unknown'));
+                    $ivStatoCls = $ivTier === 'alta' ? 'dq-stato-high'
+                                : ($ivTier === 'accettabile' ? 'dq-stato-accept'
+                                : ($ivTier === 'bassa' ? 'dq-stato-low' : 'dq-stato-unknown'));
+                    $ivCapApplied    = !empty($interview['quality_score_cap']['applied']);
+                    $ivCapBaseScore  = $interview['quality_score_caps']['base_score'] ?? null;
+                    $ivCovLabel   = $interview['quality_coverage']['label'] ?? 'Non valutabile';
+                    $mot          = $interview['quality_motivation'] ?? [];
+                    $ivMotData    = array_values(array_filter([
+                        ($mot['open']  ?? null) !== null ? ['label'=>'Open',  'text'=>$mot['open']]  : null,
+                        ($mot['scale'] ?? null) !== null ? ['label'=>'Scale', 'text'=>$mot['scale']] : null,
+                        ($mot['loi']   ?? null) !== null ? ['label'=>'LOI',   'text'=>$mot['loi']]   : null,
+                        $ivCapApplied            ? ['label'=>'Cap',   'text'=>'Ridotto da ' . $ivCapBaseScore . ' per anomalia rilevata'] : null,
+                    ]));
+                    $ivPanelLow = strtolower($interview['panel'] ?? '');
+                @endphp
+                <tr class="dq-row"
+                    data-iid="{{ $interview['iid'] }}"
+                    data-uid="{{ $interview['uid'] }}"
+                    data-panel="{{ $ivPanelLow }}"
+                    data-tier="{{ $ivTier }}">
+                    <td class="dq-td" style="font-weight:600;">{{ $interview['iid'] }}</td>
+                    <td class="dq-td dq-td-mono">{{ $interview['uid'] }}</td>
+                    <td class="dq-td dq-td-panel">{{ $interview['panel'] ?? '—' }}</td>
+                    <td class="dq-td">
+                        @if($ivSc !== null)
+                            <div class="dq-badge {{ $ivBadge }}">
+                                {{ $ivSc }}<span class="dq-badge-denom">/100</span>
+                            </div>
+                        @else
+                            <span style="color:oklch(55% 0.02 250);font-size:13px;">—</span>
+                        @endif
+                    </td>
+                    <td class="dq-td">
+                        <div class="{{ $ivStatoCls }}">{{ strtoupper($interview['rating_label'] ?? 'N/D') }}</div>
+                        <div class="dq-coverage-sub">{{ $ivCovLabel }}</div>
+                    </td>
+                    <td class="dq-td" style="text-align:center;vertical-align:middle;padding:0 12px;">
+                        <button type="button" class="dq-info-btn"
+                            data-bs-toggle="popover"
+                            data-bs-trigger="hover focus"
+                            data-bs-placement="left"
+                            data-fq-mot="{{ json_encode($ivMotData) }}">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                        </button>
+                    </td>
+                </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        <div class="dq-table-footer" id="iv-count">{{ count($completeInterviews) }} risultati</div>
+        @else
+        <div style="padding:24px;color:oklch(55% 0.02 250);font-style:italic;">Nessuna intervista completa trovata.</div>
+        @endif
+    </section>
+
+    <!-- ============================================================
+         3. CONTROLLO DOMANDE APERTE
+         ============================================================ -->
+    <section id="sez-open" class="dq-card dq-section" style="animation-delay:.14s;">
+        <div class="dq-card-header dq-border-red">
+            <div class="dq-header-left">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.14 25)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+                <div>
+                    <div class="dq-section-title">Controllo domande aperte</div>
+                    <div style="font-size:12px;color:oklch(45% 0.02 250);margin-top:2px;">Risposte segnalate per probabilità di risposta non autentica</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <input id="flt-open-search" placeholder="Cerca ID / UID…" class="dq-filter-input">
+                <select id="flt-open-panel" class="dq-filter-select">
+                    <option value="">Tutti i panel</option>
+                    @foreach($uniquePanels as $p)
+                    <option value="{{ strtolower($p) }}">{{ $p }}</option>
+                    @endforeach
+                </select>
+                <button id="flt-open-all" class="dq-btn dq-btn-outline">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Mostra tutte
+                </button>
+                <button class="dq-btn dq-btn-outline-red" onclick="exportCsv('tbl-open', ['ID','UID','Panel','Codice','Risposta','Fake%'])">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Esporta CSV
+                </button>
+            </div>
+        </div>
+
+        @if(count($allOpenRows) > 0)
+        <div class="dq-table-scroll">
+            <table id="tbl-open" class="dq-table" style="min-width:820px;">
+                <thead class="dq-thead">
+                    <tr>
+                        <th class="dq-th">ID</th>
+                        <th class="dq-th">UID</th>
+                        <th class="dq-th">Panel</th>
+                        <th class="dq-th">Codice</th>
+                        <th class="dq-th">Risposta</th>
+                        <th class="dq-th" style="text-align:right;">Fake %</th>
+                        <th class="dq-th" style="width:32px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach($allOpenRows as $index => $open)
+                @php
+                    $modalId     = "modalOpen_{$open['iid']}_{$index}";
+                    $iidStats    = $openFakeByIid[$open['iid']] ?? null;
+                    $iFake       = $iidStats['fake']  ?? 0;
+                    $iTotal      = $iidStats['total'] ?? 0;
+                    $iPct        = $iTotal > 0 ? round($iFake / $iTotal * 100) : 0;
+                    $fakeCls     = $iPct >= 50 ? 'dq-fake-high' : 'dq-fake-low';
+                    $openPanelLow = strtolower($open['panel'] ?? '');
+                    $isRowFake   = !empty($open['isFake']);
+                @endphp
+                <tr class="dq-row"
+                    data-iid="{{ $open['iid'] }}"
+                    data-uid="{{ $open['uid'] }}"
+                    data-panel="{{ $openPanelLow }}"
+                    data-fake="{{ $isRowFake ? '1' : '0' }}"
+                    @if(!$isRowFake) style="display:none;" @endif>
+                    <td class="dq-td" style="font-weight:600;padding:12px 16px;">{{ $open['iid'] }}</td>
+                    <td class="dq-td dq-td-mono" style="padding:12px 16px;">{{ $open['uid'] }}</td>
+                    <td class="dq-td" style="color:oklch(40% 0.02 250);padding:12px 16px;">{{ $open['panel'] }}</td>
+                    <td class="dq-td" style="padding:12px 16px;">
+                        <span class="fq-codice-pop"
+                              data-codice="{{ $open['codice'] }}"
+                              data-qtext="{{ $open['tooltip'] }}"
+                              style="font-family:'SF Mono',Consolas,monospace;font-size:12px;color:oklch(45% 0.02 250);cursor:pointer;text-decoration:underline dotted #aaa;text-underline-offset:3px;">
+                            {{ $open['codice'] }}
+                        </span>
+                    </td>
+                    <td class="dq-td" style="padding:12px 16px;">
+                        <span class="dq-response-cell">{{ $open['openResponse'] }}</span>
+                    </td>
+                    <td class="dq-td" style="text-align:right;padding:12px 16px;">
+                        <span class="dq-fake-badge {{ $fakeCls }}">{{ $iPct }}%</span>
+                    </td>
+                    <td class="dq-td" style="padding:12px 16px;">
+                        <button class="dq-info-btn" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}"
+                                style="color:oklch(50% 0.08 80);">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        </button>
+                    </td>
+                </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <div class="dq-table-footer">
+            <span id="open-count-label">{{ count($fakeOpenRows) }} sospette</span>
+            <span style="color:oklch(65% 0.02 250);margin:0 6px;">/</span>
+            <span style="color:oklch(55% 0.02 250);">{{ count($allOpenRows) }} totali</span>
+        </div>
+        @else
+        <div style="padding:24px;color:oklch(55% 0.02 250);font-style:italic;">Nessuna risposta aperta disponibile.</div>
+        @endif
+    </section>
+
+    <!-- ============================================================
+         4+5. LOI + GRIGLIA — affiancate
+         ============================================================ -->
+    <div class="dq-side-by-side">
+
+        <section id="sez-loi" class="dq-card dq-section" style="animation-delay:.20s;">
+            <div class="dq-card-header dq-border-amber">
+                <div class="dq-header-left">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.12 80)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <div>
+                        <div class="dq-section-title">Controllo LOI</div>
+                        <div style="font-size:12px;color:oklch(45% 0.02 250);margin-top:2px;">Mediana {{ $loiMediaFormatted }} min</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <input id="flt-loi-search" placeholder="Cerca ID…" class="dq-filter-input" style="width:130px;">
+                    <button id="flt-loi-btn" class="dq-btn dq-btn-outline" style="font-size:12px;padding:6px 10px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                        &lt;50% mediana
+                    </button>
+                    <button id="flt-loi-sort" class="dq-btn dq-btn-amber" style="font-size:12px;padding:6px 10px;">
+                        LOI &darr;
+                    </button>
+                </div>
+            </div>
+
+            @if(count($loiData) > 0)
+            <div class="dq-table-scroll">
+                <table id="tbl-loi" class="dq-table">
+                    <thead class="dq-thead">
+                        <tr>
+                            <th class="dq-th">ID</th>
+                            <th class="dq-th">UID</th>
+                            <th class="dq-th">LOI</th>
+                            <th class="dq-th">Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($loiData as $item)
+                    @php
+                        $lRatio   = $loiRatioByIid[$item['iid']] ?? null;
+                        $lSec     = $loiSecByIid[$item['iid']]   ?? 0;
+                        $lUnder50 = $lRatio !== null && $lRatio < 0.5;
+                    @endphp
+                    <tr class="dq-row"
+                        data-iid="{{ $item['iid'] }}"
+                        data-uid="{{ $item['uid'] }}"
+                        data-ratio="{{ $lRatio ?? '' }}"
+                        data-loi-sec="{{ $lSec }}">
+                        <td class="dq-td" style="font-weight:600;padding:10px 14px;">{{ $item['iid'] }}</td>
+                        <td class="dq-td dq-td-mono" style="padding:10px 14px;">{{ $item['uid'] }}</td>
+                        <td class="dq-td" style="font-variant-numeric:tabular-nums;padding:10px 14px;">{{ $item['loi'] }} min.</td>
+                        <td class="dq-td" style="padding:10px 14px;">
+                            @if($lUnder50)
+                                <span class="dq-badge-sottosoglia">Sotto soglia</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @else
+            <div style="padding:24px;color:oklch(55% 0.02 250);font-style:italic;">Nessun dato LOI disponibile.</div>
+            @endif
+        </section>
+
+        <section id="sez-griglia" class="dq-card dq-section" style="animation-delay:.26s;">
+            <div class="dq-card-header dq-border-green">
+                <div class="dq-header-left">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.12 145)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    <span class="dq-section-title">Qualità griglie</span>
+                </div>
+                <input id="flt-scale-search" placeholder="Cerca ID…" class="dq-filter-input" style="width:130px;">
+            </div>
+
+            @if(count($scaleData) > 0)
+            <div class="dq-table-scroll">
+                <table id="tbl-scale" class="dq-table">
+                    <thead class="dq-thead">
+                        <tr>
+                            <th class="dq-th">ID</th>
+                            <th class="dq-th">UID</th>
+                            <th class="dq-th">Domanda</th>
+                            <th class="dq-th">Qualità</th>
+                            <th class="dq-th" style="width:36px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($scaleData as $scale)
+                    @php
+                        $sqLabel    = ($scale['code'] !== 'unknown') ? 'Dom. ' . $scale['code'] : 'Dom. ' . $scale['questionId'];
+                        $sqDetail   = $scaleQsByIidQid[$scale['iid']][$scale['questionId']] ?? null;
+                        $sqLevel    = $sqDetail['level']   ?? null;
+                        $sqReasons  = $sqDetail['reasons'] ?? [];
+                        $sqAnomaly  = in_array($sqLevel, ['Sospetta', 'Da Verificare']);
+                        $sqBadgeCls = $sqLevel === 'Normale'        ? 'dq-badge-scale-normale'
+                                    : ($sqLevel === 'Sospetta'      ? 'dq-badge-scale-sospetta'
+                                    : ($sqLevel === 'Da Verificare' ? 'dq-badge-scale-daverif' : ''));
+                    @endphp
+                    <tr class="dq-row" data-iid="{{ $scale['iid'] }}" data-uid="{{ $scale['uid'] }}">
+                        <td class="dq-td" style="font-weight:600;padding:10px 14px;">{{ $scale['iid'] }}</td>
+                        <td class="dq-td dq-td-mono" style="padding:10px 14px;">{{ $scale['uid'] }}</td>
+                        <td class="dq-td" style="padding:10px 14px;">
+                            <span class="fq-codice-pop"
+                                  data-codice="{{ $sqLabel }}"
+                                  data-qtext="{{ $scale['tooltip'] }}"
+                                  data-qid="{{ $scale['questionId'] }}"
+                                  style="cursor:pointer;text-decoration:underline dotted #aaa;text-underline-offset:3px;font-size:13px;">
+                                {{ $sqLabel }}
+                            </span>
+                        </td>
+                        <td class="dq-td" style="padding:10px 14px;">
+                            @if($sqLevel !== null)
+                                <span class="{{ $sqBadgeCls }}">{{ $sqLevel }}</span>
+                            @else
+                                <span style="color:oklch(55% 0.02 250);font-size:12px;">N/D</span>
+                            @endif
+                        </td>
+                        <td class="dq-td" style="padding:10px 14px;text-align:center;">
+                            @if($sqAnomaly && !empty($sqReasons))
+                            <button type="button" class="dq-scale-info-btn dq-info-btn"
+                                data-fq-reasons="{{ json_encode($sqReasons) }}">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                            </button>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            @else
+            <div style="padding:24px;color:oklch(55% 0.02 250);font-style:italic;">Nessuna griglia da visualizzare.</div>
+            @endif
+        </section>
+
+    </div><!-- /dq-side-by-side -->
+
+</div><!-- /dq-sections -->
+
+</div><!-- /container field-control-container -->
+
+{{-- Modali risposta aperta — fuori da ogni card/transform/overflow --}}
+@foreach($allOpenRows as $index => $open)
+@php
+    $modalId = "modalOpen_{$open['iid']}_{$index}";
+    $mCat    = $open['category'] ?? 'weak';
+    $mReason = $open['reason']   ?? '—';
+    $mBadge  = $mCat === 'strong' ? 'danger' : ($mCat === 'medium' ? 'warning text-dark' : 'secondary');
+    $mLabel  = $mCat === 'strong' ? 'Forte'  : ($mCat === 'medium' ? 'Medio' : 'Debole');
+@endphp
+<div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-labelledby="{{ $modalId }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ $modalId }}Label">Risposta Aperta — IID {{ $open['iid'] }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Testo:</strong></p>
+                <p>{{ $open['openResponse'] }}</p>
+                @if(!empty($open['isFake']) && $open['isFake'] === true)
+                <div class="alert alert-light border py-2 px-3 mb-2" style="font-size:0.85em">
+                    <strong>Classificazione:</strong>
+                    <span class="badge bg-{{ $mBadge }} ms-1">{{ $mLabel }}</span>
+                    &nbsp;<span class="text-muted">{{ $mReason }}</span>
+                </div>
+                @endif
+                <hr/>
+                <div class="d-grid gap-2">
+                    <button class="btn" style="background-color:white;color:black;border:1px solid #ccc"
+                        onclick="addToWhiteList('{{ $open['openResponse'] }}')">
+                        Aggiungi a Whitelist
+                    </button>
+                    <button class="btn" style="background-color:black;color:white;border:1px solid #000"
+                        onclick="addToBlackList('{{ $open['openResponse'] }}')">
+                        Aggiungi a Blacklist
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
         </div>
     </div>
-
-<!-- FINE TERZA RIGA -->
 </div>
-
-
-</div><!-- container -->
-
-
+@endforeach
 
 @endsection
 
 @section('scripts')
-
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Dropdown
-        document.querySelectorAll('.dropdown-toggle').forEach(function (el) {
-            new bootstrap.Dropdown(el);
-        });
-        document.body.addEventListener("click", function (event) {
-            if (event.target.classList.contains("dropdown-toggle")) {
-                bootstrap.Dropdown.getOrCreateInstance(event.target).show();
-            }
-        });
+document.addEventListener('DOMContentLoaded', function () {
 
-        // Popover codice domanda (tabella open questions)
-        document.querySelectorAll('.fq-codice-pop').forEach(function (el) {
-            new bootstrap.Popover(el, {
-                html: true,
-                trigger: 'hover focus',
-                placement: 'auto',
-                sanitize: false,
-                title: '<span style="font-size:.8rem;font-weight:600">' + el.dataset.codice + '</span>'
-                     + (el.dataset.qid ? '<span style="font-size:.75rem;color:#888;font-weight:400;margin-left:6px">#' + el.dataset.qid + '</span>' : ''),
-                content: '<span style="font-size:.78rem;color:#555">' + el.dataset.qtext + '</span>',
-            });
-        });
+    /* ---- Dropdown Bootstrap ---- */
+    document.querySelectorAll('.dropdown-toggle').forEach(function (el) {
+        new bootstrap.Dropdown(el);
+    });
 
-        // Popover motivazioni interviste
-        document.querySelectorAll('.fq-reasons-btn').forEach(function (el) {
-            var reasons = [];
-            try { reasons = JSON.parse(el.dataset.fqReasons || '[]'); } catch(e) {}
-            var html = '<ul class="mb-0 ps-3" style="font-size:.78rem;min-width:200px">'
-                + reasons.map(function(r) {
-                    return '<li>' + r.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</li>';
-                }).join('')
-                + '</ul>';
-            new bootstrap.Popover(el, {
-                html: true,
-                content: html,
-                trigger: 'focus',
-                placement: 'auto',
-                title: '<small class="fw-semibold">Motivazioni</small>',
-                sanitize: false
-            });
+    /* ---- Popover codice domanda ---- */
+    document.querySelectorAll('.fq-codice-pop').forEach(function (el) {
+        new bootstrap.Popover(el, {
+            html: true,
+            trigger: 'hover focus',
+            placement: 'auto',
+            sanitize: false,
+            title: '<span style="font-size:.8rem;font-weight:600">' + el.dataset.codice + '</span>'
+                 + (el.dataset.qid ? '<span style="font-size:.75rem;color:#888;font-weight:400;margin-left:6px">#' + el.dataset.qid + '</span>' : ''),
+            content: '<span style="font-size:.78rem;color:#555">' + el.dataset.qtext + '</span>',
         });
     });
-</script>
 
-<script>
-    function addToWhiteList(responseText) {
-        fetch("{{ route('fieldQuality.addToWhiteList') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({
-                text: responseText
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) {
-                alert("La parola è stata aggiunta alla whitelist!");
-                window.location.reload();
-            } else {
-                alert("Errore: " + data.message);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Si è verificato un errore durante l'aggiunta alla whitelist.");
+    /* ---- Popover motivazioni interviste (hover) ---- */
+    document.querySelectorAll('.dq-info-btn:not(.dq-scale-info-btn)').forEach(function (el) {
+        var items = [];
+        try { items = JSON.parse(el.dataset.fqMot || '[]'); } catch(e) {}
+
+        var labelColor = { Open:'oklch(45% 0.12 255)', Scale:'oklch(45% 0.12 145)', LOI:'oklch(45% 0.12 80)', Cap:'oklch(45% 0.16 25)' };
+
+        var rows = items.map(function(item) {
+            var esc = (item.text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            var col = labelColor[item.label] || 'oklch(50% 0.02 250)';
+            return '<div style="display:flex;gap:10px;align-items:baseline;padding:5px 0;border-bottom:1px solid oklch(93% 0.006 250);">'
+                 + '<span style="font-size:10px;font-weight:700;color:' + col + ';text-transform:uppercase;min-width:38px;flex-shrink:0;">' + item.label + '</span>'
+                 + '<span style="font-size:12px;color:oklch(28% 0.02 250);line-height:1.5;">' + esc + '</span>'
+                 + '</div>';
+        }).join('');
+
+        var content = rows
+            ? '<div style="min-width:260px;max-width:340px;padding:2px 0;">' + rows + '</div>'
+            : '<span style="font-size:12px;color:oklch(55% 0.02 250);font-style:italic;">Nessun criterio disponibile</span>';
+
+        new bootstrap.Popover(el, {
+            html: true,
+            content: content,
+            trigger: 'hover focus',
+            placement: 'left',
+            title: '<span style="font-size:12px;font-weight:700;color:oklch(28% 0.02 250);">Motivazioni</span>',
+            sanitize: false
         });
-    }
+    });
 
-    // ---- Filtri tabelle ----
+    /* ---- Popover motivi griglia (Sospetta / Da Verificare) ---- */
+    document.querySelectorAll('.dq-scale-info-btn').forEach(function (el) {
+        var reasons = [];
+        try { reasons = JSON.parse(el.dataset.fqReasons || '[]'); } catch(e) {}
+        var rows = reasons.map(function(r) {
+            var esc = (r || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return '<div style="padding:4px 0;border-bottom:1px solid oklch(93% 0.006 250);font-size:12px;color:oklch(28% 0.02 250);line-height:1.5;">'
+                 + '&bull; ' + esc + '</div>';
+        }).join('');
+        var content = rows
+            ? '<div style="min-width:220px;max-width:300px;padding:2px 0;">' + rows + '</div>'
+            : '<span style="font-size:12px;color:oklch(55% 0.02 250);font-style:italic;">Nessun dettaglio</span>';
+        new bootstrap.Popover(el, {
+            html: true,
+            content: content,
+            trigger: 'hover focus',
+            placement: 'left',
+            title: '<span style="font-size:12px;font-weight:700;color:oklch(28% 0.02 250);">Anomalie rilevate</span>',
+            sanitize: false
+        });
+    });
+
+    /* ================================================================
+       FILTRI
+       ================================================================ */
 
     function filterRows(tableId, testFn) {
-        document.querySelectorAll('#' + tableId + ' tbody tr').forEach(function (row) {
-            row.style.display = testFn(row) ? '' : 'none';
+        var visible = 0;
+        document.querySelectorAll('#' + tableId + ' tbody tr:not(.modal)').forEach(function (row) {
+            if (row.classList.contains('modal') || row.closest('.modal')) return;
+            var show = testFn(row);
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
         });
+        return visible;
     }
 
     function iidUidMatch(row, q) {
@@ -685,47 +796,107 @@
             || (row.dataset.uid || '').toLowerCase().includes(q);
     }
 
-    // Lista interviste
+    /* -- Lista interviste -- */
     var fltIvSearch = document.getElementById('flt-iv-search');
-    var fltIvRating = document.getElementById('flt-iv-rating');
+    var fltIvPanel  = document.getElementById('flt-iv-panel');
+    var fltIvTier   = document.getElementById('flt-iv-tier');
+    var ivCount     = document.getElementById('iv-count');
+
     function applyIvFilter() {
-        var q = fltIvSearch.value.trim().toLowerCase();
-        var r = fltIvRating.value.toLowerCase();
-        filterRows('tbl-interviews', function (row) {
+        var q = (fltIvSearch ? fltIvSearch.value.trim().toLowerCase() : '');
+        var p = (fltIvPanel  ? fltIvPanel.value.toLowerCase()  : '');
+        var t = (fltIvTier   ? fltIvTier.value.toLowerCase()   : '');
+        var n = filterRows('tbl-interviews', function (row) {
             return iidUidMatch(row, q)
-                && (!r || (row.dataset.rating || '').toLowerCase() === r);
+                && (!p || (row.dataset.panel || '') === p)
+                && (!t || (row.dataset.tier  || '') === t);
         });
+        if (ivCount) ivCount.textContent = n + ' risultati';
     }
     if (fltIvSearch) fltIvSearch.addEventListener('input', applyIvFilter);
-    if (fltIvRating) fltIvRating.addEventListener('change', applyIvFilter);
+    if (fltIvPanel)  fltIvPanel.addEventListener('change', applyIvFilter);
+    if (fltIvTier)   fltIvTier.addEventListener('change', applyIvFilter);
 
-    // LOI < 50% mediana
+    /* -- LOI: filtro sotto-soglia + ricerca + ordinamento -- */
     var loiActive = false;
-    var loiBtn = document.getElementById('flt-loi-btn');
+    var loiSortDir = 'desc';
+    var loiBtn     = document.getElementById('flt-loi-btn');
+    var loiSort    = document.getElementById('flt-loi-sort');
+    var loiSearch  = document.getElementById('flt-loi-search');
+
+    function applyLoiFilter() {
+        var q = (loiSearch ? loiSearch.value.trim().toLowerCase() : '');
+        filterRows('tbl-loi', function (row) {
+            return iidUidMatch(row, q)
+                && (!loiActive || (parseFloat(row.dataset.ratio) < 0.5));
+        });
+    }
+    function sortLoi() {
+        var tbody = document.querySelector('#tbl-loi tbody');
+        if (!tbody) return;
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort(function (a, b) {
+            var sa = parseInt(a.dataset.loiSec) || 0;
+            var sb = parseInt(b.dataset.loiSec) || 0;
+            return loiSortDir === 'desc' ? sb - sa : sa - sb;
+        });
+        rows.forEach(function (r) { tbody.appendChild(r); });
+    }
     if (loiBtn) {
         loiBtn.addEventListener('click', function () {
             loiActive = !loiActive;
-            loiBtn.classList.toggle('active', loiActive);
-            loiBtn.classList.toggle('btn-warning', loiActive);
-            loiBtn.classList.toggle('btn-outline-warning', !loiActive);
-            filterRows('tbl-loi', function (row) {
-                if (!loiActive) return true;
-                var ratio = parseFloat(row.dataset.ratio);
-                return !isNaN(ratio) && ratio < 0.5;
-            });
+            loiBtn.style.background    = loiActive ? 'oklch(55% 0.10 80)' : '';
+            loiBtn.style.color         = loiActive ? '#fff' : '';
+            loiBtn.style.borderColor   = loiActive ? 'oklch(55% 0.10 80)' : '';
+            applyLoiFilter();
         });
     }
+    if (loiSort) {
+        loiSort.addEventListener('click', function () {
+            loiSortDir = loiSortDir === 'desc' ? 'asc' : 'desc';
+            loiSort.textContent = 'Ordina per LOI ' + (loiSortDir === 'desc' ? '↓' : '↑');
+            sortLoi();
+        });
+    }
+    if (loiSearch) loiSearch.addEventListener('input', applyLoiFilter);
 
-    // Domande aperte
+    /* -- Domande aperte: toggle tutte / solo sospette -- */
+    var fltOpenAll  = document.getElementById('flt-open-all');
+    var openShowAll = false;
     var fltOpenSearch = document.getElementById('flt-open-search');
-    if (fltOpenSearch) {
-        fltOpenSearch.addEventListener('input', function () {
-            var q = fltOpenSearch.value.trim().toLowerCase();
-            filterRows('tbl-open', function (row) { return iidUidMatch(row, q); });
+    function applyOpenVisibility() {
+        var p = fltOpenPanel ? fltOpenPanel.value.toLowerCase() : '';
+        var q = fltOpenSearch ? fltOpenSearch.value.toLowerCase() : '';
+        var rows = document.querySelectorAll('#tbl-open tbody tr');
+        var visible = 0;
+        rows.forEach(function(row) {
+            var isFake   = row.dataset.fake === '1';
+            var panelOk  = !p || (row.dataset.panel || '') === p;
+            var searchOk = !q || (row.dataset.iid || '').toLowerCase().includes(q)
+                               || (row.dataset.uid || '').toLowerCase().includes(q);
+            var show     = (openShowAll || isFake) && panelOk && searchOk;
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        var lbl = document.getElementById('open-count-label');
+        if (lbl) lbl.textContent = visible + (openShowAll ? ' risposte' : ' sospette');
+    }
+    if (fltOpenAll) {
+        fltOpenAll.addEventListener('click', function () {
+            openShowAll = !openShowAll;
+            fltOpenAll.innerHTML = openShowAll
+                ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Solo sospette'
+                : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Mostra tutte';
+            applyOpenVisibility();
         });
     }
 
-    // Qualità griglia
+    /* -- Domande aperte: filtro panel + ricerca -- */
+    var fltOpenPanel = document.getElementById('flt-open-panel');
+    if (fltOpenPanel) fltOpenPanel.addEventListener('change', applyOpenVisibility);
+    if (fltOpenSearch) fltOpenSearch.addEventListener('input', applyOpenVisibility);
+
+    /* -- Scale: ricerca -- */
     var fltScaleSearch = document.getElementById('flt-scale-search');
     if (fltScaleSearch) {
         fltScaleSearch.addEventListener('input', function () {
@@ -733,116 +904,308 @@
             filterRows('tbl-scale', function (row) { return iidUidMatch(row, q); });
         });
     }
+});
 
-    function addToBlackList(responseText) {
-        fetch("{{ route('fieldQuality.addToBlackList') }}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({
-                text: responseText
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if(data.success) {
-                alert("La parola è stata aggiunta alla blacklist!");
-                window.location.reload();
-            } else {
-                alert("Errore: " + data.message);
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Si è verificato un errore durante l'aggiunta alla blacklist.");
+/* ================================================================
+   EXPORT CSV
+   ================================================================ */
+function exportCsv(tableId, headers) {
+    var rows = [];
+    rows.push(headers.join(','));
+    document.querySelectorAll('#' + tableId + ' tbody tr').forEach(function (row) {
+        if (row.style.display === 'none') return;
+        if (row.closest('.modal')) return;
+        var cells = row.querySelectorAll('td');
+        var cols = [];
+        cells.forEach(function (td) {
+            var txt = td.innerText.replace(/\n/g,' ').replace(/,/g,' ').trim();
+            cols.push('"' + txt + '"');
         });
-    }
+        if (cols.length > 0) rows.push(cols.join(','));
+    });
+    var csv  = rows.join('\n');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href   = url;
+    a.download = tableId + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+/* ================================================================
+   WHITELIST / BLACKLIST
+   ================================================================ */
+function addToWhiteList(responseText) {
+    fetch("{{ route('fieldQuality.addToWhiteList') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ text: responseText })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) { alert('Aggiunto alla whitelist!'); window.location.reload(); }
+        else              { alert('Errore: ' + data.message); }
+    })
+    .catch(() => alert('Errore durante l\'aggiunta alla whitelist.'));
+}
+
+function addToBlackList(responseText) {
+    fetch("{{ route('fieldQuality.addToBlackList') }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ text: responseText })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) { alert('Aggiunto alla blacklist!'); window.location.reload(); }
+        else              { alert('Errore: ' + data.message); }
+    })
+    .catch(() => alert('Errore durante l\'aggiunta alla blacklist.'));
+}
 </script>
 
 <style>
+/* ================================================================
+   DASHBOARD QUALITÀ — Design System dq-*
+   ================================================================ */
+body { font-family: 'Inter', system-ui, sans-serif; }
 
-/* Costringe le stat-card ad avere altezza uniforme nella riga */
-.row.text-center.g-3 {
-  display: flex;
-  flex-wrap: wrap;
-}
-.row.text-center.g-3 > [class*="col-"] {
-  display: flex;
-  align-items: stretch;
-}
-/* Icone */
-.stat-icon i {
-  font-size: 1.75rem;
-  color: #078107;
+.dq-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding-bottom: 48px;
 }
 
-/* Allinea icona, valore e label verticalmente */
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
+/* Page header */
+.dq-page-header {
+    border-left: 4px solid oklch(55% 0.10 255);
+    padding-left: 16px;
+    margin-bottom: 4px;
+}
+.dq-page-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.dq-page-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: oklch(22% 0.02 250);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
+.dq-page-sub {
+    font-size: 12px;
+    color: oklch(50% 0.02 250);
+    margin: 4px 0 0;
+}
+.dq-page-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: oklch(40% 0.10 255);
+    background: oklch(95% 0.04 255);
+    border: 1px solid oklch(85% 0.06 255);
+    padding: 5px 14px;
+    border-radius: 999px;
+    white-space: nowrap;
 }
 
-/* Spazio sotto l'icona */
-.stat-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Cards */
+.dq-card {
+    background: #fff;
+    border: 1px solid oklch(92% 0.006 250);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px oklch(20% 0.02 260 / 0.06), 0 1px 2px oklch(20% 0.02 260 / 0.04);
+    transition: box-shadow .2s ease;
+}
+.dq-card:hover {
+    box-shadow: 0 8px 24px -8px oklch(30% 0.05 260 / 0.18);
 }
 
-/* Rende più consistente la badge area */
-.stat-card .badge {
-  font-size: 0.85rem;
-  padding: 0.4em 0.6em;
+/* Card header */
+.dq-card-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid oklch(92% 0.006 250);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.dq-border-blue  { border-left: 4px solid oklch(55% 0.10 255); }
+.dq-border-teal  { border-left: 4px solid oklch(55% 0.10 190); }
+.dq-border-amber { border-left: 4px solid oklch(55% 0.10 80);  }
+.dq-border-red   { border-left: 4px solid oklch(55% 0.10 25);  }
+.dq-border-green { border-left: 4px solid oklch(55% 0.10 145); }
+
+.dq-header-left    { display: flex; align-items: center; gap: 10px; }
+.dq-section-title  { font-size: 16px; font-weight: 700; }
+.dq-header-right   { font-size: 12px; color: oklch(45% 0.02 250); }
+
+/* LOI + Griglia affiancate */
+.dq-side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+@media (max-width: 900px) { .dq-side-by-side { grid-template-columns: 1fr; } }
+
+/* Stat grid */
+.dq-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: oklch(92% 0.006 250);
+}
+.dq-stat-cell   { background: #fff; padding: 22px 24px; }
+.dq-stat-label  {
+    display: flex; align-items: center; gap: 6px;
+    color: oklch(45% 0.02 250);
+    font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.04em; font-size: 12px;
+}
+.dq-stat-value {
+    font-size: 32px; font-weight: 800; margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+}
+.dq-progress-bar  { height: 6px; background: oklch(92% 0.006 250); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+.dq-progress-fill { height: 100%; border-radius: 3px; }
+.dq-distrib-bar   { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 14px; }
+.dq-distrib-legend { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.dq-distrib-dot   { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+
+/* Panel breakdown */
+.dq-panel-wrap  { padding: 20px 24px 24px; }
+.dq-panel-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: oklch(35% 0.02 250); }
+
+/* Tables */
+.dq-table  { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dq-thead  { text-align: left; background: oklch(98% 0.004 250); border-bottom: 1px solid oklch(90% 0.006 250); }
+.dq-th     { padding: 12px 16px; font-weight: 600; color: oklch(45% 0.02 250); }
+.dq-row    { border-bottom: 1px solid oklch(94% 0.006 250); }
+.dq-row:hover { background: oklch(97.5% 0.008 260); }
+.dq-td        { padding: 14px 16px; vertical-align: top; }
+.dq-td-mono   { font-family: 'SF Mono', Consolas, monospace; font-size: 12px; color: oklch(35% 0.02 250); }
+.dq-td-panel  { color: oklch(40% 0.02 250); }
+
+/* Score badges */
+.dq-badge         { display: inline-flex; align-items: baseline; gap: 4px; padding: 4px 10px; border-radius: 7px; font-weight: 700; font-size: 13px; }
+.dq-badge-high    { background: oklch(95% 0.05 150); color: oklch(40% 0.13 150); }
+.dq-badge-accept  { background: oklch(95% 0.05 75);  color: oklch(42% 0.13 75);  }
+.dq-badge-low     { background: oklch(95% 0.04 25);  color: oklch(45% 0.16 25);  }
+.dq-badge-unknown { background: oklch(94% 0.006 250); color: oklch(50% 0.02 250); }
+.dq-badge-denom   { font-size: 10px; font-weight: 600; opacity: 0.75; }
+
+.dq-cap-pill {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: oklch(95% 0.04 25); color: oklch(48% 0.16 25);
+    font-size: 10px; font-weight: 700; padding: 2px 7px;
+    border-radius: 5px; margin-top: 6px;
 }
 
-.fq-motivations {
-  vertical-align: middle;
+/* Stato label */
+.dq-stato-high    { font-size: 12px; font-weight: 700; color: oklch(40% 0.13 150); }
+.dq-stato-accept  { font-size: 12px; font-weight: 700; color: oklch(42% 0.13 75);  }
+.dq-stato-low     { font-size: 12px; font-weight: 700; color: oklch(45% 0.16 25);  }
+.dq-stato-unknown { font-size: 12px; font-weight: 700; color: oklch(50% 0.02 250); }
+.dq-coverage-sub  { font-size: 11px; color: oklch(45% 0.02 250); margin-top: 2px; }
+
+/* Motivazioni */
+.dq-mot-list { margin: 0; padding-left: 16px; color: oklch(35% 0.02 250); font-size: 12.5px; line-height: 1.6; }
+
+/* Filter inputs & buttons */
+.dq-filter-input {
+    border: 1px solid oklch(88% 0.006 250); border-radius: 8px;
+    padding: 8px 12px; font-size: 13px; width: 200px;
+    font-family: inherit; outline: none;
+}
+.dq-filter-input:focus { border-color: oklch(55% 0.10 255); }
+.dq-filter-select {
+    border: 1px solid oklch(88% 0.006 250); border-radius: 8px;
+    padding: 8px 12px; font-size: 13px;
+    font-family: inherit; color: oklch(30% 0.02 250); outline: none;
+}
+.dq-filter-select:focus { border-color: oklch(55% 0.10 255); }
+
+.dq-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 8px; padding: 8px 14px;
+    font-size: 13px; font-weight: 700;
+    text-decoration: none; white-space: nowrap;
+    cursor: pointer; font-family: inherit;
+    transition: opacity .15s ease, transform .1s ease;
+}
+.dq-btn:hover  { opacity: 0.85; }
+.dq-btn:active { transform: scale(0.97); }
+.dq-btn-outline-teal { border: 1px solid oklch(55% 0.10 190); color: oklch(45% 0.10 190); background: none; }
+.dq-btn-outline-red  { border: 1px solid oklch(55% 0.10 25);  color: oklch(45% 0.10 25);  background: none; }
+.dq-btn-outline      { border: 1px solid oklch(88% 0.006 250); color: oklch(35% 0.02 250); background: none; }
+.dq-btn-amber        { background: oklch(55% 0.10 80); color: #fff; border: none; }
+
+/* Info/popover button */
+.dq-info-btn {
+    background: none; border: none; padding: 4px;
+    color: oklch(65% 0.06 255); cursor: pointer;
+    line-height: 1; border-radius: 4px;
+    transition: color .15s, background .15s;
+}
+.dq-info-btn:hover { color: oklch(45% 0.12 255); background: oklch(95% 0.04 255); }
+
+/* LOI sotto-soglia */
+.dq-badge-sottosoglia {
+    background: oklch(95% 0.05 75); color: oklch(48% 0.14 75);
+    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
 }
 
-.fq-mot-list {
-  margin: 0;
-  padding-left: 1rem;
-  font-size: 0.74rem;
-  color: #333;
-  line-height: 1.5;
+/* Scale level badges */
+.dq-badge-scale-normale  { background: oklch(95% 0.04 150); color: oklch(45% 0.12 150); font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
+.dq-badge-scale-sospetta { background: oklch(95% 0.05 75);  color: oklch(48% 0.12 75);  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
+.dq-badge-scale-daverif  { background: oklch(95% 0.04 25);  color: oklch(48% 0.12 25);  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
+
+/* Open fake badge */
+.dq-fake-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
+.dq-fake-low   { background: oklch(95% 0.05 75); color: oklch(48% 0.14 75); }
+.dq-fake-high  { background: oklch(95% 0.04 25); color: oklch(48% 0.16 25); }
+
+/* Risposta open evidenziata */
+.dq-response-cell {
+    display: inline-block;
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 12px; background: oklch(97% 0.006 250);
+    border-radius: 6px; color: oklch(30% 0.02 250);
+    padding: 3px 8px; max-width: 300px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-.fq-mot-list li {
-  margin-bottom: 1px;
+/* Panel text colors */
+.dq-text-green { color: oklch(45% 0.11 150); font-weight: 600; }
+.dq-text-amber { color: oklch(48% 0.12 75);  font-weight: 600; }
+.dq-text-red   { color: oklch(48% 0.15 25);  font-weight: 600; }
+
+/* Table footer */
+.dq-table-footer {
+    padding: 12px 24px;
+    border-top: 1px solid oklch(92% 0.006 250);
+    font-size: 12px; color: oklch(45% 0.02 250);
+}
+.dq-table-scroll { overflow-x: auto; max-height: 420px; overflow-y: auto; }
+
+/* Section fade-in */
+.dq-section { animation: dq-fade .5s ease both; }
+@keyframes dq-fade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-.fq-cap-badge {
-  font-size: 0.68rem;
-  color: #b45309;
-  background: #fef3c7;
-  border: 1px solid #fbbf24;
-  border-radius: 4px;
-  padding: 1px 5px;
-  margin-top: 3px;
-  display: inline-block;
+/* Responsive */
+@media (max-width: 900px) {
+    .dq-stat-grid { grid-template-columns: repeat(2, 1fr); }
 }
-
-.fq-filter-bar {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  padding: 6px 10px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+@media (max-width: 600px) {
+    .dq-stat-grid { grid-template-columns: 1fr; }
 }
-.fq-filter-bar .form-control-sm,
-.fq-filter-bar .form-select-sm {
-  font-size: 0.78rem;
-  max-width: 180px;
-}
-
-
-
 </style>
 
 @endsection
