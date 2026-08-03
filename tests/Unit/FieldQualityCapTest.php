@@ -252,6 +252,78 @@ class FieldQualityCapTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // Test 10a: 1/1 fake → cap 30 (open_all_fake_single, incertezza ~53%)
+    // -------------------------------------------------------------------------
+    public function test_open_all_fake_single_answer_caps_to_30(): void
+    {
+        $interview = $this->makeInterview(
+            ['analyzed_answers' => 1, 'fake_answers' => 1, 'fake_percentage' => 100.0, 'risk' => 100],
+            ['details' => $this->normalScaleDetails(2), 'analyzed_scales' => 2],
+            ['ratio' => 0.9, 'risk' => 0]
+        );
+
+        $result = $this->callCaps($interview, 60);
+
+        $this->assertTrue($result['applied']);
+        $this->assertSame(30, $result['final_score']);
+        $this->assertContains('open_all_fake_single', array_column($result['rules'], 'reason'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Test 10b: 2/2 fake → cap 15 (open_all_fake_minimal, confidenza ~82%)
+    // -------------------------------------------------------------------------
+    public function test_open_all_fake_two_answers_caps_to_15(): void
+    {
+        $interview = $this->makeInterview(
+            ['analyzed_answers' => 2, 'fake_answers' => 2, 'fake_percentage' => 100.0, 'risk' => 100],
+            ['details' => $this->normalScaleDetails(2), 'analyzed_scales' => 2],
+            ['ratio' => 0.9, 'risk' => 0]
+        );
+
+        $result = $this->callCaps($interview, 31);
+
+        $this->assertTrue($result['applied']);
+        $this->assertSame(15, $result['final_score']);
+        $this->assertContains('open_all_fake_minimal', array_column($result['rules'], 'reason'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Test 10c: 3/3 fake → cap 5 (open_all_fake_few, confidenza ~96%)
+    // -------------------------------------------------------------------------
+    public function test_open_all_fake_three_answers_caps_to_5(): void
+    {
+        $interview = $this->makeInterview(
+            ['analyzed_answers' => 3, 'fake_answers' => 3, 'fake_percentage' => 100.0, 'risk' => 100],
+            ['details' => $this->normalScaleDetails(2), 'analyzed_scales' => 2],
+            ['ratio' => 0.9, 'risk' => 0]
+        );
+
+        $result = $this->callCaps($interview, 40);
+
+        $this->assertTrue($result['applied']);
+        $this->assertSame(5, $result['final_score']);
+        $this->assertContains('open_all_fake_few', array_column($result['rules'], 'reason'));
+    }
+
+    // -------------------------------------------------------------------------
+    // Test 10d: 4/4 fake → cap 0 (open_all_fake, confidenza >99%)
+    // -------------------------------------------------------------------------
+    public function test_open_all_fake_four_answers_caps_to_zero(): void
+    {
+        $interview = $this->makeInterview(
+            ['analyzed_answers' => 4, 'fake_answers' => 4, 'fake_percentage' => 100.0, 'risk' => 100],
+            ['details' => $this->normalScaleDetails(2), 'analyzed_scales' => 2],
+            ['ratio' => 0.9, 'risk' => 0]
+        );
+
+        $result = $this->callCaps($interview, 40);
+
+        $this->assertTrue($result['applied']);
+        $this->assertSame(0, $result['final_score']);
+        $this->assertContains('open_all_fake', array_column($result['rules'], 'reason'));
+    }
+
+    // -------------------------------------------------------------------------
     // Test 10: nessuna anomalia → nessun cap, score finale = score ordinario
     // -------------------------------------------------------------------------
     public function test_no_cap_when_all_clean(): void

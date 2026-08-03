@@ -155,11 +155,17 @@
     sort($uniquePanels);
 
     /* ---- LOI lookup per IID ---- */
-    $loiRatioByIid = [];
-    $loiSecByIid   = [];
+    $loiRatioByIid   = [];
+    $loiSecByIid     = [];
+    $loiTooSlowByIid = [];
+    $loiSurveyMaxQ   = null; // stesso per tutte le interviste del survey
     foreach ($completeInterviews as $_iv) {
-        $loiRatioByIid[$_iv['iid']] = $_iv['quality_criteria']['loi']['ratio'] ?? null;
-        $loiSecByIid[$_iv['iid']]   = $_iv['loiSec'] ?? 0;
+        $loiRatioByIid[$_iv['iid']]   = $_iv['quality_criteria']['loi']['ratio'] ?? null;
+        $loiSecByIid[$_iv['iid']]     = $_iv['loiSec'] ?? 0;
+        $loiTooSlowByIid[$_iv['iid']] = !empty($_iv['quality_criteria']['loi']['too_slow']);
+        if ($loiSurveyMaxQ === null && isset($_iv['quality_criteria']['loi']['max_q'])) {
+            $loiSurveyMaxQ = (int) $_iv['quality_criteria']['loi']['max_q'];
+        }
     }
 
     /* ---- Scale details lookup ---- */
@@ -544,15 +550,21 @@
                             <th class="dq-th">ID</th>
                             <th class="dq-th">UID</th>
                             <th class="dq-th">LOI</th>
+                            <th class="dq-th" title="Numero domande risposte / Numero domande totali del percorso completo">Dom. risp. / tot.</th>
                             <th class="dq-th">Stato</th>
                         </tr>
                     </thead>
                     <tbody>
                     @foreach($loiData as $item)
                     @php
-                        $lRatio   = $loiRatioByIid[$item['iid']] ?? null;
-                        $lSec     = $loiSecByIid[$item['iid']]   ?? 0;
-                        $lUnder50 = $lRatio !== null && $lRatio < 0.5;
+                        $lRatio   = $loiRatioByIid[$item['iid']]   ?? null;
+                        $lSec     = $loiSecByIid[$item['iid']]     ?? 0;
+                        $lTooSlow = $loiTooSlowByIid[$item['iid']] ?? false;
+                        $lUnder50 = !$lTooSlow && $lRatio !== null && $lRatio < 0.5;
+                        $lQAnswered = $item['questionsAnswered'] ?? null;
+                        $lQCount    = $lQAnswered !== null
+                            ? $lQAnswered . ' / ' . ($loiSurveyMaxQ ?? '?')
+                            : '—';
                     @endphp
                     <tr class="dq-row"
                         data-iid="{{ $item['iid'] }}"
@@ -562,8 +574,11 @@
                         <td class="dq-td" style="font-weight:600;padding:10px 14px;">{{ $item['iid'] }}</td>
                         <td class="dq-td dq-td-mono" style="padding:10px 14px;">{{ $item['uid'] }}</td>
                         <td class="dq-td" style="font-variant-numeric:tabular-nums;padding:10px 14px;">{{ $item['loi'] }} min.</td>
+                        <td class="dq-td" style="font-variant-numeric:tabular-nums;padding:10px 14px;color:oklch(50% 0.02 250);">{{ $lQCount }}</td>
                         <td class="dq-td" style="padding:10px 14px;">
-                            @if($lUnder50)
+                            @if($lTooSlow)
+                                <span class="dq-badge-nonvalutabile">Non valutabile</span>
+                            @elseif($lUnder50)
                                 <span class="dq-badge-sottosoglia">Sotto soglia</span>
                             @endif
                         </td>
@@ -1084,6 +1099,11 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 .dq-table  { width: 100%; border-collapse: collapse; font-size: 13px; }
 .dq-thead  { text-align: left; background: oklch(98% 0.004 250); border-bottom: 1px solid oklch(90% 0.006 250); }
 .dq-th     { padding: 12px 16px; font-weight: 600; color: oklch(45% 0.02 250); }
+.dq-table-scroll .dq-th {
+    position: sticky; top: 0; z-index: 2;
+    background: oklch(98% 0.004 250);
+    box-shadow: 0 1px 0 oklch(90% 0.006 250);
+}
 .dq-row    { border-bottom: 1px solid oklch(94% 0.006 250); }
 .dq-row:hover { background: oklch(97.5% 0.008 260); }
 .dq-td        { padding: 14px 16px; vertical-align: top; }
@@ -1156,6 +1176,11 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 /* LOI sotto-soglia */
 .dq-badge-sottosoglia {
     background: oklch(95% 0.05 75); color: oklch(48% 0.14 75);
+    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
+}
+/* LOI non valutabile (troppo alta) */
+.dq-badge-nonvalutabile {
+    background: oklch(93% 0.01 250); color: oklch(50% 0.03 250);
     font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
 }
 

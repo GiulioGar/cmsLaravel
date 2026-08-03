@@ -11,9 +11,11 @@ use App\Models\UserQuality;
 
 class FieldQualityController extends Controller
 {
-    private const LOI_MAX_SECONDS          = 2700;
+    private const LOI_MAX_SECONDS           = 2700;
     private const LOI_ABSOLUTE_MIN_SECONDS  = 60;
     private const LOI_CRITICAL_SCORE_CAP   = 35;
+    private const LOI_UPPER_MULTIPLIER     = 20 / 12;  // > 1.667× mediana → non-valutabile
+    private const LOI_MIN_REFERENCE_GROUP  = 10;       // min interviste per qualunque gruppo di riferimento
 
     private const QUALITY_WEIGHTS = [
         'open'  => 60,
@@ -164,11 +166,17 @@ class FieldQualityController extends Controller
                 continue;
             }
 
+            $metrics           = $this->readFileMetrics($file);
+            $questionsAnswered = $metrics['questionCount'];
+            $pathSignature     = $metrics['pathSignature'];
+
             $completeInterviews[] = [
-                'iid'                => $iid,
-                'uid'                => $uid,
-                'panel'              => $panelUsed,
-                'loiSec'             => $loiSec,
+                'iid'               => $iid,
+                'uid'               => $uid,
+                'panel'             => $panelUsed,
+                'loiSec'            => $loiSec,
+                'questionsAnswered' => $questionsAnswered,
+                'pathSignature'     => $pathSignature,
                 'score'              => null,
                 'quality_criteria'   => [],
                 'quality_risks'      => [],
@@ -178,9 +186,10 @@ class FieldQualityController extends Controller
             ];
 
             $loiData[] = [
-                'iid' => $iid,
-                'uid' => $uid,
-                'loi' => $this->formatLoiSec($loiSec),
+                'iid'               => $iid,
+                'uid'               => $uid,
+                'loi'               => $this->formatLoiSec($loiSec),
+                'questionsAnswered' => $questionsAnswered,
             ];
 
             $this->extractOpenQuestions($file, $iid, $uid, $panelUsed, $openQuestionsData);
@@ -469,39 +478,114 @@ class FieldQualityController extends Controller
 
     private function applyLoiCriterion(array &$interviews): float
     {
-        $loiEligible = [];
+        // Pass 1: indici per calculateReferenceMedian (same-path, bucket, proporzionale).
+        $signatureGroups = [];   // [sig => [[iid, loi], ...]]
+        $allEligible     = [];   // [[iid, q, loi], ...]
+        $allLoiValues    = [];
+        $allQCounts      = [];
+
         foreach ($interviews as $iv) {
-            if ($iv['loiSec'] > 0 && $iv['loiSec'] < self::LOI_MAX_SECONDS) {
-                $loiEligible[] = (float) $iv['loiSec'];
+            $loiSec = (int) $iv['loiSec'];
+            if ($loiSec <= 0 || $loiSec >= self::LOI_MAX_SECONDS) {
+                continue;
+            }
+            $q   = max(1, (int) ($iv['questionsAnswered'] ?? 1));
+            $sig = (string) ($iv['pathSignature'] ?? '');
+
+            $allLoiValues[] = (float) $loiSec;
+            $allQCounts[]   = (float) $q;
+            $allEligible[]  = ['iid' => $iv['iid'], 'q' => $q, 'loi' => (float) $loiSec];
+
+            if ($sig !== '') {
+                $signatureGroups[$sig][] = ['iid' => $iv['iid'], 'loi' => (float) $loiSec];
             }
         }
 
-        $medianLoi = count($loiEligible) > 0 ? $this->calculateMedian($loiEligible) : 0.0;
-        $available = $medianLoi > 0.0;
+        $globalMedian        = count($allLoiValues) > 0 ? $this->calculateMedian($allLoiValues)                    : 0.0;
+        $medianQuestionCount = count($allQCounts)   > 0 ? $this->calculateMedian($allQCounts)                      : 1.0;
+        $available           = $globalMedian > 0.0;
 
+        // maxQ (P95) conservato per la colonna Dom. risp./tot. nella view.
+        $maxQ = 1;
+        if (count($allQCounts) > 0) {
+            $sorted  = $allQCounts;
+            sort($sorted);
+            $p95idx  = max(0, (int) ceil(count($sorted) * 0.95) - 1);
+            $maxQ    = max(1, (int) $sorted[$p95idx]);
+        }
+
+        // Pass 2: score ogni intervista.
         foreach ($interviews as &$iv) {
             $loiSec = (int) $iv['loiSec'];
+            $q      = max(1, (int) ($iv['questionsAnswered'] ?? 1));
+            $sig    = (string) ($iv['pathSignature'] ?? '');
 
             if (!$available) {
                 $iv['quality_criteria']['loi'] = [
-                    'available'                  => false,
-                    'seconds'                    => $loiSec,
-                    'median_seconds'             => 0,
-                    'ratio'                      => null,
-                    'absolute_minimum_triggered' => false,
-                    'risk'                       => null,
+                    'available'                     => false,
+                    'seconds'                       => $loiSec,
+                    'question_count'                => $q,
+                    'questions_answered'            => $q,
+                    'max_q'                         => $maxQ,
+                    'median_question_count'         => (int) round($medianQuestionCount),
+                    'reference_type'                => null,
+                    'reference_sample_size'         => 0,
+                    'preliminary_reference_median'  => 0,
+                    'reference_median'              => 0,
+                    'excluded_slow_reference_cases' => 0,
+                    'global_median_seconds'         => 0,
+                    'ratio'                         => null,
+                    'absolute_minimum_triggered'    => false,
+                    'risk'                          => null,
                 ];
-                // chiave 'loi' assente da quality_risks (non disponibile)
                 continue;
             }
 
-            $ratio                = $loiSec / $medianLoi;
+            $ref       = $this->calculateReferenceMedian(
+                $iv['iid'], $q, $sig, $signatureGroups, $allEligible, $globalMedian, $maxQ
+            );
+            $refMedian = (float) $ref['reference_median'];
+
+            $ratio                = $loiSec > 0 && $refMedian > 0 ? $loiSec / $refMedian : 0.0;
             $absoluteMinTriggered = $loiSec > 0 && $loiSec < self::LOI_ABSOLUTE_MIN_SECONDS;
+
+            // ref_source: valore leggibile da buildMotivationLines (backward compat)
+            $refSource = ($ref['final_reference_source'] === 'proportional_floor') ? 'proportional' : 'bucket';
+
+            $baseCriteria = [
+                'seconds'                       => $loiSec,
+                'question_count'                => $q,
+                'questions_answered'            => $q,
+                'max_q'                         => $maxQ,
+                'median_question_count'         => (int) round($medianQuestionCount),
+                'reference_type'                => $ref['reference_type'],
+                'peer_reference_type'           => $ref['peer_reference_type'],
+                'peer_reference_median'         => $ref['peer_reference_median'],
+                'proportional_reference'        => $ref['proportional_reference'],
+                'final_reference_source'        => $ref['final_reference_source'],
+                'reference_sample_size'         => $ref['reference_sample_size'],
+                'preliminary_reference_median'  => $ref['preliminary_reference_median'],
+                'reference_median'              => (int) round($refMedian),
+                'excluded_slow_reference_cases' => $ref['excluded_slow_reference_cases'],
+                'global_median_seconds'         => (int) round($globalMedian),
+                'ref_source'                    => $refSource,
+                'ratio'                         => round($ratio, 4),
+                'absolute_minimum_triggered'    => $absoluteMinTriggered,
+            ];
+
+            if ($ratio > self::LOI_UPPER_MULTIPLIER) {
+                $iv['quality_criteria']['loi'] = array_merge($baseCriteria, [
+                    'available' => false,
+                    'too_slow'  => true,
+                    'risk'      => null,
+                ]);
+                continue;
+            }
 
             if ($absoluteMinTriggered) {
                 $risk = 100;
             } else {
-                $risk = 80; // fallback ratio < 0.30, LOI >= 60s
+                $risk = 80;
                 foreach (self::LOI_RISK_TABLE as [$minRatio, $tableRisk]) {
                     if ($ratio >= $minRatio) {
                         $risk = $tableRisk;
@@ -509,22 +593,17 @@ class FieldQualityController extends Controller
                     }
                 }
             }
-
             $risk = (int) min(100, max(0, $risk));
 
-            $iv['quality_criteria']['loi'] = [
-                'available'                  => true,
-                'seconds'                    => $loiSec,
-                'median_seconds'             => $medianLoi,
-                'ratio'                      => round($ratio, 4),
-                'absolute_minimum_triggered' => $absoluteMinTriggered,
-                'risk'                       => $risk,
-            ];
+            $iv['quality_criteria']['loi'] = array_merge($baseCriteria, [
+                'available' => true,
+                'risk'      => $risk,
+            ]);
             $iv['quality_risks']['loi'] = $risk;
         }
         unset($iv);
 
-        return $medianLoi;
+        return $globalMedian;
     }
 
     private function calculateMedian(array $values): float
@@ -891,15 +970,30 @@ class FieldQualityController extends Controller
         $rules = [];
 
         // 1. Cap Open per percentuale di fake estrema
+        // Modello bayesiano (FPR=0.20, P(bad)=0.15):
+        //   n=1 → P(bad|all_fake)=47% → cap 30 (incertezza alta)
+        //   n=2 → P(bad|all_fake)=82% → cap 15 (buona evidenza)
+        //   n=3 → P(bad|all_fake)=96% → cap  5 (quasi certo)
+        //   n≥4 → P(bad|all_fake)>99% → cap  0 (certo)
         if ($openAvail) {
             $analyzedAnswers = (int) ($open['analyzed_answers'] ?? 0);
             $fakeAnswers     = (int) ($open['fake_answers']     ?? 0);
             $fakePct         = (float) ($open['fake_percentage'] ?? 0.0);
 
-            if ($analyzedAnswers >= 5) {
-                if ($fakeAnswers >= $analyzedAnswers) {
-                    $rules[] = ['reason' => 'open_all_fake', 'maximum_score' => 0];
-                } elseif ($fakePct >= 80.0) {
+            if ($analyzedAnswers >= 1 && $fakeAnswers >= $analyzedAnswers) {
+                // Tutte fake: cap graduato per numero di risposte analizzate
+                if ($analyzedAnswers >= 4) {
+                    $rules[] = ['reason' => 'open_all_fake',         'maximum_score' =>  0];
+                } elseif ($analyzedAnswers === 3) {
+                    $rules[] = ['reason' => 'open_all_fake_few',     'maximum_score' =>  5];
+                } elseif ($analyzedAnswers === 2) {
+                    $rules[] = ['reason' => 'open_all_fake_minimal', 'maximum_score' => 15];
+                } else {
+                    $rules[] = ['reason' => 'open_all_fake_single',  'maximum_score' => 30];
+                }
+            } elseif ($analyzedAnswers >= 5) {
+                // Cap per percentuale alta di fake (solo con campione sufficiente)
+                if ($fakePct >= 80.0) {
                     $rules[] = ['reason' => 'open_fake_percentage_80', 'maximum_score' => 15];
                 } elseif ($fakePct >= 60.0) {
                     $rules[] = ['reason' => 'open_fake_percentage_60', 'maximum_score' => 30];
@@ -1125,27 +1219,30 @@ class FieldQualityController extends Controller
 
         // ---- LOI ----
         if (!empty($loi['available'])) {
-            $risk   = (int)   ($loi['risk']  ?? 0);
-            $ratio  = (float) ($loi['ratio'] ?? 1.0);
-            $absMin = !empty($loi['absolute_minimum_triggered']);
-            $pct    = (int) round($ratio * 100);
+            $risk      = (int)   ($loi['risk']  ?? 0);
+            $ratio     = (float) ($loi['ratio'] ?? 1.0);
+            $absMin    = !empty($loi['absolute_minimum_triggered']);
+            $pct       = (int) round($ratio * 100);
+            $q         = (int) ($loi['questions_answered'] ?? 0);
+            $refSource = ($loi['ref_source'] ?? 'bucket') === 'proportional' ? 'proporzionale' : 'gruppo';
+            $suffix    = $q > 0 ? " ({$q} dom.)" : '';
 
             if ($absMin) {
                 $lines['loi'] = "Intervista completata in meno di 60 secondi — altamente sospetto";
             } elseif ($risk === 0) {
-                $lines['loi'] = "Durata dell'intervista nella norma";
+                $lines['loi'] = "Durata nella norma rispetto al {$refSource}{$suffix}";
             } elseif ($risk <= 10) {
-                $lines['loi'] = "Intervista leggermente rapida ({$pct}% della mediana)";
+                $lines['loi'] = "Leggermente rapida rispetto al {$refSource}{$suffix} — {$pct}% della mediana";
             } elseif ($risk <= 20) {
-                $lines['loi'] = "Intervista un po' rapida rispetto alla mediana ({$pct}%)";
+                $lines['loi'] = "Un po' rapida rispetto al {$refSource}{$suffix} — {$pct}% della mediana";
             } elseif ($risk <= 35) {
-                $lines['loi'] = "Durata inferiore alla mediana del progetto ({$pct}%)";
+                $lines['loi'] = "Inferiore alla mediana del {$refSource}{$suffix} — {$pct}%";
             } elseif ($risk <= 50) {
-                $lines['loi'] = "LOI piuttosto bassa rispetto alla mediana ({$pct}%)";
+                $lines['loi'] = "LOI piuttosto bassa rispetto al {$refSource}{$suffix} — {$pct}% della mediana";
             } elseif ($risk <= 65) {
-                $lines['loi'] = "LOI decisamente bassa — al {$pct}% della mediana";
+                $lines['loi'] = "LOI decisamente bassa rispetto al {$refSource}{$suffix} — al {$pct}% della mediana";
             } else {
-                $lines['loi'] = "LOI estremamente bassa — al {$pct}% della mediana";
+                $lines['loi'] = "LOI estremamente bassa rispetto al {$refSource}{$suffix} — al {$pct}% della mediana";
             }
         }
 
@@ -1158,36 +1255,24 @@ class FieldQualityController extends Controller
             return;
         }
 
-        // Una sola query per recuperare tutti gli iid già salvati per questo prj+sid
-        $existingIids = array_flip(
-            UserQuality::where('prj', $prj)
-                ->where('sid', $sid)
-                ->pluck('iid')
-                ->all()
-        );
-
-        $now      = now()->toDateTimeString();
-        $toInsert = [];
+        $now  = now()->toDateTimeString();
+        $rows = [];
 
         foreach ($interviews as $iv) {
             $iid   = (string) ($iv['iid'] ?? '');
             $score = $iv['score'] ?? null;
 
-            if ($iid === '' || $score === null || isset($existingIids[$iid])) {
+            if ($iid === '' || $score === null) {
                 continue;
             }
 
-            // Solo panel Interactive
             if (($iv['panel'] ?? '') !== 'Interactive') {
                 continue;
             }
 
-            $tier = null;
-            if ($score >= 70)      { $tier = 'alta'; }
-            elseif ($score >= 50)  { $tier = 'accettabile'; }
-            else                   { $tier = 'bassa'; }
+            $tier = $score >= 70 ? 'alta' : ($score >= 50 ? 'accettabile' : 'bassa');
 
-            $toInsert[] = [
+            $rows[] = [
                 'prj'                => $prj,
                 'sid'                => $sid,
                 'iid'                => $iid,
@@ -1203,8 +1288,12 @@ class FieldQualityController extends Controller
             ];
         }
 
-        foreach (array_chunk($toInsert, 200) as $chunk) {
-            UserQuality::insert($chunk);
+        foreach (array_chunk($rows, 200) as $chunk) {
+            UserQuality::upsert(
+                $chunk,
+                ['prj', 'sid', 'iid'],
+                ['quality_score', 'quality_tier', 'quality_risk_total', 'cap_applied', 'updated_at']
+            );
         }
     }
 
@@ -1274,7 +1363,8 @@ class FieldQualityController extends Controller
                 $reasons[] = 'Intervista completata in meno di 60 secondi';
             } else {
                 $pct       = (int) round(($loi['ratio'] ?? 0) * 100);
-                $reasons[] = "LOI pari al {$pct}% della mediana del progetto";
+                $q         = (int) ($loi['questions_answered'] ?? 0);
+                $reasons[] = "LOI al {$pct}% della mediana" . ($q > 0 ? " ({$q} dom.)" : '');
             }
         }
 
@@ -1478,6 +1568,166 @@ class FieldQualityController extends Controller
         $line = fgets($handle);
         fclose($handle);
         return $line ?: null;
+    }
+
+    // Legge il file in un unico pass: conta le righe dati e costruisce la firma del percorso.
+    private function readFileMetrics(string $filePath): array
+    {
+        $handle = fopen($filePath, 'r');
+        if (!$handle) {
+            return ['questionCount' => 0, 'pathSignature' => ''];
+        }
+
+        $lineCount   = 0;
+        $questionIds = [];
+        $firstLine   = true;
+
+        while (($line = fgets($handle)) !== false) {
+            $trimmed = rtrim($line);
+            if ($trimmed === '') {
+                continue;
+            }
+            $lineCount++;
+            if ($firstLine) {
+                $firstLine = false;
+                continue; // salta header
+            }
+            $fields = explode(';', $trimmed);
+            $qid    = isset($fields[1]) ? trim($fields[1]) : '';
+            if ($qid !== '' && ctype_digit($qid) && (int) $qid > 0) {
+                $questionIds[] = (int) $qid;
+            }
+        }
+
+        fclose($handle);
+        sort($questionIds);
+
+        return [
+            'questionCount' => max(1, $lineCount - 1),
+            'pathSignature' => implode(',', $questionIds),
+        ];
+    }
+
+    // Costruisce il riferimento LOI per una singola intervista.
+    // Priorità: stesso percorso → bucket ±2/5/10 → proporzionale.
+    // Invariante: il riferimento peer non può MAI scendere sotto il proporzionale
+    // (peer può solo rendere il controllo più severo, mai più permissivo).
+    private function calculateReferenceMedian(
+        string $currentIid,
+        int    $currentQ,
+        string $currentSignature,
+        array  $signatureGroups,
+        array  $allEligible,
+        float  $globalMedian,
+        int    $maxQ
+    ): array {
+        $propRef     = $this->calculateProportionalReference($currentQ, $globalMedian, $maxQ);
+        $propRefInt  = (int) round($propRef);
+
+        // Helper: applica max(peerMedian, propRef) e costruisce il risultato completo.
+        $buildResult = function (
+            string $peerType,
+            int    $peerMedian,
+            int    $sampleSize,
+            int    $prelimMedian,
+            int    $excluded
+        ) use ($propRefInt): array {
+            $finalRef = max($peerMedian, $propRefInt);
+            return [
+                'reference_type'                => $peerType,
+                'peer_reference_type'           => $peerType,
+                'peer_reference_median'         => $peerMedian,
+                'proportional_reference'        => $propRefInt,
+                'reference_median'              => $finalRef,
+                'final_reference_source'        => $peerMedian >= $propRefInt ? 'peer' : 'proportional_floor',
+                'reference_sample_size'         => $sampleSize,
+                'preliminary_reference_median'  => $prelimMedian,
+                'excluded_slow_reference_cases' => $excluded,
+            ];
+        };
+
+        // 1. Stesso percorso (firma identica)
+        if ($currentSignature !== '') {
+            $candidates = $signatureGroups[$currentSignature] ?? [];
+            $loiValues  = [];
+            foreach ($candidates as $c) {
+                if ($c['iid'] !== $currentIid) {
+                    $loiValues[] = $c['loi'];
+                }
+            }
+            $cleaned = $this->cleanReferenceLoiGroup($loiValues);
+            if (count($cleaned['values']) >= self::LOI_MIN_REFERENCE_GROUP) {
+                $peerMedian = (int) round($this->calculateMedian($cleaned['values']));
+                return $buildResult('same_path', $peerMedian,
+                    count($cleaned['values']), (int) round($cleaned['preliminary_median']), $cleaned['excluded']);
+            }
+        }
+
+        // 2. Bucket adattivo ±2, ±5, ±10
+        foreach ([2, 5, 10] as $delta) {
+            $loiValues = [];
+            foreach ($allEligible as $e) {
+                if ($e['iid'] === $currentIid) {
+                    continue;
+                }
+                if (abs($e['q'] - $currentQ) <= $delta) {
+                    $loiValues[] = $e['loi'];
+                }
+            }
+            $cleaned = $this->cleanReferenceLoiGroup($loiValues);
+            if (count($cleaned['values']) >= self::LOI_MIN_REFERENCE_GROUP) {
+                $peerMedian = (int) round($this->calculateMedian($cleaned['values']));
+                return $buildResult("question_bucket_{$delta}", $peerMedian,
+                    count($cleaned['values']), (int) round($cleaned['preliminary_median']), $cleaned['excluded']);
+            }
+        }
+
+        // 3. Fallback proporzionale (nessun peer disponibile)
+        return [
+            'reference_type'                => 'proportional_fallback',
+            'peer_reference_type'           => null,
+            'peer_reference_median'         => null,
+            'proportional_reference'        => $propRefInt,
+            'reference_median'              => $propRefInt > 0 ? $propRefInt : (int) round($globalMedian),
+            'final_reference_source'        => 'proportional_floor',
+            'reference_sample_size'         => 0,
+            'preliminary_reference_median'  => 0,
+            'excluded_slow_reference_cases' => 0,
+        ];
+    }
+
+    // Filtra e pulisce un gruppo LOI: esclude LOI > 2× mediana preliminare.
+    // Le escluse non sono penalizzate, solo rimosse dalla costruzione del riferimento.
+    private function cleanReferenceLoiGroup(array $loiValues): array
+    {
+        $valid = array_values(array_filter($loiValues, fn($v) => $v > 0 && $v < self::LOI_MAX_SECONDS));
+
+        if (empty($valid)) {
+            return ['values' => [], 'preliminary_median' => 0.0, 'excluded' => 0];
+        }
+
+        $prelimMedian = $this->calculateMedian($valid);
+        $threshold    = $prelimMedian * 2.0;
+        $cleaned      = [];
+        $excluded     = 0;
+
+        foreach ($valid as $v) {
+            if ($v <= $threshold) {
+                $cleaned[] = $v;
+            } else {
+                $excluded++;
+            }
+        }
+
+        return ['values' => $cleaned, 'preliminary_median' => $prelimMedian, 'excluded' => $excluded];
+    }
+
+    private function calculateProportionalReference(int $q, float $globalMedian, int $maxQ): float
+    {
+        if ($maxQ <= 0 || $q <= 0 || $globalMedian <= 0) {
+            return $globalMedian > 0 ? $globalMedian : 0.0;
+        }
+        return ($q / $maxQ) * $globalMedian;
     }
 
     private function detectPanel(array $data, ?int $dbPanelValue = null): string
