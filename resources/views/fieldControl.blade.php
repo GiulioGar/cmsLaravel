@@ -187,16 +187,6 @@
                     </div>
                 </div>
 
-                <div class="mt-3 d-flex flex-column gap-2">
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#modalQuoteStima"
-                       class="btn btn-sm btn-outline-secondary w-100">
-                        <i class="fas fa-sliders-h me-1"></i>
-                        Quote stima
-                        @if(!empty($quotaTargetsPreview))
-                            <span class="badge bg-secondary ms-1">{{ count($quotaTargetsPreview) }}</span>
-                        @endif
-                    </a>
-                </div>
             </div>
         </div>
     </div>
@@ -624,10 +614,7 @@
                                     </div>
 
                                     @php
-                                        $irTooltip1 = 'IR: ' . number_format($irPonderatoData['ir_ponderato'], 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
-                                        $irTooltip1 .= $irPonderatoData['ir_ultimo_giorno'] !== null
-                                            ? '<br>Tot: ' . number_format($irPonderatoData['ir_totale'], 1) . '% — Giorno: ' . number_format($irPonderatoData['ir_ultimo_giorno'], 1) . '% su ' . $irPonderatoData['base_ultimo_giorno'] . ' casi'
-                                            : '<br>Ultimo giorno: dati insufficienti';
+                                        $irTooltip1 = 'IR: ' . number_format($redemption, 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
                                     @endphp
                                     <div class="fc-kpi-section-header fc-wide">
                                         <span>
@@ -635,11 +622,9 @@
                                             <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip" data-bs-html="true"
                                                title="{!! $irTooltip1 !!}" style="opacity:.45; font-size:.9em"></i>
                                         </span>
-                                        <a href="#" class="text-secondary" data-bs-toggle="modal" data-bs-target="#modalQuoteStima"
-                                           title="Configura quote stima"><i class="fas fa-sliders-h"></i></a>
                                     </div>
 
-                                    @if($stimaQuoteDettaglio !== null)
+                                    @if($stimaInterviste !== null)
                                     <div class="fc-kpi-extra-item">
                                         <div class="d-flex align-items-center gap-1 mb-1">
                                             <div class="fc-kpi-label mb-0">Max stimabile</div>
@@ -647,33 +632,8 @@
                                                data-bs-toggle="tooltip"
                                                title="Capacità massima del panel"></i>
                                         </div>
-                                        <div class="fc-kpi-value text-primary fw-bold">{{ $stimaQuoteDettaglio['totali']['max_stimabile'] }}</div>
+                                        <div class="fc-kpi-value text-primary fw-bold">{{ $stimaInterviste }}</div>
                                     </div>
-
-                                    @if(!empty($stimaQuoteDettaglio['dimensioni']))
-                                    <div class="fc-kpi-extra-item">
-                                        <div class="d-flex align-items-center gap-1 mb-1">
-                                            <div class="fc-kpi-label mb-0">Per chiusura field</div>
-                                            <i class="fas fa-info-circle text-secondary"
-                                               data-bs-toggle="tooltip"
-                                               title="Stima casi disponibili per completare le quote e chiudere il field"></i>
-                                        </div>
-                                        @if($stimaQuoteDettaglio['totali']['tutte'])
-                                            <div class="fc-kpi-value text-success fw-bold" style="font-size:.95em">
-                                                Quote raggiungibili <i class="fas fa-check-circle ms-1" style="font-size:.8em"></i>
-                                            </div>
-                                        @else
-                                            <div class="fc-kpi-value text-warning fw-bold">{{ $stimaQuoteDettaglio['totali']['stimabile_residuo'] }}</div>
-                                            <div class="text-muted" style="font-size:.65em; margin-top:.1rem">Non raggiungibili</div>
-                                        @endif
-                                    </div>
-                                    <div class="fc-wide mt-1">
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#modalStimaDettaglio"
-                                           class="btn btn-sm btn-outline-primary w-100">
-                                            <i class="fas fa-table me-1"></i>Dettaglio stima
-                                        </a>
-                                    </div>
-                                    @endif
                                     @endif
                                 </div>
                             @endif
@@ -873,10 +833,7 @@
                                             </div>
 
                                             @php
-                                                $irTooltip2 = 'IR: ' . number_format($irPonderatoData['ir_ponderato'], 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
-                                                $irTooltip2 .= $irPonderatoData['ir_ultimo_giorno'] !== null
-                                                    ? '<br>Tot: ' . number_format($irPonderatoData['ir_totale'], 1) . '% — Giorno: ' . number_format($irPonderatoData['ir_ultimo_giorno'], 1) . '% su ' . $irPonderatoData['base_ultimo_giorno'] . ' casi'
-                                                    : '<br>Ultimo giorno: dati insufficienti';
+                                                $irTooltip2 = 'IR: ' . number_format($redemption, 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
                                             @endphp
                                             <div class="fc-kpi-section-header fc-wide">
                                                 <span>
@@ -884,11 +841,9 @@
                                                     <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip" data-bs-html="true"
                                                        title="{!! $irTooltip2 !!}" style="opacity:.45; font-size:.9em"></i>
                                                 </span>
-                                                <a href="#" class="text-secondary" data-bs-toggle="modal" data-bs-target="#modalQuoteStima"
-                                                   title="Configura quote stima"><i class="fas fa-sliders-h"></i></a>
                                             </div>
 
-                                            @if($stimaQuoteDettaglio !== null)
+                                            @if($stimaInterviste !== null)
                                             <div class="fc-kpi-extra-item">
                                                 <div class="d-flex align-items-center gap-1 mb-1">
                                                     <div class="fc-kpi-label mb-0">Max stimabile</div>
@@ -896,33 +851,8 @@
                                                        data-bs-toggle="tooltip"
                                                        title="Capacità massima del panel"></i>
                                                 </div>
-                                                <div class="fc-kpi-value text-primary fw-bold">{{ $stimaQuoteDettaglio['totali']['max_stimabile'] }}</div>
+                                                <div class="fc-kpi-value text-primary fw-bold">{{ $stimaInterviste }}</div>
                                             </div>
-
-                                            @if(!empty($stimaQuoteDettaglio['dimensioni']))
-                                            <div class="fc-kpi-extra-item">
-                                                <div class="d-flex align-items-center gap-1 mb-1">
-                                                    <div class="fc-kpi-label mb-0">Per chiusura field</div>
-                                                    <i class="fas fa-info-circle text-secondary"
-                                                       data-bs-toggle="tooltip"
-                                                       title="Stima casi disponibili per completare le quote e chiudere il field"></i>
-                                                </div>
-                                                @if($stimaQuoteDettaglio['totali']['tutte'])
-                                                    <div class="fc-kpi-value text-success fw-bold" style="font-size:.95em">
-                                                        Quote raggiungibili <i class="fas fa-check-circle ms-1" style="font-size:.8em"></i>
-                                                    </div>
-                                                @else
-                                                    <div class="fc-kpi-value text-warning fw-bold">{{ $stimaQuoteDettaglio['totali']['stimabile_residuo'] }}</div>
-                                                    <div class="text-muted" style="font-size:.65em; margin-top:.1rem">Non raggiungibili</div>
-                                                @endif
-                                            </div>
-                                            <div class="fc-wide mt-1">
-                                                <a href="#" data-bs-toggle="modal" data-bs-target="#modalStimaDettaglio"
-                                                   class="btn btn-sm btn-outline-primary w-100">
-                                                    <i class="fas fa-table me-1"></i>Dettaglio stima
-                                                </a>
-                                            </div>
-                                            @endif
                                             @endif
                                         </div>
                                     @endif
@@ -1501,417 +1431,6 @@
 
 
 
-{{-- MODAL: DETTAGLIO STIMA PER QUOTA --}}
-@if($stimaQuoteDettaglio !== null)
-<div class="modal fade" id="modalStimaDettaglio" tabindex="-1" aria-labelledby="modalStimaDettaglioLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalStimaDettaglioLabel">
-                    <i class="fas fa-table me-2"></i>Dettaglio stima per quota
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
-            </div>
-            <div class="modal-body">
-
-                {{-- Parametri stima --}}
-                <div class="alert alert-light border small mb-3">
-                    Fattore stima: <strong>{{ $stimaQuoteDettaglio['fattore'] }}%</strong>
-                    &nbsp;·&nbsp; IR ponderato: <strong>{{ number_format($stimaQuoteDettaglio['ir_usato'], 1) }}%</strong>
-                    &nbsp;·&nbsp; Media red panel: <strong>{{ number_format($stimaQuoteDettaglio['media_red_panel'], 1) }}%</strong>
-                    &nbsp;·&nbsp; Dimensioni configurate: <strong>{{ $stimaQuoteDettaglio['totali']['n_dimensioni'] }}</strong>
-                </div>
-
-                {{-- Totali prudenziali --}}
-                @if(empty($stimaQuoteDettaglio['dimensioni']))
-                    {{-- Nessuna quota configurata: stima totale semplice --}}
-                    <div class="alert alert-info border-0 mb-4">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Nessuna quota configurata. La stima è calcolata sull'intero bacino di utenti disponibili.
-                        Usa il pulsante <strong>Quote Stima</strong> per aggiungere quote demografiche e ottenere una stima per coorte.
-                    </div>
-                    <div class="row g-3 mb-4 justify-content-center">
-                        <div class="col-6 col-md-4">
-                            <div class="card border-primary h-100">
-                                <div class="card-body text-center py-2">
-                                    <div class="text-muted small mb-1">Max stimabile</div>
-                                    <div class="fs-4 fw-bold text-primary">{{ $stimaQuoteDettaglio['totali']['max_stimabile'] }}</div>
-                                    <div class="text-muted" style="font-size:0.7rem">utenti disponibili × fattore stima</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                <div class="row g-3 mb-4">
-                    <div class="col-6">
-                        <div class="card border-primary h-100">
-                            <div class="card-body text-center py-2">
-                                <div class="text-muted small mb-1">Totale prudenziale max stimabile</div>
-                                <div class="fs-4 fw-bold text-primary">{{ $stimaQuoteDettaglio['totali']['max_stimabile'] }}</div>
-                                <div class="text-muted" style="font-size:0.7rem">min tra dimensioni — senza vincolo mancanti</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="card border-success h-100">
-                            <div class="card-body text-center py-2">
-                                <div class="text-muted small mb-1">Totale prudenziale su mancanti</div>
-                                <div class="fs-4 fw-bold text-success">{{ $stimaQuoteDettaglio['totali']['stimabile_residuo'] }}</div>
-                                <div class="text-muted" style="font-size:0.7rem">min tra dimensioni — capped su target residuo</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Riepilogo per dimensione --}}
-                <div class="table-responsive mb-4">
-                    <table class="table table-sm table-bordered align-middle text-center">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="text-start">Dimensione</th>
-                                <th>Totale max stimabile</th>
-                                <th>Totale su mancanti</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($stimaQuoteDettaglio['dimensioni'] as $dim => $dimData)
-                                <tr>
-                                    <td class="text-start fw-semibold">{{ $dimData['label'] }}</td>
-                                    <td class="text-primary fw-semibold">{{ $dimData['max_stimabile'] }}</td>
-                                    <td class="text-success fw-semibold">{{ $dimData['stimabile_residuo'] }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                @endif
-
-                {{-- Dettaglio per singola quota, separato per dimensione --}}
-                @foreach($stimaQuoteDettaglio['dimensioni'] as $dim => $dimData)
-                    <h6 class="text-muted mb-2 mt-3">{{ $dimData['label'] }}</h6>
-                    <div class="table-responsive mb-3">
-                        <table class="table table-sm table-bordered align-middle text-center">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-start">Quota</th>
-                                    <th>Target</th>
-                                    <th>Attuali</th>
-                                    <th>Mancano</th>
-                                    <th>Utenti disp.</th>
-                                    <th>Max stimabile</th>
-                                    <th>Stimabile su mancanti</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($dimData['quote'] as $q)
-                                    <tr>
-                                        <td class="text-start">{{ $q['label'] }}</td>
-                                        <td>{{ $q['target'] ?? '—' }}</td>
-                                        <td>{{ $q['attuali'] ?? '—' }}</td>
-                                        <td>{{ $q['mancano'] ?? '—' }}</td>
-                                        <td>{{ $q['utenti_disponibili'] }}</td>
-                                        <td class="text-primary fw-semibold">{{ $q['max_stimabile'] }}</td>
-                                        <td class="text-success fw-semibold">{{ $q['stimabile_residuo'] }}</td>
-                                    </tr>
-                                @endforeach
-                                <tr class="table-secondary fw-semibold">
-                                    <td class="text-start">Totale {{ $dimData['label'] }}</td>
-                                    <td colspan="4"></td>
-                                    <td class="text-primary">{{ $dimData['max_stimabile'] }}</td>
-                                    <td class="text-success">{{ $dimData['stimabile_residuo'] }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                @endforeach
-
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Chiudi</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-{{-- MODAL: QUOTE STIMA --}}
-<div class="modal fade" id="modalQuoteStima" tabindex="-1" aria-labelledby="modalQuoteStimaLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalQuoteStimaLabel">
-                    <i class="fas fa-sliders-h me-2"></i>Quote per stima interviste
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
-            </div>
-            <div class="modal-body">
-
-                @if(!empty($quotaTargetsPreview))
-                    <h6 class="text-muted mb-2">Quote configurate</h6>
-                    <div class="table-responsive mb-4">
-                        @php $qtMap = $quotaTargetsAvanzati->keyBy('id'); @endphp
-                        <table class="table table-sm table-bordered align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Tipo</th>
-                                    <th>Valore</th>
-                                    <th>%</th>
-                                    <th>Quota collegata</th>
-                                    <th>Stato</th>
-                                    <th>Azioni</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($quotaTargetsPreview as $row)
-                                    @php $qt = $qtMap->get($row['id']); @endphp
-                                    <tr>
-                                        <td>{{ $row['tipo'] }}</td>
-                                        <td>{{ $row['valore'] }}</td>
-                                        <td>{{ $row['percentuale'] !== null ? $row['percentuale'] . '%' : '—' }}</td>
-                                        <td><code class="text-secondary">{{ $row['quota_collegata'] }}</code></td>
-                                        <td class="text-nowrap">{{ $row['stato'] }}</td>
-                                        <td class="text-nowrap">
-                                            <button type="button"
-                                                class="btn btn-outline-primary btn-sm py-0 btn-edit-quota"
-                                                data-quota-id="{{ $row['id'] }}"
-                                                data-action="{{ route('fieldControl.quotaTargets.update', $row['id']) }}"
-                                                data-dimension="{{ $qt->quota_dimension ?? '' }}"
-                                                data-label="{{ $qt->quota_label ?? '' }}"
-                                                data-percent="{{ $qt->target_percent ?? '' }}"
-                                                data-status-id="{{ $qt->quota_status_id ?? '' }}"
-                                                data-gender="{{ $qt->gender ?? '' }}"
-                                                data-age-min="{{ $qt->age_min ?? '' }}"
-                                                data-age-max="{{ $qt->age_max ?? '' }}"
-                                                data-area="{{ $qt->area ?? '' }}"
-                                                onclick="apriModalEdit(this)">
-                                                Modifica
-                                            </button>
-                                            <form method="POST"
-                                                action="{{ route('fieldControl.quotaTargets.destroy', $row['id']) }}"
-                                                class="d-inline"
-                                                onsubmit="return confirm('Confermi la rimozione di questa quota?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <input type="hidden" name="sur_id" value="{{ $sid }}">
-                                                <button type="submit" class="btn btn-outline-danger btn-sm py-0">Rimuovi</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <p class="text-muted small mb-4">Nessuna quota configurata per questa ricerca.</p>
-                @endif
-
-                <hr>
-
-                <h6 class="text-muted mb-3">Aggiungi quota</h6>
-                @if($errors->any())
-                    <div class="alert alert-danger py-2 mb-3 small">
-                        <ul class="mb-0 ps-3">
-                            @foreach($errors->all() as $e)
-                                <li>{{ $e }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form method="POST" action="{{ route('fieldControl.quotaTargets.store') }}" id="formNuovaQuotaStima" novalidate>
-                    @csrf
-                    <input type="hidden" name="panel_control_id" value="{{ $panelData->id ?? '' }}">
-                    <input type="hidden" name="sur_id" value="{{ $sid }}">
-                    <input type="hidden" name="prj" value="{{ $prj }}">
-
-                    {{-- Riga 1: tipo / label / % / quota collegata --}}
-                    <div class="row g-2 align-items-end">
-                        <div class="col-12 col-sm-3">
-                            <label class="form-label small mb-1">Tipo quota</label>
-                            <select name="quota_dimension" id="quotaDimension" class="form-select form-select-sm">
-                                <option value="">— Seleziona —</option>
-                                <option value="gender" {{ old('quota_dimension') === 'gender' ? 'selected' : '' }}>Sesso</option>
-                                <option value="age"    {{ old('quota_dimension') === 'age'    ? 'selected' : '' }}>Età</option>
-                                <option value="area"   {{ old('quota_dimension') === 'area'   ? 'selected' : '' }}>Area</option>
-                            </select>
-                        </div>
-
-                        <div class="col-12 col-sm-3">
-                            <label class="form-label small mb-1">Etichetta <span class="text-muted">(opz.)</span></label>
-                            <input type="text" name="quota_label" value="{{ old('quota_label') }}"
-                                class="form-control form-control-sm" placeholder="es. Uomo, 18-24, Nord">
-                        </div>
-
-                        <div class="col-6 col-sm-2">
-                            <label class="form-label small mb-1">% target</label>
-                            <input type="number" name="target_percent" value="{{ old('target_percent') }}"
-                                class="form-control form-control-sm" min="0" max="100" step="0.1" placeholder="50">
-                        </div>
-
-                        <div class="col-12 col-sm-4">
-                            <label class="form-label small mb-1">Quota collegata <span class="text-danger">*</span></label>
-                            <select name="quota_status_id" class="form-select form-select-sm">
-                                <option value="">— Seleziona —</option>
-                                @foreach($quotaStatusOptions as $opt)
-                                    <option value="{{ $opt->id }}" {{ (int) old('quota_status_id') === $opt->id ? 'selected' : '' }}>
-                                        {{ $opt->target_name }} ({{ $opt->current_value }}/{{ $opt->target_value }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    {{-- Riga 2: campi condizionali per dimension --}}
-                    <div class="row g-2 mt-1 d-none" id="fieldsGender">
-                        <div class="col-12 col-sm-4">
-                            <label class="form-label small mb-1">Sesso <span class="text-danger">*</span></label>
-                            <select name="gender" class="form-select form-select-sm">
-                                <option value="">— Seleziona —</option>
-                                <option value="1" {{ (int) old('gender') === 1 ? 'selected' : '' }}>Uomo</option>
-                                <option value="2" {{ (int) old('gender') === 2 ? 'selected' : '' }}>Donna</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mt-1 d-none" id="fieldsAge">
-                        <div class="col-6 col-sm-3">
-                            <label class="form-label small mb-1">Età min <span class="text-danger">*</span></label>
-                            <input type="number" name="age_min" value="{{ old('age_min') }}"
-                                class="form-control form-control-sm" min="0" max="120" placeholder="18">
-                        </div>
-                        <div class="col-6 col-sm-3">
-                            <label class="form-label small mb-1">Età max <span class="text-danger">*</span></label>
-                            <input type="number" name="age_max" value="{{ old('age_max') }}"
-                                class="form-control form-control-sm" min="0" max="120" placeholder="54">
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mt-1 d-none" id="fieldsArea">
-                        <div class="col-6 col-sm-3">
-                            <label class="form-label small mb-1">Codice area <span class="text-danger">*</span></label>
-                            <input type="number" name="area" value="{{ old('area') }}"
-                                class="form-control form-control-sm" placeholder="es. 1">
-                        </div>
-                    </div>
-
-                    <div class="mt-3 text-end">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annulla</button>
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i>Aggiungi
-                        </button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- MODAL: MODIFICA QUOTA --}}
-<div class="modal fade" id="modalEditQuota" tabindex="-1" aria-labelledby="modalEditQuotaLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalEditQuotaLabel">
-                    <i class="fas fa-edit me-2"></i>Modifica quota
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
-            </div>
-            <div class="modal-body">
-
-                @if($errors->any() && old('_modal_origin') === 'edit')
-                    <div class="alert alert-danger py-2 mb-3 small">
-                        <ul class="mb-0 ps-3">
-                            @foreach($errors->all() as $e)
-                                <li>{{ $e }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form method="POST" id="formEditQuota" novalidate>
-                    @csrf
-                    @method('PUT')
-                    <input type="hidden" name="_modal_origin" value="edit">
-                    <input type="hidden" name="_edit_quota_id" id="editQuotaId">
-                    <input type="hidden" name="sur_id" value="{{ $sid }}">
-
-                    <div class="row g-2 align-items-end">
-                        <div class="col-12 col-sm-3">
-                            <label class="form-label small mb-1">Tipo quota</label>
-                            <select name="quota_dimension" id="editQuotaDimension" class="form-select form-select-sm">
-                                <option value="">— Seleziona —</option>
-                                <option value="gender">Sesso</option>
-                                <option value="age">Età</option>
-                                <option value="area">Area</option>
-                            </select>
-                        </div>
-
-                        <div class="col-12 col-sm-3">
-                            <label class="form-label small mb-1">Etichetta <span class="text-muted">(opz.)</span></label>
-                            <input type="text" name="quota_label" class="form-control form-control-sm" placeholder="es. Uomo, 18-24, Nord">
-                        </div>
-
-                        <div class="col-6 col-sm-2">
-                            <label class="form-label small mb-1">% target</label>
-                            <input type="number" name="target_percent" class="form-control form-control-sm" min="0" max="100" step="0.1" placeholder="50">
-                        </div>
-
-                        <div class="col-12 col-sm-4">
-                            <label class="form-label small mb-1">Quota collegata <span class="text-danger">*</span></label>
-                            <select name="quota_status_id" class="form-select form-select-sm">
-                                <option value="">— Seleziona —</option>
-                                @foreach($quotaStatusOptions as $opt)
-                                    <option value="{{ $opt->id }}">
-                                        {{ $opt->target_name }} ({{ $opt->current_value }}/{{ $opt->target_value }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mt-1 d-none" id="editFieldsGender">
-                        <div class="col-12 col-sm-4">
-                            <label class="form-label small mb-1">Sesso <span class="text-danger">*</span></label>
-                            <select name="gender" class="form-select form-select-sm">
-                                <option value="">— Seleziona —</option>
-                                <option value="1">Uomo</option>
-                                <option value="2">Donna</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mt-1 d-none" id="editFieldsAge">
-                        <div class="col-6 col-sm-3">
-                            <label class="form-label small mb-1">Età min <span class="text-danger">*</span></label>
-                            <input type="number" name="age_min" class="form-control form-control-sm" min="0" max="120" placeholder="18">
-                        </div>
-                        <div class="col-6 col-sm-3">
-                            <label class="form-label small mb-1">Età max <span class="text-danger">*</span></label>
-                            <input type="number" name="age_max" class="form-control form-control-sm" min="0" max="120" placeholder="54">
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mt-1 d-none" id="editFieldsArea">
-                        <div class="col-6 col-sm-3">
-                            <label class="form-label small mb-1">Codice area <span class="text-danger">*</span></label>
-                            <input type="number" name="area" class="form-control form-control-sm" placeholder="es. 1">
-                        </div>
-                    </div>
-
-                    <div class="mt-3 text-end">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annulla</button>
-                        <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-save me-1"></i>Salva modifiche
-                        </button>
-                    </div>
-                </form>
-
-            </div>
-        </div>
-    </div>
-</div>
-
 @endsection
 
 @section('scripts')
@@ -1933,68 +1452,12 @@
 
 <script>
 (function () {
-    // ── Flash messages ──────────────────────────────────────────────────────
     @if(session('success'))
-        Swal.fire({ icon: 'success', title: 'Fatto', text: @json(session('success')), timer: 2000, showConfirmButton: false })
-            .then(function () {
-                var el = document.getElementById('modalQuoteStima');
-                if (el) { bootstrap.Modal.getOrCreateInstance(el).show(); }
-            });
+        Swal.fire({ icon: 'success', title: 'Fatto', text: @json(session('success')), timer: 2000, showConfirmButton: false });
     @endif
     @if(session('error'))
         Swal.fire({ icon: 'error', title: 'Errore', text: @json(session('error')) });
     @endif
-
-    // ── Riapertura modal su errori di validazione ───────────────────────────
-    @if($errors->any() && old('_modal_origin') === 'edit')
-        var _editId  = {{ (int) old('_edit_quota_id', 0) }};
-        var _editBtn = document.querySelector('.btn-edit-quota[data-quota-id="' + _editId + '"]');
-        if (_editBtn) { apriModalEdit(_editBtn); }
-    @elseif($errors->any())
-        var _el = document.getElementById('modalQuoteStima');
-        if (_el) { bootstrap.Modal.getOrCreateInstance(_el).show(); }
-    @endif
-
-    // ── Toggle add form ─────────────────────────────────────────────────────
-    var _addSel = document.getElementById('quotaDimension');
-    if (_addSel) {
-        _addSel.addEventListener('change', _toggleAddDim);
-        _toggleAddDim();
-    }
-    function _toggleAddDim() {
-        var v = document.getElementById('quotaDimension').value;
-        document.getElementById('fieldsGender').classList.toggle('d-none', v !== 'gender');
-        document.getElementById('fieldsAge').classList.toggle('d-none', v !== 'age');
-        document.getElementById('fieldsArea').classList.toggle('d-none', v !== 'area');
-    }
-
-    // ── Toggle edit form ────────────────────────────────────────────────────
-    var _editSel = document.getElementById('editQuotaDimension');
-    if (_editSel) {
-        _editSel.addEventListener('change', _toggleEditDim);
-    }
-    function _toggleEditDim() {
-        var v = document.getElementById('editQuotaDimension').value;
-        document.getElementById('editFieldsGender').classList.toggle('d-none', v !== 'gender');
-        document.getElementById('editFieldsAge').classList.toggle('d-none', v !== 'age');
-        document.getElementById('editFieldsArea').classList.toggle('d-none', v !== 'area');
-    }
 }());
-
-function apriModalEdit(btn) {
-    var form = document.getElementById('formEditQuota');
-    form.action = btn.dataset.action;
-    document.getElementById('editQuotaId').value         = btn.dataset.quotaId   || '';
-    form.querySelector('[name="quota_dimension"]').value = btn.dataset.dimension || '';
-    form.querySelector('[name="quota_label"]').value     = btn.dataset.label     || '';
-    form.querySelector('[name="target_percent"]').value  = btn.dataset.percent   || '';
-    form.querySelector('[name="quota_status_id"]').value = btn.dataset.statusId  || '';
-    form.querySelector('[name="gender"]').value          = btn.dataset.gender    || '';
-    form.querySelector('[name="age_min"]').value         = btn.dataset.ageMin    || '';
-    form.querySelector('[name="age_max"]').value         = btn.dataset.ageMax    || '';
-    form.querySelector('[name="area"]').value            = btn.dataset.area      || '';
-    form.querySelector('[name="quota_dimension"]').dispatchEvent(new Event('change'));
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditQuota')).show();
-}
 </script>
 @endsection

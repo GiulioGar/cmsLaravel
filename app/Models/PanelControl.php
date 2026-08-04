@@ -26,12 +26,7 @@ class PanelControl extends Model
     // Campi di tipo datetime
     protected $dates = ['sur_date', 'last_update', 'end_field'];
 
-    public function quotaTargets()
-    {
-        return $this->hasMany(PanelControlQuotaTarget::class, 'panel_control_id', 'id');
-    }
-
-       // Calcola i giorni in field
+   // Calcola i giorni in field
        public function giorniInField()
        {
            return Carbon::parse($this->sur_date)->diffInDays(Carbon::now());
