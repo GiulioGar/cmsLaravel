@@ -597,6 +597,21 @@
                             </div>
 
                             <div class="fc-kpi-value">{{ $counts['contatti'] }}</div>
+
+                            @php
+                                $irPanelTot = ($abilitati > 0 && isset($panelCounts['Interactive']))
+                                    ? round((($panelCounts['Interactive']['contatti'] ?? 0) / $abilitati) * 100, 1)
+                                    : null;
+                            @endphp
+                            @if($irPanelTot !== null)
+                            <div class="fc-kpi-meta-row">
+                                <div class="fc-kpi-pill"
+                                    data-bs-toggle="tooltip"
+                                    title="IR panel: contatti Interactive su abilitati ({{ $panelCounts['Interactive']['contatti'] ?? 0 }}/{{ $abilitati }})">
+                                    {{ rtrim(rtrim(number_format($irPanelTot, 1), '0'), '.') }}%
+                                </div>
+                            </div>
+                            @endif
                         </div>
 
                             </div>
@@ -816,6 +831,19 @@
                                     </div>
 
                                     <div class="fc-kpi-value">{{ $panelData['contatti'] }}</div>
+
+                                    @if($panelName === 'Interactive' && $abilitati > 0)
+                                    @php
+                                        $irPanelTab = round(($panelData['contatti'] / $abilitati) * 100, 1);
+                                    @endphp
+                                    <div class="fc-kpi-meta-row">
+                                        <div class="fc-kpi-pill"
+                                            data-bs-toggle="tooltip"
+                                            title="IR panel: contatti su abilitati ({{ $panelData['contatti'] }}/{{ $abilitati }})">
+                                            {{ rtrim(rtrim(number_format($irPanelTab, 1), '0'), '.') }}%
+                                        </div>
+                                    </div>
+                                    @endif
                                 </div>
                                     </div>
 

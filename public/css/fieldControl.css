@@ -1053,6 +1053,7 @@ h3 {font-size: 15px!important;}
 .fc-danger::after{ background: linear-gradient(90deg, rgba(220,38,38,0), rgba(220,38,38,.38), rgba(220,38,38,0)); }
 .fc-info::after{ background: linear-gradient(90deg, rgba(59,130,246,0), rgba(59,130,246,.38), rgba(59,130,246,0)); }
 .fc-dark::after{ background: linear-gradient(90deg, rgba(15,23,42,0), rgba(15,23,42,.28), rgba(15,23,42,0)); }
+.fc-base::after{ background: linear-gradient(90deg, rgba(124,58,237,0), rgba(124,58,237,.32), rgba(124,58,237,0)); }
 
 .fc-kpi-extra{
   display:grid;
@@ -1815,6 +1816,11 @@ h3 {font-size: 15px!important;}
 .fc-base .fc-kpi-icon{
   background: rgba(245,243,255,.95);
   color: #7c3aed;
+}
+
+.fc-base .fc-kpi-pill{
+  color:#6d28d9;
+  background: rgba(245,243,255,.95);
 }
 
 @media (max-width: 576px){

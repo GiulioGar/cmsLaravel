@@ -88,6 +88,7 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     $bytes = $panelData->bytes ?? 0;
 
     $this->updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes);
+    $this->trackPanelEnabledSnapshot($panelData, $abilitati);
 
     /*
     |--------------------------------------------------------------------------
@@ -411,6 +412,24 @@ $redPanel = ($abilitati > 0)
             'costo' => $costo
         ]);
     }
+
+private function trackPanelEnabledSnapshot($panelData, int $abilitati): void
+{
+    if (!$panelData || (int) ($panelData->panel ?? 0) !== 1) {
+        return;
+    }
+
+    $snapshot = $panelData->panel_enabled_snapshot;
+
+    if ($snapshot === null || (int) $snapshot !== $abilitati) {
+        DB::table('t_panel_control')
+            ->where('sur_id', $panelData->sur_id)
+            ->update([
+                'panel_enabled_snapshot' => $abilitati,
+                'panel_enabled_changed_at' => now(),
+            ]);
+    }
+}
 
 private function getUtentiDisponibili($sid, $panelTarget)
 {
