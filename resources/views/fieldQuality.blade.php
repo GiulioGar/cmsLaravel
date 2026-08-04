@@ -124,9 +124,13 @@
                 ? ($ps['lois'][$n/2-1] + $ps['lois'][$n/2]) / 2
                 : $ps['lois'][($n-1)/2])
             : 0;
-        $loiMin = floor($ps['loiMedian'] / 60);
-        $loiSec = (int)$ps['loiMedian'] % 60;
-        $ps['loiMedianFmt'] = $loiMin . '.' . str_pad((string)$loiSec, 2, '0', STR_PAD_LEFT) . ' min';
+        $_mS = (int)$ps['loiMedian'];
+        $_mH = (int)floor($_mS / 3600);
+        $_mM = (int)floor(($_mS % 3600) / 60);
+        $_mSec = $_mS % 60;
+        $ps['loiMedianFmt'] = $_mH > 0
+            ? sprintf('%02d:%02d:%02d', $_mH, $_mM, $_mSec)
+            : sprintf('%02d:%02d', $_mM, $_mSec);
         $ps['avgScore'] = count($ps['scores']) > 0
             ? round(array_sum($ps['scores']) / count($ps['scores']), 1)
             : null;
@@ -155,18 +159,52 @@
     sort($uniquePanels);
 
     /* ---- LOI lookup per IID ---- */
-    $loiRatioByIid   = [];
-    $loiSecByIid     = [];
-    $loiTooSlowByIid = [];
-    $loiSurveyMaxQ   = null; // stesso per tutte le interviste del survey
+    $loiRatioByIid      = [];
+    $loiSecByIid        = [];
+    $loiTooSlowByIid    = [];
+    $loiCriteriaByIid   = [];
+    $loiSurveyRefQCount = null;
+    $loiSurveyRefType   = null;
+    $loiSurveyRefFullSec = null;
+    $loiSurveySampleSize = null;
+    $loiSurveyExcluded  = null;
+    $loiSurveyCoverage  = null;
+    /* helper per formattare secondi in mm:ss o hh:mm:ss (usato nella view) */
+    $fmtLoi = function($s) {
+        $s = (int) $s;
+        if ($s <= 0) { return '—'; }
+        $h = (int) floor($s / 3600);
+        $m = (int) floor(($s % 3600) / 60);
+        $sec = $s % 60;
+        if ($h > 0) { return sprintf('%02d:%02d:%02d', $h, $m, $sec); }
+        return sprintf('%02d:%02d', $m, $sec);
+    };
     foreach ($completeInterviews as $_iv) {
-        $loiRatioByIid[$_iv['iid']]   = $_iv['quality_criteria']['loi']['ratio'] ?? null;
-        $loiSecByIid[$_iv['iid']]     = $_iv['loiSec'] ?? 0;
-        $loiTooSlowByIid[$_iv['iid']] = !empty($_iv['quality_criteria']['loi']['too_slow']);
-        if ($loiSurveyMaxQ === null && isset($_iv['quality_criteria']['loi']['max_q'])) {
-            $loiSurveyMaxQ = (int) $_iv['quality_criteria']['loi']['max_q'];
+        $_loi = $_iv['quality_criteria']['loi'] ?? [];
+        $loiRatioByIid[$_iv['iid']]    = $_loi['ratio'] ?? null;
+        $loiSecByIid[$_iv['iid']]      = $_iv['loiSec'] ?? 0;
+        $loiTooSlowByIid[$_iv['iid']]  = !empty($_loi['too_slow']);
+        $loiCriteriaByIid[$_iv['iid']] = $_loi;
+        if ($loiSurveyRefQCount === null && isset($_loi['reference_question_count'])) {
+            $loiSurveyRefQCount  = (int)   $_loi['reference_question_count'];
+            $loiSurveyRefType    = $_loi['reference_type']           ?? null;
+            $loiSurveyRefFullSec = $_loi['reference_full_seconds']   ?? null;
+            $loiSurveySampleSize = (int)  ($_loi['reference_sample_size'] ?? 0);
+            $loiSurveyExcluded   = (int)  ($_loi['excluded_slow_reference_cases'] ?? 0);
+            $loiSurveyCoverage   = $_loi['reference_coverage'] ?? null;
         }
     }
+
+    /* Mediana LOI osservata (tutte le interviste valide, esclude <60s e >=2700s) */
+    $_obsLois = array_values(array_filter($loiSecByIid, fn($s) => $s >= 60 && $s < 2700));
+    sort($_obsLois);
+    $_obsN = count($_obsLois);
+    $_obsMedianSec = $_obsN > 0
+        ? ($_obsN % 2 === 0
+            ? ($_obsLois[$_obsN/2 - 1] + $_obsLois[$_obsN/2]) / 2.0
+            : (float)$_obsLois[($_obsN-1)/2])
+        : 0;
+    $loiObsMedianFmt = $fmtLoi((int)round($_obsMedianSec));
 
     /* ---- Scale details lookup ---- */
     $scaleQsByIidQid = [];
@@ -248,11 +286,25 @@
             <div class="dq-stat-cell">
                 <div class="dq-stat-label">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                    LOI mediana
+                    Durate LOI
                 </div>
-                <div style="display:flex;align-items:baseline;gap:4px;margin-top:8px;">
-                    <div class="dq-stat-value" style="margin-top:0;">{{ $loiMediaFormatted }}</div>
-                    <div style="font-size:14px;font-weight:600;color:oklch(45% 0.02 250);">min</div>
+                <div style="margin-top:8px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                        <div style="font-size:11px;color:oklch(50% 0.02 250);display:flex;align-items:center;gap:3px;">
+                            Mediana osservata
+                            <span class="dq-loi-info-pop" data-loi-key="obs"
+                                  style="cursor:help;color:oklch(60% 0.08 250);font-size:12px;line-height:1;">ⓘ</span>
+                        </div>
+                        <div style="font-size:15px;font-weight:700;color:oklch(25% 0.02 250);font-variant-numeric:tabular-nums;">{{ $loiObsMedianFmt }}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:6px;">
+                        <div style="font-size:11px;color:oklch(50% 0.02 250);display:flex;align-items:center;gap:3px;">
+                            Riferimento norm.
+                            <span class="dq-loi-info-pop" data-loi-key="ref"
+                                  style="cursor:help;color:oklch(60% 0.08 250);font-size:12px;line-height:1;">ⓘ</span>
+                        </div>
+                        <div style="font-size:15px;font-weight:700;color:oklch(25% 0.02 250);font-variant-numeric:tabular-nums;">{{ $loiMediaFormatted }}</div>
+                    </div>
                 </div>
             </div>
             <div class="dq-stat-cell">
@@ -286,7 +338,7 @@
                         <th class="dq-th">Alta qualità</th>
                         <th class="dq-th">Accettabile</th>
                         <th class="dq-th">Bassa qualità</th>
-                        <th class="dq-th">LOI mediana</th>
+                        <th class="dq-th">Durata mediana</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -527,7 +579,11 @@
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.12 80)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                     <div>
                         <div class="dq-section-title">Controllo LOI</div>
-                        <div style="font-size:12px;color:oklch(45% 0.02 250);margin-top:2px;">Mediana {{ $loiMediaFormatted }} min</div>
+                        <div style="font-size:12px;color:oklch(45% 0.02 250);margin-top:2px;">
+                            Durata mediana: <strong>{{ $loiObsMedianFmt }}</strong>
+                            &nbsp;·&nbsp;
+                            Riferimento LOI normalizzato: <strong>{{ $loiMediaFormatted }}</strong>
+                        </div>
                     </div>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -550,36 +606,70 @@
                             <th class="dq-th">ID</th>
                             <th class="dq-th">UID</th>
                             <th class="dq-th">LOI</th>
-                            <th class="dq-th" title="Numero domande risposte / Numero domande totali del percorso completo">Dom. risp. / tot.</th>
-                            <th class="dq-th">Stato</th>
+                            <th class="dq-th" title="Passaggi effettuati dall'intervistato / riferimento P95 dello studio (include schermate di esposizione stimolo).">Passaggi / rif.</th>
+                            <th class="dq-th">Valutazione LOI</th>
                         </tr>
                     </thead>
                     <tbody>
                     @foreach($loiData as $item)
                     @php
-                        $lRatio   = $loiRatioByIid[$item['iid']]   ?? null;
-                        $lSec     = $loiSecByIid[$item['iid']]     ?? 0;
-                        $lTooSlow = $loiTooSlowByIid[$item['iid']] ?? false;
-                        $lUnder50 = !$lTooSlow && $lRatio !== null && $lRatio < 0.5;
-                        $lQAnswered = $item['questionsAnswered'] ?? null;
-                        $lQCount    = $lQAnswered !== null
-                            ? $lQAnswered . ' / ' . ($loiSurveyMaxQ ?? '?')
+                        $lIid        = $item['iid'];
+                        $lRatio      = $loiRatioByIid[$lIid]  ?? null;
+                        $lSec        = $loiSecByIid[$lIid]    ?? 0;
+                        $lCrit       = $loiCriteriaByIid[$lIid] ?? [];
+                        $lEval       = $lCrit['evaluation']       ?? 'not_evaluable';
+                        $lEvalLabel  = $lCrit['evaluation_label'] ?? 'Non valutabile';
+                        $lQAnswered  = $item['questionsAnswered'] ?? null;
+                        $lQCount     = $lQAnswered !== null
+                            ? $lQAnswered . ' / ' . ($loiSurveyRefQCount ?? '?')
                             : '—';
+                        $lExpSec     = $lCrit['expected_seconds']   ?? null;
+                        $lRefFull    = $loiSurveyRefFullSec          ?? null;
+                        $lPct        = $lRatio !== null ? number_format($lRatio * 100, 1, ',', '.') . '%' : '—';
+                        $lUnavail    = $lCrit['unavailable_reason']  ?? null;
+                        $lAbsMin     = !empty($lCrit['absolute_minimum_triggered']);
+                        $lCovLabel   = $loiSurveyCoverage !== null ? ((int)($loiSurveyCoverage * 100)) . '%' : '—';
+                        $lRefTypeLabel = ($loiSurveyRefType === 'normalized_cohort_90') ? 'coorte 90%'
+                                       : (($loiSurveyRefType === 'normalized_cohort_80') ? 'coorte 80%' : '—');
+                        /* Costruisce il JSON dei dati per il popover LOI */
+                        $lLoiInfo = json_encode([
+                            'actualSec'   => $lSec,
+                            'actualFmt'   => $fmtLoi($lSec),
+                            'q'           => $lQAnswered,
+                            'refQ'        => $loiSurveyRefQCount,
+                            'expSec'      => $lExpSec,
+                            'expFmt'      => ($lExpSec !== null && $lExpSec > 0) ? $fmtLoi((int)round($lExpSec)) : null,
+                            'refFullSec'  => $lRefFull,
+                            'refFullFmt'  => ($lRefFull !== null && $lRefFull > 0) ? $fmtLoi((int)round($lRefFull)) : null,
+                            'pct'         => $lPct,
+                            'refType'     => $loiSurveyRefType,
+                            'refTypeLabel'=> $lRefTypeLabel,
+                            'sampleSize'  => $loiSurveySampleSize,
+                            'excluded'    => $loiSurveyExcluded,
+                            'eval'        => $lEval,
+                            'evalLabel'   => $lEvalLabel,
+                            'unavail'     => $lUnavail,
+                            'absMin'      => $lAbsMin,
+                        ], JSON_UNESCAPED_UNICODE);
                     @endphp
                     <tr class="dq-row"
-                        data-iid="{{ $item['iid'] }}"
+                        data-iid="{{ $lIid }}"
                         data-uid="{{ $item['uid'] }}"
                         data-ratio="{{ $lRatio ?? '' }}"
                         data-loi-sec="{{ $lSec }}">
-                        <td class="dq-td" style="font-weight:600;padding:10px 14px;">{{ $item['iid'] }}</td>
+                        <td class="dq-td" style="font-weight:600;padding:10px 14px;">{{ $lIid }}</td>
                         <td class="dq-td dq-td-mono" style="padding:10px 14px;">{{ $item['uid'] }}</td>
-                        <td class="dq-td" style="font-variant-numeric:tabular-nums;padding:10px 14px;">{{ $item['loi'] }} min.</td>
+                        <td class="dq-td" style="font-variant-numeric:tabular-nums;padding:10px 14px;">{{ $item['loi'] }}</td>
                         <td class="dq-td" style="font-variant-numeric:tabular-nums;padding:10px 14px;color:oklch(50% 0.02 250);">{{ $lQCount }}</td>
                         <td class="dq-td" style="padding:10px 14px;">
-                            @if($lTooSlow)
-                                <span class="dq-badge-nonvalutabile">Non valutabile</span>
-                            @elseif($lUnder50)
-                                <span class="dq-badge-sottosoglia">Sotto soglia</span>
+                            @if($lEval === 'ok')
+                                <span class="badge bg-success dq-loi-badge" data-loi-info='{{ $lLoiInfo }}' style="cursor:pointer;font-size:11px;">{{ $lEvalLabel }}</span>
+                            @elseif($lEval === 'suspicious')
+                                <span class="badge bg-warning text-dark dq-loi-badge" data-loi-info='{{ $lLoiInfo }}' style="cursor:pointer;font-size:11px;">{{ $lEvalLabel }}</span>
+                            @elseif($lEval === 'verify')
+                                <span class="badge bg-danger dq-loi-badge" data-loi-info='{{ $lLoiInfo }}' style="cursor:pointer;font-size:11px;">{{ $lEvalLabel }}</span>
+                            @else
+                                <span class="badge bg-secondary dq-loi-badge" data-loi-info='{{ $lLoiInfo }}' style="cursor:pointer;font-size:11px;">{{ $lEvalLabel }}</span>
                             @endif
                         </td>
                     </tr>
@@ -725,6 +815,47 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Dropdown(el);
     });
 
+    /* ---- Tooltip semplici ---- */
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+        new bootstrap.Tooltip(el, { trigger: 'hover focus' });
+    });
+
+    /* ---- Popover card Durate LOI ---- */
+    var _loiPopContent = {
+        obs: {
+            title: 'Mediana osservata',
+            body: '<div style="padding:6px 2px;font-size:12px;line-height:1.6;">'
+                + 'Il <strong>tempo tipico reale</strong> impiegato dai rispondenti per completare il questionario.<br><br>'
+                + 'Include tutti i completati, anche chi ha seguito percorsi più corti (meno domande), '
+                + 'quindi può risultare più bassa del riferimento.'
+                + '</div>',
+        },
+        ref: {
+            title: 'Riferimento normalizzato',
+            body: '<div style="padding:6px 2px;font-size:12px;line-height:1.6;">'
+                + 'Il <strong>tempo atteso</strong> stimato per chi risponde a tutte le domande del questionario.<br><br>'
+                + 'Ogni durata viene corretta in base alla lunghezza del percorso seguito, '
+                + 'poi si calcola la mediana di questi valori corretti. '
+                + 'È il valore usato per giudicare se un\'intervista è troppo veloce.<br><br>'
+                + '<em style="color:#888;">Se i due valori divergono, è normale: '
+                + 'indica che c\'è routing e molti rispondenti vedono solo una parte delle domande.</em>'
+                + '</div>',
+        },
+    };
+    document.querySelectorAll('.dq-loi-info-pop').forEach(function (el) {
+        var key = el.dataset.loiKey;
+        var cfg = _loiPopContent[key];
+        if (!cfg) return;
+        new bootstrap.Popover(el, {
+            html: true,
+            trigger: 'hover focus',
+            placement: 'top',
+            sanitize: false,
+            title: '<span style="font-size:.8rem;font-weight:600;">' + cfg.title + '</span>',
+            content: cfg.body,
+        });
+    });
+
     /* ---- Popover codice domanda ---- */
     document.querySelectorAll('.fq-codice-pop').forEach(function (el) {
         new bootstrap.Popover(el, {
@@ -765,6 +896,61 @@ document.addEventListener('DOMContentLoaded', function () {
             placement: 'left',
             title: '<span style="font-size:12px;font-weight:700;color:oklch(28% 0.02 250);">Motivazioni</span>',
             sanitize: false
+        });
+    });
+
+    /* ---- Popover valutazione LOI ---- */
+    document.querySelectorAll('.dq-loi-badge').forEach(function (el) {
+        var d = {};
+        try { d = JSON.parse(el.dataset.loiInfo || '{}'); } catch(e) {}
+
+        function fmtMotivation(eval, pct, unavail, absMin) {
+            if (absMin) {
+                return 'Completata in meno di 60 secondi (minimo assoluto).';
+            }
+            var unavailMap = {
+                'insufficient_reference_sample': 'Campione di riferimento insufficiente.',
+                'invalid_question_count':        'Numero passaggi non disponibile.',
+                'invalid_loi':                   'Durata non valida.',
+                'invalid_reference':             'Riferimento non calcolabile.',
+                'excessively_slow':              'Durata superiore a 1,67× il riferimento (eccessivamente lenta).',
+            };
+            if (unavail) { return unavailMap[unavail] || unavail; }
+            var p = (pct && pct !== '—') ? pct : null;
+            if (eval === 'ok')         { return p ? 'Ha impiegato il ' + p + ' del tempo atteso; soglia OK ≥70%.' : 'OK.'; }
+            if (eval === 'suspicious') { return p ? 'Ha impiegato il ' + p + ' del tempo atteso; soglia Sospetta ≥50% e <70%.' : 'Sospetta.'; }
+            if (eval === 'verify')     { return p ? 'Ha impiegato il ' + p + ' del tempo atteso; soglia Da verificare <50%.' : 'Da verificare.'; }
+            return p ? 'Ha impiegato il ' + p + ' del tempo atteso.' : '—';
+        }
+
+        var rows = [];
+        if (d.actualFmt)   { rows.push(['LOI effettiva', d.actualFmt]); }
+        if (d.q !== null && d.refQ !== null) {
+            rows.push(['Passaggi effettuati', d.q + ' / ' + d.refQ + ' (rif.)']);
+        }
+        if (d.expFmt)      { rows.push(['LOI attesa', d.expFmt]); }
+        if (d.pct && d.pct !== '—') { rows.push(['% del tempo atteso', d.pct]); }
+        if (d.refFullFmt)  { rows.push(['Riferimento normalizzato', d.refFullFmt]); }
+        if (d.sampleSize)  { rows.push(['Numerosità coorte', d.sampleSize]); }
+        if (d.refTypeLabel && d.refTypeLabel !== '—') { rows.push(['Coorte', d.refTypeLabel]); }
+
+        rows.push(['Motivazione', fmtMotivation(d.eval, d.pct, d.unavail, d.absMin)]);
+
+        var html = rows.map(function(r) {
+            return '<div style="display:flex;gap:8px;padding:3px 0;border-bottom:1px solid oklch(93% 0.006 250);">'
+                + '<span style="font-size:11px;color:oklch(50% 0.02 250);min-width:130px;flex-shrink:0;">' + r[0] + '</span>'
+                + '<span style="font-size:11px;color:oklch(22% 0.02 250);font-weight:500;">' + r[1] + '</span>'
+                + '</div>';
+        }).join('');
+        var content = '<div style="min-width:260px;max-width:340px;padding:2px 0;">' + html + '</div>';
+
+        new bootstrap.Popover(el, {
+            html:      true,
+            content:   content,
+            trigger:   'hover focus',
+            placement: 'left',
+            title:     '<span style="font-size:12px;font-weight:700;color:oklch(28% 0.02 250);">Dettaglio LOI</span>',
+            sanitize:  false,
         });
     });
 

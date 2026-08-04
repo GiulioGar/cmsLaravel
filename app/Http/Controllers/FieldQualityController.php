@@ -15,7 +15,11 @@ class FieldQualityController extends Controller
     private const LOI_ABSOLUTE_MIN_SECONDS  = 60;
     private const LOI_CRITICAL_SCORE_CAP   = 35;
     private const LOI_UPPER_MULTIPLIER     = 20 / 12;  // > 1.667× mediana → non-valutabile
-    private const LOI_MIN_REFERENCE_GROUP  = 10;       // min interviste per qualunque gruppo di riferimento
+    private const LOI_MIN_REFERENCE_GROUP           = 10;   // usato da calculateReferenceMedian (legacy, non attivo nel calcolo)
+    private const LOI_REFERENCE_PRIMARY_COVERAGE    = 0.90; // soglia minima domande per coorte primaria
+    private const LOI_REFERENCE_FALLBACK_COVERAGE   = 0.80; // soglia minima domande per coorte fallback
+    private const LOI_REFERENCE_MIN_SAMPLE          = 10;   // campione minimo per considerare la coorte valida
+    private const LOI_REFERENCE_SLOW_OUTLIER_FACTOR = 2.0;  // moltiplicatore per escludere outlier lenti
 
     private const QUALITY_WEIGHTS = [
         'open'  => 60,
@@ -205,14 +209,23 @@ class FieldQualityController extends Controller
         ];
     }
 
+    private function formatSeconds(int $seconds): string
+    {
+        if ($seconds <= 0) {
+            return '00:00';
+        }
+        $h = (int) floor($seconds / 3600);
+        $m = (int) floor(($seconds % 3600) / 60);
+        $s = $seconds % 60;
+        if ($h > 0) {
+            return sprintf('%02d:%02d:%02d', $h, $m, $s);
+        }
+        return sprintf('%02d:%02d', $m, $s);
+    }
+
     private function formatLoiSec(float $loiSec): string
     {
-        if ($loiSec <= 0) {
-            return '0.00';
-        }
-        $minutes = (int) floor($loiSec / 60);
-        $seconds = (int) $loiSec % 60;
-        return $minutes . '.' . str_pad((string) $seconds, 2, '0', STR_PAD_LEFT);
+        return $this->formatSeconds((int) $loiSec);
     }
 
     private function sortOpenQuestions(array &$data): void
@@ -478,132 +491,176 @@ class FieldQualityController extends Controller
 
     private function applyLoiCriterion(array &$interviews): float
     {
-        // Pass 1: indici per calculateReferenceMedian (same-path, bucket, proporzionale).
-        $signatureGroups = [];   // [sig => [[iid, loi], ...]]
-        $allEligible     = [];   // [[iid, q, loi], ...]
-        $allLoiValues    = [];
-        $allQCounts      = [];
+        // Pass 1: raccogli conteggi domande e interviste eligible per la coorte normalizzata.
+        $allQCounts     = [];
+        $eligibleForRef = []; // 60s <= LOI < 2700s e q > 0
 
         foreach ($interviews as $iv) {
+            $q      = (int) ($iv['questionsAnswered'] ?? 0);
             $loiSec = (int) $iv['loiSec'];
-            if ($loiSec <= 0 || $loiSec >= self::LOI_MAX_SECONDS) {
-                continue;
+            if ($q > 0) {
+                $allQCounts[] = $q;
             }
-            $q   = max(1, (int) ($iv['questionsAnswered'] ?? 1));
-            $sig = (string) ($iv['pathSignature'] ?? '');
-
-            $allLoiValues[] = (float) $loiSec;
-            $allQCounts[]   = (float) $q;
-            $allEligible[]  = ['iid' => $iv['iid'], 'q' => $q, 'loi' => (float) $loiSec];
-
-            if ($sig !== '') {
-                $signatureGroups[$sig][] = ['iid' => $iv['iid'], 'loi' => (float) $loiSec];
+            if ($q > 0 && $loiSec >= self::LOI_ABSOLUTE_MIN_SECONDS && $loiSec < self::LOI_MAX_SECONDS) {
+                $eligibleForRef[] = ['iid' => $iv['iid'], 'q' => $q, 'loi' => (float) $loiSec];
             }
         }
 
-        $globalMedian        = count($allLoiValues) > 0 ? $this->calculateMedian($allLoiValues)                    : 0.0;
-        $medianQuestionCount = count($allQCounts)   > 0 ? $this->calculateMedian($allQCounts)                      : 1.0;
-        $available           = $globalMedian > 0.0;
-
-        // maxQ (P95) conservato per la colonna Dom. risp./tot. nella view.
-        $maxQ = 1;
-        if (count($allQCounts) > 0) {
-            $sorted  = $allQCounts;
-            sort($sorted);
-            $p95idx  = max(0, (int) ceil(count($sorted) * 0.95) - 1);
-            $maxQ    = max(1, (int) $sorted[$p95idx]);
-        }
+        $refQCount           = $this->calculateReferenceQuestionCount($allQCounts);
+        $medianQuestionCount = count($allQCounts) > 0
+            ? $this->calculateMedian(array_map('floatval', $allQCounts))
+            : 1.0;
+        $cohortResult        = $this->buildAndCalculateNormalizedReference($eligibleForRef, $refQCount);
+        $refFullLoi          = $cohortResult['reference_full_loi'];
 
         // Pass 2: score ogni intervista.
         foreach ($interviews as &$iv) {
             $loiSec = (int) $iv['loiSec'];
-            $q      = max(1, (int) ($iv['questionsAnswered'] ?? 1));
-            $sig    = (string) ($iv['pathSignature'] ?? '');
+            $q      = (int) ($iv['questionsAnswered'] ?? 0);
+            $absMin = $loiSec > 0 && $loiSec < self::LOI_ABSOLUTE_MIN_SECONDS;
 
-            if (!$available) {
-                $iv['quality_criteria']['loi'] = [
-                    'available'                     => false,
-                    'seconds'                       => $loiSec,
-                    'question_count'                => $q,
-                    'questions_answered'            => $q,
-                    'max_q'                         => $maxQ,
-                    'median_question_count'         => (int) round($medianQuestionCount),
-                    'reference_type'                => null,
-                    'reference_sample_size'         => 0,
-                    'preliminary_reference_median'  => 0,
-                    'reference_median'              => 0,
-                    'excluded_slow_reference_cases' => 0,
-                    'global_median_seconds'         => 0,
-                    'ratio'                         => null,
-                    'absolute_minimum_triggered'    => false,
-                    'risk'                          => null,
-                ];
-                continue;
-            }
-
-            $ref       = $this->calculateReferenceMedian(
-                $iv['iid'], $q, $sig, $signatureGroups, $allEligible, $globalMedian, $maxQ
-            );
-            $refMedian = (float) $ref['reference_median'];
-
-            $ratio                = $loiSec > 0 && $refMedian > 0 ? $loiSec / $refMedian : 0.0;
-            $absoluteMinTriggered = $loiSec > 0 && $loiSec < self::LOI_ABSOLUTE_MIN_SECONDS;
-
-            // ref_source: valore leggibile da buildMotivationLines (backward compat)
-            $refSource = ($ref['final_reference_source'] === 'proportional_floor') ? 'proportional' : 'bucket';
-
-            $baseCriteria = [
-                'seconds'                       => $loiSec,
-                'question_count'                => $q,
-                'questions_answered'            => $q,
-                'max_q'                         => $maxQ,
-                'median_question_count'         => (int) round($medianQuestionCount),
-                'reference_type'                => $ref['reference_type'],
-                'peer_reference_type'           => $ref['peer_reference_type'],
-                'peer_reference_median'         => $ref['peer_reference_median'],
-                'proportional_reference'        => $ref['proportional_reference'],
-                'final_reference_source'        => $ref['final_reference_source'],
-                'reference_sample_size'         => $ref['reference_sample_size'],
-                'preliminary_reference_median'  => $ref['preliminary_reference_median'],
-                'reference_median'              => (int) round($refMedian),
-                'excluded_slow_reference_cases' => $ref['excluded_slow_reference_cases'],
-                'global_median_seconds'         => (int) round($globalMedian),
-                'ref_source'                    => $refSource,
-                'ratio'                         => round($ratio, 4),
-                'absolute_minimum_triggered'    => $absoluteMinTriggered,
+            $baseLoi = [
+                'seconds'                            => $loiSec,
+                'question_count'                     => $q,
+                'reference_question_count'           => $refQCount,
+                'reference_type'                     => $cohortResult['reference_type'],
+                'reference_coverage'                 => $cohortResult['coverage'],
+                'reference_min_questions'            => $cohortResult['min_questions'],
+                'reference_sample_size'              => $cohortResult['sample_size'],
+                'preliminary_reference_full_seconds' => $cohortResult['preliminary_median'],
+                'reference_full_seconds'             => $refFullLoi,
+                'excluded_slow_reference_cases'      => $cohortResult['excluded'],
+                'absolute_minimum_triggered'         => $absMin,
+                // Alias legacy — non usati per il calcolo, mantenuti per backward compat
+                'questions_answered'                 => $q,
+                'max_q'                              => $refQCount,
+                'display_max_q'                      => $refQCount,
+                'median_question_count'              => (int) round($medianQuestionCount),
+                'global_median_seconds'              => (int) round($refFullLoi),
+                'ref_source'                         => $cohortResult['reference_type'] ?? 'proportional',
             ];
 
-            if ($ratio > self::LOI_UPPER_MULTIPLIER) {
-                $iv['quality_criteria']['loi'] = array_merge($baseCriteria, [
-                    'available' => false,
-                    'too_slow'  => true,
-                    'risk'      => null,
+            // Domande non disponibili
+            if ($q <= 0) {
+                $iv['quality_criteria']['loi'] = array_merge($baseLoi, [
+                    'available'          => false,
+                    'expected_seconds'   => null,
+                    'reference_median'   => null,
+                    'ratio'              => null,
+                    'risk'               => null,
+                    'evaluation'         => 'not_evaluable',
+                    'evaluation_label'   => 'Non valutabile',
+                    'unavailable_reason' => 'invalid_question_count',
                 ]);
                 continue;
             }
 
-            if ($absoluteMinTriggered) {
-                $risk = 100;
-            } else {
-                $risk = 80;
-                foreach (self::LOI_RISK_TABLE as [$minRatio, $tableRisk]) {
-                    if ($ratio >= $minRatio) {
-                        $risk = $tableRisk;
-                        break;
-                    }
+            // LOI non valida
+            if ($loiSec <= 0) {
+                $iv['quality_criteria']['loi'] = array_merge($baseLoi, [
+                    'available'          => false,
+                    'expected_seconds'   => null,
+                    'reference_median'   => null,
+                    'ratio'              => null,
+                    'risk'               => null,
+                    'evaluation'         => 'not_evaluable',
+                    'evaluation_label'   => 'Non valutabile',
+                    'unavailable_reason' => 'invalid_loi',
+                ]);
+                continue;
+            }
+
+            // Campione di riferimento insufficiente
+            if ($cohortResult['reference_type'] === 'insufficient_reference_sample' || $refFullLoi <= 0.0) {
+                $iv['quality_criteria']['loi'] = array_merge($baseLoi, [
+                    'available'          => false,
+                    'expected_seconds'   => null,
+                    'reference_median'   => null,
+                    'ratio'              => null,
+                    'risk'               => null,
+                    'evaluation'         => 'not_evaluable',
+                    'evaluation_label'   => 'Non valutabile',
+                    'unavailable_reason' => 'insufficient_reference_sample',
+                ]);
+                continue;
+            }
+
+            $expectedLoi = $this->calculateExpectedLoi($refFullLoi, $q, $refQCount);
+
+            if ($expectedLoi <= 0.0) {
+                $iv['quality_criteria']['loi'] = array_merge($baseLoi, [
+                    'available'          => false,
+                    'expected_seconds'   => null,
+                    'reference_median'   => null,
+                    'ratio'              => null,
+                    'risk'               => null,
+                    'evaluation'         => 'not_evaluable',
+                    'evaluation_label'   => 'Non valutabile',
+                    'unavailable_reason' => 'invalid_reference',
+                ]);
+                continue;
+            }
+
+            // LOI sotto il minimo assoluto (< 60s): disponibile ma risk = 100
+            if ($absMin) {
+                $ratio = $loiSec / $expectedLoi;
+                $iv['quality_criteria']['loi'] = array_merge($baseLoi, [
+                    'available'          => true,
+                    'expected_seconds'   => round($expectedLoi, 1),
+                    'reference_median'   => (int) round($expectedLoi),
+                    'ratio'              => round($ratio, 4),
+                    'risk'               => 100,
+                    'evaluation'         => 'verify',
+                    'evaluation_label'   => 'Da verificare',
+                    'unavailable_reason' => null,
+                ]);
+                $iv['quality_risks']['loi'] = 100;
+                continue;
+            }
+
+            $ratio = $loiSec / $expectedLoi;
+
+            // LOI eccessivamente lenta (ratio > 1.667): non valutabile
+            if ($ratio > self::LOI_UPPER_MULTIPLIER) {
+                $iv['quality_criteria']['loi'] = array_merge($baseLoi, [
+                    'available'          => false,
+                    'too_slow'           => true,
+                    'expected_seconds'   => round($expectedLoi, 1),
+                    'reference_median'   => (int) round($expectedLoi),
+                    'ratio'              => round($ratio, 4),
+                    'risk'               => null,
+                    'evaluation'         => 'not_evaluable',
+                    'evaluation_label'   => 'Non valutabile',
+                    'unavailable_reason' => 'excessively_slow',
+                ]);
+                continue;
+            }
+
+            $risk = 80;
+            foreach (self::LOI_RISK_TABLE as [$minRatio, $tableRisk]) {
+                if ($ratio >= $minRatio) {
+                    $risk = $tableRisk;
+                    break;
                 }
             }
             $risk = (int) min(100, max(0, $risk));
+            $eval = $this->calculateLoiEvaluation($ratio);
 
-            $iv['quality_criteria']['loi'] = array_merge($baseCriteria, [
-                'available' => true,
-                'risk'      => $risk,
+            $iv['quality_criteria']['loi'] = array_merge($baseLoi, [
+                'available'          => true,
+                'expected_seconds'   => round($expectedLoi, 1),
+                'reference_median'   => (int) round($expectedLoi),
+                'ratio'              => round($ratio, 4),
+                'risk'               => $risk,
+                'evaluation'         => $eval['evaluation'],
+                'evaluation_label'   => $eval['evaluation_label'],
+                'unavailable_reason' => null,
             ]);
             $iv['quality_risks']['loi'] = $risk;
         }
         unset($iv);
 
-        return $globalMedian;
+        return $refFullLoi;
     }
 
     private function calculateMedian(array $values): float
@@ -618,6 +675,131 @@ class FieldQualityController extends Controller
             return (float) $values[$mid];
         }
         return ($values[$mid - 1] + $values[$mid]) / 2.0;
+    }
+
+    // =========================================================================
+    // LOI — FUNZIONI DI RIFERIMENTO NORMALIZZATO
+    // =========================================================================
+
+    // P95 dei questionCount validi → usato come referenceQuestionCount.
+    private function calculateReferenceQuestionCount(array $qCounts): int
+    {
+        if (empty($qCounts)) {
+            return 1;
+        }
+        $sorted = $qCounts;
+        sort($sorted);
+        $p95idx = max(0, (int) ceil(count($sorted) * 0.95) - 1);
+        return max(1, (int) $sorted[$p95idx]);
+    }
+
+    // Seleziona le interviste della coorte con questionCount >= referenceQuestionCount × coverage.
+    private function buildNormalizedLoiCohort(array $eligible, int $refQCount, float $coverage): array
+    {
+        $minQ     = max(1, (int) floor($refQCount * $coverage));
+        $filtered = [];
+        foreach ($eligible as $e) {
+            if ($e['q'] >= $minQ) {
+                $filtered[] = $e;
+            }
+        }
+        return $filtered;
+    }
+
+    // Calcola la mediana LOI normalizzata della coorte con pulizia outlier lenti.
+    // normalizedFullLoi = actualLoi × refQCount / questionCount
+    private function calculateNormalizedReferenceLoi(array $cohort, int $refQCount): array
+    {
+        if (empty($cohort) || $refQCount <= 0) {
+            return ['reference_full_loi' => 0.0, 'preliminary_median' => 0.0, 'excluded' => 0, 'sample_size' => 0];
+        }
+
+        $normalized = [];
+        foreach ($cohort as $e) {
+            if ($e['q'] > 0) {
+                $normalized[] = $e['loi'] * $refQCount / $e['q'];
+            }
+        }
+
+        if (empty($normalized)) {
+            return ['reference_full_loi' => 0.0, 'preliminary_median' => 0.0, 'excluded' => 0, 'sample_size' => 0];
+        }
+
+        $prelimMedian = $this->calculateMedian($normalized);
+        $threshold    = $prelimMedian * self::LOI_REFERENCE_SLOW_OUTLIER_FACTOR;
+        $cleaned      = [];
+        $excluded     = 0;
+        foreach ($normalized as $v) {
+            if ($v <= $threshold) {
+                $cleaned[] = $v;
+            } else {
+                $excluded++;
+            }
+        }
+
+        if (empty($cleaned)) {
+            return ['reference_full_loi' => 0.0, 'preliminary_median' => $prelimMedian, 'excluded' => $excluded, 'sample_size' => 0];
+        }
+
+        return [
+            'reference_full_loi' => $this->calculateMedian($cleaned),
+            'preliminary_median' => $prelimMedian,
+            'excluded'           => $excluded,
+            'sample_size'        => count($cleaned),
+        ];
+    }
+
+    // Tenta la coorte al 90%, poi all'80%, poi dichiara campione insufficiente.
+    private function buildAndCalculateNormalizedReference(array $eligible, int $refQCount): array
+    {
+        $attempts = [
+            ['coverage' => self::LOI_REFERENCE_PRIMARY_COVERAGE,  'type' => 'normalized_cohort_90'],
+            ['coverage' => self::LOI_REFERENCE_FALLBACK_COVERAGE, 'type' => 'normalized_cohort_80'],
+        ];
+
+        foreach ($attempts as $attempt) {
+            $cohort = $this->buildNormalizedLoiCohort($eligible, $refQCount, $attempt['coverage']);
+            $calc   = $this->calculateNormalizedReferenceLoi($cohort, $refQCount);
+            if ($calc['sample_size'] >= self::LOI_REFERENCE_MIN_SAMPLE) {
+                $minQ = max(1, (int) floor($refQCount * $attempt['coverage']));
+                return array_merge($calc, [
+                    'reference_type' => $attempt['type'],
+                    'coverage'       => $attempt['coverage'],
+                    'min_questions'  => $minQ,
+                ]);
+            }
+        }
+
+        return [
+            'reference_full_loi' => 0.0,
+            'preliminary_median' => 0.0,
+            'excluded'           => 0,
+            'sample_size'        => 0,
+            'reference_type'     => 'insufficient_reference_sample',
+            'coverage'           => null,
+            'min_questions'      => null,
+        ];
+    }
+
+    // LOI attesa proporzionale al numero di domande.
+    private function calculateExpectedLoi(float $refFullLoi, int $qCount, int $refQCount): float
+    {
+        if ($refQCount <= 0 || $qCount <= 0 || $refFullLoi <= 0.0) {
+            return 0.0;
+        }
+        return $refFullLoi * $qCount / $refQCount;
+    }
+
+    // Valutazione sintetica basata sul ratio (non arrotondato).
+    private function calculateLoiEvaluation(float $ratio): array
+    {
+        if ($ratio >= 0.70) {
+            return ['evaluation' => 'ok',         'evaluation_label' => 'OK'];
+        }
+        if ($ratio >= 0.50) {
+            return ['evaluation' => 'suspicious', 'evaluation_label' => 'Sospetta'];
+        }
+        return ['evaluation' => 'verify',     'evaluation_label' => 'Da verificare'];
     }
 
     private function calculateOpenRisk(float $fakePercentage): int
@@ -1219,30 +1401,29 @@ class FieldQualityController extends Controller
 
         // ---- LOI ----
         if (!empty($loi['available'])) {
-            $risk      = (int)   ($loi['risk']  ?? 0);
-            $ratio     = (float) ($loi['ratio'] ?? 1.0);
-            $absMin    = !empty($loi['absolute_minimum_triggered']);
-            $pct       = (int) round($ratio * 100);
-            $q         = (int) ($loi['questions_answered'] ?? 0);
-            $refSource = ($loi['ref_source'] ?? 'bucket') === 'proportional' ? 'proporzionale' : 'gruppo';
-            $suffix    = $q > 0 ? " ({$q} dom.)" : '';
+            $risk   = (int)   ($loi['risk']  ?? 0);
+            $ratio  = (float) ($loi['ratio'] ?? 1.0);
+            $absMin = !empty($loi['absolute_minimum_triggered']);
+            $pct    = (int) round($ratio * 100);
+            $q      = (int) ($loi['questions_answered'] ?? 0);
+            $suffix = $q > 0 ? " ({$q} dom.)" : '';
 
             if ($absMin) {
                 $lines['loi'] = "Intervista completata in meno di 60 secondi — altamente sospetto";
             } elseif ($risk === 0) {
-                $lines['loi'] = "Durata nella norma rispetto al {$refSource}{$suffix}";
+                $lines['loi'] = "Durata nella norma rispetto al riferimento normalizzato{$suffix}";
             } elseif ($risk <= 10) {
-                $lines['loi'] = "Leggermente rapida rispetto al {$refSource}{$suffix} — {$pct}% della mediana";
+                $lines['loi'] = "Leggermente rapida rispetto al riferimento normalizzato{$suffix} — {$pct}% dell'atteso";
             } elseif ($risk <= 20) {
-                $lines['loi'] = "Un po' rapida rispetto al {$refSource}{$suffix} — {$pct}% della mediana";
+                $lines['loi'] = "Un po' rapida rispetto al riferimento normalizzato{$suffix} — {$pct}% dell'atteso";
             } elseif ($risk <= 35) {
-                $lines['loi'] = "Inferiore alla mediana del {$refSource}{$suffix} — {$pct}%";
+                $lines['loi'] = "LOI inferiore all'atteso{$suffix} — {$pct}%";
             } elseif ($risk <= 50) {
-                $lines['loi'] = "LOI piuttosto bassa rispetto al {$refSource}{$suffix} — {$pct}% della mediana";
+                $lines['loi'] = "LOI piuttosto bassa rispetto all'atteso{$suffix} — {$pct}% dell'atteso";
             } elseif ($risk <= 65) {
-                $lines['loi'] = "LOI decisamente bassa rispetto al {$refSource}{$suffix} — al {$pct}% della mediana";
+                $lines['loi'] = "LOI decisamente bassa rispetto all'atteso{$suffix} — al {$pct}% dell'atteso";
             } else {
-                $lines['loi'] = "LOI estremamente bassa rispetto al {$refSource}{$suffix} — al {$pct}% della mediana";
+                $lines['loi'] = "LOI estremamente bassa rispetto all'atteso{$suffix} — al {$pct}% dell'atteso";
             }
         }
 
@@ -1364,7 +1545,12 @@ class FieldQualityController extends Controller
             } else {
                 $pct       = (int) round(($loi['ratio'] ?? 0) * 100);
                 $q         = (int) ($loi['questions_answered'] ?? 0);
-                $reasons[] = "LOI al {$pct}% della mediana" . ($q > 0 ? " ({$q} dom.)" : '');
+                $evalLabel = $loi['evaluation_label'] ?? null;
+                $loiMsg    = "LOI al {$pct}% dell'atteso" . ($q > 0 ? " ({$q} dom.)" : '');
+                if ($evalLabel !== null && $evalLabel !== 'OK') {
+                    $loiMsg .= " — {$evalLabel}";
+                }
+                $reasons[] = $loiMsg;
             }
         }
 
@@ -1603,7 +1789,7 @@ class FieldQualityController extends Controller
         sort($questionIds);
 
         return [
-            'questionCount' => max(1, $lineCount - 1),
+            'questionCount' => max(1, count(array_unique($questionIds))),
             'pathSignature' => implode(',', $questionIds),
         ];
     }
