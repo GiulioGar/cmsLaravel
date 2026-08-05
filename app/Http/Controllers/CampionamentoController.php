@@ -217,7 +217,21 @@ if ($righeSelezionate->isNotEmpty()) {
         ->all();
 
     if (!empty($toInsert)) {
-        DB::transaction(function () use ($toInsert) {
+        $panelRow = DB::table('t_panel_control')
+            ->where('sur_id', $surId)
+            ->where('panel', 1)
+            ->first();
+
+        $panelControlId = $panelRow ? $panelRow->id : null;
+
+        $enabledBefore = DB::table('t_respint')
+            ->where('sid', $surId)
+            ->where('prj_name', $prj)
+            ->count();
+
+        $enabledAfter = $enabledBefore;
+
+        DB::transaction(function () use ($toInsert, $surId, $prj, $panelControlId, $enabledBefore, &$enabledAfter) {
             DB::table('t_respint')->insertOrIgnore($toInsert);
 
             $uids = collect($toInsert)
@@ -227,6 +241,38 @@ if ($righeSelezionate->isNotEmpty()) {
                 ->all();
 
             $this->aggiornaInvitiUtenti($uids);
+
+            $enabledAfter = DB::table('t_respint')
+                ->where('sid', $surId)
+                ->where('prj_name', $prj)
+                ->count();
+
+            $usersCount = max($enabledAfter - $enabledBefore, 0);
+
+            if ($usersCount > 0 && $panelControlId !== null) {
+                $now = now();
+
+                DB::table('t_panel_sample_waves')->insert([
+                    'panel_control_id'     => $panelControlId,
+                    'sid'                  => $surId,
+                    'prj_name'             => $prj,
+                    'users_count'          => $usersCount,
+                    'enabled_total_before' => $enabledBefore,
+                    'enabled_total_after'  => $enabledAfter,
+                    'contacts_snapshot'    => null,
+                    'complete_snapshot'    => null,
+                    'launched_at'          => $now,
+                    'created_at'           => $now,
+                    'updated_at'           => $now,
+                ]);
+
+                DB::table('t_panel_control')
+                    ->where('sur_id', $surId)
+                    ->update([
+                        'panel_enabled_snapshot'   => $enabledAfter,
+                        'panel_enabled_changed_at' => $now,
+                    ]);
+            }
         });
     }
 }

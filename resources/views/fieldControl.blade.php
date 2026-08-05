@@ -598,17 +598,13 @@
 
                             <div class="fc-kpi-value">{{ $counts['contatti'] }}</div>
 
-                            @php
-                                $irPanelTot = ($abilitati > 0 && isset($panelCounts['Interactive']))
-                                    ? round((($panelCounts['Interactive']['contatti'] ?? 0) / $abilitati) * 100, 1)
-                                    : null;
-                            @endphp
-                            @if($irPanelTot !== null)
+                            @if($panelRateInfo !== null && $panelRateInfo['valore_corrente'] > 0)
                             <div class="fc-kpi-meta-row">
                                 <div class="fc-kpi-pill"
+                                    style="{{ $panelRateInfo['maturo'] ? '' : 'opacity:.72' }}"
                                     data-bs-toggle="tooltip"
-                                    title="IR panel: contatti Interactive su abilitati ({{ $panelCounts['Interactive']['contatti'] ?? 0 }}/{{ $abilitati }})">
-                                    {{ rtrim(rtrim(number_format($irPanelTot, 1), '0'), '.') }}%
+                                    title="{{ $panelRateInfo['maturo'] ? 'IR panel studio corrente' : ('⏳ In aggiornamento' . ($panelRateInfo['ore_dalla_variazione'] !== null ? ' · ' . $panelRateInfo['ore_dalla_variazione'] . 'h / 24h' : '')) }}">
+                                    {{ rtrim(rtrim(number_format($panelRateInfo['valore_corrente'], 1), '0'), '.') }}%
                                 </div>
                             </div>
                             @endif
@@ -629,7 +625,46 @@
                                     </div>
 
                                     @php
-                                        $irTooltip1 = 'IR: ' . number_format($redemption, 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
+                                        $_sep1    = '<br><small style=\'opacity:.6\'>────────────────</small><br>';
+                                        $_etaAdj1 = ($panelRateInfo && $panelRateInfo['eta_info']['coefficiente_eta'] != 1.0) ? ' <i>(età-adj.)</i>' : '';
+                                        if ($ondateInfo !== null) {
+                                            $_stima1 = $_sep1 . '<small>Disponibili: <b>' . number_format($ondateInfo['utenti_disponibili']) . '</b>';
+                                            if ($ondateInfo['utenti_residui_ondate'] > 0) {
+                                                $_stima1 .= ' &nbsp;+&nbsp; ondate <b>+' . number_format($ondateInfo['utenti_residui_ondate']) . '</b><br>Effettivi: <b>' . number_format($ondateInfo['utenti_effettivi']) . '</b>';
+                                            }
+                                            $_stima1 .= '<br>IR survey: <b>' . number_format($redemption, 1) . '%</b></small>';
+                                            if ($stimaDiagnostica !== null) {
+                                                $_stima1 .= $_sep1 . '→ <b>' . $stimaDiagnostica . ' interviste</b>';
+                                            }
+                                        } else {
+                                            $_stima1 = $_sep1 . '<small>IR survey: ' . number_format($redemption, 1) . '%</small>';
+                                        }
+                                        $_fonte1 = $panelRateInfo['fonte'] ?? '';
+                                        if ($_fonte1 === 'studio_stabile') {
+                                            $irTooltip1 =
+                                                '<b>✓ Campione stabile</b> · da ' . $panelRateInfo['ore_dalla_variazione'] . 'h' .
+                                                $_sep1 .
+                                                'IR panel usato: <b>' . number_format($panelRateInfo['valore_utilizzato'], 1) . '%</b><br>' .
+                                                '<small>Studio ' . number_format($panelRateInfo['valore_corrente'], 1) . '% &nbsp;·&nbsp; Storico ' . number_format($panelRateInfo['eta_info']['media_corretta'], 1) . '%' . $_etaAdj1 . ' · media 50/50</small>' .
+                                                $_stima1;
+                                        } elseif ($_fonte1 === 'studio') {
+                                            $_oreLabel1 = $panelRateInfo['ore_dalla_variazione'] !== null ? ' · ' . $panelRateInfo['ore_dalla_variazione'] . 'h / 24h' : '';
+                                            $irTooltip1 =
+                                                '<b>⏳ In aggiornamento</b>' . $_oreLabel1 .
+                                                $_sep1 .
+                                                'IR panel usato: <b>' . number_format($panelRateInfo['valore_utilizzato'], 1) . '%</b><br>' .
+                                                '<small>Studio ' . number_format($panelRateInfo['valore_corrente'], 1) . '% &nbsp;·&nbsp; Storico ' . number_format($panelRateInfo['eta_info']['media_corretta'], 1) . '%' . $_etaAdj1 . ' · media 50/50</small>' .
+                                                $_stima1;
+                                        } elseif ($_fonte1 === 'storico') {
+                                            $irTooltip1 =
+                                                '<b>Nessun contatto</b> · usando storico' .
+                                                $_sep1 .
+                                                'IR panel usato: <b>' . number_format($panelRateInfo['valore_utilizzato'], 1) . '%</b><br>' .
+                                                '<small>Storico ' . number_format($panelRateInfo['eta_info']['media_corretta'], 1) . '%' . $_etaAdj1 . '</small>' .
+                                                $_stima1;
+                                        } else {
+                                            $irTooltip1 = 'IR: ' . number_format($redemption, 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
+                                        }
                                     @endphp
                                     <div class="fc-kpi-section-header fc-wide">
                                         <span>
@@ -640,14 +675,39 @@
                                     </div>
 
                                     @if($stimaInterviste !== null)
-                                    <div class="fc-kpi-extra-item">
-                                        <div class="d-flex align-items-center gap-1 mb-1">
-                                            <div class="fc-kpi-label mb-0">Max stimabile</div>
-                                            <i class="fas fa-info-circle text-secondary"
-                                               data-bs-toggle="tooltip"
-                                               title="Capacità massima del panel"></i>
+                                    @php
+                                        $_c1       = $panelCounts['Interactive']['complete'] ?? 0;
+                                        $_tot1     = $_c1 + $stimaInterviste;
+                                        $studyGoal = (int)($panelData->goal ?? 0);
+                                        $_hg1      = $studyGoal > 0;
+                                        $_ok1      = $_hg1 && $_tot1 >= $studyGoal;
+                                        $_ftBg1    = !$_hg1 ? 'rgba(0,0,0,.06)' : ($_ok1 ? 'rgba(22,163,74,.1)'  : 'rgba(220,38,38,.1)');
+                                        $_ftBd1    = !$_hg1 ? 'rgba(0,0,0,.1)'  : ($_ok1 ? 'rgba(22,163,74,.22)' : 'rgba(220,38,38,.22)');
+                                        $_ftCol1   = !$_hg1 ? '#374151'          : ($_ok1 ? '#16a34a'             : '#dc2626');
+                                    @endphp
+                                    <div class="fc-kpi-extra-item fc-wide">
+                                        <div style="background:rgba(0,0,0,.04); border-radius:8px; overflow:hidden">
+                                            <div style="padding:.5rem .7rem; display:flex; flex-direction:column; gap:.35rem">
+                                                <div style="display:flex; justify-content:space-between; align-items:center">
+                                                    <span style="font-size:.78em; color:#16a34a"><i class="fas fa-check-circle me-1"></i>Già raccolte</span>
+                                                    <span style="font-weight:600; font-size:.9em; color:#16a34a">{{ $_c1 }}</span>
+                                                </div>
+                                                <div style="display:flex; justify-content:space-between; align-items:center">
+                                                    <span style="font-size:.78em; color:#2563eb"><i class="fas fa-plus-circle me-1"></i>Stima aggiuntive</span>
+                                                    <span style="font-weight:600; font-size:.9em; color:#2563eb">+{{ $stimaInterviste }}</span>
+                                                </div>
+                                            </div>
+                                            <div style="background:{{ $_ftBg1 }}; border-top:1px solid {{ $_ftBd1 }}; padding:.45rem .7rem; display:flex; justify-content:space-between; align-items:center">
+                                                <span style="font-size:.78em; font-weight:600; color:{{ $_ftCol1 }}">
+                                                    @if($_hg1)
+                                                        <i class="fas fa-circle" style="font-size:.5em; vertical-align:middle; margin-right:.25rem"></i>{{ $_ok1 ? 'Completabile' : 'Non completabile' }}<span style="font-weight:400; opacity:.65"> · ob. {{ $studyGoal }}</span>
+                                                    @else
+                                                        Max raggiungibile
+                                                    @endif
+                                                </span>
+                                                <span style="font-weight:700; font-size:1.1em; color:{{ $_ftCol1 }}">{{ $_tot1 }}</span>
+                                            </div>
                                         </div>
-                                        <div class="fc-kpi-value text-primary fw-bold">{{ $stimaInterviste }}</div>
                                     </div>
                                     @endif
                                 </div>
@@ -832,15 +892,13 @@
 
                                     <div class="fc-kpi-value">{{ $panelData['contatti'] }}</div>
 
-                                    @if($panelName === 'Interactive' && $abilitati > 0)
-                                    @php
-                                        $irPanelTab = round(($panelData['contatti'] / $abilitati) * 100, 1);
-                                    @endphp
+                                    @if($panelName === 'Interactive' && $abilitati > 0 && $panelRateInfo !== null)
                                     <div class="fc-kpi-meta-row">
                                         <div class="fc-kpi-pill"
+                                            style="{{ $panelRateInfo['maturo'] ? '' : 'opacity:.72' }}"
                                             data-bs-toggle="tooltip"
-                                            title="IR panel: contatti su abilitati ({{ $panelData['contatti'] }}/{{ $abilitati }})">
-                                            {{ rtrim(rtrim(number_format($irPanelTab, 1), '0'), '.') }}%
+                                            title="{{ $panelRateInfo['maturo'] ? 'IR panel studio corrente' : ('⏳ In aggiornamento' . ($panelRateInfo['ore_dalla_variazione'] !== null ? ' · ' . $panelRateInfo['ore_dalla_variazione'] . 'h / 24h' : '')) }}">
+                                            {{ rtrim(rtrim(number_format($panelRateInfo['valore_corrente'], 1), '0'), '.') }}%
                                         </div>
                                     </div>
                                     @endif
@@ -861,7 +919,46 @@
                                             </div>
 
                                             @php
-                                                $irTooltip2 = 'IR: ' . number_format($redemption, 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
+                                                $_sep2    = '<br><small style=\'opacity:.6\'>────────────────</small><br>';
+                                                $_etaAdj2 = ($panelRateInfo && $panelRateInfo['eta_info']['coefficiente_eta'] != 1.0) ? ' <i>(età-adj.)</i>' : '';
+                                                if ($ondateInfo !== null) {
+                                                    $_stima2 = $_sep2 . '<small>Disponibili: <b>' . number_format($ondateInfo['utenti_disponibili']) . '</b>';
+                                                    if ($ondateInfo['utenti_residui_ondate'] > 0) {
+                                                        $_stima2 .= ' &nbsp;+&nbsp; ondate <b>+' . number_format($ondateInfo['utenti_residui_ondate']) . '</b><br>Effettivi: <b>' . number_format($ondateInfo['utenti_effettivi']) . '</b>';
+                                                    }
+                                                    $_stima2 .= '<br>IR survey: <b>' . number_format($redemption, 1) . '%</b></small>';
+                                                    if ($stimaDiagnostica !== null) {
+                                                        $_stima2 .= $_sep2 . '→ <b>' . $stimaDiagnostica . ' interviste</b>';
+                                                    }
+                                                } else {
+                                                    $_stima2 = $_sep2 . '<small>IR survey: ' . number_format($redemption, 1) . '%</small>';
+                                                }
+                                                $_fonte2 = $panelRateInfo['fonte'] ?? '';
+                                                if ($_fonte2 === 'studio_stabile') {
+                                                    $irTooltip2 =
+                                                        '<b>✓ Campione stabile</b> · da ' . $panelRateInfo['ore_dalla_variazione'] . 'h' .
+                                                        $_sep2 .
+                                                        'IR panel usato: <b>' . number_format($panelRateInfo['valore_utilizzato'], 1) . '%</b><br>' .
+                                                        '<small>Studio ' . number_format($panelRateInfo['valore_corrente'], 1) . '% &nbsp;·&nbsp; Storico ' . number_format($panelRateInfo['eta_info']['media_corretta'], 1) . '%' . $_etaAdj2 . ' · media 50/50</small>' .
+                                                        $_stima2;
+                                                } elseif ($_fonte2 === 'studio') {
+                                                    $_oreLabel2 = $panelRateInfo['ore_dalla_variazione'] !== null ? ' · ' . $panelRateInfo['ore_dalla_variazione'] . 'h / 24h' : '';
+                                                    $irTooltip2 =
+                                                        '<b>⏳ In aggiornamento</b>' . $_oreLabel2 .
+                                                        $_sep2 .
+                                                        'IR panel usato: <b>' . number_format($panelRateInfo['valore_utilizzato'], 1) . '%</b><br>' .
+                                                        '<small>Studio ' . number_format($panelRateInfo['valore_corrente'], 1) . '% &nbsp;·&nbsp; Storico ' . number_format($panelRateInfo['eta_info']['media_corretta'], 1) . '%' . $_etaAdj2 . ' · media 50/50</small>' .
+                                                        $_stima2;
+                                                } elseif ($_fonte2 === 'storico') {
+                                                    $irTooltip2 =
+                                                        '<b>Nessun contatto</b> · usando storico' .
+                                                        $_sep2 .
+                                                        'IR panel usato: <b>' . number_format($panelRateInfo['valore_utilizzato'], 1) . '%</b><br>' .
+                                                        '<small>Storico ' . number_format($panelRateInfo['eta_info']['media_corretta'], 1) . '%' . $_etaAdj2 . '</small>' .
+                                                        $_stima2;
+                                                } else {
+                                                    $irTooltip2 = 'IR: ' . number_format($redemption, 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
+                                                }
                                             @endphp
                                             <div class="fc-kpi-section-header fc-wide">
                                                 <span>
@@ -872,14 +969,38 @@
                                             </div>
 
                                             @if($stimaInterviste !== null)
-                                            <div class="fc-kpi-extra-item">
-                                                <div class="d-flex align-items-center gap-1 mb-1">
-                                                    <div class="fc-kpi-label mb-0">Max stimabile</div>
-                                                    <i class="fas fa-info-circle text-secondary"
-                                                       data-bs-toggle="tooltip"
-                                                       title="Capacità massima del panel"></i>
+                                            @php
+                                                $_c2     = $panelData['complete'] ?? 0;
+                                                $_tot2   = $_c2 + $stimaInterviste;
+                                                $_hg2    = $studyGoal > 0;
+                                                $_ok2    = $_hg2 && $_tot2 >= $studyGoal;
+                                                $_ftBg2  = !$_hg2 ? 'rgba(0,0,0,.06)' : ($_ok2 ? 'rgba(22,163,74,.1)'  : 'rgba(220,38,38,.1)');
+                                                $_ftBd2  = !$_hg2 ? 'rgba(0,0,0,.1)'  : ($_ok2 ? 'rgba(22,163,74,.22)' : 'rgba(220,38,38,.22)');
+                                                $_ftCol2 = !$_hg2 ? '#374151'          : ($_ok2 ? '#16a34a'             : '#dc2626');
+                                            @endphp
+                                            <div class="fc-kpi-extra-item fc-wide">
+                                                <div style="background:rgba(0,0,0,.04); border-radius:8px; overflow:hidden">
+                                                    <div style="padding:.5rem .7rem; display:flex; flex-direction:column; gap:.35rem">
+                                                        <div style="display:flex; justify-content:space-between; align-items:center">
+                                                            <span style="font-size:.78em; color:#16a34a"><i class="fas fa-check-circle me-1"></i>Già raccolte</span>
+                                                            <span style="font-weight:600; font-size:.9em; color:#16a34a">{{ $_c2 }}</span>
+                                                        </div>
+                                                        <div style="display:flex; justify-content:space-between; align-items:center">
+                                                            <span style="font-size:.78em; color:#2563eb"><i class="fas fa-plus-circle me-1"></i>Stima aggiuntive</span>
+                                                            <span style="font-weight:600; font-size:.9em; color:#2563eb">+{{ $stimaInterviste }}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div style="background:{{ $_ftBg2 }}; border-top:1px solid {{ $_ftBd2 }}; padding:.45rem .7rem; display:flex; justify-content:space-between; align-items:center">
+                                                        <span style="font-size:.78em; font-weight:600; color:{{ $_ftCol2 }}">
+                                                            @if($_hg2)
+                                                                <i class="fas fa-circle" style="font-size:.5em; vertical-align:middle; margin-right:.25rem"></i>{{ $_ok2 ? 'Completabile' : 'Non completabile' }}<span style="font-weight:400; opacity:.65"> · ob. {{ $studyGoal }}</span>
+                                                            @else
+                                                                Max raggiungibile
+                                                            @endif
+                                                        </span>
+                                                        <span style="font-weight:700; font-size:1.1em; color:{{ $_ftCol2 }}">{{ $_tot2 }}</span>
+                                                    </div>
                                                 </div>
-                                                <div class="fc-kpi-value text-primary fw-bold">{{ $stimaInterviste }}</div>
                                             </div>
                                             @endif
                                         </div>

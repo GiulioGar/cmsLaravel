@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Cache;
 
 class FieldControlController extends Controller
 {
+    private const PANEL_MATURITY_HOURS = 24;
+
 public function index(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
 {
     ini_set('memory_limit', '512M');
@@ -81,14 +83,41 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     $utentiDisponibili = $this->getUtentiDisponibili($sid, $panelData);
     $mediaRedPanel = $this->calcolaMediaRedPanel();
 
-    $stimaInterviste = ((int) $panelValueFromDB === 1)
-        ? $this->calcolaStimaInterviste($utentiDisponibili, $redemption, $mediaRedPanel)
-        : null;
-
     $bytes = $panelData->bytes ?? 0;
 
     $this->updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes);
-    $this->trackPanelEnabledSnapshot($panelData, $abilitati);
+
+    $contattiInteractive = (int) ($panelCounts['Interactive']['contatti'] ?? 0);
+
+    $redPanelCorrente = ($abilitati > 0 && isset($panelCounts['Interactive']))
+        ? round(($contattiInteractive / $abilitati) * 100, 1)
+        : 0.0;
+
+    $panelRateInfo = ((int) $panelValueFromDB === 1)
+        ? $this->getPanelRateInfo($panelData, $redPanelCorrente, (float) $mediaRedPanel, $abilitati, $contattiInteractive)
+        : null;
+
+    $stimaInterviste = ((int) $panelValueFromDB === 1)
+        ? $this->calcolaStimaInterviste(
+            $utentiDisponibili,
+            $redemption,
+            $panelRateInfo ? $panelRateInfo['valore_utilizzato'] : $mediaRedPanel
+          )
+        : null;
+
+    $irInteractive = (float) ($panelCounts['Interactive']['redemption'] ?? 0);
+
+    $ondateInfo = ((int) $panelValueFromDB === 1)
+        ? $this->getOndate24h($sid, $prj, $utentiDisponibili)
+        : null;
+
+    $stimaDiagnostica = ($ondateInfo !== null && $panelRateInfo !== null && $irInteractive > 0)
+        ? max(0, round(
+            $ondateInfo['utenti_effettivi']
+            * ($panelRateInfo['valore_utilizzato'] / 100)
+            * ($irInteractive / 100)
+          ))
+        : null;
 
     /*
     |--------------------------------------------------------------------------
@@ -148,6 +177,9 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'panelCounts',
         'utentiDisponibili',
         'stimaInterviste',
+        'panelRateInfo',
+        'ondateInfo',
+        'stimaDiagnostica',
         'filtrateCountsByPanel',
         'hasFiltrate',
         'quotaData',
@@ -413,22 +445,109 @@ $redPanel = ($abilitati > 0)
         ]);
     }
 
-private function trackPanelEnabledSnapshot($panelData, int $abilitati): void
+private function correggiMediaPerEta(float $mediaRedPanel, $age1, $age2): array
 {
-    if (!$panelData || (int) ($panelData->panel ?? 0) !== 1) {
-        return;
+    $riferimento = 8.0;
+    $neutro = [
+        'media_originale'  => $mediaRedPanel,
+        'benchmark_target' => $riferimento,
+        'coefficiente_eta' => 1.0,
+        'media_corretta'   => $mediaRedPanel,
+    ];
+
+    if (!is_numeric($age1) || !is_numeric($age2)) {
+        return $neutro;
     }
 
-    $snapshot = $panelData->panel_enabled_snapshot;
+    $a1 = max(18, (int) $age1);
+    $a2 = min(65, (int) $age2);
 
-    if ($snapshot === null || (int) $snapshot !== $abilitati) {
-        DB::table('t_panel_control')
-            ->where('sur_id', $panelData->sur_id)
-            ->update([
-                'panel_enabled_snapshot' => $abilitati,
-                'panel_enabled_changed_at' => now(),
-            ]);
+    if ($a1 > $a2) {
+        return $neutro;
     }
+
+    if ($a1 === 18 && $a2 === 65) {
+        return $neutro;
+    }
+
+    $brackets = [
+        ['min' => 18, 'max' => 24, 'benchmark' => 3.0],
+        ['min' => 25, 'max' => 34, 'benchmark' => 4.5],
+        ['min' => 35, 'max' => 44, 'benchmark' => 7.5],
+        ['min' => 45, 'max' => 65, 'benchmark' => 9.5],
+    ];
+
+    $totalEta    = 0;
+    $sommaPesata = 0.0;
+
+    foreach ($brackets as $b) {
+        $oMin = max($a1, $b['min']);
+        $oMax = min($a2, $b['max']);
+        if ($oMin <= $oMax) {
+            $n             = $oMax - $oMin + 1;
+            $totalEta     += $n;
+            $sommaPesata  += $n * $b['benchmark'];
+        }
+    }
+
+    if ($totalEta === 0) {
+        return $neutro;
+    }
+
+    $benchmarkTarget = round($sommaPesata / $totalEta, 4);
+    $coefficiente    = round(min(1.20, max(0.35, $benchmarkTarget / $riferimento)), 4);
+    $mediaCorretta   = round($mediaRedPanel * $coefficiente, 2);
+
+    return [
+        'media_originale'  => $mediaRedPanel,
+        'benchmark_target' => round($benchmarkTarget, 2),
+        'coefficiente_eta' => $coefficiente,
+        'media_corretta'   => $mediaCorretta,
+    ];
+}
+
+private function getPanelRateInfo($panelData, float $redPanelCorrente, float $mediaRedPanel, int $abilitati, int $contattiAssoluti = 0): array
+{
+    $etaInfo = $this->correggiMediaPerEta(
+        $mediaRedPanel,
+        $panelData->age1_target ?? null,
+        $panelData->age2_target ?? null
+    );
+    $mediaStorica = $etaInfo['media_corretta'];
+
+    $snapshotPrecedente = ($panelData && $panelData->panel_enabled_snapshot !== null)
+        ? (int) $panelData->panel_enabled_snapshot
+        : null;
+    $changedAt         = $panelData ? $panelData->panel_enabled_changed_at : null;
+    $abilitatiCambiati = ($snapshotPrecedente === null || $snapshotPrecedente !== $abilitati);
+
+    $secondi            = 0;
+    $oreDallaVariazione = null;
+    $maturo             = false;
+
+    if ($changedAt !== null && !$abilitatiCambiati) {
+        $secondi            = max(0, time() - strtotime($changedAt));
+        $oreDallaVariazione = round($secondi / 3600, 1);
+        $maturo             = $secondi >= (self::PANEL_MATURITY_HOURS * 3600);
+    }
+
+    // (studio + storico) / 2 — media fissa 50/50 solo con almeno 10 contatti
+    if ($contattiAssoluti > 10) {
+        $valoreUtilizzato = round(($redPanelCorrente + $mediaStorica) / 2, 2);
+        $fonte            = $maturo ? 'studio_stabile' : 'studio';
+    } else {
+        $valoreUtilizzato = $mediaStorica;
+        $fonte            = 'storico';
+    }
+
+    return [
+        'valore_corrente'      => $redPanelCorrente,
+        'valore_utilizzato'    => $valoreUtilizzato,
+        'fonte'                => $fonte,
+        'maturo'               => $maturo,
+        'ore_dalla_variazione' => $oreDallaVariazione,
+        'eta_info'             => $etaInfo,
+    ];
 }
 
 private function getUtentiDisponibili($sid, $panelTarget)
@@ -523,6 +642,45 @@ private function calcolaMediaRedPanel()
 
         return max(0, round($stimaInterviste));
     }
+
+private function getOndate24h(string $sid, string $prj, int $utentiDisponibili): array
+{
+    $ventiquattoreFA = now()->subHours(24);
+
+    $waves = DB::table('t_panel_sample_waves')
+        ->where('sid', $sid)
+        ->where('prj_name', $prj)
+        ->where('launched_at', '>=', $ventiquattoreFA)
+        ->orderBy('launched_at', 'asc')
+        ->get(['users_count', 'launched_at']);
+
+    $dettaglioOndate = [];
+    $utentiResiduiOndate = 0;
+    $now = now();
+
+    foreach ($waves as $wave) {
+        $minutiTrascorsi = (int) $now->diffInMinutes($wave->launched_at);
+        $pesoResiduo = max(1.0 - $minutiTrascorsi / 1440.0, 0.0);
+        $utentiResidui = (int) round($wave->users_count * $pesoResiduo);
+
+        $dettaglioOndate[] = [
+            'launched_at'      => $wave->launched_at,
+            'users_count'      => (int) $wave->users_count,
+            'minuti_trascorsi' => $minutiTrascorsi,
+            'peso_residuo'     => round($pesoResiduo, 4),
+            'utenti_residui'   => $utentiResidui,
+        ];
+
+        $utentiResiduiOndate += $utentiResidui;
+    }
+
+    return [
+        'utenti_disponibili'    => $utentiDisponibili,
+        'utenti_residui_ondate' => $utentiResiduiOndate,
+        'utenti_effettivi'      => $utentiDisponibili + $utentiResiduiOndate,
+        'dettaglio_ondate'      => $dettaglioOndate,
+    ];
+}
 
     private function getQuotaData($prj, $sid, FieldControlSreService $sreService, array $questionMap = [])
     {
