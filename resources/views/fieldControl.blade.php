@@ -700,7 +700,7 @@
                                             <div style="background:{{ $_ftBg1 }}; border-top:1px solid {{ $_ftBd1 }}; padding:.45rem .7rem; display:flex; justify-content:space-between; align-items:center">
                                                 <span style="font-size:.78em; font-weight:600; color:{{ $_ftCol1 }}">
                                                     @if($_hg1)
-                                                        <i class="fas fa-circle" style="font-size:.5em; vertical-align:middle; margin-right:.25rem"></i>{{ $_ok1 ? 'Completabile' : 'Non completabile' }}<span style="font-weight:400; opacity:.65"> · ob. {{ $studyGoal }}</span>
+                                                        <i class="fas fa-circle" style="font-size:.5em; vertical-align:middle; margin-right:.25rem"></i>{{ $_ok1 ? 'Completabile' : 'Non completabile' }}<span style="font-weight:400; opacity:.65"> · ob. {{ $studyGoal ?? 0 }}</span>
                                                     @else
                                                         Max raggiungibile
                                                     @endif
@@ -970,9 +970,10 @@
 
                                             @if($stimaInterviste !== null)
                                             @php
-                                                $_c2     = $panelData['complete'] ?? 0;
-                                                $_tot2   = $_c2 + $stimaInterviste;
-                                                $_hg2    = $studyGoal > 0;
+                                                $_c2       = $panelData['complete'] ?? 0;
+                                                $_tot2     = $_c2 + $stimaInterviste;
+                                                $studyGoal = $studyGoal ?? (int)($panelData->goal ?? 0);
+                                                $_hg2      = $studyGoal > 0;
                                                 $_ok2    = $_hg2 && $_tot2 >= $studyGoal;
                                                 $_ftBg2  = !$_hg2 ? 'rgba(0,0,0,.06)' : ($_ok2 ? 'rgba(22,163,74,.1)'  : 'rgba(220,38,38,.1)');
                                                 $_ftBd2  = !$_hg2 ? 'rgba(0,0,0,.1)'  : ($_ok2 ? 'rgba(22,163,74,.22)' : 'rgba(220,38,38,.22)');
@@ -993,7 +994,7 @@
                                                     <div style="background:{{ $_ftBg2 }}; border-top:1px solid {{ $_ftBd2 }}; padding:.45rem .7rem; display:flex; justify-content:space-between; align-items:center">
                                                         <span style="font-size:.78em; font-weight:600; color:{{ $_ftCol2 }}">
                                                             @if($_hg2)
-                                                                <i class="fas fa-circle" style="font-size:.5em; vertical-align:middle; margin-right:.25rem"></i>{{ $_ok2 ? 'Completabile' : 'Non completabile' }}<span style="font-weight:400; opacity:.65"> · ob. {{ $studyGoal }}</span>
+                                                                <i class="fas fa-circle" style="font-size:.5em; vertical-align:middle; margin-right:.25rem"></i>{{ $_ok2 ? 'Completabile' : 'Non completabile' }}<span style="font-weight:400; opacity:.65"> · ob. {{ $studyGoal ?? 0 }}</span>
                                                             @else
                                                                 Max raggiungibile
                                                             @endif

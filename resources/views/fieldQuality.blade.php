@@ -20,7 +20,7 @@
         <!-- Menu orizzontale con dropdown -->
         <ul class="nav custom-nav-links">
             <!-- Ricerche in corso -->
-            <li class="nav-item dropdown position-relative">
+            <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="ongoingResearchDropdown" role="button"
                    data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-tasks me-1"></i> Ricerche in corso
@@ -64,7 +64,7 @@
             </li>
 
             <!-- Impostazioni con dropdown -->
-            <li class="nav-item dropdown position-relative">
+            <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button"
                    data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-cog me-1"></i> Impostazioni
@@ -810,10 +810,37 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    /* ---- Dropdown Bootstrap ---- */
-    document.querySelectorAll('.dropdown-toggle').forEach(function (el) {
-        new bootstrap.Dropdown(el);
-    });
+    /* ---- Dropdown navbar (workaround AdminKit app.js conflict) ---- */
+    (function initDropdowns() {
+        var toggles = document.querySelectorAll('.custom-navbar [data-bs-toggle="dropdown"]');
+        toggles.forEach(function (toggleEl) {
+            var instance = bootstrap.Dropdown.getOrCreateInstance(toggleEl);
+            toggleEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                toggles.forEach(function (other) {
+                    if (other !== toggleEl) {
+                        var otherInst = bootstrap.Dropdown.getInstance(other);
+                        if (otherInst) otherInst.hide();
+                    }
+                });
+                var menu = toggleEl.nextElementSibling;
+                if (menu && menu.classList.contains('show')) {
+                    instance.hide();
+                } else {
+                    instance.show();
+                }
+            });
+        });
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('.custom-navbar .dropdown')) {
+                toggles.forEach(function (toggleEl) {
+                    var inst = bootstrap.Dropdown.getInstance(toggleEl);
+                    if (inst) inst.hide();
+                });
+            }
+        });
+    })();
 
     /* ---- Tooltip semplici ---- */
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
