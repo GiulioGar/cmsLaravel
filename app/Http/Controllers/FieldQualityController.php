@@ -12,7 +12,8 @@ use App\Models\UserQuality;
 class FieldQualityController extends Controller
 {
     private const LOI_MAX_SECONDS           = 2700;
-    private const LOI_ABSOLUTE_MIN_SECONDS  = 60;
+    private const LOI_ABSOLUTE_MIN_SECONDS          = 60;
+    private const LOI_SHORT_SURVEY_THRESHOLD_SECONDS = 180; // solo sondaggi con refLOI > 3 min attivano il floor assoluto
     private const LOI_CRITICAL_SCORE_CAP   = 35;
     private const LOI_UPPER_MULTIPLIER     = 20 / 12;  // > 1.667× mediana → non-valutabile
     private const LOI_MIN_REFERENCE_GROUP           = 10;   // usato da calculateReferenceMedian (legacy, non attivo nel calcolo)
@@ -517,7 +518,9 @@ class FieldQualityController extends Controller
         foreach ($interviews as &$iv) {
             $loiSec = (int) $iv['loiSec'];
             $q      = (int) ($iv['questionsAnswered'] ?? 0);
-            $absMin = $loiSec > 0 && $loiSec < self::LOI_ABSOLUTE_MIN_SECONDS;
+            $absMin = $loiSec > 0
+                && $loiSec < self::LOI_ABSOLUTE_MIN_SECONDS
+                && $refFullLoi > self::LOI_SHORT_SURVEY_THRESHOLD_SECONDS;
 
             $baseLoi = [
                 'seconds'                            => $loiSec,
