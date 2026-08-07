@@ -19,6 +19,8 @@
             <span>Status Field</span>
         </a>
 
+        <div class="fc-navbar-sep d-none d-md-block"></div>
+
         <!-- Menu orizzontale con dropdown -->
         <ul class="nav custom-nav-links">
             <!-- Ricerche in corso -->
@@ -27,19 +29,20 @@
        data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-tasks me-1"></i> Ricerche in corso
                 </a>
-                <ul class="dropdown-menu" aria-labelledby="ongoingResearchDropdown">
+                <ul class="dropdown-menu fc-research-dropdown" aria-labelledby="ongoingResearchDropdown">
                     @forelse($ricercheInCorso as $ricerca)
                         <li>
-                            <a class="dropdown-item"
+                            <a class="dropdown-item fc-nav-research-item"
                                href="{{ url('fieldControl?prj=' . $ricerca->prj . '&sid=' . $ricerca->sur_id) }}">
-                                {{ $ricerca->description }}
+                                <span class="fc-nav-research-id">#{{ $ricerca->sur_id }}</span>
+                                <span class="fc-nav-research-name">{{ $ricerca->description }}</span>
                             </a>
                         </li>
                     @empty
-                        <li><span class="dropdown-item text-muted">Nessuna ricerca attiva</span></li>
+                        <li><span class="dropdown-item text-muted" style="font-size:.85rem">Nessuna ricerca attiva</span></li>
                     @endforelse
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item " href="{{url('surveys')}}"><b>Vedi tutte</b></a></li>
+                    <li><a class="dropdown-item" href="{{ url('surveys') }}" style="font-size:.82rem; color:#64748b"><i class="fas fa-list me-1"></i> Vedi tutte</a></li>
                 </ul>
             </li>
 
