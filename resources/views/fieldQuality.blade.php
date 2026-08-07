@@ -649,7 +649,13 @@
                         <td class="dq-td dq-td-mono" style="padding:10px 14px;">
                             @php $lPanel = $item['panel'] ?? ''; @endphp
                             <span class="dq-panel-badge {{ $lPanel === 'Interactive' ? 'dq-panel-badge-in' : 'dq-panel-badge-out' }}"
-                                  data-bs-toggle="tooltip" data-bs-title="{{ $lPanel ?: '—' }}">{{ $lPanel === 'Interactive' ? 'IN' : 'OUT' }}</span>
+                                  data-bs-toggle="tooltip" data-bs-title="{{ $lPanel ?: '—' }}">
+                                @if($lPanel === 'Interactive')
+                                    <i class="bi bi-person-fill"></i>
+                                @else
+                                    <i class="bi bi-globe"></i>
+                                @endif
+                            </span>
                             @if($lPanel === 'Interactive')
                                 <a href="/user/{{ $item['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $item['uid'] }}</a>
                             @else
@@ -717,7 +723,13 @@
                         <td class="dq-td dq-td-mono" style="padding:10px 14px;">
                             @php $sPanel = $scale['panel'] ?? ''; @endphp
                             <span class="dq-panel-badge {{ $sPanel === 'Interactive' ? 'dq-panel-badge-in' : 'dq-panel-badge-out' }}"
-                                  data-bs-toggle="tooltip" data-bs-title="{{ $sPanel ?: '—' }}">{{ $sPanel === 'Interactive' ? 'IN' : 'OUT' }}</span>
+                                  data-bs-toggle="tooltip" data-bs-title="{{ $sPanel ?: '—' }}">
+                                @if($sPanel === 'Interactive')
+                                    <i class="bi bi-person-fill"></i>
+                                @else
+                                    <i class="bi bi-globe"></i>
+                                @endif
+                            </span>
                             @if($sPanel === 'Interactive')
                                 <a href="/user/{{ $scale['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $scale['uid'] }}</a>
                             @else
@@ -1205,11 +1217,11 @@ function addToBlackList(responseText) {
 
 /* ---- Panel badge (IN / OUT) nelle tabelle LOI e Scale ---- */
 .dq-panel-badge {
-    display: inline-flex; align-items: center;
-    font-size: .58rem; font-weight: 800; letter-spacing: .04em;
-    padding: .08rem .28rem; border-radius: 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 18px; height: 18px; border-radius: 4px;
+    font-size: .72rem;
     cursor: default; vertical-align: middle; margin-right: .3rem;
-    line-height: 1.4;
+    flex-shrink: 0;
 }
 .dq-panel-badge-in {
     background: oklch(93% 0.07 145); color: oklch(32% 0.13 145);
