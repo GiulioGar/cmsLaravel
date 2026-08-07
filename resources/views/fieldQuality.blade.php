@@ -634,7 +634,16 @@
                         data-ratio="{{ $lRatio ?? '' }}"
                         data-loi-sec="{{ $lSec }}">
                         <td class="dq-td" style="font-weight:600;padding:10px 14px;">{{ $lIid }}</td>
-                        <td class="dq-td dq-td-mono" style="padding:10px 14px;">{{ $item['uid'] }}</td>
+                        <td class="dq-td dq-td-mono" style="padding:10px 14px;">
+                            @php $lPanel = $item['panel'] ?? ''; @endphp
+                            <span class="dq-panel-badge {{ $lPanel === 'Interactive' ? 'dq-panel-badge-in' : 'dq-panel-badge-out' }}"
+                                  data-bs-toggle="tooltip" data-bs-title="{{ $lPanel ?: '—' }}">{{ $lPanel === 'Interactive' ? 'IN' : 'OUT' }}</span>
+                            @if($lPanel === 'Interactive')
+                                <a href="/user/{{ $item['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $item['uid'] }}</a>
+                            @else
+                                {{ $item['uid'] }}
+                            @endif
+                        </td>
                         <td class="dq-td" style="font-variant-numeric:tabular-nums;padding:10px 14px;">{{ $item['loi'] }}</td>
                         <td class="dq-td" style="font-variant-numeric:tabular-nums;padding:10px 14px;color:oklch(50% 0.02 250);">{{ $lQCount }}</td>
                         <td class="dq-td" style="padding:10px 14px;">
@@ -693,7 +702,16 @@
                     @endphp
                     <tr class="dq-row" data-iid="{{ $scale['iid'] }}" data-uid="{{ $scale['uid'] }}">
                         <td class="dq-td" style="font-weight:600;padding:10px 14px;">{{ $scale['iid'] }}</td>
-                        <td class="dq-td dq-td-mono" style="padding:10px 14px;">{{ $scale['uid'] }}</td>
+                        <td class="dq-td dq-td-mono" style="padding:10px 14px;">
+                            @php $sPanel = $scale['panel'] ?? ''; @endphp
+                            <span class="dq-panel-badge {{ $sPanel === 'Interactive' ? 'dq-panel-badge-in' : 'dq-panel-badge-out' }}"
+                                  data-bs-toggle="tooltip" data-bs-title="{{ $sPanel ?: '—' }}">{{ $sPanel === 'Interactive' ? 'IN' : 'OUT' }}</span>
+                            @if($sPanel === 'Interactive')
+                                <a href="/user/{{ $scale['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $scale['uid'] }}</a>
+                            @else
+                                {{ $scale['uid'] }}
+                            @endif
+                        </td>
                         <td class="dq-td" style="padding:10px 14px;">
                             <span class="fq-codice-pop"
                                   data-codice="{{ $sqLabel }}"
@@ -1172,6 +1190,29 @@ function addToBlackList(responseText) {
 <style>
 /* ================================================================
    DASHBOARD QUALITÀ — Design System dq-*
+
+/* ---- Panel badge (IN / OUT) nelle tabelle LOI e Scale ---- */
+.dq-panel-badge {
+    display: inline-flex; align-items: center;
+    font-size: .58rem; font-weight: 800; letter-spacing: .04em;
+    padding: .08rem .28rem; border-radius: 4px;
+    cursor: default; vertical-align: middle; margin-right: .3rem;
+    line-height: 1.4;
+}
+.dq-panel-badge-in {
+    background: oklch(93% 0.07 145); color: oklch(32% 0.13 145);
+    border: 1px solid oklch(76% 0.11 145);
+}
+.dq-panel-badge-out {
+    background: oklch(93% 0.01 250); color: oklch(45% 0.02 250);
+    border: 1px solid oklch(82% 0.02 250);
+}
+/* ---- UID cliccabile (solo panel Interactive) ---- */
+.dq-uid-link {
+    color: inherit; text-decoration: none;
+    border-bottom: 1px dotted oklch(60% 0.02 250);
+}
+.dq-uid-link:hover { color: oklch(42% 0.18 250); border-bottom-color: oklch(42% 0.18 250); }
    ================================================================ */
 body { font-family: 'Inter', system-ui, sans-serif; }
 

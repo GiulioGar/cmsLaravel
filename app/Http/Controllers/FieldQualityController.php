@@ -328,6 +328,7 @@ class FieldQualityController extends Controller
             $loiData[] = [
                 'iid'               => $iid,
                 'uid'               => $uid,
+                'panel'             => $panelUsed,
                 'loi'               => $this->formatLoiSec($loiSec),
                 'questionsAnswered' => $questionsAnswered,
             ];
