@@ -151,8 +151,7 @@
         $openFakeByIid[$iid]['total']++;
         if (!empty($row['isFake'])) $openFakeByIid[$iid]['fake']++;
     }
-    $fakeOpenRows = array_values(array_filter($openQuestionsData, fn($r) => !empty($r['isFake'])));
-    $allOpenRows  = array_values($openQuestionsData);
+    /* $fakeOpenRows, $allOpenRows, $openTotalCount — pre-calcolati dal controller (cap 1500) */
 
     /* ---- Panel unici per dropdown filtri ---- */
     $uniquePanels = array_unique(array_column($completeInterviews, 'panel'));
@@ -189,11 +188,10 @@
         : 0;
     $loiObsMedianFmt = $fmtLoi((int)round($_obsMedianSec));
 
-    /* ---- Ordina tutte le tabelle per IID numerico ---- */
+    /* ---- Ordina le tabelle per IID numerico ---- */
+    /* $allOpenRows e $fakeOpenRows già ordinati dal controller (fake-first, poi IID) */
     usort($completeInterviews, fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
     usort($loiData,            fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
-    usort($fakeOpenRows,       fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
-    usort($allOpenRows,        fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
     usort($scaleData,          fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);
 @endphp
 
@@ -536,7 +534,10 @@
         <div class="dq-table-footer">
             <span id="open-count-label">{{ count($fakeOpenRows) }} sospette</span>
             <span style="color:oklch(65% 0.02 250);margin:0 6px;">/</span>
-            <span style="color:oklch(55% 0.02 250);">{{ count($allOpenRows) }} totali</span>
+            <span style="color:oklch(55% 0.02 250);">{{ $openTotalCount }} totali</span>
+            @if($openTotalCount > count($allOpenRows))
+                <span style="color:oklch(55% 0.02 250);font-size:.78em;margin-left:.4rem;">(visualizzate {{ count($allOpenRows) }})</span>
+            @endif
         </div>
         @else
         <div style="padding:24px;color:oklch(55% 0.02 250);font-style:italic;">Nessuna risposta aperta disponibile.</div>

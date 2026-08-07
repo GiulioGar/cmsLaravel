@@ -66,6 +66,7 @@ class FieldQualityController extends Controller
     public function index(Request $request, PrimisApiService $primis)
     {
         ini_set('memory_limit', '512M');
+        set_time_limit(0);
 
         $prj = $request->query('prj');
         $sid = $request->query('sid');
@@ -91,6 +92,19 @@ class FieldQualityController extends Controller
         $this->populateOpenQuestionsDetails($openQuestionsData, $questionMap);
         $this->populateScaleQuestionsDetails($scaleData, $questionMap);
         $this->sortOpenQuestions($openQuestionsData);
+
+        // Pre-calcola open rows per la view: fake prima (per IID), poi non-fake (per IID).
+        // Cap a 1500 per evitare HTML/browser OOM quando ci sono molte interviste.
+        $openTotalCount = count($openQuestionsData);
+        $sortedOpen = $openQuestionsData;
+        usort($sortedOpen, function ($a, $b) {
+            $fa = !empty($a['isFake']) ? 0 : 1;
+            $fb = !empty($b['isFake']) ? 0 : 1;
+            return $fa !== $fb ? $fa - $fb : ((int) $a['iid'] <=> (int) $b['iid']);
+        });
+        $allOpenRows  = array_slice($sortedOpen, 0, 1500);
+        $fakeOpenRows = array_values(array_filter($allOpenRows, fn ($r) => !empty($r['isFake'])));
+        unset($sortedOpen);
 
         // 4) Criteri di punteggio (popolano quality_criteria e quality_risks)
         $loiMedianSec = $this->applyLoiCriterion($completeInterviews);
@@ -165,6 +179,9 @@ class FieldQualityController extends Controller
             'openQuestionsData'  => $openQuestionsData,
             'scaleData'          => $scaleData,
             'questionsFromApi'   => $questionsFromApi,
+            'allOpenRows'        => $allOpenRows,
+            'fakeOpenRows'       => $fakeOpenRows,
+            'openTotalCount'     => $openTotalCount,
             'loiCriteriaByIid'   => $loiCriteriaByIid,
             'loiSecByIid'        => $loiSecByIid,
             'scaleQsByIidQid'    => $scaleQsByIidQid,
