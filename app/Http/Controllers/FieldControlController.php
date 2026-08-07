@@ -97,15 +97,15 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         ? $this->getPanelRateInfo($panelData, $redPanelCorrente, (float) $mediaRedPanel, $abilitati, $contattiInteractive)
         : null;
 
+    $irInteractive = (float) ($panelCounts['Interactive']['redemption'] ?? 0);
+
     $stimaInterviste = ((int) $panelValueFromDB === 1)
         ? $this->calcolaStimaInterviste(
             $utentiDisponibili,
-            $redemption,
+            $irInteractive,
             $panelRateInfo ? $panelRateInfo['valore_utilizzato'] : $mediaRedPanel
           )
         : null;
-
-    $irInteractive = (float) ($panelCounts['Interactive']['redemption'] ?? 0);
 
     $ondateInfo = ((int) $panelValueFromDB === 1)
         ? $this->getOndate24h($sid, $prj, $utentiDisponibili)
@@ -174,6 +174,7 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'counts',
         'abilitati',
         'redemption',
+        'irInteractive',
         'panelCounts',
         'utentiDisponibili',
         'stimaInterviste',

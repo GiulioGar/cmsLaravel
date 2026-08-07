@@ -612,7 +612,7 @@
 
                             </div>
 
-                            @if(count($panelCounts) == 1 && array_key_exists('Interactive', $panelCounts))
+                            @if(array_key_exists('Interactive', $panelCounts))
                                 <div class="fc-kpi-extra mt-3">
                                     <div class="fc-kpi-extra-item">
                                         <div class="fc-kpi-label">Abilitati panel</div>
@@ -632,12 +632,12 @@
                                             if ($ondateInfo['utenti_residui_ondate'] > 0) {
                                                 $_stima1 .= ' &nbsp;+&nbsp; ondate <b>+' . number_format($ondateInfo['utenti_residui_ondate']) . '</b><br>Effettivi: <b>' . number_format($ondateInfo['utenti_effettivi']) . '</b>';
                                             }
-                                            $_stima1 .= '<br>IR survey: <b>' . number_format($redemption, 1) . '%</b></small>';
+                                            $_stima1 .= '<br>IR survey: <b>' . number_format($irInteractive, 1) . '%</b></small>';
                                             if ($stimaDiagnostica !== null) {
                                                 $_stima1 .= $_sep1 . '→ <b>' . $stimaDiagnostica . ' interviste</b>';
                                             }
                                         } else {
-                                            $_stima1 = $_sep1 . '<small>IR survey: ' . number_format($redemption, 1) . '%</small>';
+                                            $_stima1 = $_sep1 . '<small>IR survey: ' . number_format($irInteractive, 1) . '%</small>';
                                         }
                                         $_fonte1 = $panelRateInfo['fonte'] ?? '';
                                         if ($_fonte1 === 'studio_stabile') {
@@ -707,6 +707,10 @@
                                                 </span>
                                                 <span style="font-weight:700; font-size:1.1em; color:{{ $_ftCol1 }}">{{ $_tot1 }}</span>
                                             </div>
+                                        </div>
+                                        <div style="color:#dc2626; font-size:.7em; margin-top:.35rem; display:flex; align-items:center; gap:.3rem; opacity:.8">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span>La stima non considera eventuali chiusure di quote ed è relativa al panel Interactive</span>
                                         </div>
                                     </div>
                                     @endif
@@ -926,12 +930,12 @@
                                                     if ($ondateInfo['utenti_residui_ondate'] > 0) {
                                                         $_stima2 .= ' &nbsp;+&nbsp; ondate <b>+' . number_format($ondateInfo['utenti_residui_ondate']) . '</b><br>Effettivi: <b>' . number_format($ondateInfo['utenti_effettivi']) . '</b>';
                                                     }
-                                                    $_stima2 .= '<br>IR survey: <b>' . number_format($redemption, 1) . '%</b></small>';
+                                                    $_stima2 .= '<br>IR survey: <b>' . number_format($irInteractive, 1) . '%</b></small>';
                                                     if ($stimaDiagnostica !== null) {
                                                         $_stima2 .= $_sep2 . '→ <b>' . $stimaDiagnostica . ' interviste</b>';
                                                     }
                                                 } else {
-                                                    $_stima2 = $_sep2 . '<small>IR survey: ' . number_format($redemption, 1) . '%</small>';
+                                                    $_stima2 = $_sep2 . '<small>IR survey: ' . number_format($irInteractive, 1) . '%</small>';
                                                 }
                                                 $_fonte2 = $panelRateInfo['fonte'] ?? '';
                                                 if ($_fonte2 === 'studio_stabile') {
@@ -972,7 +976,7 @@
                                             @php
                                                 $_c2       = $panelData['complete'] ?? 0;
                                                 $_tot2     = $_c2 + $stimaInterviste;
-                                                $studyGoal = $studyGoal ?? (int)($panelData->goal ?? 0);
+                                                $studyGoal = $goal;
                                                 $_hg2      = $studyGoal > 0;
                                                 $_ok2    = $_hg2 && $_tot2 >= $studyGoal;
                                                 $_ftBg2  = !$_hg2 ? 'rgba(0,0,0,.06)' : ($_ok2 ? 'rgba(22,163,74,.1)'  : 'rgba(220,38,38,.1)');
@@ -1001,6 +1005,10 @@
                                                         </span>
                                                         <span style="font-weight:700; font-size:1.1em; color:{{ $_ftCol2 }}">{{ $_tot2 }}</span>
                                                     </div>
+                                                </div>
+                                                <div style="color:#dc2626; font-size:.7em; margin-top:.35rem; display:flex; align-items:center; gap:.3rem; opacity:.8">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    <span>La stima non considera eventuali chiusure di quote ed è relativa al panel Interactive</span>
                                                 </div>
                                             </div>
                                             @endif
