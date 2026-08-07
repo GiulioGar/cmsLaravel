@@ -404,7 +404,13 @@
                     data-panel="{{ $ivPanelLow }}"
                     data-tier="{{ $ivTier }}">
                     <td class="dq-td" style="font-weight:600;">{{ $interview['iid'] }}</td>
-                    <td class="dq-td dq-td-mono">{{ $interview['uid'] }}</td>
+                    <td class="dq-td dq-td-mono">
+                        @if(($interview['panel'] ?? '') === 'Interactive')
+                            <a href="/user/{{ $interview['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $interview['uid'] }}</a>
+                        @else
+                            {{ $interview['uid'] }}
+                        @endif
+                    </td>
                     <td class="dq-td dq-td-panel">{{ $interview['panel'] ?? '—' }}</td>
                     <td class="dq-td">
                         @if($ivSc !== null)
@@ -503,7 +509,13 @@
                     data-fake="{{ $isRowFake ? '1' : '0' }}"
                     @if(!$isRowFake) style="display:none;" @endif>
                     <td class="dq-td" style="font-weight:600;padding:12px 16px;">{{ $open['iid'] }}</td>
-                    <td class="dq-td dq-td-mono" style="padding:12px 16px;">{{ $open['uid'] }}</td>
+                    <td class="dq-td dq-td-mono" style="padding:12px 16px;">
+                        @if(($open['panel'] ?? '') === 'Interactive')
+                            <a href="/user/{{ $open['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $open['uid'] }}</a>
+                        @else
+                            {{ $open['uid'] }}
+                        @endif
+                    </td>
                     <td class="dq-td" style="color:oklch(40% 0.02 250);padding:12px 16px;">{{ $open['panel'] }}</td>
                     <td class="dq-td" style="padding:12px 16px;">
                         <span class="fq-codice-pop"
