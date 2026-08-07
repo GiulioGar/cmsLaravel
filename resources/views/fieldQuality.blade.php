@@ -158,17 +158,7 @@
     $uniquePanels = array_unique(array_column($completeInterviews, 'panel'));
     sort($uniquePanels);
 
-    /* ---- LOI lookup per IID ---- */
-    $loiRatioByIid      = [];
-    $loiSecByIid        = [];
-    $loiTooSlowByIid    = [];
-    $loiCriteriaByIid   = [];
-    $loiSurveyRefQCount = null;
-    $loiSurveyRefType   = null;
-    $loiSurveyRefFullSec = null;
-    $loiSurveySampleSize = null;
-    $loiSurveyExcluded  = null;
-    $loiSurveyCoverage  = null;
+    /* ---- LOI lookup per IID — pre-calcolati dal controller ---- */
     /* helper per formattare secondi in mm:ss o hh:mm:ss (usato nella view) */
     $fmtLoi = function($s) {
         $s = (int) $s;
@@ -179,21 +169,14 @@
         if ($h > 0) { return sprintf('%02d:%02d:%02d', $h, $m, $sec); }
         return sprintf('%02d:%02d', $m, $sec);
     };
-    foreach ($completeInterviews as $_iv) {
-        $_loi = $_iv['quality_criteria']['loi'] ?? [];
-        $loiRatioByIid[$_iv['iid']]    = $_loi['ratio'] ?? null;
-        $loiSecByIid[$_iv['iid']]      = $_iv['loiSec'] ?? 0;
-        $loiTooSlowByIid[$_iv['iid']]  = !empty($_loi['too_slow']);
-        $loiCriteriaByIid[$_iv['iid']] = $_loi;
-        if ($loiSurveyRefQCount === null && isset($_loi['reference_question_count'])) {
-            $loiSurveyRefQCount  = (int)   $_loi['reference_question_count'];
-            $loiSurveyRefType    = $_loi['reference_type']           ?? null;
-            $loiSurveyRefFullSec = $_loi['reference_full_seconds']   ?? null;
-            $loiSurveySampleSize = (int)  ($_loi['reference_sample_size'] ?? 0);
-            $loiSurveyExcluded   = (int)  ($_loi['excluded_slow_reference_cases'] ?? 0);
-            $loiSurveyCoverage   = $_loi['reference_coverage'] ?? null;
-        }
-    }
+    $loiRatioByIid    = array_map(fn($l) => $l['ratio']    ?? null,   $loiCriteriaByIid);
+    $loiTooSlowByIid  = array_map(fn($l) => !empty($l['too_slow']),   $loiCriteriaByIid);
+    $loiSurveyRefQCount  = $loiSurveyMeta['refQCount'];
+    $loiSurveyRefType    = $loiSurveyMeta['refType'];
+    $loiSurveyRefFullSec = $loiSurveyMeta['refFullSec'];
+    $loiSurveySampleSize = $loiSurveyMeta['sampleSize'];
+    $loiSurveyExcluded   = $loiSurveyMeta['excluded'];
+    $loiSurveyCoverage   = $loiSurveyMeta['coverage'];
 
     /* Mediana LOI osservata (tutte le interviste valide, esclude <60s e >=2700s) */
     $_obsLois = array_values(array_filter($loiSecByIid, fn($s) => $s >= 60 && $s < 2700));
@@ -205,14 +188,6 @@
             : (float)$_obsLois[($_obsN-1)/2])
         : 0;
     $loiObsMedianFmt = $fmtLoi((int)round($_obsMedianSec));
-
-    /* ---- Scale details lookup ---- */
-    $scaleQsByIidQid = [];
-    foreach ($completeInterviews as $iv) {
-        foreach ($iv['quality_criteria']['scale']['details'] ?? [] as $d) {
-            $scaleQsByIidQid[$iv['iid']][$d['question_id']] = $d;
-        }
-    }
 
     /* ---- Ordina tutte le tabelle per IID numerico ---- */
     usort($completeInterviews, fn($a, $b) => (int)$a['iid'] <=> (int)$b['iid']);

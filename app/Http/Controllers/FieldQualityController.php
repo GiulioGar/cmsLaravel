@@ -65,6 +65,8 @@ class FieldQualityController extends Controller
 
     public function index(Request $request, PrimisApiService $primis)
     {
+        ini_set('memory_limit', '512M');
+
         $prj = $request->query('prj');
         $sid = $request->query('sid');
 
@@ -73,7 +75,7 @@ class FieldQualityController extends Controller
             $directory = "/var/imr/fields/{$prj}/{$sid}/results";
         }
 
-        // 1) Parsing file .sre
+        // 1) Parsing file .sre — singolo pass per file
         $parsed             = $this->parseSreFiles($directory);
         $completeInterviews = $parsed['interviews'];
         $loiData            = $parsed['loiData'];
@@ -108,7 +110,41 @@ class FieldQualityController extends Controller
         $stats          = $this->computeScoreStats($completeInterviews);
         $classification = $this->computeQualityClassification($completeInterviews);
 
-        // 8) Dati DB (navbar e panel)
+        // 8) Estrae lookup per la view ed elimina i campi annidati pesanti da $completeInterviews
+        //    (quality_criteria / quality_risks / quality_weights non servono al rendering HTML)
+        $loiCriteriaByIid = [];
+        $loiSecByIid      = [];
+        $scaleQsByIidQid  = [];
+        $loiSurveyMeta    = [
+            'refQCount'  => null, 'refType'    => null, 'refFullSec' => null,
+            'sampleSize' => null, 'excluded'   => null, 'coverage'   => null,
+        ];
+
+        foreach ($completeInterviews as &$iv) {
+            $loi = $iv['quality_criteria']['loi'] ?? [];
+            $loiCriteriaByIid[$iv['iid']] = $loi;
+            $loiSecByIid[$iv['iid']]      = $iv['loiSec'];
+
+            foreach ($iv['quality_criteria']['scale']['details'] ?? [] as $d) {
+                $scaleQsByIidQid[$iv['iid']][$d['question_id']] = $d;
+            }
+
+            if ($loiSurveyMeta['refQCount'] === null && isset($loi['reference_question_count'])) {
+                $loiSurveyMeta = [
+                    'refQCount'  => (int)    $loi['reference_question_count'],
+                    'refType'    =>          $loi['reference_type']               ?? null,
+                    'refFullSec' =>          $loi['reference_full_seconds']       ?? null,
+                    'sampleSize' => (int)   ($loi['reference_sample_size']        ?? 0),
+                    'excluded'   => (int)   ($loi['excluded_slow_reference_cases'] ?? 0),
+                    'coverage'   =>          $loi['reference_coverage']           ?? null,
+                ];
+            }
+
+            unset($iv['quality_criteria'], $iv['quality_risks'], $iv['quality_weights']);
+        }
+        unset($iv);
+
+        // 9) Dati DB (navbar e panel)
         $ricercheInCorso = DB::table('t_panel_control')
             ->where('stato', 0)
             ->orderBy('description', 'asc')
@@ -129,6 +165,10 @@ class FieldQualityController extends Controller
             'openQuestionsData'  => $openQuestionsData,
             'scaleData'          => $scaleData,
             'questionsFromApi'   => $questionsFromApi,
+            'loiCriteriaByIid'   => $loiCriteriaByIid,
+            'loiSecByIid'        => $loiSecByIid,
+            'scaleQsByIidQid'    => $scaleQsByIidQid,
+            'loiSurveyMeta'      => $loiSurveyMeta,
         ], $classification));
     }
 
@@ -153,35 +193,113 @@ class FieldQualityController extends Controller
         }
 
         foreach (glob($directory . "/*.sre") as $file) {
-            $line = $this->readFirstLine($file);
-            if (!$line) {
+            $handle = fopen($file, 'r');
+            if (!$handle) {
                 continue;
             }
 
-            $data   = explode(";", trim($line));
+            // Prima riga: header — status, iid, uid, loiSec, panel
+            $firstRaw = fgets($handle);
+            if (!$firstRaw) {
+                fclose($handle);
+                continue;
+            }
+
+            $data   = explode(";", trim($firstRaw));
             $offset = (isset($data[0]) && $data[0] === '2.0') ? 0 : -1;
 
-            $status    = isset($data[8 + $offset]) ? (int) $data[8 + $offset] : null;
+            $status = isset($data[8 + $offset]) ? (int) $data[8 + $offset] : null;
+            if ($status !== 3) {
+                fclose($handle);
+                continue;
+            }
+
             $iid       = $data[3 + $offset] ?? 'N/A';
             $uid       = $data[4 + $offset] ?? 'N/A';
             $loiSec    = isset($data[7 + $offset]) ? (int) $data[7 + $offset] : 0;
             $panelUsed = $this->detectPanel($data);
 
-            if ($status !== 3) {
-                continue;
+            // Lettura singola di tutte le righe rimanenti
+            $questionIds = [];
+
+            while (($line = fgets($handle)) !== false) {
+                $trimmed = rtrim($line);
+                if ($trimmed === '') {
+                    continue;
+                }
+
+                $fields = explode(';', $trimmed);
+                $type   = $fields[0] ?? '';
+
+                // Raccoglie question IDs per questionsAnswered / pathSignature
+                $qid = isset($fields[1]) ? trim($fields[1]) : '';
+                if ($qid !== '' && ctype_digit($qid) && (int) $qid > 0) {
+                    $questionIds[] = (int) $qid;
+                }
+
+                if ($type === 'open') {
+                    $openResponse = $fields[2] ?? '';
+                    if (!is_numeric($openResponse)) {
+                        $openQuestionsData[] = [
+                            'iid'          => $iid,
+                            'uid'          => $uid,
+                            'panel'        => $panelUsed,
+                            'questionId'   => (int) $qid,
+                            'openResponse' => $openResponse,
+                        ];
+                    }
+                } elseif ($type === 'choice') {
+                    $questionId = (int) ($fields[1] ?? 0);
+                    if ($questionId > 0) {
+                        for ($i = 5; $i < count($fields); $i++) {
+                            $part = trim($fields[$i]);
+                            if ($part === '') {
+                                continue;
+                            }
+                            if (!preg_match('/^(comp(\d+)):(.+)$/i', $part, $m)) {
+                                continue;
+                            }
+                            $answer = trim($m[3]);
+                            if ($answer === '' || is_numeric($answer)) {
+                                continue;
+                            }
+                            $openQuestionsData[] = [
+                                'iid'             => $iid,
+                                'uid'             => $uid,
+                                'panel'           => $panelUsed,
+                                'questionId'      => $questionId,
+                                'openResponse'    => $answer,
+                                'question_type'   => 'choice_open',
+                                'component'       => $m[1],
+                                'component_index' => (int) $m[2],
+                            ];
+                        }
+                    }
+                } elseif ($type === 'scale') {
+                    $parsed = $this->parseScaleLine($trimmed);
+                    if ($parsed !== null) {
+                        $parsed['iid']   = $iid;
+                        $parsed['uid']   = $uid;
+                        $parsed['panel'] = $panelUsed;
+                        $scaleData[]     = $parsed;
+                    }
+                }
             }
 
-            $metrics           = $this->readFileMetrics($file);
-            $questionsAnswered = $metrics['questionCount'];
-            $pathSignature     = $metrics['pathSignature'];
+            fclose($handle);
+
+            sort($questionIds);
+            $uniqueIds         = array_unique($questionIds);
+            $questionsAnswered = max(1, count($uniqueIds));
+            $pathSignature     = implode(',', $questionIds);
 
             $completeInterviews[] = [
-                'iid'               => $iid,
-                'uid'               => $uid,
-                'panel'             => $panelUsed,
-                'loiSec'            => $loiSec,
-                'questionsAnswered' => $questionsAnswered,
-                'pathSignature'     => $pathSignature,
+                'iid'                => $iid,
+                'uid'                => $uid,
+                'panel'              => $panelUsed,
+                'loiSec'             => $loiSec,
+                'questionsAnswered'  => $questionsAnswered,
+                'pathSignature'      => $pathSignature,
                 'score'              => null,
                 'quality_criteria'   => [],
                 'quality_risks'      => [],
@@ -196,10 +314,6 @@ class FieldQualityController extends Controller
                 'loi'               => $this->formatLoiSec($loiSec),
                 'questionsAnswered' => $questionsAnswered,
             ];
-
-            $this->extractOpenQuestions($file, $iid, $uid, $panelUsed, $openQuestionsData);
-            $this->extractChoiceOpenComponents($file, $iid, $uid, $panelUsed, $openQuestionsData);
-            $this->extractScaleData($file, $iid, $uid, $panelUsed, $scaleData);
         }
 
         return [
