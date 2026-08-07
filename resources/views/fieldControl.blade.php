@@ -34,7 +34,7 @@
                         <li>
                             <a class="dropdown-item fc-nav-research-item"
                                href="{{ url('fieldControl?prj=' . $ricerca->prj . '&sid=' . $ricerca->sur_id) }}">
-                                <span class="fc-nav-research-id">#{{ $ricerca->sur_id }}</span>
+                                <span class="fc-nav-research-id"><span class="fc-nav-live-dot"></span>#{{ $ricerca->sur_id }}</span>
                                 <span class="fc-nav-research-name">{{ $ricerca->description }}</span>
                             </a>
                         </li>
