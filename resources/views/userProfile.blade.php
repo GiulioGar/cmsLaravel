@@ -334,6 +334,10 @@
                     <span class="header-stat-label">Regolari</span>
                     <span class="header-stat-value">{{ $quality['regolari'] }}</span>
                 </div>
+                <div class="header-stat-card stat-neutral">
+                    <span class="header-stat-label">Incerte</span>
+                    <span class="header-stat-value">{{ $quality['incerte'] }}</span>
+                </div>
                 <div class="header-stat-card stat-warning">
                     <span class="header-stat-label">Anomale</span>
                     <span class="header-stat-value">{{ $quality['anomale'] }}</span>
@@ -366,7 +370,12 @@
                     @endphp
                     <tr>
                         <td>{{ $q->prj }}</td>
-                        <td>{{ $q->sid }}</td>
+                        <td>
+                            <a href="{{ url('fieldControl') }}?prj={{ urlencode($q->prj) }}&sid={{ urlencode($q->sid) }}"
+                               target="_blank" rel="noopener" class="text-decoration-none fw-semibold">
+                                {{ $q->sid }}
+                            </a>
+                        </td>
                         <td>{{ $q->iid }}</td>
                         <td>
                             @if($q->quality_score !== null)

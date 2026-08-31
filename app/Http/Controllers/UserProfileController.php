@@ -104,8 +104,9 @@ class UserProfileController extends Controller
     $qualityScores   = $qualityList->whereNotNull('quality_score')->pluck('quality_score');
     $qualityMedia    = $qualityScores->count() > 0 ? round($qualityScores->avg(), 1) : null;
     $qualityCount    = $qualityList->count();
-    $qualityRegolari = $qualityList->where('quality_tier', 'regolare')->count();
-    $qualityAnomale  = $qualityList->where('quality_tier', 'anomala')->count();
+    $qualityRegolari = $qualityList->whereIn('quality_tier', ['regolare', 'alta'])->count();
+    $qualityIncerte  = $qualityList->whereIn('quality_tier', ['incerta', 'accettabile'])->count();
+    $qualityAnomale  = $qualityList->whereIn('quality_tier', ['anomala', 'bassa'])->count();
 
     $qualityByIid = [];
     foreach ($qualityList as $q) {
@@ -135,6 +136,7 @@ class UserProfileController extends Controller
             'media'       => $qualityMedia,
             'count'       => $qualityCount,
             'regolari'    => $qualityRegolari,
+            'incerte'     => $qualityIncerte,
             'anomale'     => $qualityAnomale,
             'byIid'       => $qualityByIid,
         ],
