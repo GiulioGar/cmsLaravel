@@ -1150,6 +1150,13 @@ document.addEventListener('DOMContentLoaded', function () {
             filterRows('tbl-scale', function (row) { return iidUidMatch(row, q); });
         });
     }
+
+    /* -- Auto-fill UID from URL param (e.g. coming from user profile) -- */
+    var urlUid = new URLSearchParams(window.location.search).get('uid');
+    if (urlUid && fltIvSearch) {
+        fltIvSearch.value = urlUid;
+        applyIvFilter();
+    }
 });
 
 /* ================================================================
