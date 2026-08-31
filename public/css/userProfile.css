@@ -480,6 +480,11 @@ body {
     color: #92400e;
 }
 
+.badge-soft-secondary {
+    background: #f1f5f9;
+    color: #475569;
+}
+
 .section-header {
     display: flex;
     align-items: center;

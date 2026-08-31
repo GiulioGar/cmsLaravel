@@ -4,11 +4,14 @@
     $hasSid  = isset($s->sid) && $s->sid !== '-' && $s->sid !== '';
     $hasPrj  = isset($s->prj) && $s->prj !== '-' && $s->prj !== '';
     $hasIid  = isset($s->iid) && $s->iid !== '-' && $s->iid !== '';
-    $qData   = ($hasIid && isset($qualityByIid[$s->iid])) ? $qualityByIid[$s->iid] : null;
-    $qTier   = $qData['tier'] ?? '';
-    $qBadge  = $qTier === 'regolare' ? 'badge-soft-success'
-             : ($qTier === 'incerta'  ? 'badge-soft-warning'
-             : ($qTier === 'anomala'  ? 'badge-soft-danger'  : 'badge-soft-secondary'));
+    $qData     = ($hasIid && isset($qualityByIid[$s->iid])) ? $qualityByIid[$s->iid] : null;
+    $qTier     = $qData['tier'] ?? '';
+    $qTierNorm = in_array($qTier, ['alta', 'regolare'])        ? 'regolare'
+               : (in_array($qTier, ['accettabile', 'incerta']) ? 'incerta'
+               : (in_array($qTier, ['bassa', 'anomala'])       ? 'anomala' : $qTier));
+    $qBadge  = $qTierNorm === 'regolare' ? 'badge-soft-success'
+             : ($qTierNorm === 'incerta'  ? 'badge-soft-warning'
+             : ($qTierNorm === 'anomala'  ? 'badge-soft-danger' : 'badge-soft-secondary'));
 @endphp
     <tr>
         <td>{{ \Carbon\Carbon::parse($s->event_date)->format('d/m/Y H:i') }}</td>

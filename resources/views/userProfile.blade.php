@@ -350,7 +350,6 @@
                         <th>IID</th>
                         <th>Score</th>
                         <th>Stato</th>
-                        <th>Cap</th>
                         <th>Data</th>
                     </tr>
                 </thead>
@@ -358,9 +357,12 @@
                     @foreach($quality['lista'] as $q)
                     @php
                         $qTier     = $q->quality_tier ?? '';
-                        $qBadgeCls = $qTier === 'regolare' ? 'badge-soft-success'
-                                   : ($qTier === 'incerta'  ? 'badge-soft-warning'
-                                   : ($qTier === 'anomala'  ? 'badge-soft-danger' : 'badge-soft-secondary'));
+                        $qTierNorm = in_array($qTier, ['alta', 'regolare'])           ? 'regolare'
+                                   : (in_array($qTier, ['accettabile', 'incerta'])    ? 'incerta'
+                                   : (in_array($qTier, ['bassa', 'anomala'])          ? 'anomala' : $qTier));
+                        $qBadgeCls = $qTierNorm === 'regolare' ? 'badge-soft-success'
+                                   : ($qTierNorm === 'incerta'  ? 'badge-soft-warning'
+                                   : ($qTierNorm === 'anomala'  ? 'badge-soft-danger' : 'badge-soft-secondary'));
                     @endphp
                     <tr>
                         <td>{{ $q->prj }}</td>
@@ -374,14 +376,7 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge {{ $qBadgeCls }}">{{ mb_strtoupper($qTier ?: '—', 'UTF-8') }}</span>
-                        </td>
-                        <td>
-                            @if($q->cap_applied)
-                                <span class="badge badge-soft-warning"><i class="bi bi-arrow-down-circle me-1"></i>Sì</span>
-                            @else
-                                <span class="text-muted small">—</span>
-                            @endif
+                            <span class="badge {{ $qBadgeCls }}">{{ mb_strtoupper($qTierNorm ?: '—', 'UTF-8') }}</span>
                         </td>
                         <td>{{ $q->computed_at ? \Carbon\Carbon::parse($q->computed_at)->format('d/m/Y') : '—' }}</td>
                     </tr>
