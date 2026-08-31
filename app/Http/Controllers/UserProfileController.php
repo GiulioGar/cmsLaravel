@@ -94,7 +94,28 @@ class UserProfileController extends Controller
     Log::info('UserProfile show total time', $logData);
 
     // ===============================
-    // 6) RETURN ALLA VIEW
+    // 6) QUALITÀ INTERVISTE
+    // ===============================
+    $qualityList = DB::table('t_user_quality')
+        ->where('uid', $uid)
+        ->orderByDesc('computed_at')
+        ->get(['prj', 'sid', 'iid', 'quality_score', 'quality_tier', 'cap_applied', 'computed_at']);
+
+    $qualityScores   = $qualityList->whereNotNull('quality_score')->pluck('quality_score');
+    $qualityMedia    = $qualityScores->count() > 0 ? round($qualityScores->avg(), 1) : null;
+    $qualityCount    = $qualityList->count();
+    $qualityRegolari = $qualityList->where('quality_tier', 'regolare')->count();
+    $qualityAnomale  = $qualityList->where('quality_tier', 'anomala')->count();
+
+    $qualityByIid = [];
+    foreach ($qualityList as $q) {
+        if ($q->iid !== '' && $q->iid !== '-') {
+            $qualityByIid[$q->iid] = ['score' => $q->quality_score, 'tier' => $q->quality_tier];
+        }
+    }
+
+    // ===============================
+    // 7) RETURN ALLA VIEW
     // ===============================
     return view('userProfile', [
         'user' => $user,
@@ -108,6 +129,14 @@ class UserProfileController extends Controller
             'pagati' => $premiPagati,
             'da_pagare' => $premiDaPagare,
             'totali' => $premiTotali,
+        ],
+        'quality' => [
+            'lista'       => $qualityList,
+            'media'       => $qualityMedia,
+            'count'       => $qualityCount,
+            'regolari'    => $qualityRegolari,
+            'anomale'     => $qualityAnomale,
+            'byIid'       => $qualityByIid,
         ],
         'storico' => $storico,
     ]);
@@ -289,7 +318,16 @@ public function assignBonusMalus(Request $request, $user_id)
         }
 
         $storico = $this->buildStorico($user_id, 30);
-        $storicoHtml = view('partials.userProfileStoricoRows', compact('storico'))->render();
+
+        $qualityRows = DB::table('t_user_quality')->where('uid', $user_id)->get(['iid', 'quality_score', 'quality_tier']);
+        $qualityByIid = [];
+        foreach ($qualityRows as $q) {
+            if ($q->iid !== '' && $q->iid !== '-') {
+                $qualityByIid[$q->iid] = ['score' => $q->quality_score, 'tier' => $q->quality_tier];
+            }
+        }
+
+        $storicoHtml = view('partials.userProfileStoricoRows', compact('storico', 'qualityByIid'))->render();
 
         $result['storico_html'] = $storicoHtml;
 

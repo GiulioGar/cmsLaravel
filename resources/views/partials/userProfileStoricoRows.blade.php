@@ -1,4 +1,15 @@
+@php $qualityByIid = $qualityByIid ?? []; @endphp
 @forelse($storico as $s)
+@php
+    $hasSid  = isset($s->sid) && $s->sid !== '-' && $s->sid !== '';
+    $hasPrj  = isset($s->prj) && $s->prj !== '-' && $s->prj !== '';
+    $hasIid  = isset($s->iid) && $s->iid !== '-' && $s->iid !== '';
+    $qData   = ($hasIid && isset($qualityByIid[$s->iid])) ? $qualityByIid[$s->iid] : null;
+    $qTier   = $qData['tier'] ?? '';
+    $qBadge  = $qTier === 'regolare' ? 'badge-soft-success'
+             : ($qTier === 'incerta'  ? 'badge-soft-warning'
+             : ($qTier === 'anomala'  ? 'badge-soft-danger'  : 'badge-soft-secondary'));
+@endphp
     <tr>
         <td>{{ \Carbon\Carbon::parse($s->event_date)->format('d/m/Y H:i') }}</td>
         <td>
@@ -8,8 +19,24 @@
         </td>
         <td class="text-muted small">{{ $s->tipologia }}</td>
         <td>{{ $s->iid }}</td>
-        <td>{{ $s->sid }}</td>
+        <td>
+            @if($hasSid && $hasPrj)
+                <a href="{{ url('fieldControl') }}?prj={{ urlencode($s->prj) }}&sid={{ urlencode($s->sid) }}"
+                   target="_blank" rel="noopener" class="text-decoration-none fw-semibold">
+                    {{ $s->sid }}
+                </a>
+            @else
+                {{ $s->sid }}
+            @endif
+        </td>
         <td>{{ $s->prj }}</td>
+        <td>
+            @if($qData !== null)
+                <span class="badge {{ $qBadge }}">{{ $qData['score'] ?? '—' }}</span>
+            @else
+                <span class="text-muted small">—</span>
+            @endif
+        </td>
         <td>
             @if($s->bytes > 0)
                 <span class="text-success fw-semibold">
@@ -28,6 +55,6 @@
     </tr>
 @empty
     <tr>
-        <td colspan="7" class="text-muted">Nessun evento registrato</td>
+        <td colspan="8" class="text-muted">Nessun evento registrato</td>
     </tr>
 @endforelse

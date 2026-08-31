@@ -1586,7 +1586,7 @@ class FieldQualityController extends Controller
                 continue;
             }
 
-            $tier = $score >= 70 ? 'alta' : ($score >= 50 ? 'accettabile' : 'bassa');
+            $tier = $score >= 70 ? 'regolare' : ($score >= 50 ? 'incerta' : 'anomala');
 
             $rows[] = [
                 'prj'                => $prj,
@@ -1617,14 +1617,14 @@ class FieldQualityController extends Controller
     {
         $score = max(0, min(100, $score));
 
-        if ($score >= 90) { return ['stars' => 5.0, 'label' => 'Ottima']; }
-        if ($score >= 80) { return ['stars' => 4.5, 'label' => 'Molto buona']; }
-        if ($score >= 70) { return ['stars' => 4.0, 'label' => 'Buona']; }
-        if ($score >= 60) { return ['stars' => 3.5, 'label' => 'Accettabile']; }
+        if ($score >= 90) { return ['stars' => 5.0, 'label' => 'Nessuna anomalia']; }
+        if ($score >= 80) { return ['stars' => 4.5, 'label' => 'Anomalia trascurabile']; }
+        if ($score >= 70) { return ['stars' => 4.0, 'label' => 'Anomalia lieve']; }
+        if ($score >= 60) { return ['stars' => 3.5, 'label' => 'Dubbia']; }
         if ($score >= 50) { return ['stars' => 3.0, 'label' => 'Da verificare']; }
-        if ($score >= 40) { return ['stars' => 2.5, 'label' => 'Sospetta']; }
-        if ($score >= 30) { return ['stars' => 2.0, 'label' => 'Scarsa']; }
-        if ($score >= 20) { return ['stars' => 1.5, 'label' => 'Molto scarsa']; }
+        if ($score >= 40) { return ['stars' => 2.5, 'label' => 'Scarsa qualità']; }
+        if ($score >= 30) { return ['stars' => 2.0, 'label' => 'Qualità insufficiente']; }
+        if ($score >= 20) { return ['stars' => 1.5, 'label' => 'Inattendibile']; }
         if ($score >= 10) { return ['stars' => 1.0, 'label' => 'Probabile fake']; }
         return ['stars' => 0.5, 'label' => 'Fortemente inattendibile'];
     }

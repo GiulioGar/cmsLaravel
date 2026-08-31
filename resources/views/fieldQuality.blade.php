@@ -291,9 +291,9 @@
                     <div style="width:{{ $pctLow }}%;background:oklch(55% 0.17 25);"></div>
                 </div>
                 <div class="dq-distrib-legend">
-                    <div style="font-size:11px;color:oklch(45% 0.02 250);"><span class="dq-distrib-dot" style="background:oklch(55% 0.13 150);"></span>Alta {{ $pctHigh }}%</div>
-                    <div style="font-size:11px;color:oklch(45% 0.02 250);"><span class="dq-distrib-dot" style="background:oklch(58% 0.14 75);"></span>Acc. {{ $pctAccept }}%</div>
-                    <div style="font-size:11px;color:oklch(45% 0.02 250);"><span class="dq-distrib-dot" style="background:oklch(55% 0.17 25);"></span>Bassa {{ $pctLow }}%</div>
+                    <div style="font-size:11px;color:oklch(45% 0.02 250);"><span class="dq-distrib-dot" style="background:oklch(55% 0.13 150);"></span>Regolare {{ $pctHigh }}%</div>
+                    <div style="font-size:11px;color:oklch(45% 0.02 250);"><span class="dq-distrib-dot" style="background:oklch(58% 0.14 75);"></span>Incerta {{ $pctAccept }}%</div>
+                    <div style="font-size:11px;color:oklch(45% 0.02 250);"><span class="dq-distrib-dot" style="background:oklch(55% 0.17 25);"></span>Anomala {{ $pctLow }}%</div>
                 </div>
             </div>
         </div>
@@ -308,9 +308,9 @@
                         <th class="dq-th">Panel</th>
                         <th class="dq-th">Interviste</th>
                         <th class="dq-th">Score medio</th>
-                        <th class="dq-th">Alta qualità</th>
-                        <th class="dq-th">Accettabile</th>
-                        <th class="dq-th">Bassa qualità</th>
+                        <th class="dq-th">Regolare</th>
+                        <th class="dq-th">Incerta</th>
+                        <th class="dq-th">Anomala</th>
                         <th class="dq-th">Durata mediana</th>
                     </tr>
                 </thead>
@@ -351,9 +351,9 @@
                 </select>
                 <select id="flt-iv-tier" class="dq-filter-select">
                     <option value="">Tutte le qualità</option>
-                    <option value="alta">Alta qualità</option>
-                    <option value="accettabile">Accettabile</option>
-                    <option value="bassa">Bassa qualità</option>
+                    <option value="regolare">Regolare</option>
+                    <option value="incerta">Incerta</option>
+                    <option value="anomala">Anomala</option>
                 </select>
                 <button class="dq-btn dq-btn-outline-teal" onclick="exportCsv('tbl-interviews', ['ID','UID','Panel','Score','Stato'])">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -379,13 +379,13 @@
                 @foreach($completeInterviews as $interview)
                 @php
                     $ivSc    = $interview['score'] !== null ? (int) $interview['score'] : null;
-                    $ivTier  = $ivSc === null ? 'na' : ($ivSc >= 70 ? 'alta' : ($ivSc >= 50 ? 'accettabile' : 'bassa'));
-                    $ivBadge = $ivTier === 'alta' ? 'dq-badge-high'
-                             : ($ivTier === 'accettabile' ? 'dq-badge-accept'
-                             : ($ivTier === 'bassa' ? 'dq-badge-low' : 'dq-badge-unknown'));
-                    $ivStatoCls = $ivTier === 'alta' ? 'dq-stato-high'
-                                : ($ivTier === 'accettabile' ? 'dq-stato-accept'
-                                : ($ivTier === 'bassa' ? 'dq-stato-low' : 'dq-stato-unknown'));
+                    $ivTier  = $ivSc === null ? 'na' : ($ivSc >= 70 ? 'regolare' : ($ivSc >= 50 ? 'incerta' : 'anomala'));
+                    $ivBadge = $ivTier === 'regolare' ? 'dq-badge-high'
+                             : ($ivTier === 'incerta' ? 'dq-badge-accept'
+                             : ($ivTier === 'anomala' ? 'dq-badge-low' : 'dq-badge-unknown'));
+                    $ivStatoCls = $ivTier === 'regolare' ? 'dq-stato-high'
+                                : ($ivTier === 'incerta' ? 'dq-stato-accept'
+                                : ($ivTier === 'anomala' ? 'dq-stato-low' : 'dq-stato-unknown'));
                     $ivCapApplied    = !empty($interview['quality_score_cap']['applied']);
                     $ivCapBaseScore  = $interview['quality_score_caps']['base_score'] ?? null;
                     $ivCovLabel   = $interview['quality_coverage']['label'] ?? 'Non valutabile';
@@ -406,7 +406,7 @@
                     <td class="dq-td" style="font-weight:600;">{{ $interview['iid'] }}</td>
                     <td class="dq-td dq-td-mono">
                         @if(($interview['panel'] ?? '') === 'Interactive')
-                            <a href="/user/{{ $interview['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $interview['uid'] }}</a>
+                            <a href="{{ url('user/' . $interview['uid']) }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $interview['uid'] }}</a>
                         @else
                             {{ $interview['uid'] }}
                         @endif
@@ -422,7 +422,7 @@
                         @endif
                     </td>
                     <td class="dq-td">
-                        <div class="{{ $ivStatoCls }}">{{ strtoupper($interview['rating_label'] ?? 'N/D') }}</div>
+                        <div class="{{ $ivStatoCls }}">{{ mb_strtoupper($interview['rating_label'] ?? 'N/D', 'UTF-8') }}</div>
                         <div class="dq-coverage-sub">{{ $ivCovLabel }}</div>
                     </td>
                     <td class="dq-td" style="text-align:center;vertical-align:middle;padding:0 12px;">
@@ -511,7 +511,7 @@
                     <td class="dq-td" style="font-weight:600;padding:12px 16px;">{{ $open['iid'] }}</td>
                     <td class="dq-td dq-td-mono" style="padding:12px 16px;">
                         @if(($open['panel'] ?? '') === 'Interactive')
-                            <a href="/user/{{ $open['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $open['uid'] }}</a>
+                            <a href="{{ url('user/' . $open['uid']) }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $open['uid'] }}</a>
                         @else
                             {{ $open['uid'] }}
                         @endif
@@ -657,7 +657,7 @@
                                 @endif
                             </span>
                             @if($lPanel === 'Interactive')
-                                <a href="/user/{{ $item['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $item['uid'] }}</a>
+                                <a href="{{ url('user/' . $item['uid']) }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $item['uid'] }}</a>
                             @else
                                 {{ $item['uid'] }}
                             @endif
@@ -731,7 +731,7 @@
                                 @endif
                             </span>
                             @if($sPanel === 'Interactive')
-                                <a href="/user/{{ $scale['uid'] }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $scale['uid'] }}</a>
+                                <a href="{{ url('user/' . $scale['uid']) }}" target="_blank" rel="noopener" class="dq-uid-link">{{ $scale['uid'] }}</a>
                             @else
                                 {{ $scale['uid'] }}
                             @endif

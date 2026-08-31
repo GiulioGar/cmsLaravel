@@ -559,6 +559,15 @@ body {
     color: #475569;
 }
 
+.header-qualita {
+    background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%);
+}
+
+.header-qualita .section-icon {
+    background: #ede9fe;
+    color: #7c3aed;
+}
+
 .header-stats {
     display: flex;
     align-items: stretch;

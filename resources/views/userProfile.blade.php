@@ -303,6 +303,98 @@
             </div>
         </div>
 
+{{-- ===== 3b) QUALITÀ INTERVISTE ===== --}}
+<div class="col-12">
+    <div class="card">
+        <div class="card-header section-header header-qualita">
+            <div class="section-header-left">
+                <div class="section-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div>
+                    <h5 class="section-title mb-0">Qualità Interviste</h5>
+                    <div class="section-subtitle">Score di qualità per ogni intervista completata nel panel Interactive</div>
+                </div>
+            </div>
+            <div class="header-stats">
+                @php
+                    $qMediaTier = $quality['media'] !== null
+                        ? ($quality['media'] >= 70 ? 'stat-success' : ($quality['media'] >= 50 ? 'stat-warning' : 'stat-warning'))
+                        : 'stat-neutral';
+                @endphp
+                <div class="header-stat-card {{ $qMediaTier }}">
+                    <span class="header-stat-label">Media score</span>
+                    <span class="header-stat-value">{{ $quality['media'] !== null ? $quality['media'] : '—' }}</span>
+                </div>
+                <div class="header-stat-card stat-neutral">
+                    <span class="header-stat-label">Interviste</span>
+                    <span class="header-stat-value">{{ $quality['count'] }}</span>
+                </div>
+                <div class="header-stat-card stat-success">
+                    <span class="header-stat-label">Regolari</span>
+                    <span class="header-stat-value">{{ $quality['regolari'] }}</span>
+                </div>
+                <div class="header-stat-card stat-warning">
+                    <span class="header-stat-label">Anomale</span>
+                    <span class="header-stat-value">{{ $quality['anomale'] }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            @if($quality['count'] > 0)
+            <table class="table table-sm table-striped text-center align-middle">
+                <thead>
+                    <tr>
+                        <th>PRJ</th>
+                        <th>SID</th>
+                        <th>IID</th>
+                        <th>Score</th>
+                        <th>Stato</th>
+                        <th>Cap</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($quality['lista'] as $q)
+                    @php
+                        $qTier     = $q->quality_tier ?? '';
+                        $qBadgeCls = $qTier === 'regolare' ? 'badge-soft-success'
+                                   : ($qTier === 'incerta'  ? 'badge-soft-warning'
+                                   : ($qTier === 'anomala'  ? 'badge-soft-danger' : 'badge-soft-secondary'));
+                    @endphp
+                    <tr>
+                        <td>{{ $q->prj }}</td>
+                        <td>{{ $q->sid }}</td>
+                        <td>{{ $q->iid }}</td>
+                        <td>
+                            @if($q->quality_score !== null)
+                                <span class="badge {{ $qBadgeCls }}">{{ $q->quality_score }}/100</span>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="badge {{ $qBadgeCls }}">{{ mb_strtoupper($qTier ?: '—', 'UTF-8') }}</span>
+                        </td>
+                        <td>
+                            @if($q->cap_applied)
+                                <span class="badge badge-soft-warning"><i class="bi bi-arrow-down-circle me-1"></i>Sì</span>
+                            @else
+                                <span class="text-muted small">—</span>
+                            @endif
+                        </td>
+                        <td>{{ $q->computed_at ? \Carbon\Carbon::parse($q->computed_at)->format('d/m/Y') : '—' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @else
+                <p class="text-muted text-center py-3 mb-0">Nessun dato di qualità disponibile per questo utente.</p>
+            @endif
+        </div>
+    </div>
+</div>
+
 {{-- ===== 4) STORICO ===== --}}
 <div class="col-12">
     <div class="card">
@@ -327,12 +419,13 @@
                         <th>IID</th>
                         <th>SID</th>
                         <th>PRJ</th>
+                        <th>Score</th>
                         <th>Bytes</th>
                     </tr>
                 </thead>
 
             <tbody id="storicoTableBody">
-                @include('partials.userProfileStoricoRows', ['storico' => $storico])
+                @include('partials.userProfileStoricoRows', ['storico' => $storico, 'qualityByIid' => $quality['byIid']])
             </tbody>
 
             </table>
