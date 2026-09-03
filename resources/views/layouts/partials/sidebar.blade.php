@@ -55,6 +55,12 @@
                         </a>
                     </li>
                     <li class="sidebar-item">
+                        <a class="sidebar-link" href="{{ route('panelQuality.index') }}">
+                            <i class="align-middle" data-feather="shield"></i>
+                            <span class="align-middle">Controllo qualità</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-item">
                         <a class="sidebar-link" href="{{ route('premi.panel') }}">
                             <i class="align-middle" data-feather="bar-chart-2"></i>
                             <span class="align-middle">Premi</span>

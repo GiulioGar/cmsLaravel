@@ -1,0 +1,455 @@
+/* ================================================================
+   PANEL QUALITY MONITOR — Design System pq-*
+   Estende il vocabolario visivo dq-* di fieldQuality
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+body { font-family: 'Inter', system-ui, sans-serif; }
+
+/* ── Contenitore pagina ─────────────────────────────────────────── */
+.pq-container {
+    max-width: 1400px;
+    padding-bottom: 60px;
+}
+
+/* ── Page header ────────────────────────────────────────────────── */
+.pq-page-header {
+    border-left: 4px solid oklch(55% 0.10 255);
+    padding-left: 16px;
+    margin-bottom: 28px;
+}
+.pq-page-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: oklch(22% 0.02 250);
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
+.pq-page-sub {
+    font-size: 12px;
+    color: oklch(50% 0.02 250);
+    margin: 5px 0 0;
+}
+.pq-page-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: oklch(40% 0.10 255);
+    background: oklch(95% 0.04 255);
+    border: 1px solid oklch(85% 0.06 255);
+    padding: 4px 12px;
+    border-radius: 999px;
+    margin-top: 8px;
+}
+
+/* ── KPI globali ────────────────────────────────────────────────── */
+.pq-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: oklch(92% 0.006 250);
+    border: 1px solid oklch(92% 0.006 250);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 28px;
+    box-shadow: 0 1px 3px oklch(20% 0.02 260 / 0.06);
+}
+.pq-kpi-cell {
+    background: #fff;
+    padding: 22px 24px;
+}
+.pq-kpi-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: oklch(45% 0.02 250);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 11px;
+}
+.pq-kpi-value {
+    font-size: 36px;
+    font-weight: 800;
+    margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.pq-kpi-sub {
+    font-size: 11px;
+    color: oklch(55% 0.02 250);
+    margin-top: 6px;
+}
+.pq-kpi-bar {
+    height: 5px;
+    background: oklch(92% 0.006 250);
+    border-radius: 3px;
+    margin-top: 10px;
+    overflow: hidden;
+}
+.pq-kpi-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+}
+
+/* ── Card comune ────────────────────────────────────────────────── */
+.pq-card {
+    background: #fff;
+    border: 1px solid oklch(92% 0.006 250);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px oklch(20% 0.02 260 / 0.06);
+    margin-bottom: 24px;
+}
+.pq-card-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid oklch(92% 0.006 250);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.pq-card-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.pq-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: oklch(22% 0.02 250);
+}
+.pq-card-sub {
+    font-size: 12px;
+    color: oklch(50% 0.02 250);
+    margin-top: 2px;
+}
+.pq-border-blue   { border-left: 4px solid oklch(55% 0.10 255); }
+.pq-border-red    { border-left: 4px solid oklch(55% 0.10 25);  }
+.pq-border-amber  { border-left: 4px solid oklch(55% 0.10 80);  }
+.pq-border-gray   { border-left: 4px solid oklch(72% 0.01 250); }
+
+/* ── Tabs ───────────────────────────────────────────────────────── */
+.pq-tabs {
+    border-bottom: 2px solid oklch(92% 0.006 250);
+    margin-bottom: 24px;
+    gap: 4px;
+}
+.pq-tabs .nav-link {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: oklch(50% 0.02 250);
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    padding: 10px 18px;
+    margin-bottom: -2px;
+    transition: color .15s, border-color .15s;
+}
+.pq-tabs .nav-link:hover {
+    color: oklch(35% 0.02 250);
+    border-bottom-color: oklch(80% 0.04 255);
+}
+.pq-tabs .nav-link.active {
+    color: oklch(42% 0.13 255);
+    border-bottom-color: oklch(55% 0.13 255);
+    background: transparent;
+}
+.pq-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 6px;
+    background: oklch(93% 0.006 250);
+    color: oklch(45% 0.02 250);
+}
+.pq-tabs .nav-link.active .pq-tab-count {
+    background: oklch(92% 0.06 255);
+    color: oklch(42% 0.13 255);
+}
+
+/* ── Filtri ─────────────────────────────────────────────────────── */
+.pq-filters {
+    padding: 14px 20px;
+    background: oklch(98.5% 0.003 250);
+    border-bottom: 1px solid oklch(93% 0.005 250);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.pq-filter-input {
+    border: 1px solid oklch(88% 0.006 250);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-family: 'Inter', system-ui, sans-serif;
+    outline: none;
+    min-width: 200px;
+}
+.pq-filter-input:focus { border-color: oklch(55% 0.10 255); }
+.pq-filter-select {
+    border: 1px solid oklch(88% 0.006 250);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: oklch(30% 0.02 250);
+    outline: none;
+}
+.pq-filter-select:focus { border-color: oklch(55% 0.10 255); }
+.pq-filter-count {
+    font-size: 12px;
+    color: oklch(55% 0.02 250);
+    margin-left: auto;
+}
+
+/* ── Tabelle ────────────────────────────────────────────────────── */
+.pq-table-wrap {
+    overflow-x: auto;
+}
+.pq-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+.pq-thead {
+    text-align: left;
+    background: oklch(98% 0.004 250);
+    border-bottom: 1px solid oklch(90% 0.006 250);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+.pq-th {
+    padding: 11px 14px;
+    font-weight: 600;
+    font-size: 11px;
+    color: oklch(45% 0.02 250);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.pq-th-sort {
+    cursor: pointer;
+    user-select: none;
+}
+.pq-th-sort:hover { color: oklch(35% 0.02 250); }
+.pq-row { border-bottom: 1px solid oklch(94% 0.006 250); }
+.pq-row:hover { background: oklch(97.5% 0.008 260); }
+.pq-row[data-hidden="true"] { display: none; }
+.pq-td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    color: oklch(25% 0.02 250);
+}
+.pq-td-mono {
+    font-family: 'SF Mono', Consolas, monospace;
+    font-size: 12px;
+    color: oklch(38% 0.02 250);
+}
+.pq-td-muted { color: oklch(55% 0.02 250); font-size: 12px; }
+
+/* ── Avatar mini ────────────────────────────────────────────────── */
+.pq-avatar-mini {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+.pq-user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+.pq-user-name {
+    font-weight: 600;
+    color: oklch(22% 0.02 250);
+    line-height: 1.2;
+}
+.pq-user-uid {
+    font-size: 11px;
+    color: oklch(55% 0.02 250);
+    font-family: 'SF Mono', Consolas, monospace;
+    margin-top: 1px;
+}
+
+/* ── Score badge ────────────────────────────────────────────────── */
+.pq-score {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-weight: 700;
+    font-size: 13px;
+}
+.pq-score-high    { background: oklch(95% 0.05 150); color: oklch(40% 0.13 150); }
+.pq-score-accept  { background: oklch(95% 0.05 75);  color: oklch(42% 0.13 75);  }
+.pq-score-low     { background: oklch(95% 0.04 25);  color: oklch(45% 0.16 25);  }
+.pq-score-denom   { font-size: 10px; font-weight: 600; opacity: 0.7; }
+
+/* ── Tier badge ─────────────────────────────────────────────────── */
+.pq-tier {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.pq-tier-regolare { background: oklch(94% 0.06 150); color: oklch(38% 0.14 150); }
+.pq-tier-incerta  { background: oklch(95% 0.06 75);  color: oklch(40% 0.15 75);  }
+.pq-tier-anomala  { background: oklch(94% 0.05 25);  color: oklch(44% 0.17 25);  }
+
+/* ── CAP pill ───────────────────────────────────────────────────── */
+.pq-cap-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: oklch(95% 0.04 25);
+    color: oklch(48% 0.16 25);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+}
+
+/* ── Mini barra distribuzione ───────────────────────────────────── */
+.pq-distrib {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    min-width: 80px;
+    background: oklch(93% 0.004 250);
+}
+.pq-distrib-seg-high   { background: oklch(58% 0.12 150); }
+.pq-distrib-seg-mid    { background: oklch(62% 0.12 75);  }
+.pq-distrib-seg-low    { background: oklch(58% 0.14 25);  }
+.pq-distrib-label {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 10px;
+    color: oklch(50% 0.02 250);
+    white-space: nowrap;
+}
+
+/* ── Stato ricerca ──────────────────────────────────────────────── */
+.pq-stato-aperta  { color: oklch(40% 0.13 150); font-weight: 600; font-size: 11px; }
+.pq-stato-chiusa  { color: oklch(55% 0.02 250); font-size: 11px; }
+
+/* ── Sezione B (senza dati) ─────────────────────────────────────── */
+.pq-section-b-header {
+    padding: 16px 24px;
+    background: oklch(98.5% 0.004 80);
+    border-bottom: 1px solid oklch(92% 0.008 80);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.pq-section-b-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: oklch(40% 0.10 80);
+}
+.pq-empty {
+    padding: 40px 24px;
+    text-align: center;
+    color: oklch(60% 0.02 250);
+    font-style: italic;
+    font-size: 13px;
+}
+
+/* ── Panel icons ────────────────────────────────────────────────── */
+.pq-panel-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+.pq-panel-icon {
+    font-size: 16px;
+    cursor: default;
+    line-height: 1;
+}
+.pq-panel-int { color: #16a34a; }
+.pq-panel-ext { color: #2563eb; }
+
+/* ── Paginator ──────────────────────────────────────────────────── */
+.pq-paginator-wrap {
+    padding: 14px 20px;
+    border-top: 1px solid oklch(93% 0.005 250);
+    background: oklch(98.5% 0.003 250);
+}
+.pq-paginator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.pq-page-btn {
+    min-width: 34px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid oklch(88% 0.006 250);
+    border-radius: 7px;
+    background: #fff;
+    font-size: 13px;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: oklch(35% 0.02 250);
+    cursor: pointer;
+    transition: background .12s, border-color .12s;
+}
+.pq-page-btn:hover:not(:disabled) {
+    background: oklch(95% 0.04 255);
+    border-color: oklch(75% 0.08 255);
+    color: oklch(42% 0.13 255);
+}
+.pq-page-btn.active {
+    background: oklch(55% 0.13 255);
+    border-color: oklch(55% 0.13 255);
+    color: #fff;
+    font-weight: 700;
+}
+.pq-page-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+.pq-page-ellipsis {
+    font-size: 13px;
+    color: oklch(60% 0.02 250);
+    padding: 0 4px;
+}
+.pq-page-info {
+    font-size: 12px;
+    color: oklch(55% 0.02 250);
+    margin-left: 8px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .pq-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 575.98px) {
+    .pq-kpi-grid { grid-template-columns: 1fr; }
+}

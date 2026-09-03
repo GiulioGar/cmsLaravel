@@ -13,6 +13,7 @@ use App\Http\Controllers\AbilitaUidController;
 use App\Http\Controllers\AutotestController;
 use App\Http\Controllers\ConceptToolController;
 use App\Http\Controllers\PanelUsersController;
+use App\Http\Controllers\PanelQualityController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\PremiPanelController;
 use App\Http\Controllers\RecruitmentController;
@@ -115,6 +116,12 @@ Route::middleware(['auth.custom'])->group(function () {
     // ============================================
     Route::get('/concept-tool', [ConceptToolController::class, 'index'])->name('concept.index');
     Route::post('/concept-tool', [ConceptToolController::class, 'process'])->name('concept.process');
+
+    // ============================================
+    // PANEL - Controllo Qualità
+    // ============================================
+
+        Route::get('/panelQuality', [PanelQualityController::class, 'index'])->name('panelQuality.index');
 
     // ============================================
     // PANEL - Gestione Utenti
