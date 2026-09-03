@@ -9,6 +9,10 @@
 
     <div class="row g-3">
 
+        {{-- ===== COLONNA SINISTRA: Hero + Informazioni personali ===== --}}
+        <div class="col-lg-7">
+        <div class="row g-3">
+
         {{-- ===== HERO PROFILO ===== --}}
         <div class="col-12">
             <div class="card up-hero-card">
@@ -27,46 +31,57 @@
                 <div class="up-hero-identity">
                     <div class="up-avatar" style="background:{{ $avatarBg }};">{{ $initials }}</div>
                     <div class="up-hero-info">
-                        <div class="up-hero-name">
-                            {{ $user->full_name ?? $user->user_id }}
-                            @if($user->active == 1)
-                                <span class="up-status-badge up-status-active"
-                                      role="button" data-bs-toggle="modal" data-bs-target="#modalUserActive"
-                                      title="Gestisci stato">ATTIVO</span>
-                            @else
-                                <span class="up-status-badge up-status-inactive"
-                                      role="button" data-bs-toggle="modal" data-bs-target="#modalUserInactive"
-                                      title="Gestisci stato">NON ATTIVO</span>
-                            @endif
+                        {{-- Colonna sinistra: nome, email, azioni --}}
+                        <div class="up-hero-info-main">
+                            <div class="up-hero-name">
+                                {{ $user->full_name ?? $user->user_id }}
+                                @if($user->active == 1)
+                                    <span class="up-status-badge up-status-active"
+                                          role="button" data-bs-toggle="modal" data-bs-target="#modalUserActive"
+                                          title="Gestisci stato">ATTIVO</span>
+                                @else
+                                    <span class="up-status-badge up-status-inactive"
+                                          role="button" data-bs-toggle="modal" data-bs-target="#modalUserInactive"
+                                          title="Gestisci stato">NON ATTIVO</span>
+                                @endif
+                            </div>
+                            <div class="up-hero-email">
+                                <i class="bi bi-envelope"></i> {{ $user->email ?? '—' }}
+                                @if(!empty($user->paypalEmail))
+                                    <span class="up-hero-sep">·</span>
+                                    <i class="bi bi-paypal"></i> {{ $user->paypalEmail }}
+                                @endif
+                            </div>
+                            <div class="up-hero-actions">
+                                <button class="btn btn-sm up-action-btn" data-bs-toggle="modal" data-bs-target="#modalBonusMalus">
+                                    <i class="bi bi-plus-slash-minus me-1"></i>Bonus / Malus
+                                </button>
+                                <button type="button" class="btn btn-sm up-action-btn" id="btnRefreshRespintLog">
+                                    <i class="bi bi-list-check me-1"></i>Log
+                                </button>
+                                <button type="button" class="btn btn-sm up-action-btn-icon" id="btnOpenRespintLog"
+                                        title="Apri dettaglio log" disabled>
+                                    <i class="bi bi-search"></i>
+                                </button>
+                                <span class="up-log-status"><span id="respintLogStatus">—</span></span>
+                            </div>
                         </div>
-                        <div class="up-hero-email">
-                            <i class="bi bi-envelope"></i> {{ $user->email ?? '—' }}
-                            @if(!empty($user->paypalEmail))
-                                <span class="up-hero-sep">·</span>
-                                <i class="bi bi-paypal"></i> {{ $user->paypalEmail }}
-                            @endif
-                        </div>
-                        <div class="up-hero-meta">
-                            <span>ID utente: {{ $user->user_id }}</span>
-                            <span class="up-hero-sep">·</span>
-                            <span>Registrato dal {{ $user->reg_date ? \Carbon\Carbon::parse($user->reg_date)->format('d/m/Y') : '—' }}</span>
+                        {{-- Colonna destra: info anagrafiche --}}
+                        <div class="up-hero-info-side">
+                            <div class="up-meta-row">
+                                <span class="up-meta-key">ID utente</span>
+                                <span class="up-meta-val">{{ $user->user_id }}</span>
+                            </div>
+                            <div class="up-meta-row">
+                                <span class="up-meta-key">Registrato</span>
+                                <span class="up-meta-val">{{ $user->reg_date ? \Carbon\Carbon::parse($user->reg_date)->format('d/m/Y') : '—' }}</span>
+                            </div>
                             @if($cityStr)
-                                <span class="up-hero-sep">·</span>
-                                <span>{{ $cityStr }}</span>
+                            <div class="up-meta-row">
+                                <span class="up-meta-key">Città</span>
+                                <span class="up-meta-val">{{ $cityStr }}</span>
+                            </div>
                             @endif
-                        </div>
-                        <div class="up-hero-actions">
-                            <button class="btn btn-sm up-action-btn" data-bs-toggle="modal" data-bs-target="#modalBonusMalus">
-                                <i class="bi bi-plus-slash-minus me-1"></i>Bonus / Malus
-                            </button>
-                            <button type="button" class="btn btn-sm up-action-btn" id="btnRefreshRespintLog">
-                                <i class="bi bi-list-check me-1"></i>Log
-                            </button>
-                            <button type="button" class="btn btn-sm up-action-btn-icon" id="btnOpenRespintLog"
-                                    title="Apri dettaglio log" disabled>
-                                <i class="bi bi-search"></i>
-                            </button>
-                            <span class="up-log-status"><span id="respintLogStatus">—</span></span>
                         </div>
                     </div>
                 </div>
@@ -121,7 +136,7 @@
         </div>
 
         {{-- ===== INFORMAZIONI PERSONALI ===== --}}
-        <div class="col-lg-7">
+        <div class="col-12">
             <div class="card h-100">
                 <div class="card-header up-section-header">
                     <div class="up-section-left">
@@ -195,7 +210,10 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div>{{-- /col-12 info personali --}}
+
+        </div>{{-- /row g-3 sinistra --}}
+        </div>{{-- /col-lg-7 sinistra --}}
 
         {{-- ===== QUALITÀ INTERVISTE (condensed) ===== --}}
         <div class="col-lg-5">
