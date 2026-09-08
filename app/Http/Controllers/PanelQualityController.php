@@ -38,13 +38,19 @@ class PanelQualityController extends Controller
             ->get()
             ->keyBy('user_id');
 
+        // Filtro difensivo: un uid senza corrispondenza in t_user_info non può essere
+        // un vero panelista Interactive (t_user_info.user_id è varchar(10), niente
+        // GUID esterni può starci). Copre i casi in cui detectPanel() etichetta
+        // erroneamente "Interactive" per assenza del campo pan= nel file .sre.
+        $panelisti = $panelisti->filter(fn ($p) => $nomiByUid->has($p->uid))->values();
+
         $panelisti->each(function ($p) use ($nomiByUid) {
             $ui = $nomiByUid->get($p->uid);
-            $p->full_name = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : '';
+            $p->full_name = trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? ''));
         });
 
-        // Tabella limitata ai peggiori N (già ordinati per score ASC) — i KPI restano sul totale
-        $panelistiTable = $panelisti->take(50);
+        // Tutti i panelisti (già ordinati per score ASC) — paginati lato client a 30/pagina
+        $panelistiTable = $panelisti;
 
         // ── KPI globali — derivati in PHP dalla collection già in memoria ─────
         $intervisteTotali = $panelisti->sum('interviste');
@@ -226,7 +232,12 @@ class PanelQualityController extends Controller
 
             foreach ($panelisti as $p) {
                 $ui = $infoByUid->get($p->uid);
-                $nome = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : '';
+                // Uid senza corrispondenza in t_user_info: non è un panelista Interactive
+                // reale (vedi filtro difensivo analogo nella tabella Panelisti).
+                if (!$ui) {
+                    continue;
+                }
+                $nome = trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? ''));
                 fwrite($out, $p->uid . ';' . $nome . ';' . ($ui->email ?? '') . "\r\n");
             }
 

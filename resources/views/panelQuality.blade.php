@@ -123,9 +123,6 @@
                             <div class="pq-card-title">Qualità per panelista</div>
                             <div class="pq-card-sub">
                                 Solo panel Interactive — ordinati per score medio crescente, i peggiori in cima
-                                @if($panelisti->count() > $panelistiTable->count())
-                                    · primi {{ $panelistiTable->count() }} su {{ $panelisti->count() }}
-                                @endif
                             </div>
                         </div>
                     </div>
@@ -730,6 +727,13 @@
 
 </div>{{-- /pq-container --}}
 
+@endsection
+
+{{-- Script in @section('scripts'), NON inline in 'content': il layout carica Bootstrap/jQuery
+     dopo @yield('content') ma prima di @yield('scripts') — uno script qui dentro 'content'
+     gira prima che `bootstrap` esista, causando ReferenceError e bloccando tutto il resto
+     (tooltip, filtri, paginazione falliscono silenziosamente). --}}
+@section('scripts')
 {{-- ═══ JS: filtri + paginazione (panelisti + ricerche) ══════════════════ --}}
 <script>
 /* Funzione riutilizzabile per filtro+paginazione su qualsiasi tabella */
@@ -809,6 +813,7 @@ var _pan = pqTable({
     tableId:      'tblPanelisti',
     goFn:         'pqGoPan',
     label:        'panelisti',
+    pageSize:     30,
     match: function (r) {
         var term = document.getElementById('fltPanelistiSearch').value.toLowerCase().trim();
         var tier = document.getElementById('fltPanelistiTier').value;

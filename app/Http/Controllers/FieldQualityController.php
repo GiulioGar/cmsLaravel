@@ -1574,6 +1574,19 @@ class FieldQualityController extends Controller
         $now  = now()->toDateTimeString();
         $rows = [];
 
+        // detectPanel() etichetta "Interactive" per default quando il file .sre non
+        // contiene il campo pan= — vale per i veri panelisti Interactive, ma anche
+        // (erroneamente) per alcuni panel esterni che non scrivono quel campo. Un uid
+        // reale Interactive esiste sempre in t_user_info (user_id varchar(10), niente
+        // GUID esterni può starci): usiamo questo come verifica per correggere l'etichetta.
+        $interactiveUids = array_unique(array_map(
+            fn ($iv) => (string) ($iv['uid'] ?? ''),
+            array_filter($interviews, fn ($iv) => ($iv['panel'] ?? '') === 'Interactive')
+        ));
+        $realInteractiveUids = !empty($interactiveUids)
+            ? DB::table('t_user_info')->whereIn('user_id', $interactiveUids)->pluck('user_id')->flip()
+            : collect();
+
         foreach ($interviews as $iv) {
             $iid   = (string) ($iv['iid'] ?? '');
             $score = $iv['score'] ?? null;
@@ -1584,12 +1597,18 @@ class FieldQualityController extends Controller
 
             $tier = $score >= 70 ? 'regolare' : ($score >= 50 ? 'incerta' : 'anomala');
 
+            $panel = $iv['panel'] ?? null;
+            $uid   = (string) ($iv['uid'] ?? '');
+            if ($panel === 'Interactive' && !$realInteractiveUids->has($uid)) {
+                $panel = 'Sconosciuto';
+            }
+
             $rows[] = [
                 'prj'                => $prj,
                 'sid'                => $sid,
                 'iid'                => $iid,
-                'uid'                => (string) ($iv['uid'] ?? ''),
-                'panel'              => $iv['panel'] ?? null,
+                'uid'                => $uid,
+                'panel'              => $panel,
                 'quality_score'      => (int) $score,
                 'quality_tier'       => $tier,
                 'quality_risk_total' => $iv['quality_risk_total'] ?? null,
@@ -1604,7 +1623,7 @@ class FieldQualityController extends Controller
             UserQuality::upsert(
                 $chunk,
                 ['prj', 'sid', 'iid'],
-                ['quality_score', 'quality_tier', 'quality_risk_total', 'cap_applied', 'updated_at']
+                ['panel', 'quality_score', 'quality_tier', 'quality_risk_total', 'cap_applied', 'updated_at']
             );
         }
     }
