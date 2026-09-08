@@ -7,13 +7,16 @@
 
     {{-- ═══ PAGE HEADER ═══════════════════════════════════════════════════ --}}
     <div class="pq-page-header">
-        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
-            <div>
-                <h1 class="pq-page-title">Controllo Qualità Panel</h1>
-                <p class="pq-page-sub">Monitoraggio aggregato degli score di qualità per i panelisti Interactive</p>
-                <span class="pq-page-badge"><i class="bi bi-person-fill me-1"></i>Solo panel Interactive</span>
+        <div class="pq-page-header-inner">
+            <div class="pq-page-icon"><i class="bi bi-shield-check"></i></div>
+            <div class="pq-page-header-text">
+                <div class="pq-page-title-row">
+                    <h1 class="pq-page-title">Controllo Qualità Interviste</h1>
+                </div>
+                <p class="pq-page-sub">Monitoraggio aggregato della qualità delle interviste per panelisti, ricerche e panel esterni</p>
             </div>
-            <div class="text-end pq-page-sub mt-1">
+            <div class="pq-page-updated">
+                <i class="bi bi-clock-history"></i>
                 Aggiornato al {{ now()->format('d/m/Y H:i') }}
             </div>
         </div>
@@ -91,7 +94,15 @@
                     data-bs-toggle="tab" data-bs-target="#tab-ricerche"
                     type="button" role="tab">
                 <i class="bi bi-journal-text me-1"></i>Ricerche
-                <span class="pq-tab-count">{{ $ricercheConDati->count() + $ricerceSenzaDati->count() }}</span>
+                <span class="pq-tab-count">{{ $ricercheConDati->count() + $ricerceSenzaDati->count() + $ricercheEsterneSenzaDati->count() }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-panel-esterni-btn"
+                    data-bs-toggle="tab" data-bs-target="#tab-panel-esterni"
+                    type="button" role="tab">
+                <i class="bi bi-globe me-1"></i>Panel Esterni
+                <span class="pq-tab-count">{{ $panelEsterniRollup->count() }}</span>
             </button>
         </li>
     </ul>
@@ -105,12 +116,17 @@
             <div class="pq-card">
 
                 {{-- Header --}}
-                <div class="pq-card-header pq-border-blue">
+                <div class="pq-card-header pq-border-green">
                     <div class="pq-card-header-left">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.12 255)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         <div>
                             <div class="pq-card-title">Qualità per panelista</div>
-                            <div class="pq-card-sub">Ordinati per score medio crescente — i peggiori in cima</div>
+                            <div class="pq-card-sub">
+                                Solo panel Interactive — ordinati per score medio crescente, i peggiori in cima
+                                @if($panelisti->count() > $panelistiTable->count())
+                                    · primi {{ $panelistiTable->count() }} su {{ $panelisti->count() }}
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -125,8 +141,19 @@
                         <option value="incerta">Solo incerti</option>
                         <option value="regolare">Solo regolari</option>
                     </select>
+
+                    <form method="GET" action="{{ route('panelQuality.exportPanelisti') }}" target="_blank" class="pq-export-form">
+                        <span class="pq-export-label">Score da</span>
+                        <input type="number" name="score_min" class="pq-filter-input pq-export-input" min="0" max="100" step="1" value="0" required>
+                        <span class="pq-export-label">a</span>
+                        <input type="number" name="score_max" class="pq-filter-input pq-export-input" min="0" max="100" step="1" value="100" required>
+                        <button type="submit" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download me-1"></i>Esporta CSV
+                        </button>
+                    </form>
+
                     <span class="pq-filter-count" id="panelistiVisibili">
-                        {{ $panelisti->count() }} panelisti
+                        {{ $panelistiTable->count() }} panelisti
                     </span>
                 </div>
 
@@ -141,14 +168,13 @@
                                 <th class="pq-th">Distribuzione</th>
                                 <th class="pq-th pq-th-sort" data-col="interviste">Interviste ↕</th>
                                 <th class="pq-th">Ultima val.</th>
-                                <th class="pq-th"></th>
                             </tr>
                         </thead>
                         <tbody id="bodyPanelisti">
                         @php
                             $avatarPalette = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#ec4899','#14b8a6','#f97316'];
                         @endphp
-                        @forelse($panelisti as $p)
+                        @forelse($panelistiTable as $p)
                         @php
                             $score    = (float)($p->score_medio ?? 0);
                             $scoreCls = $score >= 70 ? 'pq-score-high' : ($score >= 50 ? 'pq-score-accept' : 'pq-score-low');
@@ -174,27 +200,19 @@
                             data-score="{{ $score }}"
                             data-interviste="{{ $p->interviste }}">
                             <td class="pq-td">
-                                <div class="pq-user-cell">
+                                <a href="{{ url('user/' . $p->uid) }}" target="_blank" class="pq-user-cell pq-user-link">
                                     <div class="pq-avatar-mini" style="background:{{ $avatarBg }};">{{ $initials }}</div>
                                     <div>
                                         <div class="pq-user-name">{{ $nameDisplay }}</div>
                                         <div class="pq-user-uid">{{ $p->uid }}</div>
                                     </div>
-                                </div>
+                                </a>
                             </td>
                             <td class="pq-td">
                                 <span class="pq-score {{ $scoreCls }}">
                                     {{ $p->score_medio ?? '—' }}
                                     <span class="pq-score-denom">/100</span>
                                 </span>
-                                @if($p->cap_count > 0)
-                                    <div class="mt-1">
-                                        <span class="pq-cap-pill">
-                                            <i class="bi bi-slash-circle" style="font-size:9px;"></i>
-                                            CAP ×{{ $p->cap_count }}
-                                        </span>
-                                    </div>
-                                @endif
                             </td>
                             <td class="pq-td">
                                 <span class="pq-tier pq-tier-{{ $tierPrev }}">{{ $tierPrev }}</span>
@@ -215,16 +233,10 @@
                             <td class="pq-td pq-td-muted">
                                 {{ $p->ultima_val ? \Carbon\Carbon::parse($p->ultima_val)->format('d/m/Y') : '—' }}
                             </td>
-                            <td class="pq-td">
-                                <a href="{{ url('user/' . $p->uid) }}" target="_blank"
-                                   class="btn btn-sm btn-outline-secondary" style="font-size:11px;padding:3px 9px;">
-                                    Profilo
-                                </a>
-                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="pq-empty">Nessun dato di qualità disponibile.</td>
+                            <td colspan="6" class="pq-empty">Nessun dato di qualità disponibile.</td>
                         </tr>
                         @endforelse
                         </tbody>
@@ -263,12 +275,12 @@
 
             {{-- ── Sezione A: con dati ────────────────────────────────────── --}}
             <div class="pq-card">
-                <div class="pq-card-header pq-border-blue">
+                <div class="pq-card-header pq-border-green">
                     <div class="pq-card-header-left">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.12 255)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                         <div>
                             <div class="pq-card-title">Ricerche con dati qualità</div>
-                            <div class="pq-card-sub">{{ $ricercheConDati->count() }} ricerche — ordinate per score medio crescente</div>
+                            <div class="pq-card-sub">Solo panel Interactive — {{ $ricercheConDati->count() }} ricerche, ordinate per score medio crescente</div>
                         </div>
                     </div>
                 </div>
@@ -453,7 +465,266 @@
 
             </div>
 
+            {{-- ── Sezione C: panel esterno senza dati ────────────────────── --}}
+            <div class="pq-card">
+                <div class="pq-card-header pq-border-green">
+                    <div class="pq-card-header-left">
+                        <i class="bi bi-globe" style="font-size:18px;color:#6e904b;"></i>
+                        <div>
+                            <div class="pq-card-title">Ricerche con panel esterno senza dati qualità</div>
+                            <div class="pq-card-sub">{{ $ricercheEsterneSenzaDati->count() }} ricerche con panel esterno senza valutazione nel {{ $annoSenzaDati }} — aprire fieldQuality per calcolarla</div>
+                        </div>
+                    </div>
+                </div>
+
+                @if($ricercheEsterneSenzaDati->count() > 0)
+                <div class="pq-filters">
+                    <input type="text" class="pq-filter-input" id="fltEsternoSenzaDatiSearch"
+                           placeholder="Cerca per PRJ o SID…">
+                    <span class="pq-filter-count" id="esternoSenzaDatiVisibili">{{ $ricercheEsterneSenzaDati->count() }} ricerche</span>
+                </div>
+
+                <div class="pq-table-wrap">
+                    <table class="pq-table" id="tblEsternoSenzaDati">
+                        <thead class="pq-thead">
+                            <tr>
+                                <th class="pq-th">PRJ / SID</th>
+                                <th class="pq-th">Descrizione</th>
+                                <th class="pq-th">Panel</th>
+                                <th class="pq-th">Stato</th>
+                                <th class="pq-th">Completate</th>
+                                <th class="pq-th">Target</th>
+                                <th class="pq-th">Data inizio</th>
+                                <th class="pq-th"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodyEsternoSenzaDati">
+                        @foreach($ricercheEsterneSenzaDati as $r)
+                        <tr class="pq-row"
+                            data-prj="{{ strtolower($r->prj) }}"
+                            data-sid="{{ strtolower($r->sur_id) }}">
+                            <td class="pq-td">
+                                <div class="pq-td-mono" style="font-size:11px;color:oklch(50% 0.02 250);">{{ $r->prj }}</div>
+                                <div class="pq-td-mono fw-semibold">{{ $r->sur_id }}</div>
+                            </td>
+                            <td class="pq-td" style="max-width:220px;">
+                                <div style="font-weight:500;color:oklch(25% 0.02 250);">{{ $r->description ?? '—' }}</div>
+                            </td>
+                            <td class="pq-td">{!! $panelBadgesFn($r->panel_interno ?? 0, $r->panel_esterno ?? 0, $r->panel_nome_esterno ?? null) !!}</td>
+                            <td class="pq-td">
+                                @if(($r->stato ?? 1) == 0)
+                                    <span class="pq-stato-aperta"><i class="bi bi-circle-fill me-1" style="font-size:7px;"></i>Aperta</span>
+                                @else
+                                    <span class="pq-stato-chiusa"><i class="bi bi-check-circle me-1"></i>Chiusa</span>
+                                @endif
+                            </td>
+                            <td class="pq-td pq-td-muted">{{ $r->complete ?? '—' }}</td>
+                            <td class="pq-td pq-td-muted">{{ $r->goal ?? '—' }}</td>
+                            <td class="pq-td pq-td-muted">
+                                {{ $r->sur_date ? \Carbon\Carbon::parse($r->sur_date)->format('d/m/Y') : '—' }}
+                            </td>
+                            <td class="pq-td">
+                                <a href="{{ url('fieldQuality') }}?prj={{ urlencode($r->prj) }}&sid={{ urlencode($r->sur_id) }}"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-success" style="font-size:11px;padding:3px 9px;">
+                                    Calcola qualità
+                                </a>
+                            </td>
+                        </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div id="esternoSenzaDatiPaginator" class="pq-paginator-wrap"></div>
+                @else
+                    <div class="pq-empty">Tutte le ricerche con panel esterno note hanno già dati di qualità.</div>
+                @endif
+
+            </div>
+
         </div>{{-- /tab-ricerche --}}
+
+        {{-- ───────────────────────────────────────────────────────────────── --}}
+        {{-- TAB 3 — PANEL ESTERNI                                              --}}
+        {{-- ───────────────────────────────────────────────────────────────── --}}
+        <div class="tab-pane fade" id="tab-panel-esterni" role="tabpanel">
+
+            {{-- ── Sezione A: media per panel ────────────────────────────── --}}
+            <div class="pq-card">
+                <div class="pq-card-header pq-border-green">
+                    <div class="pq-card-header-left">
+                        <i class="bi bi-globe" style="font-size:18px;color:#6e904b;"></i>
+                        <div>
+                            <div class="pq-card-title">Valutazione media per panel</div>
+                            <div class="pq-card-sub">Esclude panel Interactive — {{ $panelEsterniRollup->count() }} panel monitorati, ordinati per score medio crescente</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pq-table-wrap">
+                    <table class="pq-table">
+                        <thead class="pq-thead">
+                            <tr>
+                                <th class="pq-th">Panel</th>
+                                <th class="pq-th">Score medio</th>
+                                <th class="pq-th">Distribuzione</th>
+                                <th class="pq-th">Ricerche</th>
+                                <th class="pq-th">Interviste val.</th>
+                                <th class="pq-th">Ultima val.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @forelse($panelEsterniRollup as $row)
+                        @php
+                            $score    = (float)($row->score_medio ?? 0);
+                            $scoreCls = $score >= 70 ? 'pq-score-high' : ($score >= 50 ? 'pq-score-accept' : 'pq-score-low');
+                            $tot      = max(1, $row->regolari + $row->incerte + $row->anomale);
+                            $pctR     = round($row->regolari / $tot * 100);
+                            $pctI     = round($row->incerte  / $tot * 100);
+                            $pctA     = 100 - $pctR - $pctI;
+                        @endphp
+                        <tr class="pq-row">
+                            <td class="pq-td">
+                                <span class="pq-panel-name-badge"><i class="bi bi-globe"></i>{{ $row->panel }}</span>
+                            </td>
+                            <td class="pq-td">
+                                <span class="pq-score {{ $scoreCls }}">
+                                    {{ $row->score_medio ?? '—' }}
+                                    <span class="pq-score-denom">/100</span>
+                                </span>
+                            </td>
+                            <td class="pq-td">
+                                <div class="pq-distrib">
+                                    <div class="pq-distrib-seg-high" style="width:{{ $pctR }}%;"></div>
+                                    <div class="pq-distrib-seg-mid"  style="width:{{ $pctI }}%;"></div>
+                                    <div class="pq-distrib-seg-low"  style="width:{{ $pctA }}%;"></div>
+                                </div>
+                                <div class="pq-distrib-label">
+                                    <span>{{ $row->regolari }} reg</span>
+                                    <span>{{ $row->incerte }} inc</span>
+                                    <span>{{ $row->anomale }} ano</span>
+                                </div>
+                            </td>
+                            <td class="pq-td pq-td-muted">{{ $row->ricerche }}</td>
+                            <td class="pq-td pq-td-muted">{{ $row->interviste }}</td>
+                            <td class="pq-td pq-td-muted">
+                                {{ $row->ultima_val ? \Carbon\Carbon::parse($row->ultima_val)->format('d/m/Y') : '—' }}
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="6" class="pq-empty">Nessun dato di qualità disponibile per panel esterni.</td>
+                        </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- ── Sezione B: dettaglio per ricerca ──────────────────────── --}}
+            <div class="pq-card">
+                <div class="pq-card-header pq-border-blue">
+                    <div class="pq-card-header-left">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(45% 0.12 255)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        <div>
+                            <div class="pq-card-title">Dettaglio per ricerca</div>
+                            <div class="pq-card-sub">{{ $panelEsterniPerRicerca->count() }} combinazioni ricerca/panel — ordinate per score medio crescente</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pq-filters">
+                    <input type="text" class="pq-filter-input" id="fltPanelEstSearch"
+                           placeholder="Cerca per PRJ o SID…">
+                    <select class="pq-filter-select" id="fltPanelEstPanel">
+                        <option value="">Tutti i panel</option>
+                        @foreach($panelEsterniRollup as $row)
+                            <option value="{{ strtolower($row->panel) }}">{{ $row->panel }}</option>
+                        @endforeach
+                    </select>
+                    <span class="pq-filter-count" id="panelEstVisibili">{{ $panelEsterniPerRicerca->count() }} righe</span>
+                </div>
+
+                <div class="pq-table-wrap">
+                    <table class="pq-table" id="tblPanelEst">
+                        <thead class="pq-thead">
+                            <tr>
+                                <th class="pq-th">PRJ / SID</th>
+                                <th class="pq-th">Descrizione</th>
+                                <th class="pq-th">Panel</th>
+                                <th class="pq-th">Score medio</th>
+                                <th class="pq-th">Distribuzione</th>
+                                <th class="pq-th">Interviste val.</th>
+                                <th class="pq-th">Ultima val.</th>
+                                <th class="pq-th"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodyPanelEst">
+                        @forelse($panelEsterniPerRicerca as $r)
+                        @php
+                            $score    = (float)($r->score_medio ?? 0);
+                            $scoreCls = $score >= 70 ? 'pq-score-high' : ($score >= 50 ? 'pq-score-accept' : 'pq-score-low');
+                            $tot      = max(1, $r->regolari + $r->incerte + $r->anomale);
+                            $pctR     = round($r->regolari / $tot * 100);
+                            $pctI     = round($r->incerte  / $tot * 100);
+                            $pctA     = 100 - $pctR - $pctI;
+                        @endphp
+                        <tr class="pq-row"
+                            data-prj="{{ strtolower($r->prj) }}"
+                            data-sid="{{ strtolower($r->sid) }}"
+                            data-panel="{{ strtolower($r->panel) }}">
+                            <td class="pq-td">
+                                <div class="pq-td-mono" style="font-size:11px;color:oklch(50% 0.02 250);">{{ $r->prj }}</div>
+                                <div class="pq-td-mono fw-semibold">{{ $r->sid }}</div>
+                            </td>
+                            <td class="pq-td" style="max-width:220px;">
+                                <div style="font-weight:500;color:oklch(25% 0.02 250);">{{ $r->description ?? '—' }}</div>
+                            </td>
+                            <td class="pq-td">
+                                <span class="pq-panel-name-badge"><i class="bi bi-globe"></i>{{ $r->panel }}</span>
+                            </td>
+                            <td class="pq-td">
+                                <span class="pq-score {{ $scoreCls }}">
+                                    {{ $r->score_medio ?? '—' }}
+                                    <span class="pq-score-denom">/100</span>
+                                </span>
+                            </td>
+                            <td class="pq-td">
+                                <div class="pq-distrib">
+                                    <div class="pq-distrib-seg-high" style="width:{{ $pctR }}%;"></div>
+                                    <div class="pq-distrib-seg-mid"  style="width:{{ $pctI }}%;"></div>
+                                    <div class="pq-distrib-seg-low"  style="width:{{ $pctA }}%;"></div>
+                                </div>
+                                <div class="pq-distrib-label">
+                                    <span>{{ $r->regolari }} reg</span>
+                                    <span>{{ $r->incerte }} inc</span>
+                                    <span>{{ $r->anomale }} ano</span>
+                                </div>
+                            </td>
+                            <td class="pq-td pq-td-muted">{{ $r->interviste_valutate }}</td>
+                            <td class="pq-td pq-td-muted">
+                                {{ $r->ultima_val ? \Carbon\Carbon::parse($r->ultima_val)->format('d/m/Y') : '—' }}
+                            </td>
+                            <td class="pq-td">
+                                <a href="{{ url('fieldQuality') }}?prj={{ urlencode($r->prj) }}&sid={{ urlencode($r->sid) }}"
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-secondary" style="font-size:11px;padding:3px 9px;">
+                                    Dettaglio
+                                </a>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="8" class="pq-empty">Nessuna ricerca con dati di qualità per panel esterni.</td>
+                        </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div id="panelEstPaginator" class="pq-paginator-wrap"></div>
+            </div>
+
+        </div>{{-- /tab-panel-esterni --}}
 
     </div>{{-- /tab-content --}}
 
@@ -586,6 +857,47 @@ if (document.getElementById('bodySenzaDati')) {
     window.pqGoSenza = function (p) { _senza.go(p); };
     document.getElementById('fltSenzaDatiSearch').addEventListener('input', function () { _senza.reset(); });
     _senza.render();
+}
+
+/* ── Ricerche con panel esterno senza dati ───────────────────────── */
+if (document.getElementById('bodyEsternoSenzaDati')) {
+    var _esternoSenza = pqTable({
+        rowsSelector: '#bodyEsternoSenzaDati .pq-row',
+        paginatorId:  'esternoSenzaDatiPaginator',
+        countId:      'esternoSenzaDatiVisibili',
+        tableId:      'tblEsternoSenzaDati',
+        goFn:         'pqGoEsternoSenza',
+        label:        'ricerche',
+        match: function (r) {
+            var term = document.getElementById('fltEsternoSenzaDatiSearch').value.toLowerCase().trim();
+            return !term || r.dataset.prj.includes(term) || r.dataset.sid.includes(term);
+        }
+    });
+    window.pqGoEsternoSenza = function (p) { _esternoSenza.go(p); };
+    document.getElementById('fltEsternoSenzaDatiSearch').addEventListener('input', function () { _esternoSenza.reset(); });
+    _esternoSenza.render();
+}
+
+/* ── Panel esterni — dettaglio per ricerca ───────────────────────── */
+if (document.getElementById('bodyPanelEst')) {
+    var _panelEst = pqTable({
+        rowsSelector: '#bodyPanelEst .pq-row',
+        paginatorId:  'panelEstPaginator',
+        countId:      'panelEstVisibili',
+        tableId:      'tblPanelEst',
+        goFn:         'pqGoPanelEst',
+        label:        'righe',
+        match: function (r) {
+            var term  = document.getElementById('fltPanelEstSearch').value.toLowerCase().trim();
+            var panel = document.getElementById('fltPanelEstPanel').value;
+            return (!term || r.dataset.prj.includes(term) || r.dataset.sid.includes(term))
+                && (!panel || r.dataset.panel === panel);
+        }
+    });
+    window.pqGoPanelEst = function (p) { _panelEst.go(p); };
+    document.getElementById('fltPanelEstSearch').addEventListener('input',  function () { _panelEst.reset(); });
+    document.getElementById('fltPanelEstPanel').addEventListener('change', function () { _panelEst.reset(); });
+    _panelEst.render();
 }
 </script>
 

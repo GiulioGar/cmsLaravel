@@ -1582,10 +1582,6 @@ class FieldQualityController extends Controller
                 continue;
             }
 
-            if (($iv['panel'] ?? '') !== 'Interactive') {
-                continue;
-            }
-
             $tier = $score >= 70 ? 'regolare' : ($score >= 50 ? 'incerta' : 'anomala');
 
             $rows[] = [
@@ -2051,24 +2047,20 @@ class FieldQualityController extends Controller
         return ($q / $maxQ) * $globalMedian;
     }
 
+    private ?array $panelNamesCache = null;
+
     private function detectPanel(array $data, ?int $dbPanelValue = null): string
     {
-        $panelNames = [
-            1 => 'Cint',
-            2 => 'Dynata',
-            3 => 'Bilendi',
-            4 => 'Norstat',
-            5 => 'Toluna',
-            6 => 'Netquest',
-            7 => 'CATI',
-            8 => 'Makeopinion',
-            9 => 'Altro Panel',
-        ];
+        if ($this->panelNamesCache === null) {
+            // Fonte autorevole: t_fornitoripanel (usata anche da PanelQualityController).
+            // Una mappa hardcoded qui andrebbe facilmente fuori sincrono con la tabella.
+            $this->panelNamesCache = DB::table('t_fornitoripanel')->pluck('name', 'panel_code')->all();
+        }
 
         foreach ($data as $element) {
             if (strpos($element, 'pan=') !== false) {
                 $val = (int) str_replace('pan=', '', $element);
-                return $panelNames[$val] ?? 'Altro Panel';
+                return $this->panelNamesCache[$val] ?? 'Altro Panel';
             }
         }
 
