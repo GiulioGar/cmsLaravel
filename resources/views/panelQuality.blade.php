@@ -130,28 +130,50 @@
 
                 {{-- Filtri --}}
                 <div class="pq-filters">
-                    <input type="text" class="pq-filter-input" id="fltPanelistiSearch"
-                           placeholder="Cerca per nome o UID…">
-                    <select class="pq-filter-select" id="fltPanelistiTier">
-                        <option value="">Tutti i tier</option>
-                        <option value="anomala">Solo anomali</option>
-                        <option value="incerta">Solo incerti</option>
-                        <option value="regolare">Solo regolari</option>
-                    </select>
+                    <div class="pq-filter-group">
+                        <label class="pq-filter-label" for="fltPanelistiSearch">Cerca</label>
+                        <input type="text" class="pq-filter-input" id="fltPanelistiSearch"
+                               placeholder="Nome o UID…">
+                    </div>
+
+                    <div class="pq-filter-group">
+                        <label class="pq-filter-label" for="fltPanelistiTier">Tier</label>
+                        <select class="pq-filter-select" id="fltPanelistiTier">
+                            <option value="">Tutti</option>
+                            <option value="anomala">Solo anomali</option>
+                            <option value="incerta">Solo incerti</option>
+                            <option value="regolare">Solo regolari</option>
+                        </select>
+                    </div>
+
+                    <div class="pq-filter-group">
+                        <label class="pq-filter-label" for="fltPanelistiScoreMax">Score max</label>
+                        <input type="number" class="pq-filter-input pq-filter-input-num" id="fltPanelistiScoreMax"
+                               min="0" max="100" step="1" placeholder="100">
+                    </div>
+
+                    <div class="pq-filter-group">
+                        <label class="pq-filter-label" for="fltPanelistiIntervisteMin">Interviste min</label>
+                        <input type="number" class="pq-filter-input pq-filter-input-num" id="fltPanelistiIntervisteMin"
+                               min="0" step="1" placeholder="0">
+                    </div>
+
+                    <span class="pq-filter-count" id="panelistiVisibili">
+                        {{ $panelistiTable->count() }} panelisti
+                    </span>
 
                     <form method="GET" action="{{ route('panelQuality.exportPanelisti') }}" target="_blank" class="pq-export-form">
                         <span class="pq-export-label">Score da</span>
                         <input type="number" name="score_min" class="pq-filter-input pq-export-input" min="0" max="100" step="1" value="0" required>
                         <span class="pq-export-label">a</span>
                         <input type="number" name="score_max" class="pq-filter-input pq-export-input" min="0" max="100" step="1" value="100" required>
+                        <span class="pq-export-label">Almeno</span>
+                        <input type="number" name="min_interviste" class="pq-filter-input pq-export-input" min="0" step="1" value="0">
+                        <span class="pq-export-label">interviste</span>
                         <button type="submit" class="btn btn-sm btn-outline-success">
                             <i class="bi bi-download me-1"></i>Esporta CSV
                         </button>
                     </form>
-
-                    <span class="pq-filter-count" id="panelistiVisibili">
-                        {{ $panelistiTable->count() }} panelisti
-                    </span>
                 </div>
 
                 {{-- Tabella --}}
@@ -815,15 +837,21 @@ var _pan = pqTable({
     label:        'panelisti',
     pageSize:     30,
     match: function (r) {
-        var term = document.getElementById('fltPanelistiSearch').value.toLowerCase().trim();
-        var tier = document.getElementById('fltPanelistiTier').value;
+        var term       = document.getElementById('fltPanelistiSearch').value.toLowerCase().trim();
+        var tier       = document.getElementById('fltPanelistiTier').value;
+        var scoreMax   = document.getElementById('fltPanelistiScoreMax').value;
+        var intMin     = document.getElementById('fltPanelistiIntervisteMin').value;
         return (!term || r.dataset.uid.includes(term) || r.dataset.name.includes(term))
-            && (!tier || r.dataset.tier === tier);
+            && (!tier || r.dataset.tier === tier)
+            && (scoreMax === '' || parseFloat(r.dataset.score) <= parseFloat(scoreMax))
+            && (intMin === '' || parseInt(r.dataset.interviste, 10) >= parseInt(intMin, 10));
     }
 });
 window.pqGoPan = function (p) { _pan.go(p); };
 document.getElementById('fltPanelistiSearch').addEventListener('input',  function () { _pan.reset(); });
 document.getElementById('fltPanelistiTier').addEventListener('change', function () { _pan.reset(); });
+document.getElementById('fltPanelistiScoreMax').addEventListener('input', function () { _pan.reset(); });
+document.getElementById('fltPanelistiIntervisteMin').addEventListener('input', function () { _pan.reset(); });
 _pan.render();
 
 /* ── Ricerche con dati ─────────────────────────────────────────── */

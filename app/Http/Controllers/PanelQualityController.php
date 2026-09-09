@@ -206,13 +206,14 @@ class PanelQualityController extends Controller
     {
         $scoreMin = is_numeric($request->query('score_min')) ? (float) $request->query('score_min') : 0;
         $scoreMax = is_numeric($request->query('score_max')) ? (float) $request->query('score_max') : 100;
+        $minInterviste = is_numeric($request->query('min_interviste')) ? (int) $request->query('min_interviste') : 0;
 
         $panelisti = DB::table('t_user_quality as uq')
             ->selectRaw('uq.uid, ROUND(AVG(uq.quality_score), 1) AS score_medio')
             ->whereNotNull('uq.quality_score')
             ->where('uq.panel', 'Interactive')
             ->groupBy('uq.uid')
-            ->havingRaw('AVG(uq.quality_score) BETWEEN ? AND ?', [$scoreMin, $scoreMax])
+            ->havingRaw('AVG(uq.quality_score) BETWEEN ? AND ? AND COUNT(*) >= ?', [$scoreMin, $scoreMax, $minInterviste])
             ->orderByRaw('AVG(uq.quality_score) ASC')
             ->get();
 
