@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\QualityMalusNotification;
 
 class UserProfileController extends Controller
 {
@@ -115,6 +117,11 @@ class UserProfileController extends Controller
         }
     }
 
+    $malusHistory = DB::table('t_quality_malus')
+        ->where('uid', $uid)
+        ->orderByDesc('created_at')
+        ->get(['valore', 'motivazione', 'assigned_by', 'email_sent', 'created_at']);
+
     // ===============================
     // 7) RETURN ALLA VIEW
     // ===============================
@@ -139,6 +146,8 @@ class UserProfileController extends Controller
             'incerte'     => $qualityIncerte,
             'anomale'     => $qualityAnomale,
             'byIid'       => $qualityByIid,
+            'malusHistory' => $malusHistory,
+            'malusCount'  => $malusHistory->count(),
         ],
         'storico' => $storico,
     ]);
@@ -238,7 +247,7 @@ public function updateAnagrafica(Request $request, $user_id)
                 ], 422);
             }
 
-            $updateData['password'] = md5($passwordPlain);
+            $updateData['pwd'] = md5($passwordPlain);
         }
 
         DB::table('t_user_info')
@@ -337,6 +346,122 @@ public function assignBonusMalus(Request $request, $user_id)
 
     } catch (\Exception $e) {
         Log::error('Errore bonus/malus: ' . $e->getMessage());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Errore durante l\'operazione.',
+        ]);
+    }
+}
+
+public function assignQualityMalus(Request $request, $user_id)
+{
+    $validated = $request->validate([
+        'valore' => 'required|integer|min:1',
+        'motivazione' => 'required|string|max:255',
+        'send_email' => 'nullable|boolean',
+    ]);
+
+    $sendEmail = (bool) ($validated['send_email'] ?? false);
+
+    try {
+        $result = DB::transaction(function () use ($user_id, $validated) {
+            $user = DB::table('t_user_info')
+                ->where('user_id', $user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$user) {
+                return ['success' => false, 'message' => 'Utente non trovato.'];
+            }
+
+            $scoreSnapshot = DB::table('t_user_quality')
+                ->where('uid', $user_id)
+                ->whereNotNull('quality_score')
+                ->avg('quality_score');
+
+            $malusId = DB::table('t_quality_malus')->insertGetId([
+                'uid' => $user_id,
+                'quality_score_snapshot' => $scoreSnapshot !== null ? round($scoreSnapshot, 1) : null,
+                'valore' => (int) $validated['valore'],
+                'motivazione' => $validated['motivazione'],
+                'assigned_by' => session('user_name'),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $prev = (int) $user->points;
+            $value = (int) $validated['valore'];
+            $new = max(0, $prev - $value);
+
+            DB::table('t_user_info')->where('user_id', $user_id)->update(['points' => $new]);
+
+            DB::table('t_user_history')->insert([
+                'user_id' => $user_id,
+                'event_date' => now(),
+                'event_type' => 'MALUS QUALITA',
+                'event_info' => $validated['motivazione'],
+                'prev_level' => $prev,
+                'new_level' => $new,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Malus qualità assegnato correttamente.',
+                'points' => $new,
+                'malus_id' => $malusId,
+                'user_email' => $user->email,
+                'user_name' => $user->first_name ?: $user_id,
+            ];
+        });
+
+        if (!$result['success']) {
+            return response()->json($result);
+        }
+
+        $emailSent = false;
+
+        if ($sendEmail && !empty($result['user_email'])) {
+            try {
+                Mail::to($result['user_email'])->send(new QualityMalusNotification(
+                    $validated['motivazione'],
+                    (int) $validated['valore'],
+                    $result['user_name']
+                ));
+
+                DB::table('t_quality_malus')->where('id', $result['malus_id'])->update([
+                    'email_sent' => true,
+                    'email_sent_at' => now(),
+                ]);
+                $emailSent = true;
+            } catch (\Exception $mailException) {
+                Log::error('Errore invio email malus qualità: ' . $mailException->getMessage());
+            }
+        }
+
+        $storico = $this->buildStorico($user_id, 30);
+
+        $qualityRows = DB::table('t_user_quality')->where('uid', $user_id)->get(['iid', 'quality_score', 'quality_tier']);
+        $qualityByIid = [];
+        foreach ($qualityRows as $q) {
+            if ($q->iid !== '' && $q->iid !== '-') {
+                $qualityByIid[$q->iid] = ['score' => $q->quality_score, 'tier' => $q->quality_tier];
+            }
+        }
+
+        $storicoHtml = view('partials.userProfileStoricoRows', compact('storico', 'qualityByIid'))->render();
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['message'],
+            'points' => $result['points'],
+            'storico_html' => $storicoHtml,
+            'email_requested' => $sendEmail,
+            'email_sent' => $emailSent,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Errore assegnazione malus qualità: ' . $e->getMessage());
 
         return response()->json([
             'success' => false,

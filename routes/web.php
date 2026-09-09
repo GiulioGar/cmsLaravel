@@ -151,6 +151,7 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/user/{user_id}/activate', [UserProfileController::class, 'activate'])->name('user.activate');
     Route::post('/user/{user_id}/update-info', [UserProfileController::class, 'updateAnagrafica'])->name('user.update.info');
     Route::post('/user/{user_id}/bonus-malus', [UserProfileController::class, 'assignBonusMalus'])->name('user.bonus.malus');
+    Route::post('/user/{user_id}/quality-malus', [UserProfileController::class, 'assignQualityMalus'])->name('user.quality.malus');
 
 
     // ============================================

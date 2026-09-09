@@ -223,6 +223,10 @@
                         <div class="up-section-icon up-icon-purple"><i class="bi bi-shield-check"></i></div>
                         <h5 class="up-section-title up-title-purple mb-0">Qualità interviste</h5>
                     </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger up-qm-header-btn" id="btnQualityMalus"
+                            title="Assegna malus qualità">
+                        <i class="bi bi-exclamation-triangle me-1"></i>Malus
+                    </button>
                 </div>
                 <div class="card-body">
                     @php
@@ -250,6 +254,10 @@
                                 <span class="up-quality-gauge-label">{{ $quality['media'] ?? '—' }}</span>
                             </div>
                             <div class="up-quality-gauge-sub">Media score</div>
+                            <span class="up-quality-malus-pill badge {{ $quality['malusCount'] > 0 ? 'badge-soft-danger' : 'badge-soft-secondary' }}" id="qmCountPill">
+                                <i class="bi bi-exclamation-triangle{{ $quality['malusCount'] > 0 ? '-fill' : '' }} me-1"></i>
+                                <span id="qmCountPillText">{{ $quality['malusCount'] }} malus assegnat{{ $quality['malusCount'] == 1 ? 'o' : 'i' }}</span>
+                            </span>
                         </div>
                         <div class="up-quality-condensed-stats">
                             <div class="up-quality-stat">
@@ -877,6 +885,17 @@ function showToast(message, type = 'success') {
 
 @endsection
 
+@php
+    $qualityMalusHistoryData = $quality['malusHistory']->map(function ($m) {
+        return [
+            'valore' => $m->valore,
+            'motivazione' => $m->motivazione,
+            'assigned_by' => $m->assigned_by,
+            'created_at' => $m->created_at,
+            'email_sent' => (bool) $m->email_sent,
+        ];
+    });
+@endphp
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -1164,6 +1183,181 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showToast('Errore di connessione.', 'error');
         });
+    });
+
+    // ===========================
+    // 🔹 MALUS QUALITÀ (popover a livello utente, con storico richiami)
+    // ===========================
+    const userQualityMalusUrl = @json(route('user.quality.malus', ['user_id' => $user->user_id]));
+    let qualityMalusHistory = @json($qualityMalusHistoryData);
+    let qmPopoverInstance = null;
+    const qmBtn = document.getElementById('btnQualityMalus');
+    const qmCountPill = document.getElementById('qmCountPill');
+    const qmCountPillText = document.getElementById('qmCountPillText');
+
+    function updateQualityMalusPill() {
+        if (!qmCountPill || !qmCountPillText) return;
+        const n = qualityMalusHistory.length;
+        qmCountPillText.textContent = `${n} malus assegnat${n === 1 ? 'o' : 'i'}`;
+        qmCountPill.classList.toggle('badge-soft-danger', n > 0);
+        qmCountPill.classList.toggle('badge-soft-secondary', n === 0);
+        qmCountPill.querySelector('i').className = `bi bi-exclamation-triangle${n > 0 ? '-fill' : ''} me-1`;
+    }
+
+    function formatDateIt(value) {
+        if (!value) return '—';
+        const d = new Date(String(value).replace(' ', 'T'));
+        if (isNaN(d.getTime())) return '—';
+        return d.toLocaleDateString('it-IT');
+    }
+
+    function closeQualityMalusPopover() {
+        if (qmPopoverInstance) {
+            qmPopoverInstance.dispose();
+            qmPopoverInstance = null;
+        }
+    }
+
+    function buildQualityMalusHistoryHtml() {
+        if (!qualityMalusHistory.length) {
+            return '<p class="small text-muted mb-2">Nessun richiamo precedente.</p>';
+        }
+
+        const rows = qualityMalusHistory.map(m => `
+            <div class="up-qm-history-row">
+                <div class="up-qm-history-top">
+                    <span class="fw-semibold text-danger">-${escapeHtml(m.valore)} pt</span>
+                    <span class="text-muted small">${formatDateIt(m.created_at)}</span>
+                </div>
+                <div class="small">${escapeHtml(m.motivazione)}</div>
+                <div class="up-qm-history-bottom text-muted small">
+                    <span>${m.assigned_by ? 'di ' + escapeHtml(m.assigned_by) : ''}</span>
+                    <span class="up-qm-email-status" title="${m.email_sent ? 'Email inviata' : 'Email non inviata'}">
+                        <i class="bi bi-envelope${m.email_sent ? '-check-fill text-success' : '-slash text-muted'}"></i>
+                    </span>
+                </div>
+            </div>
+        `).join('');
+
+        return `<div class="up-qm-history-list">${rows}</div>`;
+    }
+
+    function buildQualityMalusPopoverHtml() {
+        return `
+            <div class="up-qm-popover">
+                <div class="up-qm-history-label">Richiami precedenti (${qualityMalusHistory.length})</div>
+                ${buildQualityMalusHistoryHtml()}
+                <hr class="my-2">
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Valore malus</label>
+                    <input type="number" id="qmValore" class="form-control form-control-sm" min="1" value="1">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Motivazione</label>
+                    <textarea id="qmMotivazione" class="form-control form-control-sm" rows="3" maxlength="255">Rilevate anomalie ricorrenti nella qualità delle interviste completate. Ti invitiamo a prestare maggiore attenzione nelle prossime partecipazioni per evitare ulteriori provvedimenti.</textarea>
+                </div>
+                <div class="form-check mb-2">
+                    <input type="checkbox" id="qmSendEmail" class="form-check-input" checked>
+                    <label class="form-check-label small" for="qmSendEmail">Invia email all'utente</label>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-secondary" id="qmCancel">Annulla</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="qmSubmit">Conferma malus</button>
+                </div>
+            </div>
+        `;
+    }
+
+    qmBtn?.addEventListener('click', () => {
+        if (qmPopoverInstance) {
+            closeQualityMalusPopover();
+            return;
+        }
+
+        qmPopoverInstance = new bootstrap.Popover(qmBtn, {
+            html: true,
+            sanitize: false,
+            trigger: 'manual',
+            container: 'body',
+            placement: 'left',
+            title: 'Assegna malus qualità',
+            content: buildQualityMalusPopoverHtml(),
+        });
+        qmPopoverInstance.show();
+
+        setTimeout(() => {
+            const popEl = document.querySelector('.popover');
+            if (!popEl) return;
+
+            popEl.querySelector('#qmCancel')?.addEventListener('click', closeQualityMalusPopover);
+
+            popEl.querySelector('#qmSubmit')?.addEventListener('click', () => {
+                const valore = parseInt(popEl.querySelector('#qmValore').value, 10);
+                const motivazione = popEl.querySelector('#qmMotivazione').value.trim();
+                const sendEmail = popEl.querySelector('#qmSendEmail').checked;
+
+                if (!valore || valore < 1 || !motivazione) {
+                    showToast('Compila valore e motivazione.', 'warning');
+                    return;
+                }
+
+                fetch(userQualityMalusUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ valore, motivazione, send_email: sendEmail }),
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) {
+                        showToast(data.message || 'Errore durante l\'operazione.', 'error');
+                        return;
+                    }
+
+                    closeQualityMalusPopover();
+
+                    qualityMalusHistory.unshift({
+                        valore,
+                        motivazione,
+                        assigned_by: '{{ session('user_name') }}',
+                        created_at: new Date().toISOString(),
+                        email_sent: !!data.email_sent,
+                    });
+
+                    updateQualityMalusPill();
+
+                    const userPointsEl = document.getElementById('userPoints');
+                    if (userPointsEl && typeof data.points !== 'undefined') {
+                        userPointsEl.textContent = data.points;
+                    }
+
+                    const storicoTableBody = document.getElementById('storicoTableBody');
+                    if (storicoTableBody && data.storico_html) {
+                        storicoTableBody.innerHTML = data.storico_html;
+                        applyStoricoFilter();
+                    }
+
+                    showToast(data.message, 'success');
+
+                    if (data.email_requested && !data.email_sent) {
+                        showToast('Malus salvato, ma l\'invio email non è riuscito (controlla la configurazione SMTP).', 'warning');
+                    }
+                })
+                .catch(() => showToast('Errore di connessione.', 'error'));
+            });
+        }, 0);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!qmPopoverInstance) return;
+        const insidePopover = e.target.closest('.popover');
+        const onTrigger = e.target.closest('#btnQualityMalus');
+        if (!insidePopover && !onTrigger) {
+            closeQualityMalusPopover();
+        }
     });
 
     // ===========================
