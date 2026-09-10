@@ -203,15 +203,85 @@ public function delete($user_id)
     }
 }
 
+    public function ban(Request $request, $user_id)
+    {
+        $validated = $request->validate([
+            'motivazione' => 'required|string|max:255',
+            'send_email'  => 'boolean',
+        ]);
+
+        $sendEmail = (bool) ($validated['send_email'] ?? false);
+
+        try {
+            $user = DB::table('t_user_info')->where('user_id', $user_id)->first();
+
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Utente non trovato.']);
+            }
+
+            DB::table('t_user_info')->where('user_id', $user_id)->update(['active' => 8]);
+
+            $currentPoints = (int) ($user->points ?? 0);
+
+            DB::table('t_user_history')->insert([
+                'user_id'    => $user_id,
+                'event_date' => now(),
+                'event_type' => 'BAN',
+                'event_info' => $validated['motivazione'],
+                'prev_level' => $currentPoints,
+                'new_level'  => $currentPoints,
+                'ip'         => $request->ip(),
+            ]);
+
+            $emailSent = false;
+            if ($sendEmail && !empty($user->email)) {
+                try {
+                    $nome = $user->first_name ?: $user_id;
+                    Mail::to($user->email)->send(new \App\Mail\BanNotification(
+                        $validated['motivazione'],
+                        $nome,
+                        $user_id
+                    ));
+                    $emailSent = true;
+                } catch (\Exception $e) {
+                    Log::error('Errore invio email ban: ' . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'success'       => true,
+                'message'       => 'Utente sospeso/bannato correttamente.',
+                'email_sent'    => $emailSent,
+                'email_requested' => $sendEmail,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Errore ban utente: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Errore durante la sospensione.']);
+        }
+    }
+
     /**
      * Riattiva un utente (active=1, confirm=1)
      */
     public function activate($user_id)
     {
         try {
+            $user = DB::table('t_user_info')->where('user_id', $user_id)->first();
+
             DB::table('t_user_info')
                 ->where('user_id', $user_id)
                 ->update(['active' => 1, 'confirm' => 1]);
+
+            $points = (int) ($user->points ?? 0);
+
+            DB::table('t_user_history')->insert([
+                'user_id'    => $user_id,
+                'event_date' => now(),
+                'event_type' => 'RIATTIVAZIONE',
+                'event_info' => 'Account riattivato da ' . (session('user_name') ?? 'staff'),
+                'prev_level' => $points,
+                'new_level'  => $points,
+            ]);
 
             return response()->json(['success' => true, 'message' => 'Utente riattivato correttamente.']);
         } catch (\Exception $e) {
@@ -357,7 +427,7 @@ public function assignBonusMalus(Request $request, $user_id)
 public function assignQualityMalus(Request $request, $user_id)
 {
     $validated = $request->validate([
-        'valore' => 'required|integer|min:1',
+        'valore'     => 'required|integer|min:1',
         'motivazione' => 'required|string|max:255',
         'send_email' => 'nullable|boolean',
     ]);
@@ -397,12 +467,12 @@ public function assignQualityMalus(Request $request, $user_id)
             DB::table('t_user_info')->where('user_id', $user_id)->update(['points' => $new]);
 
             DB::table('t_user_history')->insert([
-                'user_id' => $user_id,
+                'user_id'    => $user_id,
                 'event_date' => now(),
                 'event_type' => 'MALUS QUALITA',
                 'event_info' => $validated['motivazione'],
                 'prev_level' => $prev,
-                'new_level' => $new,
+                'new_level'  => $new,
             ]);
 
             return [
@@ -615,7 +685,7 @@ $storicoQuery = DB::table('t_user_history')
         switch ($eventType) {
             case 'interview_screenout':
                 $item->evento_label = 'SCREENOUT';
-                $item->evento_color = 'danger';
+                $item->evento_color = 'warning';
                 $item->evento_icon = 'bi-emoji-frown';
                 $item->tipologia = 'Sondaggio Interactive';
                 break;
@@ -629,7 +699,7 @@ $storicoQuery = DB::table('t_user_history')
 
             case 'interview_quotafull':
                 $item->evento_label = 'QUOTAFULL';
-                $item->evento_color = 'warning';
+                $item->evento_color = 'info';
                 $item->evento_icon = 'bi-emoji-neutral';
                 $item->tipologia = 'Sondaggio Interactive';
                 break;
@@ -670,6 +740,56 @@ $storicoQuery = DB::table('t_user_history')
                 $item->evento_color = 'orange';
                 $item->evento_icon = 'bi-emoji-angry';
                 $item->tipologia = $item->event_info ?? 'Malus';
+                break;
+
+            case 'malus qualita':
+                $item->bytes = -abs($diff);
+                $item->evento_label = 'MALUS QUALITÀ';
+                $item->evento_color = 'danger';
+                $item->evento_icon = 'bi-shield-exclamation';
+                $item->tipologia = $item->event_info ?? 'Malus qualità';
+                break;
+
+            case 'ban':
+                $item->evento_label = 'BAN';
+                $item->evento_color = 'dark';
+                $item->evento_icon = 'bi-slash-circle';
+                $item->tipologia = $item->event_info ?? 'Sospensione account';
+                break;
+
+            case 'riattivazione':
+                $item->evento_label = 'RIATTIVAZIONE';
+                $item->evento_color = 'success';
+                $item->evento_icon = 'bi-person-check-fill';
+                $item->tipologia = $item->event_info ?? 'Account riattivato';
+                break;
+
+            case 'subscribe':
+                $item->evento_label = 'ISCRIZIONE';
+                $item->evento_color = 'success';
+                $item->evento_icon = 'bi-person-check';
+                $item->tipologia = $item->event_info ?? '';
+                break;
+
+            case 'unsubscribe':
+                $item->evento_label = 'CANCELLAZIONE';
+                $item->evento_color = 'secondary';
+                $item->evento_icon = 'bi-person-x';
+                $item->tipologia = $item->event_info ?? '';
+                break;
+
+            case 'livelli_rimossi':
+                $item->evento_label = 'LIVELLI RIMOSSI';
+                $item->evento_color = 'warning';
+                $item->evento_icon = 'bi-layers';
+                $item->tipologia = $item->event_info ?? '';
+                break;
+
+            default:
+                $item->evento_label = strtoupper($item->event_type ?? '-');
+                $item->evento_color = 'secondary';
+                $item->evento_icon = 'bi-info-circle';
+                $item->tipologia = $item->event_info ?? '-';
                 break;
         }
 

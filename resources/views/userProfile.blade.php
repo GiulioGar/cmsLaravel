@@ -1,4 +1,4 @@
-@extends('layouts.main')
+﻿@extends('layouts.main')
 
 
 @section('content')
@@ -39,6 +39,10 @@
                                     <span class="up-status-badge up-status-active"
                                           role="button" data-bs-toggle="modal" data-bs-target="#modalUserActive"
                                           title="Gestisci stato">ATTIVO</span>
+                                @elseif($user->active == 8)
+                                    <span class="up-status-badge up-status-banned"
+                                          role="button" data-bs-toggle="modal" data-bs-target="#modalUserBanned"
+                                          title="Gestisci stato">BANNATO</span>
                                 @else
                                     <span class="up-status-badge up-status-inactive"
                                           role="button" data-bs-toggle="modal" data-bs-target="#modalUserInactive"
@@ -670,14 +674,23 @@
                 <h6 class="modal-title"><i class="bi bi-person-gear me-1"></i> Gestione utente attivo</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center">
-                <p class="mb-3">Cosa desideri fare con <strong>{{ $user->full_name ?? $user->user_id }}</strong>?</p>
-                <button class="btn btn-outline-warning me-2" id="btnDeactivate">
-                    <i class="bi bi-person-dash me-1"></i> Disattiva
-                </button>
-                <button class="btn btn-outline-danger" id="btnDelete">
-                    <i class="bi bi-trash me-1"></i> Elimina definitivamente
-                </button>
+            <div class="modal-body px-4 py-3">
+                <p class="text-muted small mb-3">Cosa desideri fare con <strong class="text-dark">{{ $user->full_name ?? $user->user_id }}</strong>?</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-warning text-start" id="btnDeactivate">
+                        <i class="bi bi-person-dash me-2"></i> Disattiva utente
+                        <small class="d-block text-muted fw-normal ms-4" style="font-size:0.75rem;">Imposta active=9, l'utente non può accedere</small>
+                    </button>
+                    <button class="btn btn-outline-danger text-start" id="btnBanOpen"
+                            data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#modalBan">
+                        <i class="bi bi-slash-circle me-2"></i> Sospendi / Banna
+                        <small class="d-block text-muted fw-normal ms-4" style="font-size:0.75rem;">Imposta active=8, invia notifica email opzionale</small>
+                    </button>
+                    <button class="btn btn-outline-danger text-start" id="btnDelete">
+                        <i class="bi bi-trash me-2"></i> Elimina definitivamente
+                        <small class="d-block text-muted fw-normal ms-4" style="font-size:0.75rem;">Rimuove email e dati di contatto</small>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -695,6 +708,56 @@
                 <p class="mb-3">Vuoi riattivare <strong>{{ $user->full_name ?? $user->user_id }}</strong>?</p>
                 <button class="btn btn-outline-success" id="btnActivate">
                     <i class="bi bi-person-check me-1"></i> Attiva utente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- 🔹 Modal conferma ban (con motivazione + email) --}}
+<div class="modal fade" id="modalBan" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h6 class="modal-title"><i class="bi bi-slash-circle me-1"></i> Sospendi / Banna utente</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3">L'utente verrà sospeso (active=8). Puoi inviare una notifica via email.</p>
+                <div class="mb-3">
+                    <label class="form-label small mb-1">Motivazione interna</label>
+                    <textarea id="banMotivazione" class="form-control form-control-sm" rows="2" maxlength="255">Anomalie rilevate durante i controlli qualitativi e di conformità al Regolamento.</textarea>
+                </div>
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" id="banSendEmail" checked>
+                    <label class="form-check-label small" for="banSendEmail">Invia email di notifica all'utente</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-sm btn-danger" id="btnBanConfirm">
+                    <i class="bi bi-slash-circle me-1"></i> Conferma sospensione
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- 🔹 Modal utente bannato --}}
+<div class="modal fade" id="modalUserBanned" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background:#9a3412;">
+                <h6 class="modal-title"><i class="bi bi-slash-circle me-1"></i> Utente sospeso/bannato</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p class="mb-3">Cosa desideri fare con <strong>{{ $user->full_name ?? $user->user_id }}</strong>?</p>
+                <button class="btn btn-outline-success me-2" id="btnActivateFromBan">
+                    <i class="bi bi-person-check me-1"></i> Riattiva
+                </button>
+                <button class="btn btn-outline-danger" id="btnDeleteFromBan">
+                    <i class="bi bi-trash me-1"></i> Elimina definitivamente
                 </button>
             </div>
         </div>
@@ -905,6 +968,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userActivateUrl = @json(route('user.activate', ['user_id' => $user->user_id]));
     const userUpdateInfoUrl = @json(route('user.update.info', ['user_id' => $user->user_id]));
     const userBonusMalusUrl = @json(route('user.bonus.malus', ['user_id' => $user->user_id]));
+    const userBanUrl = @json(route('user.ban', ['user_id' => $user->user_id]));
     const respintSummaryUrl = @json(route('user.respint.summary', ['user_id' => $user->user_id]));
     const respintDetailUrl = @json(route('user.respint.log', ['user_id' => $user->user_id]));
 
@@ -994,20 +1058,72 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🔹 GESTIONE STATO UTENTE
     // ===========================
     document.getElementById('btnDeactivate')?.addEventListener('click', () => {
-        if (confirm('Confermi la disattivazione dell’utente?')) {
+        if (confirm("Confermi la disattivazione dell'utente?")) {
             sendUserAction(userDeactivateUrl, 'modalUserActive');
         }
     });
 
     document.getElementById('btnDelete')?.addEventListener('click', () => {
-        if (confirm('Confermi l’eliminazione definitiva dell’utente?')) {
+        if (confirm("Confermi l'eliminazione definitiva dell'utente?")) {
             sendUserAction(userDeleteUrl, 'modalUserActive');
         }
     });
 
     document.getElementById('btnActivate')?.addEventListener('click', () => {
-        if (confirm('Confermi la riattivazione dell’utente?')) {
+        if (confirm("Confermi la riattivazione dell'utente?")) {
             sendUserAction(userActivateUrl, 'modalUserInactive');
+        }
+    });
+
+    // Ban
+    document.getElementById('btnBanConfirm')?.addEventListener('click', () => {
+        const motivazione = document.getElementById('banMotivazione').value.trim();
+        const sendEmail   = document.getElementById('banSendEmail').checked;
+
+        if (!motivazione) {
+            showToast('Inserisci una motivazione.', 'warning');
+            return;
+        }
+
+        fetch(userBanUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ motivazione, send_email: sendEmail }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('modalBan'))?.hide();
+                setTimeout(() => {
+                    if (data.email_requested && !data.email_sent) {
+                        showToast('Utente sospeso, ma l\'email non è stata inviata.', 'warning');
+                    } else {
+                        showToast(data.message, 'success');
+                    }
+                    location.reload();
+                }, 300);
+            } else {
+                showToast(data.message || 'Errore durante la sospensione.', 'error');
+            }
+        })
+        .catch(() => showToast('Errore di connessione.', 'error'));
+    });
+
+    // Riattiva da stato bannato
+    document.getElementById('btnActivateFromBan')?.addEventListener('click', () => {
+        if (confirm('Confermi la riattivazione dell\'utente bannato?')) {
+            sendUserAction(userActivateUrl, 'modalUserBanned');
+        }
+    });
+
+    // Elimina da stato bannato
+    document.getElementById('btnDeleteFromBan')?.addEventListener('click', () => {
+        if (confirm('Confermi l\'eliminazione definitiva dell\'utente?')) {
+            sendUserAction(userDeleteUrl, 'modalUserBanned');
         }
     });
 

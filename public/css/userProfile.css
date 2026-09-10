@@ -823,6 +823,12 @@ body {
     border: 1px solid #fecaca;
 }
 
+.up-status-banned {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
+}
+
 .up-hero-email {
     font-size: 0.81rem;
     color: #6b7280;
