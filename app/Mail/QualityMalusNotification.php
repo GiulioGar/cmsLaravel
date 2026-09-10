@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -14,17 +13,19 @@ class QualityMalusNotification extends Mailable
     public $motivazione;
     public $valore;
     public $nome;
+    public $uid;
 
-    public function __construct(string $motivazione, int $valore, string $nome)
+    public function __construct(string $motivazione, int $valore, string $nome, string $uid)
     {
         $this->motivazione = $motivazione;
         $this->valore      = $valore;
         $this->nome        = $nome;
+        $this->uid         = $uid;
     }
 
     public function build()
     {
-        return $this->subject('Comunicazione qualità intervista')
+        return $this->subject('Comunicazione qualità interviste')
             ->view('emails.quality-malus');
     }
 }

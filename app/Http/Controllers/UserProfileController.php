@@ -426,7 +426,8 @@ public function assignQualityMalus(Request $request, $user_id)
                 Mail::to($result['user_email'])->send(new QualityMalusNotification(
                     $validated['motivazione'],
                     (int) $validated['valore'],
-                    $result['user_name']
+                    $result['user_name'],
+                    $user_id
                 ));
 
                 DB::table('t_quality_malus')->where('id', $result['malus_id'])->update([

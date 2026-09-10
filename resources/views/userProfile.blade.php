@@ -1254,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="mb-2">
                     <label class="form-label small mb-1">Motivazione</label>
-                    <textarea id="qmMotivazione" class="form-control form-control-sm" rows="3" maxlength="255">Rilevate anomalie ricorrenti nella qualità delle interviste completate. Ti invitiamo a prestare maggiore attenzione nelle prossime partecipazioni per evitare ulteriori provvedimenti.</textarea>
+                    <textarea id="qmMotivazione" class="form-control form-control-sm" rows="2" maxlength="255">Rilevate anomalie ricorrenti nella qualità delle interviste</textarea>
                 </div>
                 <div class="form-check mb-2">
                     <input type="checkbox" id="qmSendEmail" class="form-check-input" checked>
