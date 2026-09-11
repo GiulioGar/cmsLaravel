@@ -1,7 +1,10 @@
 @extends('layouts.main')
 
-@section('content')
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/referral.css') }}">
+@endsection
+
+@section('content')
 
 <div class="container-fluid mt-4">
         @if(session('referral_export_error'))

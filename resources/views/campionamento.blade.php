@@ -1,7 +1,9 @@
 {{-- resources/views/campionamento.blade.php --}}
 @extends('layouts.main')
 
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/campionamento.css') }}">
+@endsection
 
 @section('title', 'Campionamento')
 

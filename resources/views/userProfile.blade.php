@@ -1,9 +1,11 @@
 ﻿@extends('layouts.main')
 
 
-@section('content')
-
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/userProfile.css') }}">
+@endsection
+
+@section('content')
 
 <div class="container-fluid mt-3">
 

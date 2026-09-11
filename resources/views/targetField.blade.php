@@ -4,8 +4,11 @@ use Illuminate\Support\Str;
 
 @extends('layouts.main')
 
-@section('content')
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/fieldControl.css') }}">
+@endsection
+
+@section('content')
 
 <div class="container field-control-container">
 

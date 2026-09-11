@@ -1,7 +1,10 @@
 @extends('layouts.main')
 
-@section('content')
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/tickets.css') }}">
+@endsection
+
+@section('content')
 
 <div class="container-fluid mt-4">
     <div class="tickets-page-hero mb-4">

@@ -11,36 +11,31 @@
     <meta name="csrf-token" content="{{ csrf_token() }}"> {{-- nel layout <head> --}}
 
 
-    <link rel="preconnect" href="https://fonts.gstatic.com">
+    {{-- Preconnect: stabilisce le connessioni TCP/TLS ai CDN prima che il parser arrivi ai <link> --}}
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.datatables.net" crossorigin>
+    <link rel="preconnect" href="https://code.jquery.com" crossorigin>
+
     <link rel="shortcut icon" href="{{ asset('img/icons/logoSmall.png') }}" />
     <link rel="canonical" href="https://demo-basic.adminkit.io/" />
 
-    <!-- CSS di Bootstrap 5 (qui un esempio CDN) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-
-<!-- DataTables + Bootstrap 5 CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-
-<!-- Bootstrap Icons -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-{{-- Notifiche topbar CSS --}}
-<link rel="stylesheet" href="{{ asset('css/topbar-notifications.css') }}">
-
-
-
-
-<!--  SweetAlert2-->
-     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 
     <title>Gestionale Interactive</title>
 
-    <!-- Carica il CSS dalla cartella public -->
+    {{-- CSS locale: app.css prima, poi overrides pagina-specifici via @yield('head') --}}
     <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/topbar-notifications.css') }}">
+
+    @yield('head')
 
 
 
@@ -137,6 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script src="{{ asset('js/topbar-notifications.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 @yield('scripts')
 

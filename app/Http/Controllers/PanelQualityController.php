@@ -34,7 +34,7 @@ class PanelQualityController extends Controller
 
         $nomiByUid = DB::table('t_user_info')
             ->whereIn('user_id', $panelisti->pluck('uid'))
-            ->select('user_id', 'first_name', 'second_name')
+            ->select('user_id', 'first_name', 'second_name', 'points')
             ->get()
             ->keyBy('user_id');
 
@@ -44,9 +44,18 @@ class PanelQualityController extends Controller
         // erroneamente "Interactive" per assenza del campo pan= nel file .sre.
         $panelisti = $panelisti->filter(fn ($p) => $nomiByUid->has($p->uid))->values();
 
-        $panelisti->each(function ($p) use ($nomiByUid) {
+        $malusByUid = DB::table('t_quality_malus')
+            ->whereIn('uid', $panelisti->pluck('uid'))
+            ->selectRaw('uid, COUNT(*) as malus_count')
+            ->groupBy('uid')
+            ->get()
+            ->keyBy('uid');
+
+        $panelisti->each(function ($p) use ($nomiByUid, $malusByUid) {
             $ui = $nomiByUid->get($p->uid);
-            $p->full_name = trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? ''));
+            $p->full_name   = trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? ''));
+            $p->bytes       = (int) ($ui->points ?? 0);
+            $p->malus_count = (int) (optional($malusByUid->get($p->uid))->malus_count ?? 0);
         });
 
         // Tutti i panelisti (già ordinati per score ASC) — paginati lato client a 30/pagina
@@ -107,40 +116,22 @@ class PanelQualityController extends Controller
 
         $anniDisponibili = DB::table('t_panel_control')
             ->selectRaw('DISTINCT YEAR(sur_date) as anno')
-            ->where('panel_interno', '>', 0)
             ->whereNotNull('sur_date')
+            ->where('complete', '>', 0)
             ->orderByDesc('anno')
             ->pluck('anno');
 
+        // Tutte le ricerche con completamenti ma senza dati qualità (Interactive + Esterno unificati).
+        // complete_int/complete_ext vengono passati alla blade per data-int/data-ext — filtro lato client.
         $ricerceSenzaDati = DB::table('t_panel_control as pc')
             ->leftJoin('t_user_quality as uq', function ($join) {
                 $join->on('pc.sur_id', '=', 'uq.sid')
-                     ->on('pc.prj', '=', 'uq.prj')
-                     ->where('uq.panel', '=', 'Interactive');
+                     ->on('pc.prj', '=', 'uq.prj');
             })
             ->leftJoin('t_fornitoripanel as fp', 'pc.panel', '=', 'fp.panel_code')
-            ->selectRaw('pc.prj, pc.sur_id, pc.description, pc.stato, pc.complete, pc.goal, pc.sur_date, pc.panel_interno, pc.panel_esterno, fp.name AS panel_nome_esterno')
+            ->selectRaw('pc.prj, pc.sur_id, pc.description, pc.stato, pc.complete, pc.complete_int, pc.complete_ext, pc.goal, pc.sur_date, fp.name AS panel_nome_esterno')
             ->whereNull('uq.id')
-            ->where('pc.panel_interno', '>', 0)
-            ->whereRaw('YEAR(pc.sur_date) = ?', [$annoSenzaDati])
-            ->orderByDesc('pc.sur_date')
-            ->get();
-
-        // ── Tab Ricerche — panel esterno senza dati qualità (stesso anno) ────
-        // Euristica: pc.panel_esterno > 0. Nota: questo flag può essere impreciso
-        // (visto con BRS/R2603060UK, che aveva panel_esterno vuoto pur avendo
-        // davvero interviste Purespectrum) — non intercetta il 100% dei casi,
-        // ma copre la maggioranza senza dover leggere i file .sre su disco.
-        $ricercheEsterneSenzaDati = DB::table('t_panel_control as pc')
-            ->leftJoin('t_user_quality as uq', function ($join) {
-                $join->on('pc.sur_id', '=', 'uq.sid')
-                     ->on('pc.prj', '=', 'uq.prj')
-                     ->where('uq.panel', '!=', 'Interactive');
-            })
-            ->leftJoin('t_fornitoripanel as fp', 'pc.panel', '=', 'fp.panel_code')
-            ->selectRaw('pc.prj, pc.sur_id, pc.description, pc.stato, pc.complete, pc.goal, pc.sur_date, pc.panel_interno, pc.panel_esterno, fp.name AS panel_nome_esterno')
-            ->whereNull('uq.id')
-            ->where('pc.panel_esterno', '>', 0)
+            ->where('pc.complete', '>', 0)
             ->whereRaw('YEAR(pc.sur_date) = ?', [$annoSenzaDati])
             ->orderByDesc('pc.sur_date')
             ->get();
@@ -194,7 +185,6 @@ class PanelQualityController extends Controller
             'panelistiTable',
             'ricercheConDati',
             'ricerceSenzaDati',
-            'ricercheEsterneSenzaDati',
             'annoSenzaDati',
             'anniDisponibili',
             'panelEsterniRollup',

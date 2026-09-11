@@ -1,6 +1,8 @@
 @extends('layouts.main')
 
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/abilitaUid.css') }}">
+@endsection
 
 @section('content')
 <div class="container-fluid px-4 au-page">

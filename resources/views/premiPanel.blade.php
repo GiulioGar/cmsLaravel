@@ -1,7 +1,10 @@
 @extends('layouts.main')
 
-@section('content')
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/premiPanel.css') }}">
+@endsection
+
+@section('content')
 
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">

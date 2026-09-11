@@ -1,7 +1,10 @@
 @extends('layouts.main')
 
-@section('content')
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/search-select.css') }}">
+@endsection
+
+@section('content')
 <div class="container-fluid px-3">
 <div class="row g-3">
   <!-- SINISTRA ~60% -->

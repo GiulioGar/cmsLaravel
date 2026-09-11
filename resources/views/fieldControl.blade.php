@@ -1,8 +1,10 @@
 @extends('layouts.main')
 
-@section('content')
-<!-- Importazione dello stile personalizzato -->
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/fieldControl.css') }}">
+@endsection
+
+@section('content')
 
 
 

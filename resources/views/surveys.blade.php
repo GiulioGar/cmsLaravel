@@ -1,9 +1,11 @@
 @extends('layouts.main')
 
-@section('content')
-
+@section('head')
 <link rel="stylesheet" href="{{ asset('css/surveys.css') }}">
 <link rel="stylesheet" href="{{ asset('css/search-select.css') }}">
+@endsection
+
+@section('content')
 
 <main class="content">
 
