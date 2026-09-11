@@ -207,11 +207,78 @@
                 <p class="dq-page-sub">Monitoraggio qualità dati e controlli antifrode &middot; {{ $panelData->description ?? ($prj . '/' . $sid) }}</p>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
-                <button id="btnSimilarity" class="dq-btn dq-btn-sim" onclick="runSimilarityCheck()">
+                <button id="btnSimilarity" class="dq-btn dq-btn-sim" onclick="openSimModal()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg>
                     Controlla duplicati
                 </button>
                 <span class="dq-page-badge">{{ $totalInterviews }} interviste</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MODAL: configurazione analisi duplicati
+         ============================================================ -->
+    <div class="modal fade" id="modalSimConfig" tabindex="-1" aria-labelledby="modalSimConfigLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius:10px;border:1.5px solid oklch(88% 0.04 80);">
+                <div class="modal-header" style="border-bottom:1px solid oklch(92% 0.03 80);padding:14px 20px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(50% 0.12 80)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg>
+                        <h5 class="modal-title" id="modalSimConfigLabel" style="font-size:15px;font-weight:600;color:oklch(25% 0.04 255);margin:0;">Configura analisi duplicati</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+                <div class="modal-body" style="padding:18px 20px;">
+                    <p style="font-size:13px;color:#666;margin-bottom:16px;">
+                        Seleziona le domande da includere nell'analisi. Le domande con <strong>≤ 2 opzioni</strong> sono deselezionate di default (es. Sì/No, Maschio/Femmina).
+                    </p>
+
+                    <!-- Stato di caricamento -->
+                    <div id="sim-modal-loading" style="text-align:center;padding:24px 0;color:#888;font-size:13px;">
+                        <svg class="dq-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(55% 0.10 80)" stroke-width="2" stroke-linecap="round" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                        Caricamento struttura domande...
+                    </div>
+
+                    <!-- Contenuto (nascosto durante loading) -->
+                    <div id="sim-modal-body" style="display:none;">
+
+                        <!-- Sezione Choice -->
+                        <div class="sim-modal-section">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                                <span class="sim-modal-section-title">
+                                    Domande a scelta
+                                    <span id="sim-choice-count" class="sim-modal-count"></span>
+                                </span>
+                                <span style="display:flex;gap:4px;">
+                                    <button onclick="simSelectAll('choice')" class="sim-sel-btn">Tutte</button>
+                                    <button onclick="simSelectNone('choice')" class="sim-sel-btn">Nessuna</button>
+                                </span>
+                            </div>
+                            <div id="sim-choice-list" class="sim-modal-list"></div>
+                        </div>
+
+                        <!-- Sezione Open -->
+                        <div class="sim-modal-section" style="margin-top:18px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                                <span class="sim-modal-section-title">
+                                    Domande aperte
+                                    <span id="sim-open-count" class="sim-modal-count"></span>
+                                </span>
+                                <span style="display:flex;gap:4px;">
+                                    <button onclick="simSelectAll('open')" class="sim-sel-btn">Tutte</button>
+                                    <button onclick="simSelectNone('open')" class="sim-sel-btn">Nessuna</button>
+                                </span>
+                            </div>
+                            <div id="sim-open-list" class="sim-modal-list"></div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid oklch(92% 0.03 80);padding:12px 20px;gap:8px;">
+                    <button type="button" class="dq-btn dq-btn-outline" data-bs-dismiss="modal" style="font-size:13px;">Annulla</button>
+                    <button type="button" id="btnExecSim" class="dq-btn dq-btn-sim" onclick="execSimilarityCheck()" style="font-size:13px;" disabled>Avvia analisi</button>
+                </div>
             </div>
         </div>
     </div>
@@ -851,8 +918,182 @@
 
 @section('scripts')
 <script>
+/* ---- Mappa codici domanda (da questionsFromApi) ---- */
+@php
+    $qMapForJs = [];
+    foreach ($questionsFromApi as $q) {
+        if (isset($q['id'])) {
+            $qMapForJs[(int) $q['id']] = [
+                'code' => $q['code'] ?? ('Q' . (int) $q['id']),
+                'text' => $q['text'] ?? '',
+                'type' => $q['type'] ?? '',
+            ];
+        }
+    }
+@endphp
+var qMap = @json($qMapForJs);
+
+function cleanQText(s) {
+    if (!s) return '';
+    s = s.replace(/<script[\s\S]*?<\/script>/gi, '');
+    s = s.replace(/<[^>]+>/g, '');
+    s = s.replace(/\$\s*\([\s\S]*$/, '');
+    return s.trim();
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 /* ---- Analisi duplicati (similarity check) ---- */
-function runSimilarityCheck() {
+var SIM_BTN_HTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg> Controlla duplicati';
+
+function openSimModal() {
+    var modal = new bootstrap.Modal(document.getElementById('modalSimConfig'));
+    modal.show();
+
+    document.getElementById('sim-modal-loading').style.display = '';
+    document.getElementById('sim-modal-body').style.display   = 'none';
+    document.getElementById('btnExecSim').disabled = true;
+
+    fetch('{{ route("fieldQuality.questionsMeta") }}?prj={{ $prj }}&sid={{ $sid }}')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            populateSimModal(data.choice || {}, data.open || []);
+            document.getElementById('sim-modal-loading').style.display = 'none';
+            document.getElementById('sim-modal-body').style.display    = '';
+            document.getElementById('btnExecSim').disabled = false;
+        })
+        .catch(function() {
+            document.getElementById('sim-modal-loading').innerHTML =
+                '<span style="color:oklch(48% 0.15 25);font-size:13px;">Errore nel caricamento delle domande. Riprova.</span>';
+        });
+}
+
+function populateSimModal(choiceMeta, openQids) {
+    var choiceList = document.getElementById('sim-choice-list');
+    var openList   = document.getElementById('sim-open-list');
+
+    // ---- Choice ----
+    var sortedChoiceQids = Object.keys(choiceMeta).map(Number).sort(function(a,b){ return a-b; });
+    var choiceHtml = '';
+    sortedChoiceQids.forEach(function(qid) {
+        var nOpt  = choiceMeta[qid];
+        var q     = qMap[qid] || {};
+        var code  = q.code || ('Q' + qid);
+        var text  = cleanQText(q.text || '');
+        var autoOn = nOpt >= 5;
+        var nOptCls = autoOn ? 'sim-nopt sim-nopt-hi' : 'sim-nopt sim-nopt-lo';
+        choiceHtml += '<div class="sim-modal-qrow">';
+        choiceHtml += '<label>';
+        choiceHtml += '<input type="checkbox" class="sim-choice-cb" value="' + qid + '"' + (autoOn ? ' checked' : '') + '>';
+        choiceHtml += '<span class="sim-qcode">' + escHtml(code) + '</span>';
+        choiceHtml += '<span class="sim-qtext" title="' + escHtml(text) + '">' + escHtml(text) + '</span>';
+        choiceHtml += '<span class="' + nOptCls + '">' + nOpt + ' opz</span>';
+        choiceHtml += '</label>';
+        choiceHtml += '<button class="sim-expand-btn" title="Vedi opzioni" onclick="loadQOptions(' + qid + ', this)">&#9660;</button>';
+        choiceHtml += '<div id="sim-opts-' + qid + '" style="display:none;width:100%;"></div>';
+        choiceHtml += '</div>';
+    });
+    choiceList.innerHTML = choiceHtml || '<div style="padding:12px;color:#aaa;font-size:13px;">Nessuna domanda a scelta trovata.</div>';
+
+    // ---- Open ----
+    var sortedOpenQids = openQids.slice().sort(function(a,b){ return a-b; });
+    var openHtml = '';
+    sortedOpenQids.forEach(function(qid) {
+        var q    = qMap[qid] || {};
+        var code = q.code || ('Q' + qid);
+        var text = cleanQText(q.text || '');
+        openHtml += '<div class="sim-modal-qrow">';
+        openHtml += '<label>';
+        openHtml += '<input type="checkbox" class="sim-open-cb" value="' + qid + '" checked>';
+        openHtml += '<span class="sim-qcode">' + escHtml(code) + '</span>';
+        openHtml += '<span class="sim-qtext" title="' + escHtml(text) + '">' + escHtml(text) + '</span>';
+        openHtml += '</label>';
+        openHtml += '</div>';
+    });
+    openList.innerHTML = openHtml || '<div style="padding:12px;color:#aaa;font-size:13px;">Nessuna domanda aperta trovata.</div>';
+
+    updateSimCounts();
+    // aggiorna contatori al cambio checkbox
+    choiceList.addEventListener('change', updateSimCounts);
+    openList.addEventListener('change', updateSimCounts);
+}
+
+function updateSimCounts() {
+    var cc = document.querySelectorAll('#sim-choice-list .sim-choice-cb:checked').length;
+    var oc = document.querySelectorAll('#sim-open-list .sim-open-cb:checked').length;
+    var tot = document.querySelectorAll('#sim-choice-list .sim-choice-cb').length;
+    var totO = document.querySelectorAll('#sim-open-list .sim-open-cb').length;
+    var cel = document.getElementById('sim-choice-count');
+    var oel = document.getElementById('sim-open-count');
+    if (cel) cel.textContent = '(' + cc + '/' + tot + ' selezionate)';
+    if (oel) oel.textContent = '(' + oc + '/' + totO + ' selezionate)';
+}
+
+function simSelectAll(type) {
+    document.querySelectorAll('#sim-' + type + '-list .sim-' + type + '-cb')
+        .forEach(function(cb) { cb.checked = true; });
+    updateSimCounts();
+}
+
+function simSelectNone(type) {
+    document.querySelectorAll('#sim-' + type + '-list .sim-' + type + '-cb')
+        .forEach(function(cb) { cb.checked = false; });
+    updateSimCounts();
+}
+
+function loadQOptions(qid, btn) {
+    var container = document.getElementById('sim-opts-' + qid);
+    if (!container) return;
+
+    if (container.style.display !== 'none') {
+        container.style.display = 'none';
+        btn.innerHTML = '&#9660;';
+        return;
+    }
+    if (container.dataset.loaded) {
+        container.style.display = '';
+        btn.innerHTML = '&#9650;';
+        return;
+    }
+
+    btn.innerHTML = '&#8230;';
+    fetch('{{ route("targetField.getQuestionDetail") }}?prj={{ $prj }}&sid={{ $sid }}&question_id=' + qid)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var html = '<div class="sim-options-panel">';
+            if (data.success && data.question && Array.isArray(data.question.options) && data.question.options.length) {
+                data.question.options.forEach(function(opt, i) {
+                    html += '<span class="sim-opt-tag">' + i + ' · ' + escHtml(opt) + '</span>';
+                });
+            } else {
+                html += '<span style="font-size:11px;color:#aaa;">Opzioni non disponibili</span>';
+            }
+            html += '</div>';
+            container.innerHTML = html;
+            container.dataset.loaded = '1';
+            container.style.display = '';
+            btn.innerHTML = '&#9650;';
+        })
+        .catch(function() {
+            container.innerHTML = '<div class="sim-options-panel"><span style="font-size:11px;color:#aaa;">Errore nel caricamento</span></div>';
+            container.style.display = '';
+            btn.innerHTML = '&#9650;';
+        });
+}
+
+function execSimilarityCheck() {
+    var choiceQids = Array.from(document.querySelectorAll('#sim-choice-list .sim-choice-cb:checked'))
+                         .map(function(cb) { return parseInt(cb.value); });
+    var openQids   = Array.from(document.querySelectorAll('#sim-open-list .sim-open-cb:checked'))
+                         .map(function(cb) { return parseInt(cb.value); });
+
+    bootstrap.Modal.getInstance(document.getElementById('modalSimConfig')).hide();
+    runSimilarityCheck(choiceQids, openQids);
+}
+
+function runSimilarityCheck(includeChoiceQids, includeOpenQids) {
     var btn     = document.getElementById('btnSimilarity');
     var section = document.getElementById('sez-similarita');
     var content = document.getElementById('sim-content');
@@ -861,23 +1102,40 @@ function runSimilarityCheck() {
     btn.innerHTML = '<svg class="dq-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Analisi in corso...';
     section.style.display = '';
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    content.innerHTML = '<div class="dq-sim-loading"><svg class="dq-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(55% 0.10 80)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>Analisi in corso su tutte le interviste...</div>';
+    content.innerHTML = '<div class="dq-sim-loading"><svg class="dq-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(55% 0.10 80)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>Analisi in corso...</div>';
+
+    var payload = { prj: '{{ $prj }}', sid: '{{ $sid }}' };
+    if (includeChoiceQids && includeChoiceQids.length) payload.include_choice_qids = includeChoiceQids;
+    if (includeOpenQids   && includeOpenQids.length)   payload.include_open_qids   = includeOpenQids;
 
     fetch('{{ route("fieldQuality.similarityCheck") }}', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-        body: JSON.stringify({ prj: '{{ $prj }}', sid: '{{ $sid }}' })
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+        return r.text().then(function(text) {
+            try { return JSON.parse(text); }
+            catch(e) { throw new Error('Risposta non JSON (HTTP ' + r.status + '): ' + text.substring(0, 300)); }
+        });
+    })
     .then(function(data) {
         btn.disabled = false;
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg> Controlla duplicati';
+        btn.innerHTML = SIM_BTN_HTML;
+        if (data.error || data.message) {
+            content.innerHTML = '<div style="color:oklch(48% 0.15 25);padding:12px 0;font-size:13px;"><strong>Errore dal server:</strong> ' + escHtml(data.error || data.message) + '</div>';
+            return;
+        }
         renderSimilarityResults(data, content);
     })
-    .catch(function() {
+    .catch(function(e) {
         btn.disabled = false;
-        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg> Controlla duplicati';
-        content.innerHTML = '<div style="color:oklch(48% 0.15 25);padding:12px 0;">Errore durante l\'analisi. Riprova.</div>';
+        btn.innerHTML = SIM_BTN_HTML;
+        content.innerHTML = '<div style="color:oklch(48% 0.15 25);padding:12px 0;font-size:13px;"><strong>Errore:</strong> ' + escHtml(e.message || 'Errore sconosciuto') + '</div>';
     });
 }
 
@@ -894,6 +1152,20 @@ function renderSimilarityResults(data, container) {
     var activeColor = { 0: 'oklch(50% 0.02 250)', 1: 'oklch(40% 0.13 150)', 8: 'oklch(45% 0.16 25)', 9: 'oklch(48% 0.12 25)' };
 
     var html = '<div class="dq-sim-summary">Trovati <strong>' + clusters.length + '</strong> gruppi sospetti su <strong>' + total + '</strong> interviste analizzate</div>';
+
+    if (data._debug_qid_dist) {
+        html += '<details style="margin-bottom:12px;font-size:12px;color:#666;border:1px dashed #ccc;padding:8px 12px;border-radius:6px;">';
+        html += '<summary style="cursor:pointer;font-weight:600;">DEBUG — distribuzione qid nel pairwise</summary><div style="margin-top:8px;">';
+        Object.keys(data._debug_qid_dist).forEach(function(qid) {
+            var d = data._debug_qid_dist[qid];
+            var q = qMap[parseInt(qid)] || {};
+            var code = q.code || ('Q' + qid);
+            html += '<div style="margin-bottom:4px;"><strong>' + escHtml(code) + '</strong> (qid=' + qid + ') — ' + d.n_interviews + ' interviste — top valori: ';
+            html += Object.entries(d.top_values).map(function(e){ return '"' + e[0] + '"×' + e[1]; }).join(', ');
+            html += '</div>';
+        });
+        html += '</div></details>';
+    }
 
     clusters.forEach(function(cluster, idx) {
         var sig = cluster.soft_signature || {};
@@ -920,11 +1192,18 @@ function renderSimilarityResults(data, container) {
         html += '<div class="dq-sim-reason-title">Perché questo gruppo è sospetto — risposte prevalenti (≥70% dei membri)</div>';
         html += '<div class="dq-sim-sig-items">';
         sigKeys.forEach(function(qid) {
-            var s = sig[qid];
+            var s    = sig[qid];
+            var qInfo = qMap[parseInt(qid)] || {};
+            var code = qInfo.code || ('Q' + qid);
+            var text = qInfo.text || '';
             var pctColor = s.pct >= 90 ? 'oklch(45% 0.16 25)' : (s.pct >= 80 ? 'oklch(48% 0.14 75)' : 'oklch(45% 0.10 255)');
-            html += '<span class="dq-sim-sig-item">';
-            html += '<span class="dq-sim-qid">Q' + qid + '</span>';
-            html += '<span class="dq-sim-qans">= ' + s.answer + '</span>';
+            html += '<span class="dq-sim-sig-item fq-codice-pop" style="cursor:pointer;"'
+                  + ' data-codice="' + escHtml(code) + '"'
+                  + ' data-qid="' + qid + '"'
+                  + ' data-qtext="' + escHtml(text) + '"'
+                  + ' data-answer="' + escHtml(s.answer) + '">';
+            html += '<span class="dq-sim-qid" style="text-decoration:underline dotted #aaa;text-underline-offset:3px;">' + escHtml(code) + '</span>';
+            html += '<span class="dq-sim-qans">= ' + escHtml(s.answer) + '</span>';
             html += '<span class="dq-sim-qpct" style="color:' + pctColor + '">' + s.pct + '%</span>';
             html += '</span>';
         });
@@ -936,9 +1215,18 @@ function renderSimilarityResults(data, container) {
             html += '<div class="dq-sim-reason-title" style="margin-top:10px;">Risposte aperte duplicate</div>';
             html += '<div class="dq-sim-sig-items">';
             openDups.forEach(function(od) {
-                html += '<span class="dq-sim-sig-item" style="background:oklch(97% 0.015 255);border-color:oklch(88% 0.03 255);">';
-                html += '<span class="dq-sim-qid">Q' + od.questionId + '</span>';
-                html += '<span class="dq-sim-qans" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">&ldquo;' + od.text.substring(0, 60) + (od.text.length > 60 ? '…' : '') + '&rdquo;</span>';
+                var qInfo = qMap[parseInt(od.questionId)] || {};
+                var code  = qInfo.code || ('Q' + od.questionId);
+                var text  = qInfo.text || '';
+                html += '<span class="dq-sim-sig-item fq-codice-pop" style="background:oklch(97% 0.015 255);border-color:oklch(88% 0.03 255);cursor:pointer;"'
+                      + ' data-codice="' + escHtml(code) + '"'
+                      + ' data-qid="' + od.questionId + '"'
+                      + ' data-qtext="' + escHtml(text) + '"'
+                      + ' data-is-open="1"'
+                      + ' data-answer="' + escHtml(String(od.text).substring(0, 60)) + '">';
+                html += '<span class="dq-sim-qid" style="text-decoration:underline dotted #aaa;text-underline-offset:3px;">' + escHtml(code) + '</span>';
+                var odText = String(od.text);
+                html += '<span class="dq-sim-qans" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">&ldquo;' + odText.substring(0, 60) + (odText.length > 60 ? '…' : '') + '&rdquo;</span>';
                 html += '<span class="dq-sim-qpct" style="color:oklch(45% 0.10 255);">×' + od.count + '</span>';
                 html += '</span>';
             });
@@ -978,11 +1266,84 @@ function renderSimilarityResults(data, container) {
     });
 
     container.innerHTML = html;
+    initSimPopovers();
 }
 
 function toggleSim(id) {
     var el = document.getElementById(id);
     if (el) { el.style.display = el.style.display === 'none' ? '' : 'none'; }
+}
+
+var _simOptCache = {};
+
+function buildSimPopContent(el) {
+    var qtextHtml = el.dataset.qtext
+        ? '<span style="font-size:.78rem;color:#555">' + el.dataset.qtext + '</span>'
+        : '<span style="font-size:.78rem;color:#aaa;font-style:italic">Testo non disponibile</span>';
+
+    if (el.dataset.isOpen === '1') return qtextHtml;
+
+    var ans = el.dataset.answer || '';
+    var labelLine = '<hr style="margin:6px 0;border-color:#eee">'
+                  + '<span style="font-size:.78rem">Risposta: <strong>' + escHtml(ans) + '</strong>';
+    if (el.dataset.optLabel) {
+        labelLine += ' &mdash; ' + escHtml(el.dataset.optLabel);
+    } else if (!el.dataset.labelLoaded) {
+        labelLine += ' <span style="color:#bbb;font-style:italic">(caricamento etichetta…)</span>';
+    }
+    labelLine += '</span>';
+    return qtextHtml + labelLine;
+}
+
+function initSimPopovers() {
+    document.querySelectorAll('#sim-content .fq-codice-pop').forEach(function(el) {
+        var pop = new bootstrap.Popover(el, {
+            html: true,
+            trigger: 'hover focus',
+            placement: 'auto',
+            sanitize: false,
+            title: '<span style="font-size:.8rem;font-weight:600">' + el.dataset.codice + '</span>'
+                 + '<span style="font-size:.75rem;color:#888;font-weight:400;margin-left:6px">#' + el.dataset.qid + '</span>',
+            content: function() { return buildSimPopContent(el); }
+        });
+
+        if (el.dataset.isOpen !== '1' && el.dataset.answer !== undefined) {
+            el.addEventListener('shown.bs.popover', function() {
+                if (el.dataset.labelLoaded) return;
+                var qid = el.dataset.qid;
+                function applyLabel() {
+                    var idx = parseInt(el.dataset.answer);
+                    var opts = _simOptCache[qid];
+                    el.dataset.optLabel = (opts && opts[idx]) ? opts[idx] : '';
+                    el.dataset.labelLoaded = '1';
+                    var descId = el.getAttribute('aria-describedby');
+                    if (descId) {
+                        var popEl = document.getElementById(descId);
+                        if (popEl) {
+                            var body = popEl.querySelector('.popover-body');
+                            if (body) body.innerHTML = buildSimPopContent(el);
+                        }
+                    }
+                }
+                if (_simOptCache[qid] !== undefined) {
+                    applyLabel();
+                    return;
+                }
+                _simOptCache[qid] = null; // mark as loading
+                fetch('{{ route("targetField.getQuestionDetail") }}?prj={{ $prj }}&sid={{ $sid }}&question_id=' + qid)
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        _simOptCache[qid] = (data.success && data.question && data.question.options)
+                            ? data.question.options : {};
+                        applyLabel();
+                    })
+                    .catch(function() {
+                        _simOptCache[qid] = {};
+                        applyLabel();
+                    });
+            });
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -1658,6 +2019,46 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     border: 1px solid oklch(82% 0.08 80); font-size: 13px;
 }
 .dq-btn-sim:disabled { opacity: .6; cursor: not-allowed; }
+/* ---- Modal config duplicati ---- */
+.sim-modal-section { }
+.sim-modal-section-title { font-size:13px;font-weight:600;color:oklch(30% 0.06 255); }
+.sim-modal-count { font-size:12px;font-weight:400;color:#999;margin-left:6px; }
+.sim-modal-list {
+    border:1px solid oklch(90% 0.03 255);border-radius:6px;
+    max-height:240px;overflow-y:auto;background:#fafafa;
+}
+.sim-modal-qrow {
+    display:flex;align-items:center;gap:6px;
+    padding:6px 10px;border-bottom:1px solid oklch(93% 0.02 255);
+    transition:background .12s;
+}
+.sim-modal-qrow:last-child { border-bottom:none; }
+.sim-modal-qrow:hover { background:oklch(97% 0.01 255); }
+.sim-modal-qrow label { display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;min-width:0; }
+.sim-modal-qrow input[type=checkbox] { flex-shrink:0;width:14px;height:14px;cursor:pointer; }
+.sim-qcode { font-size:12px;font-weight:600;color:oklch(35% 0.10 255);min-width:54px;flex-shrink:0; }
+.sim-qtext { font-size:12px;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1; }
+.sim-nopt { font-size:11px;padding:1px 6px;border-radius:3px;flex-shrink:0; }
+.sim-nopt-lo  { background:oklch(93% 0.05 25);color:oklch(40% 0.15 25); }
+.sim-nopt-hi  { background:oklch(93% 0.05 150);color:oklch(30% 0.12 150); }
+.sim-expand-btn {
+    font-size:12px;color:oklch(50% 0.08 255);background:none;border:none;
+    cursor:pointer;padding:2px 5px;flex-shrink:0;line-height:1;
+    border-radius:3px;transition:background .12s;
+}
+.sim-expand-btn:hover { background:oklch(92% 0.04 255); }
+.sim-options-panel { padding:4px 0 4px 36px;display:flex;flex-wrap:wrap;gap:4px; }
+.sim-opt-tag {
+    font-size:11px;background:#f0f0f0;border:1px solid #ddd;
+    border-radius:3px;padding:1px 6px;color:#444;
+}
+.sim-sel-btn {
+    font-size:11px;padding:2px 8px;border-radius:4px;
+    border:1px solid oklch(82% 0.04 255);background:white;
+    color:oklch(40% 0.08 255);cursor:pointer;transition:background .1s;
+}
+.sim-sel-btn:hover { background:oklch(95% 0.02 255); }
+/* ---- Fine modal ---- */
 .dq-sim-loading {
     display: flex; align-items: center; gap: 10px;
     color: oklch(48% 0.08 80); font-size: 14px; padding: 12px 0;

@@ -193,6 +193,93 @@ class FieldQualityController extends Controller
     // SIMILARITY CHECK
     // =========================================================================
 
+    public function questionsMeta(Request $request)
+    {
+        $prj = (string) $request->input('prj', '');
+        $sid = (string) $request->input('sid', '');
+
+        if ($prj === '' || $sid === '') {
+            return response()->json(['error' => 'PRJ e SID obbligatori'], 422);
+        }
+
+        $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+        if (!is_dir($directory)) {
+            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
+        if (!is_dir($directory)) {
+            return response()->json(['error' => 'Directory non trovata'], 404);
+        }
+
+        $choiceMeta  = []; // qid => ['nOptions' => N, 'multi' => bool]
+        $openQids    = []; // qid => true
+        $filesScanned = 0;
+
+        foreach (glob($directory . '/*.sre') as $file) {
+            $handle = fopen($file, 'r');
+            if (!$handle) {
+                continue;
+            }
+            $firstRaw = fgets($handle);
+            if (!$firstRaw) {
+                fclose($handle);
+                continue;
+            }
+            $data   = explode(';', trim($firstRaw));
+            $offset = (isset($data[0]) && $data[0] === '2.0') ? 0 : -1;
+            $status = isset($data[8 + $offset]) ? (int) $data[8 + $offset] : null;
+            if ($status !== 3) {
+                fclose($handle);
+                continue;
+            }
+
+            while (($line = fgets($handle)) !== false) {
+                $fields = explode(';', rtrim($line));
+                $type   = $fields[0] ?? '';
+                if ($type === 'choice') {
+                    $qid    = (int) ($fields[1] ?? 0);
+                    $nOpt   = (int) ($fields[2] ?? 0);
+                    $answer = $fields[3] ?? '';
+                    if ($qid > 0 && $nOpt > 0) {
+                        $isMulti = (strlen($answer) === $nOpt);
+                        if (!isset($choiceMeta[$qid])) {
+                            $choiceMeta[$qid] = ['nOptions' => $nOpt, 'multi' => $isMulti];
+                        } elseif ($isMulti) {
+                            // Se almeno una risposta è bitmask, è multi
+                            $choiceMeta[$qid]['multi'] = true;
+                        }
+                    }
+                } elseif ($type === 'open') {
+                    $qid  = (int) ($fields[1] ?? 0);
+                    $text = trim($fields[2] ?? '');
+                    if ($qid > 0 && mb_strlen($text) >= 1) {
+                        $openQids[$qid] = true;
+                    }
+                }
+            }
+            fclose($handle);
+
+            // Scansiona fino a 30 file per catturare domande condizionali
+            if (++$filesScanned >= 30) {
+                break;
+            }
+        }
+
+        // Esclude le domande a risposta multipla (bitmask): creano falsi ponti transitivi
+        $choiceMeta = array_filter($choiceMeta, fn ($m) => !($m['multi'] ?? false));
+        ksort($choiceMeta);
+
+        // Restituisce solo nOptions (il flag multi è già filtrato via)
+        $choiceOut = [];
+        foreach ($choiceMeta as $qid => $m) {
+            $choiceOut[$qid] = $m['nOptions'];
+        }
+
+        return response()->json([
+            'choice' => $choiceOut,
+            'open'   => array_keys($openQids),
+        ]);
+    }
+
     public function similarityCheck(Request $request)
     {
         ini_set('memory_limit', '256M');
@@ -203,6 +290,12 @@ class FieldQualityController extends Controller
         if ($prj === '' || $sid === '') {
             return response()->json(['error' => 'PRJ e SID obbligatori'], 422);
         }
+
+        // Filtri opzionali: null = tutte le domande
+        $rawChoiceFilter = $request->input('include_choice_qids');
+        $rawOpenFilter   = $request->input('include_open_qids');
+        $choiceFilter    = is_array($rawChoiceFilter) ? array_map('intval', $rawChoiceFilter) : null;
+        $openFilter      = is_array($rawOpenFilter)   ? array_map('intval', $rawOpenFilter)   : null;
 
         $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
         if (!is_dir($directory)) {
@@ -252,20 +345,26 @@ class FieldQualityController extends Controller
                     $qid    = (int) ($fields[1] ?? 0);
                     $answer = $fields[3] ?? null;
                     if ($qid > 0 && $answer !== null && $answer !== '') {
-                        $choices[$qid] = $answer;
+                        if ($choiceFilter === null || in_array($qid, $choiceFilter)) {
+                            $choices[$qid] = $answer;
+                        }
                     }
                 } elseif ($type === 'open') {
                     $qid  = (int) ($fields[1] ?? 0);
                     $text = trim($fields[2] ?? '');
-                    if ($qid > 0 && !is_numeric($text) && mb_strlen($text) >= 2) {
-                        $openAnswers[$qid] = $text;
+                    if ($qid > 0 && mb_strlen($text) >= 1) {
+                        if ($openFilter === null || in_array($qid, $openFilter)) {
+                            $openAnswers[$qid] = $text;
+                        }
                     }
                 }
             }
             fclose($handle);
 
-            if (!empty($choices)) {
-                $interviews[] = ['iid' => $iid, 'uid' => $uid, 'choices' => $choices, 'open' => $openAnswers];
+            // Unisce choice e open per il confronto pairwise (open numeriche come S3 contribuiscono)
+            $pairwise = $choices + $openAnswers;
+            if (!empty($pairwise)) {
+                $interviews[] = ['iid' => $iid, 'uid' => $uid, 'pairwise' => $pairwise, 'open' => $openAnswers];
             }
         }
 
@@ -274,7 +373,31 @@ class FieldQualityController extends Controller
             return response()->json(['total_interviews' => $n, 'clusters' => []]);
         }
 
-        // 2. Union-Find: collega le coppie con similarità choice >= 60% su >= 4 domande comuni
+        // DEBUG: distribuzione valori per ogni qid selezionato nel pairwise
+        if (config('app.debug')) {
+            $qidDist = [];
+            foreach ($interviews as $iv) {
+                foreach ($iv['pairwise'] as $qid => $val) {
+                    $qidDist[$qid][$val] = ($qidDist[$qid][$val] ?? 0) + 1;
+                }
+            }
+            $debugInfo = [];
+            foreach ($qidDist as $qid => $vals) {
+                arsort($vals);
+                $debugInfo[$qid] = [
+                    'n_interviews' => array_sum($vals),
+                    'top_values'   => array_slice($vals, 0, 5, true),
+                ];
+            }
+        }
+
+        // 2. Union-Find: collega le coppie con similarità sufficiente su >= minCommon domande comuni
+        // - Con filtro esplicito: match esatto (100%) su tutte le domande in comune, min 2
+        // - Senza filtro (tutte le domande): soglia 60%, min 4
+        $hasFilter = ($choiceFilter !== null || $openFilter !== null);
+        $minCommon = $hasFilter ? 2 : 4;
+        $threshold = $hasFilter ? 1.0 : 0.60;
+
         $parent = range(0, $n - 1);
         $findRoot = function (int $x) use (&$parent): int {
             while ($parent[$x] !== $x) {
@@ -286,11 +409,11 @@ class FieldQualityController extends Controller
 
         for ($i = 0; $i < $n; $i++) {
             for ($j = $i + 1; $j < $n; $j++) {
-                $c1     = $interviews[$i]['choices'];
-                $c2     = $interviews[$j]['choices'];
+                $c1     = $interviews[$i]['pairwise'];
+                $c2     = $interviews[$j]['pairwise'];
                 $common = array_intersect_key($c1, $c2);
                 $total  = count($common);
-                if ($total < 4) {
+                if ($total < $minCommon) {
                     continue;
                 }
                 $matching = 0;
@@ -299,7 +422,7 @@ class FieldQualityController extends Controller
                         $matching++;
                     }
                 }
-                if ($matching / $total < 0.60) {
+                if ($matching / $total < $threshold) {
                     continue;
                 }
                 $ri = $findRoot($i);
@@ -315,7 +438,7 @@ class FieldQualityController extends Controller
         for ($i = 0; $i < $n; $i++) {
             $rawClusters[$findRoot($i)][] = $i;
         }
-        $rawClusters = array_values(array_filter($rawClusters, fn ($c) => count($c) >= 2));
+        $rawClusters = array_values(array_filter($rawClusters, fn ($c) => count($c) >= 8));
 
         if (empty($rawClusters)) {
             return response()->json(['total_interviews' => $n, 'clusters' => []]);
@@ -340,11 +463,11 @@ class FieldQualityController extends Controller
         foreach ($rawClusters as $members) {
             $mc = count($members);
 
-            // Soft signature: per ogni domanda conta voti per risposta,
+            // Soft signature: per ogni domanda (choice + open) conta voti per risposta,
             // mantieni quelle dove almeno il 70% ha dato la stessa risposta
             $questionVotes = [];
             foreach ($members as $idx) {
-                foreach ($interviews[$idx]['choices'] as $qid => $ans) {
+                foreach ($interviews[$idx]['pairwise'] as $qid => $ans) {
                     $questionVotes[$qid][$ans] = ($questionVotes[$qid][$ans] ?? 0) + 1;
                 }
             }
@@ -363,8 +486,8 @@ class FieldQualityController extends Controller
             }
             ksort($softSig);
 
-            // Salta cluster senza pattern chiaro (meno di 4 domande con consenso >= 70%)
-            if (count($softSig) < 4) {
+            // Salta cluster senza pattern chiaro
+            if (count($softSig) < $minCommon) {
                 continue;
             }
 
@@ -385,7 +508,7 @@ class FieldQualityController extends Controller
                     if ($count >= 2) {
                         $openDups[] = [
                             'questionId' => $qid,
-                            'text'       => $text,
+                            'text'       => (string) $text,
                             'count'      => $count,
                             'pct'        => (int) round($count / $mc * 100),
                         ];
@@ -432,7 +555,11 @@ class FieldQualityController extends Controller
             return $b['sig_count'] - $a['sig_count'];
         });
 
-        return response()->json(['total_interviews' => $n, 'clusters' => $result]);
+        $response = ['total_interviews' => $n, 'clusters' => $result];
+        if (config('app.debug') && isset($debugInfo)) {
+            $response['_debug_qid_dist'] = $debugInfo;
+        }
+        return response()->json($response);
     }
 
     // =========================================================================
