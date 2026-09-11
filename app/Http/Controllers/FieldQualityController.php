@@ -190,6 +190,223 @@ class FieldQualityController extends Controller
     }
 
     // =========================================================================
+    // SIMILARITY CHECK
+    // =========================================================================
+
+    public function similarityCheck(Request $request)
+    {
+        ini_set('memory_limit', '256M');
+
+        $prj = (string) $request->input('prj', '');
+        $sid = (string) $request->input('sid', '');
+
+        if ($prj === '' || $sid === '') {
+            return response()->json(['error' => 'PRJ e SID obbligatori'], 422);
+        }
+
+        $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
+        if (!is_dir($directory)) {
+            $directory = "/var/imr/fields/{$prj}/{$sid}/results";
+        }
+        if (!is_dir($directory)) {
+            return response()->json(['error' => 'Directory risultati non trovata'], 404);
+        }
+
+        // 1. Legge tutti i file .sre (solo status=3), estrae vettore risposte choice
+        $interviews = [];
+        foreach (glob($directory . '/*.sre') as $file) {
+            $handle = fopen($file, 'r');
+            if (!$handle) {
+                continue;
+            }
+
+            $firstRaw = fgets($handle);
+            if (!$firstRaw) {
+                fclose($handle);
+                continue;
+            }
+
+            $data   = explode(';', trim($firstRaw));
+            $offset = (isset($data[0]) && $data[0] === '2.0') ? 0 : -1;
+
+            $status = isset($data[8 + $offset]) ? (int) $data[8 + $offset] : null;
+            if ($status !== 3) {
+                fclose($handle);
+                continue;
+            }
+
+            $iid = (string) ($data[3 + $offset] ?? 'N/A');
+            $uid = (string) ($data[4 + $offset] ?? 'N/A');
+
+            $choices = [];
+            while (($line = fgets($handle)) !== false) {
+                $trimmed = rtrim($line);
+                if ($trimmed === '') {
+                    continue;
+                }
+                $fields = explode(';', $trimmed);
+                if (($fields[0] ?? '') !== 'choice') {
+                    continue;
+                }
+                $questionId = (int) ($fields[1] ?? 0);
+                $answer     = $fields[3] ?? null;
+                if ($questionId > 0 && $answer !== null && $answer !== '') {
+                    $choices[$questionId] = $answer;
+                }
+            }
+            fclose($handle);
+
+            if (!empty($choices)) {
+                $interviews[] = ['iid' => $iid, 'uid' => $uid, 'choices' => $choices];
+            }
+        }
+
+        $n = count($interviews);
+        if ($n < 2) {
+            return response()->json(['total_interviews' => $n, 'clusters' => []]);
+        }
+
+        // 2. Union-Find iterativo per raggruppare le coppie simili
+        $parent = range(0, $n - 1);
+        $findRoot = function (int $x) use (&$parent): int {
+            while ($parent[$x] !== $x) {
+                $parent[$x] = $parent[$parent[$x]];
+                $x          = $parent[$x];
+            }
+            return $x;
+        };
+
+        // Confronto a coppie: similarità >= 60% su almeno 4 domande choice comuni
+        for ($i = 0; $i < $n; $i++) {
+            for ($j = $i + 1; $j < $n; $j++) {
+                $c1     = $interviews[$i]['choices'];
+                $c2     = $interviews[$j]['choices'];
+                $common = array_intersect_key($c1, $c2);
+                $total  = count($common);
+                if ($total < 4) {
+                    continue;
+                }
+                $matching = 0;
+                foreach ($common as $qid => $v) {
+                    if ($c2[$qid] === $v) {
+                        $matching++;
+                    }
+                }
+                if ($matching / $total < 0.60) {
+                    continue;
+                }
+                $ri = $findRoot($i);
+                $rj = $findRoot($j);
+                if ($ri !== $rj) {
+                    $parent[$ri] = $rj;
+                }
+            }
+        }
+
+        // 3. Raggruppa per radice, filtra cluster con >= 2 membri
+        $clusters = [];
+        for ($i = 0; $i < $n; $i++) {
+            $clusters[$findRoot($i)][] = $i;
+        }
+        $suspicious = array_values(array_filter($clusters, fn ($c) => count($c) >= 2));
+
+        if (empty($suspicious)) {
+            return response()->json(['total_interviews' => $n, 'clusters' => []]);
+        }
+
+        // 4. Arricchimento dati utente per gli uid coinvolti
+        $allUids = [];
+        foreach ($suspicious as $members) {
+            foreach ($members as $idx) {
+                $allUids[] = $interviews[$idx]['uid'];
+            }
+        }
+        $allUids  = array_unique($allUids);
+        $userInfo = DB::table('t_user_info')
+            ->whereIn('user_id', $allUids)
+            ->select('user_id', 'first_name', 'second_name', 'email', 'points', 'active', 'city')
+            ->get()
+            ->keyBy('user_id');
+
+        // 5. Costruisce output per ogni cluster
+        $result = [];
+        foreach ($suspicious as $members) {
+            $mc = count($members);
+
+            // Firma: domande con risposta IDENTICA in tutti i membri
+            $firstChoices = $interviews[$members[0]]['choices'];
+            $sharedSig    = [];
+            foreach ($firstChoices as $qid => $ans) {
+                $allSame = true;
+                for ($k = 1; $k < $mc; $k++) {
+                    if (($interviews[$members[$k]]['choices'][$qid] ?? null) !== $ans) {
+                        $allSame = false;
+                        break;
+                    }
+                }
+                if ($allSame) {
+                    $sharedSig[$qid] = $ans;
+                }
+            }
+
+            // Similarità media tra tutte le coppie del cluster
+            $pairSims = [];
+            for ($a = 0; $a < $mc; $a++) {
+                for ($b = $a + 1; $b < $mc; $b++) {
+                    $ca  = $interviews[$members[$a]]['choices'];
+                    $cb  = $interviews[$members[$b]]['choices'];
+                    $com = array_intersect_key($ca, $cb);
+                    $tot = count($com);
+                    if ($tot > 0) {
+                        $m = 0;
+                        foreach ($com as $qid => $v) {
+                            if ($cb[$qid] === $v) {
+                                $m++;
+                            }
+                        }
+                        $pairSims[] = round($m / $tot * 100);
+                    }
+                }
+            }
+            $avgSim = count($pairSims) > 0 ? (int) round(array_sum($pairSims) / count($pairSims)) : 0;
+
+            // Dati membro
+            $memberData = [];
+            foreach ($members as $idx) {
+                $iv = $interviews[$idx];
+                $ui = $userInfo->get($iv['uid']);
+                $memberData[] = [
+                    'iid'            => $iv['iid'],
+                    'uid'            => $iv['uid'],
+                    'nome'           => $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null,
+                    'email'          => $ui ? ($ui->email ?? null) : null,
+                    'bytes'          => $ui ? (int) ($ui->points ?? 0) : null,
+                    'active'         => $ui ? (int) ($ui->active ?? 1) : null,
+                    'city'           => $ui ? ($ui->city ?? null) : null,
+                    'is_interactive' => $ui !== null,
+                ];
+            }
+
+            $result[] = [
+                'size'           => $mc,
+                'avg_similarity' => $avgSim,
+                'shared_q'       => count($sharedSig),
+                'signature'      => $sharedSig,
+                'members'        => $memberData,
+            ];
+        }
+
+        usort($result, function ($a, $b) {
+            if ($b['size'] !== $a['size']) {
+                return $b['size'] - $a['size'];
+            }
+            return $b['avg_similarity'] - $a['avg_similarity'];
+        });
+
+        return response()->json(['total_interviews' => $n, 'clusters' => $result]);
+    }
+
+    // =========================================================================
     // PARSING
     // =========================================================================
 

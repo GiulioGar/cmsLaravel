@@ -206,9 +206,34 @@
                 <h1 class="dq-page-title">Dashboard Qualità Interviste</h1>
                 <p class="dq-page-sub">Monitoraggio qualità dati e controlli antifrode &middot; {{ $panelData->description ?? ($prj . '/' . $sid) }}</p>
             </div>
-            <span class="dq-page-badge">{{ $totalInterviews }} interviste</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <button id="btnSimilarity" class="dq-btn dq-btn-sim" onclick="runSimilarityCheck()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg>
+                    Controlla duplicati
+                </button>
+                <span class="dq-page-badge">{{ $totalInterviews }} interviste</span>
+            </div>
         </div>
     </div>
+
+    <!-- ============================================================
+         SIMILARITY RESULTS (appare su richiesta)
+         ============================================================ -->
+    <section id="sez-similarita" class="dq-card dq-section" style="display:none;animation-delay:.01s;">
+        <div class="dq-card-header dq-border-amber">
+            <div class="dq-header-left">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="oklch(50% 0.12 80)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg>
+                <span class="dq-section-title">Analisi duplicati — risposte simili</span>
+            </div>
+            <button class="dq-btn dq-btn-outline" style="font-size:12px;padding:5px 10px;" onclick="document.getElementById('sez-similarita').style.display='none';">Chiudi</button>
+        </div>
+        <div id="sim-content" style="padding:24px;">
+            <div class="dq-sim-loading">
+                <svg class="dq-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(55% 0.10 80)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                Analisi in corso...
+            </div>
+        </div>
+    </section>
 
     <!-- ============================================================
          1. VALUTAZIONE GENERALE
@@ -826,6 +851,109 @@
 
 @section('scripts')
 <script>
+/* ---- Analisi duplicati (similarity check) ---- */
+function runSimilarityCheck() {
+    var btn     = document.getElementById('btnSimilarity');
+    var section = document.getElementById('sez-similarita');
+    var content = document.getElementById('sim-content');
+
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="dq-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-opacity=".3"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Analisi in corso...';
+    section.style.display = '';
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    content.innerHTML = '<div class="dq-sim-loading"><svg class="dq-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(55% 0.10 80)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>Analisi in corso su tutte le interviste...</div>';
+
+    fetch('{{ route("fieldQuality.similarityCheck") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ prj: '{{ $prj }}', sid: '{{ $sid }}' })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg> Controlla duplicati';
+        renderSimilarityResults(data, content);
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg> Controlla duplicati';
+        content.innerHTML = '<div style="color:oklch(48% 0.15 25);padding:12px 0;">Errore durante l\'analisi. Riprova.</div>';
+    });
+}
+
+function renderSimilarityResults(data, container) {
+    var clusters = data.clusters || [];
+    var total    = data.total_interviews || 0;
+
+    if (clusters.length === 0) {
+        container.innerHTML = '<div class="dq-sim-ok">Nessun gruppo di interviste con risposte duplicate rilevato su <strong>' + total + '</strong> interviste analizzate.</div>';
+        return;
+    }
+
+    var activeMap = { 0: 'Inattivo', 1: 'Attivo', 8: 'Bannato', 9: 'Eliminato' };
+    var activeColor = { 0: 'color:oklch(50% 0.02 250)', 1: 'color:oklch(40% 0.13 150);font-weight:700', 8: 'color:oklch(45% 0.16 25);font-weight:700', 9: 'color:oklch(48% 0.12 25)' };
+
+    var html = '<div class="dq-sim-summary">Trovati <strong>' + clusters.length + '</strong> cluster sospetti su <strong>' + total + '</strong> interviste analizzate</div>';
+
+    clusters.forEach(function(cluster, idx) {
+        html += '<div class="dq-sim-cluster">';
+        html += '<div class="dq-sim-cluster-header">';
+        html += '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">';
+        html += '<span class="dq-sim-cluster-num">Cluster ' + (idx + 1) + '</span>';
+        html += '<span class="dq-sim-cluster-size">' + cluster.size + ' interviste</span>';
+        html += '<span class="dq-sim-cluster-sim">' + cluster.avg_similarity + '% similarità media</span>';
+        html += '<span class="dq-sim-cluster-sig">' + cluster.shared_q + ' domande condivise</span>';
+        html += '</div>';
+        if (cluster.shared_q > 0) {
+            html += '<button class="dq-btn dq-btn-outline" style="font-size:11px;padding:4px 10px;" onclick="toggleSim(\'sig-' + idx + '\')">Mostra firma</button>';
+        }
+        html += '</div>';
+
+        html += '<div class="dq-table-scroll"><table class="dq-table dq-sim-table" style="width:100%;border-collapse:collapse;">';
+        html += '<thead><tr><th>IID</th><th>UID</th><th>Nome</th><th>Email</th><th>Bytes</th><th>Città</th><th>Account</th></tr></thead>';
+        html += '<tbody>';
+
+        cluster.members.forEach(function(m) {
+            var activeVal  = m.active !== null ? m.active : 1;
+            var activeStr  = activeMap[activeVal] || ('Stato ' + activeVal);
+            var activeCol  = activeColor[activeVal] || '';
+            if (!m.is_interactive) { activeStr = 'Esterno'; activeCol = 'color:oklch(50% 0.02 250)'; }
+            var bytes = m.bytes !== null ? m.bytes.toLocaleString('it-IT') : '—';
+            html += '<tr>';
+            html += '<td><strong>' + m.iid + '</strong></td>';
+            html += '<td><code>' + m.uid + '</code></td>';
+            html += '<td>' + (m.nome || '—') + '</td>';
+            html += '<td>' + (m.email || '—') + '</td>';
+            html += '<td>' + bytes + '</td>';
+            html += '<td>' + (m.city || '—') + '</td>';
+            html += '<td><span style="font-size:12px;' + activeCol + '">' + activeStr + '</span></td>';
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+
+        if (cluster.shared_q > 0) {
+            html += '<div id="sig-' + idx + '" class="dq-sim-sig" style="display:none;">';
+            html += '<div class="dq-sim-sig-title">Risposte identiche in tutti i membri del cluster</div>';
+            html += '<div class="dq-sim-sig-items">';
+            var sig = cluster.signature || {};
+            Object.keys(sig).sort(function(a, b) { return parseInt(a) - parseInt(b); }).forEach(function(qid) {
+                html += '<span class="dq-sim-sig-item"><span class="dq-sim-qid">Q' + qid + '</span><span class="dq-sim-qans">= ' + sig[qid] + '</span></span>';
+            });
+            html += '</div></div>';
+        }
+
+        html += '</div>';
+    });
+
+    container.innerHTML = html;
+}
+
+function toggleSim(id) {
+    var el = document.getElementById(id);
+    if (el) { el.style.display = el.style.display === 'none' ? '' : 'none'; }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
 
     /* ---- Dropdown navbar (workaround AdminKit app.js conflict) ---- */
@@ -1492,6 +1620,50 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 @media (max-width: 600px) {
     .dq-stat-grid { grid-template-columns: 1fr; }
 }
+
+/* Similarity check */
+.dq-btn-sim {
+    background: oklch(97% 0.03 80); color: oklch(45% 0.14 80);
+    border: 1px solid oklch(82% 0.08 80); font-size: 13px;
+}
+.dq-btn-sim:disabled { opacity: .6; cursor: not-allowed; }
+.dq-sim-loading {
+    display: flex; align-items: center; gap: 10px;
+    color: oklch(48% 0.08 80); font-size: 14px; padding: 12px 0;
+}
+.dq-sim-ok {
+    color: oklch(40% 0.11 150); background: oklch(97% 0.03 150);
+    border: 1px solid oklch(86% 0.08 150); border-radius: 10px;
+    padding: 14px 18px; font-size: 14px;
+}
+.dq-sim-summary {
+    font-size: 13px; color: oklch(40% 0.02 250); margin-bottom: 18px;
+}
+.dq-sim-cluster {
+    border: 1px solid oklch(92% 0.006 250); border-radius: 12px;
+    overflow: hidden; margin-bottom: 16px;
+}
+.dq-sim-cluster-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px; background: oklch(98% 0.02 80);
+    border-bottom: 1px solid oklch(92% 0.006 250); gap: 12px; flex-wrap: wrap;
+}
+.dq-sim-cluster-num  { font-size: 14px; font-weight: 800; color: oklch(35% 0.02 250); margin-right: 6px; }
+.dq-sim-cluster-size { font-size: 12px; font-weight: 700; color: oklch(45% 0.14 80); background: oklch(94% 0.05 80); padding: 2px 9px; border-radius: 6px; margin-right: 6px; }
+.dq-sim-cluster-sim  { font-size: 12px; color: oklch(45% 0.02 250); margin-right: 6px; }
+.dq-sim-cluster-sig  { font-size: 12px; color: oklch(45% 0.10 255); }
+.dq-sim-table th { font-size: 11px; font-weight: 700; color: oklch(50% 0.02 250); text-transform: uppercase; letter-spacing: .04em; padding: 10px 14px; background: oklch(98% 0.006 250); border-bottom: 1px solid oklch(92% 0.006 250); white-space: nowrap; }
+.dq-sim-table td { font-size: 13px; padding: 9px 14px; border-bottom: 1px solid oklch(95% 0.004 250); color: oklch(25% 0.02 250); }
+.dq-sim-table tr:last-child td { border-bottom: none; }
+.dq-sim-table code  { font-size: 11px; background: oklch(96% 0.008 250); padding: 2px 6px; border-radius: 5px; color: oklch(40% 0.06 255); }
+.dq-sim-sig { padding: 14px 18px; background: oklch(98.5% 0.01 250); border-top: 1px solid oklch(93% 0.006 250); }
+.dq-sim-sig-title { font-size: 11px; font-weight: 700; color: oklch(48% 0.02 250); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+.dq-sim-sig-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.dq-sim-sig-item  { display: inline-flex; align-items: center; gap: 4px; background: oklch(96% 0.012 255); border: 1px solid oklch(89% 0.02 255); border-radius: 7px; padding: 3px 9px; }
+.dq-sim-qid  { font-size: 11px; font-weight: 700; color: oklch(45% 0.10 255); }
+.dq-sim-qans { font-size: 11px; color: oklch(35% 0.02 250); font-family: 'SF Mono', Consolas, monospace; margin-left: 3px; }
+@keyframes dq-spin { to { transform: rotate(360deg); } }
+.dq-spin { animation: dq-spin .8s linear infinite; flex-shrink: 0; }
 </style>
 
 @endsection

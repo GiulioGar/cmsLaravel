@@ -73,6 +73,7 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::get('/fieldQuality', [FieldQualityController::class, 'index'])->name('fieldQuality.index');
     Route::post('/fieldQuality/addToWhiteList', [FieldQualityController::class, 'addToWhiteList'])->name('fieldQuality.addToWhiteList');
     Route::post('/fieldQuality/addToBlackList', [FieldQualityController::class, 'addToBlackList'])->name('fieldQuality.addToBlackList');
+    Route::post('/fieldQuality/similarity-check', [FieldQualityController::class, 'similarityCheck'])->name('fieldQuality.similarityCheck');
 
     // ============================================
     // CAMPIONAMENTO
