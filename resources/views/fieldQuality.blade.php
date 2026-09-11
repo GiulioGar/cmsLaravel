@@ -886,38 +886,79 @@ function renderSimilarityResults(data, container) {
     var total    = data.total_interviews || 0;
 
     if (clusters.length === 0) {
-        container.innerHTML = '<div class="dq-sim-ok">Nessun gruppo di interviste con risposte duplicate rilevato su <strong>' + total + '</strong> interviste analizzate.</div>';
+        container.innerHTML = '<div class="dq-sim-ok">Nessun gruppo sospetto rilevato su <strong>' + total + '</strong> interviste analizzate.</div>';
         return;
     }
 
-    var activeMap = { 0: 'Inattivo', 1: 'Attivo', 8: 'Bannato', 9: 'Eliminato' };
-    var activeColor = { 0: 'color:oklch(50% 0.02 250)', 1: 'color:oklch(40% 0.13 150);font-weight:700', 8: 'color:oklch(45% 0.16 25);font-weight:700', 9: 'color:oklch(48% 0.12 25)' };
+    var activeMap   = { 0: 'Inattivo', 1: 'Attivo', 8: 'Bannato', 9: 'Eliminato' };
+    var activeColor = { 0: 'oklch(50% 0.02 250)', 1: 'oklch(40% 0.13 150)', 8: 'oklch(45% 0.16 25)', 9: 'oklch(48% 0.12 25)' };
 
-    var html = '<div class="dq-sim-summary">Trovati <strong>' + clusters.length + '</strong> cluster sospetti su <strong>' + total + '</strong> interviste analizzate</div>';
+    var html = '<div class="dq-sim-summary">Trovati <strong>' + clusters.length + '</strong> gruppi sospetti su <strong>' + total + '</strong> interviste analizzate</div>';
 
     clusters.forEach(function(cluster, idx) {
+        var sig = cluster.soft_signature || {};
+        var sigKeys = Object.keys(sig).sort(function(a, b) { return parseInt(a) - parseInt(b); });
+        var openDups = cluster.open_duplicates || [];
+
         html += '<div class="dq-sim-cluster">';
+
+        // Header
         html += '<div class="dq-sim-cluster-header">';
-        html += '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">';
-        html += '<span class="dq-sim-cluster-num">Cluster ' + (idx + 1) + '</span>';
+        html += '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">';
+        html += '<span class="dq-sim-cluster-num">Gruppo ' + (idx + 1) + '</span>';
         html += '<span class="dq-sim-cluster-size">' + cluster.size + ' interviste</span>';
-        html += '<span class="dq-sim-cluster-sim">' + cluster.avg_similarity + '% similarità media</span>';
-        html += '<span class="dq-sim-cluster-sig">' + cluster.shared_q + ' domande condivise</span>';
-        html += '</div>';
-        if (cluster.shared_q > 0) {
-            html += '<button class="dq-btn dq-btn-outline" style="font-size:11px;padding:4px 10px;" onclick="toggleSim(\'sig-' + idx + '\')">Mostra firma</button>';
+        html += '<span class="dq-sim-cluster-sig">' + cluster.sig_count + ' domande con risposta prevalente</span>';
+        if (openDups.length > 0) {
+            html += '<span style="font-size:12px;color:oklch(45% 0.12 255);">' + openDups.length + ' duplicati nelle aperte</span>';
         }
         html += '</div>';
+        html += '<button class="dq-btn dq-btn-outline" style="font-size:11px;padding:4px 10px;" onclick="toggleSim(\'members-' + idx + '\')">Mostra panelisti</button>';
+        html += '</div>';
 
+        // Motivo del flag: soft signature (sempre visibile)
+        html += '<div class="dq-sim-reason">';
+        html += '<div class="dq-sim-reason-title">Perché questo gruppo è sospetto — risposte prevalenti (≥70% dei membri)</div>';
+        html += '<div class="dq-sim-sig-items">';
+        sigKeys.forEach(function(qid) {
+            var s = sig[qid];
+            var pctColor = s.pct >= 90 ? 'oklch(45% 0.16 25)' : (s.pct >= 80 ? 'oklch(48% 0.14 75)' : 'oklch(45% 0.10 255)');
+            html += '<span class="dq-sim-sig-item">';
+            html += '<span class="dq-sim-qid">Q' + qid + '</span>';
+            html += '<span class="dq-sim-qans">= ' + s.answer + '</span>';
+            html += '<span class="dq-sim-qpct" style="color:' + pctColor + '">' + s.pct + '%</span>';
+            html += '</span>';
+        });
+        html += '</div>';
+
+        // Risposte aperte duplicate (se presenti)
+        if (openDups.length > 0) {
+            html += '<div class="dq-sim-open-dups">';
+            html += '<div class="dq-sim-reason-title" style="margin-top:10px;">Risposte aperte duplicate</div>';
+            html += '<div class="dq-sim-sig-items">';
+            openDups.forEach(function(od) {
+                html += '<span class="dq-sim-sig-item" style="background:oklch(97% 0.015 255);border-color:oklch(88% 0.03 255);">';
+                html += '<span class="dq-sim-qid">Q' + od.questionId + '</span>';
+                html += '<span class="dq-sim-qans" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">&ldquo;' + od.text.substring(0, 60) + (od.text.length > 60 ? '…' : '') + '&rdquo;</span>';
+                html += '<span class="dq-sim-qpct" style="color:oklch(45% 0.10 255);">×' + od.count + '</span>';
+                html += '</span>';
+            });
+            html += '</div>';
+            html += '</div>';
+        }
+
+        html += '</div>'; // dq-sim-reason
+
+        // Tabella membri (collassabile)
+        html += '<div id="members-' + idx + '" style="display:none;">';
         html += '<div class="dq-table-scroll"><table class="dq-table dq-sim-table" style="width:100%;border-collapse:collapse;">';
         html += '<thead><tr><th>IID</th><th>UID</th><th>Nome</th><th>Email</th><th>Bytes</th><th>Città</th><th>Account</th></tr></thead>';
         html += '<tbody>';
 
         cluster.members.forEach(function(m) {
-            var activeVal  = m.active !== null ? m.active : 1;
-            var activeStr  = activeMap[activeVal] || ('Stato ' + activeVal);
-            var activeCol  = activeColor[activeVal] || '';
-            if (!m.is_interactive) { activeStr = 'Esterno'; activeCol = 'color:oklch(50% 0.02 250)'; }
+            var activeVal = m.active !== null ? m.active : 1;
+            var activeStr = activeMap[activeVal] || ('Stato ' + activeVal);
+            var activeCol = activeColor[activeVal] || 'oklch(50% 0.02 250)';
+            if (!m.is_interactive) { activeStr = 'Esterno'; activeCol = 'oklch(50% 0.02 250)'; }
             var bytes = m.bytes !== null ? m.bytes.toLocaleString('it-IT') : '—';
             html += '<tr>';
             html += '<td><strong>' + m.iid + '</strong></td>';
@@ -926,24 +967,14 @@ function renderSimilarityResults(data, container) {
             html += '<td>' + (m.email || '—') + '</td>';
             html += '<td>' + bytes + '</td>';
             html += '<td>' + (m.city || '—') + '</td>';
-            html += '<td><span style="font-size:12px;' + activeCol + '">' + activeStr + '</span></td>';
+            html += '<td><span style="font-size:12px;font-weight:600;color:' + activeCol + '">' + activeStr + '</span></td>';
             html += '</tr>';
         });
 
         html += '</tbody></table></div>';
+        html += '</div>'; // members
 
-        if (cluster.shared_q > 0) {
-            html += '<div id="sig-' + idx + '" class="dq-sim-sig" style="display:none;">';
-            html += '<div class="dq-sim-sig-title">Risposte identiche in tutti i membri del cluster</div>';
-            html += '<div class="dq-sim-sig-items">';
-            var sig = cluster.signature || {};
-            Object.keys(sig).sort(function(a, b) { return parseInt(a) - parseInt(b); }).forEach(function(qid) {
-                html += '<span class="dq-sim-sig-item"><span class="dq-sim-qid">Q' + qid + '</span><span class="dq-sim-qans">= ' + sig[qid] + '</span></span>';
-            });
-            html += '</div></div>';
-        }
-
-        html += '</div>';
+        html += '</div>'; // dq-sim-cluster
     });
 
     container.innerHTML = html;
@@ -1657,11 +1688,13 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 .dq-sim-table tr:last-child td { border-bottom: none; }
 .dq-sim-table code  { font-size: 11px; background: oklch(96% 0.008 250); padding: 2px 6px; border-radius: 5px; color: oklch(40% 0.06 255); }
 .dq-sim-sig { padding: 14px 18px; background: oklch(98.5% 0.01 250); border-top: 1px solid oklch(93% 0.006 250); }
-.dq-sim-sig-title { font-size: 11px; font-weight: 700; color: oklch(48% 0.02 250); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+.dq-sim-reason       { padding: 14px 18px; background: oklch(99% 0.015 80); border-bottom: 1px solid oklch(93% 0.006 250); }
+.dq-sim-reason-title { font-size: 11px; font-weight: 700; color: oklch(48% 0.02 250); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
 .dq-sim-sig-items { display: flex; flex-wrap: wrap; gap: 6px; }
 .dq-sim-sig-item  { display: inline-flex; align-items: center; gap: 4px; background: oklch(96% 0.012 255); border: 1px solid oklch(89% 0.02 255); border-radius: 7px; padding: 3px 9px; }
-.dq-sim-qid  { font-size: 11px; font-weight: 700; color: oklch(45% 0.10 255); }
-.dq-sim-qans { font-size: 11px; color: oklch(35% 0.02 250); font-family: 'SF Mono', Consolas, monospace; margin-left: 3px; }
+.dq-sim-qid   { font-size: 11px; font-weight: 700; color: oklch(45% 0.10 255); }
+.dq-sim-qans  { font-size: 11px; color: oklch(35% 0.02 250); font-family: 'SF Mono', Consolas, monospace; margin-left: 3px; }
+.dq-sim-qpct  { font-size: 10px; font-weight: 700; margin-left: 4px; }
 @keyframes dq-spin { to { transform: rotate(360deg); } }
 .dq-spin { animation: dq-spin .8s linear infinite; flex-shrink: 0; }
 </style>

@@ -212,7 +212,7 @@ class FieldQualityController extends Controller
             return response()->json(['error' => 'Directory risultati non trovata'], 404);
         }
 
-        // 1. Legge tutti i file .sre (solo status=3), estrae vettore risposte choice
+        // 1. Parse .sre: estrae risposte choice (fields[3]) e open (testo non numerico)
         $interviews = [];
         foreach (glob($directory . '/*.sre') as $file) {
             $handle = fopen($file, 'r');
@@ -238,26 +238,34 @@ class FieldQualityController extends Controller
             $iid = (string) ($data[3 + $offset] ?? 'N/A');
             $uid = (string) ($data[4 + $offset] ?? 'N/A');
 
-            $choices = [];
+            $choices     = [];
+            $openAnswers = [];
             while (($line = fgets($handle)) !== false) {
                 $trimmed = rtrim($line);
                 if ($trimmed === '') {
                     continue;
                 }
                 $fields = explode(';', $trimmed);
-                if (($fields[0] ?? '') !== 'choice') {
-                    continue;
-                }
-                $questionId = (int) ($fields[1] ?? 0);
-                $answer     = $fields[3] ?? null;
-                if ($questionId > 0 && $answer !== null && $answer !== '') {
-                    $choices[$questionId] = $answer;
+                $type   = $fields[0] ?? '';
+
+                if ($type === 'choice') {
+                    $qid    = (int) ($fields[1] ?? 0);
+                    $answer = $fields[3] ?? null;
+                    if ($qid > 0 && $answer !== null && $answer !== '') {
+                        $choices[$qid] = $answer;
+                    }
+                } elseif ($type === 'open') {
+                    $qid  = (int) ($fields[1] ?? 0);
+                    $text = trim($fields[2] ?? '');
+                    if ($qid > 0 && !is_numeric($text) && mb_strlen($text) >= 2) {
+                        $openAnswers[$qid] = $text;
+                    }
                 }
             }
             fclose($handle);
 
             if (!empty($choices)) {
-                $interviews[] = ['iid' => $iid, 'uid' => $uid, 'choices' => $choices];
+                $interviews[] = ['iid' => $iid, 'uid' => $uid, 'choices' => $choices, 'open' => $openAnswers];
             }
         }
 
@@ -266,7 +274,7 @@ class FieldQualityController extends Controller
             return response()->json(['total_interviews' => $n, 'clusters' => []]);
         }
 
-        // 2. Union-Find iterativo per raggruppare le coppie simili
+        // 2. Union-Find: collega le coppie con similarità choice >= 60% su >= 4 domande comuni
         $parent = range(0, $n - 1);
         $findRoot = function (int $x) use (&$parent): int {
             while ($parent[$x] !== $x) {
@@ -276,7 +284,6 @@ class FieldQualityController extends Controller
             return $x;
         };
 
-        // Confronto a coppie: similarità >= 60% su almeno 4 domande choice comuni
         for ($i = 0; $i < $n; $i++) {
             for ($j = $i + 1; $j < $n; $j++) {
                 $c1     = $interviews[$i]['choices'];
@@ -303,20 +310,20 @@ class FieldQualityController extends Controller
             }
         }
 
-        // 3. Raggruppa per radice, filtra cluster con >= 2 membri
-        $clusters = [];
+        // 3. Raggruppa per radice
+        $rawClusters = [];
         for ($i = 0; $i < $n; $i++) {
-            $clusters[$findRoot($i)][] = $i;
+            $rawClusters[$findRoot($i)][] = $i;
         }
-        $suspicious = array_values(array_filter($clusters, fn ($c) => count($c) >= 2));
+        $rawClusters = array_values(array_filter($rawClusters, fn ($c) => count($c) >= 2));
 
-        if (empty($suspicious)) {
+        if (empty($rawClusters)) {
             return response()->json(['total_interviews' => $n, 'clusters' => []]);
         }
 
-        // 4. Arricchimento dati utente per gli uid coinvolti
+        // 4. Arricchimento dati utente
         $allUids = [];
-        foreach ($suspicious as $members) {
+        foreach ($rawClusters as $members) {
             foreach ($members as $idx) {
                 $allUids[] = $interviews[$idx]['uid'];
             }
@@ -328,47 +335,64 @@ class FieldQualityController extends Controller
             ->get()
             ->keyBy('user_id');
 
-        // 5. Costruisce output per ogni cluster
+        // 5. Per ogni cluster: firma molle (soft signature) e duplicati nelle aperte
         $result = [];
-        foreach ($suspicious as $members) {
+        foreach ($rawClusters as $members) {
             $mc = count($members);
 
-            // Firma: domande con risposta IDENTICA in tutti i membri
-            $firstChoices = $interviews[$members[0]]['choices'];
-            $sharedSig    = [];
-            foreach ($firstChoices as $qid => $ans) {
-                $allSame = true;
-                for ($k = 1; $k < $mc; $k++) {
-                    if (($interviews[$members[$k]]['choices'][$qid] ?? null) !== $ans) {
-                        $allSame = false;
-                        break;
-                    }
-                }
-                if ($allSame) {
-                    $sharedSig[$qid] = $ans;
+            // Soft signature: per ogni domanda conta voti per risposta,
+            // mantieni quelle dove almeno il 70% ha dato la stessa risposta
+            $questionVotes = [];
+            foreach ($members as $idx) {
+                foreach ($interviews[$idx]['choices'] as $qid => $ans) {
+                    $questionVotes[$qid][$ans] = ($questionVotes[$qid][$ans] ?? 0) + 1;
                 }
             }
 
-            // Similarità media tra tutte le coppie del cluster
-            $pairSims = [];
-            for ($a = 0; $a < $mc; $a++) {
-                for ($b = $a + 1; $b < $mc; $b++) {
-                    $ca  = $interviews[$members[$a]]['choices'];
-                    $cb  = $interviews[$members[$b]]['choices'];
-                    $com = array_intersect_key($ca, $cb);
-                    $tot = count($com);
-                    if ($tot > 0) {
-                        $m = 0;
-                        foreach ($com as $qid => $v) {
-                            if ($cb[$qid] === $v) {
-                                $m++;
-                            }
-                        }
-                        $pairSims[] = round($m / $tot * 100);
+            $softSig = [];
+            foreach ($questionVotes as $qid => $votes) {
+                $maxVotes = max($votes);
+                if ($maxVotes < 2) {
+                    continue;
+                }
+                $dominant = (string) array_search($maxVotes, $votes);
+                $pct      = (int) round($maxVotes / $mc * 100);
+                if ($pct >= 70) {
+                    $softSig[$qid] = ['answer' => $dominant, 'pct' => $pct, 'count' => $maxVotes];
+                }
+            }
+            ksort($softSig);
+
+            // Salta cluster senza pattern chiaro (meno di 4 domande con consenso >= 70%)
+            if (count($softSig) < 4) {
+                continue;
+            }
+
+            // Risposte aperte duplicate: testo identico (case-insensitive) in >= 2 membri
+            $openVotes = [];
+            foreach ($members as $idx) {
+                foreach ($interviews[$idx]['open'] as $qid => $text) {
+                    $key = mb_strtolower(trim($text));
+                    if ($key !== '') {
+                        $openVotes[$qid][$key] = ($openVotes[$qid][$key] ?? 0) + 1;
                     }
                 }
             }
-            $avgSim = count($pairSims) > 0 ? (int) round(array_sum($pairSims) / count($pairSims)) : 0;
+
+            $openDups = [];
+            foreach ($openVotes as $qid => $texts) {
+                foreach ($texts as $text => $count) {
+                    if ($count >= 2) {
+                        $openDups[] = [
+                            'questionId' => $qid,
+                            'text'       => $text,
+                            'count'      => $count,
+                            'pct'        => (int) round($count / $mc * 100),
+                        ];
+                    }
+                }
+            }
+            usort($openDups, fn ($a, $b) => $b['count'] - $a['count']);
 
             // Dati membro
             $memberData = [];
@@ -386,21 +410,26 @@ class FieldQualityController extends Controller
                     'is_interactive' => $ui !== null,
                 ];
             }
+            usort($memberData, fn ($a, $b) => (int) $a['iid'] - (int) $b['iid']);
 
             $result[] = [
-                'size'           => $mc,
-                'avg_similarity' => $avgSim,
-                'shared_q'       => count($sharedSig),
-                'signature'      => $sharedSig,
-                'members'        => $memberData,
+                'size'            => $mc,
+                'sig_count'       => count($softSig),
+                'soft_signature'  => $softSig,
+                'open_duplicates' => $openDups,
+                'members'         => $memberData,
             ];
+        }
+
+        if (empty($result)) {
+            return response()->json(['total_interviews' => $n, 'clusters' => []]);
         }
 
         usort($result, function ($a, $b) {
             if ($b['size'] !== $a['size']) {
                 return $b['size'] - $a['size'];
             }
-            return $b['avg_similarity'] - $a['avg_similarity'];
+            return $b['sig_count'] - $a['sig_count'];
         });
 
         return response()->json(['total_interviews' => $n, 'clusters' => $result]);
