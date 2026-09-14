@@ -1196,10 +1196,10 @@ function loadFlaggedUids() {
             (d.flagged_uids || []).forEach(function(uid) { flagged[uid] = true; });
             document.querySelectorAll('#sim-content .sim-row-chk').forEach(function(chk) {
                 if (flagged[chk.dataset.uid]) {
-                    chk.disabled = true;
-                    chk.checked  = false;
-                    chk.title    = 'Già segnalato per questa ricerca';
-                    chk.closest('tr').style.opacity = '.55';
+                    chk.disabled      = true;
+                    chk.checked       = false;
+                    chk.title         = 'Già segnalato per questa ricerca';
+                    chk.style.opacity = '.3';
                 }
             });
             simUpdateFlagBar();
