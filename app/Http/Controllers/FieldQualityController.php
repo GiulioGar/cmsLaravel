@@ -291,12 +291,6 @@ class FieldQualityController extends Controller
             return response()->json(['error' => 'PRJ e SID obbligatori'], 422);
         }
 
-        // Filtri opzionali: null = tutte le domande
-        $rawChoiceFilter = $request->input('include_choice_qids');
-        $rawOpenFilter   = $request->input('include_open_qids');
-        $choiceFilter    = is_array($rawChoiceFilter) ? array_map('intval', $rawChoiceFilter) : null;
-        $openFilter      = is_array($rawOpenFilter)   ? array_map('intval', $rawOpenFilter)   : null;
-
         $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
         if (!is_dir($directory)) {
             $directory = "/var/imr/fields/{$prj}/{$sid}/results";
@@ -305,8 +299,9 @@ class FieldQualityController extends Controller
             return response()->json(['error' => 'Directory risultati non trovata'], 404);
         }
 
-        // 1. Parse .sre: estrae risposte choice (fields[3]) e open (testo non numerico)
+        // 1. Parse .sre: estrae solo risposte choice single (esclude bitmask multi-choice)
         $interviews = [];
+        $qidNOpts   = []; // numero massimo di opzioni visto per ogni qid
         foreach (glob($directory . '/*.sre') as $file) {
             $handle = fopen($file, 'r');
             if (!$handle) {
@@ -331,8 +326,9 @@ class FieldQualityController extends Controller
             $iid = (string) ($data[3 + $offset] ?? 'N/A');
             $uid = (string) ($data[4 + $offset] ?? 'N/A');
 
-            $choices     = [];
-            $openAnswers = [];
+            $choices      = [];
+            $openAnswers  = [];
+            $numericOpen  = []; // risposte aperte numeriche intere → trattate come choice in pairwise
             while (($line = fgets($handle)) !== false) {
                 $trimmed = rtrim($line);
                 if ($trimmed === '') {
@@ -343,28 +339,38 @@ class FieldQualityController extends Controller
 
                 if ($type === 'choice') {
                     $qid    = (int) ($fields[1] ?? 0);
+                    $nOpt   = (int) ($fields[2] ?? 0);
                     $answer = $fields[3] ?? null;
-                    if ($qid > 0 && $answer !== null && $answer !== '') {
-                        if ($choiceFilter === null || in_array($qid, $choiceFilter)) {
+                    if ($qid > 0 && $nOpt > 0 && $answer !== null && $answer !== '') {
+                        // bitmask = multi-choice, escludi
+                        if (strlen($answer) !== $nOpt) {
                             $choices[$qid] = $answer;
+                            $qidNOpts[$qid] = max($qidNOpts[$qid] ?? 0, $nOpt);
                         }
                     }
                 } elseif ($type === 'open') {
                     $qid  = (int) ($fields[1] ?? 0);
                     $text = trim($fields[2] ?? '');
                     if ($qid > 0 && mb_strlen($text) >= 1) {
-                        if ($openFilter === null || in_array($qid, $openFilter)) {
-                            $openAnswers[$qid] = $text;
+                        $openAnswers[$qid] = $text;
+                        // Risposta aperta puramente numerica (es. codice regione "36"):
+                        // entropia naturalmente alta → segnale forte nel pairwise
+                        if (ctype_digit($text)) {
+                            $numericOpen[$qid] = $text;
                         }
                     }
                 }
             }
             fclose($handle);
 
-            // Unisce choice e open per il confronto pairwise (open numeriche come S3 contribuiscono)
-            $pairwise = $choices + $openAnswers;
-            if (!empty($pairwise)) {
-                $interviews[] = ['iid' => $iid, 'uid' => $uid, 'pairwise' => $pairwise, 'open' => $openAnswers];
+            $merged = $choices + $numericOpen;
+            if (!empty($merged)) {
+                $interviews[] = [
+                    'iid'     => $iid,
+                    'uid'     => $uid,
+                    'choices' => $merged,
+                    'open'    => $openAnswers,
+                ];
             }
         }
 
@@ -373,30 +379,51 @@ class FieldQualityController extends Controller
             return response()->json(['total_interviews' => $n, 'clusters' => []]);
         }
 
-        // DEBUG: distribuzione valori per ogni qid selezionato nel pairwise
-        if (config('app.debug')) {
-            $qidDist = [];
-            foreach ($interviews as $iv) {
-                foreach ($iv['pairwise'] as $qid => $val) {
-                    $qidDist[$qid][$val] = ($qidDist[$qid][$val] ?? 0) + 1;
-                }
-            }
-            $debugInfo = [];
-            foreach ($qidDist as $qid => $vals) {
-                arsort($vals);
-                $debugInfo[$qid] = [
-                    'n_interviews' => array_sum($vals),
-                    'top_values'   => array_slice($vals, 0, 5, true),
-                ];
+        // 2. Calcola entropia di Shannon per ogni domanda choice sul campione completo.
+        //    H alta = domanda discriminativa (molte risposte diverse) → peso alto nel confronto.
+        //    H bassa = tutti rispondono uguale → peso vicino a 0, non influenza il match.
+        $qidFreq = [];
+        foreach ($interviews as $iv) {
+            foreach ($iv['choices'] as $qid => $answer) {
+                $qidFreq[$qid][$answer] = ($qidFreq[$qid][$answer] ?? 0) + 1;
             }
         }
 
-        // 2. Union-Find: collega le coppie con similarità sufficiente su >= minCommon domande comuni
-        // - Con filtro esplicito: match esatto (100%) su tutte le domande in comune, min 2
-        // - Senza filtro (tutte le domande): soglia 60%, min 4
-        $hasFilter = ($choiceFilter !== null || $openFilter !== null);
-        $minCommon = $hasFilter ? 2 : 4;
-        $threshold = $hasFilter ? 1.0 : 0.60;
+        $entropy = [];
+        foreach ($qidFreq as $qid => $freqs) {
+            $total = array_sum($freqs);
+            $h     = 0.0;
+            foreach ($freqs as $count) {
+                $p = $count / $total;
+                if ($p > 0.0) {
+                    $h -= $p * log($p, 2);
+                }
+            }
+            $entropy[$qid] = $h;
+        }
+
+        // Domande degenerate: escluse da pairwise e da tabella.
+        // - nOpt ≤ 2: binarie strutturalmente inutili (es. Sì/No, 0/1)
+        // - risposta dominante ≥ 99%: varianza quasi nulla sull'intero campione
+        //   (es. S5=0 in wave-1 dove nessuno ha visto l'annuncio)
+        $degenQids = [];
+        foreach ($qidFreq as $qid => $freqs) {
+            if (($qidNOpts[$qid] ?? 999) <= 2) {
+                $degenQids[$qid] = true;
+                continue;
+            }
+            $tot = array_sum($freqs);
+            if ($tot > 0 && max($freqs) / $tot >= 0.99) {
+                $degenQids[$qid] = true;
+            }
+        }
+
+        // 3. Pairwise weighted similarity.
+        //    sim(i,j) = Σ H(q)*[ri==rj] / Σ H(q)  sulle domande in comune con H >= 0.05 e non degenerate.
+        //    Soglie: totalWeight >= 1.0, sim >= 0.82, e almeno 1 domanda ad alta entropia (H>2.0) deve matchare.
+        //    La soglia alta (0.82) e il requisito H>2.0 prevengono falsi positivi via transitività Union-Find.
+        $threshold      = 0.82;
+        $minTotalWeight = 1.0;
 
         $parent = range(0, $n - 1);
         $findRoot = function (int $x) use (&$parent): int {
@@ -409,22 +436,38 @@ class FieldQualityController extends Controller
 
         for ($i = 0; $i < $n; $i++) {
             for ($j = $i + 1; $j < $n; $j++) {
-                $c1     = $interviews[$i]['pairwise'];
-                $c2     = $interviews[$j]['pairwise'];
-                $common = array_intersect_key($c1, $c2);
-                $total  = count($common);
-                if ($total < $minCommon) {
-                    continue;
-                }
-                $matching = 0;
-                foreach ($common as $qid => $v) {
+                $c1 = $interviews[$i]['choices'];
+                $c2 = $interviews[$j]['choices'];
+
+                $totalWeight    = 0.0;
+                $matchWeight    = 0.0;
+                $highEntMatches = 0; // domande con H>2.0 bit che coincidono
+                foreach ($c1 as $qid => $v) {
+                    if (!isset($c2[$qid])) {
+                        continue;
+                    }
+                    if (isset($degenQids[$qid])) {
+                        continue;
+                    }
+                    $w = $entropy[$qid] ?? 0.0;
+                    if ($w < 0.05) {
+                        continue;
+                    }
+                    $totalWeight += $w;
                     if ($c2[$qid] === $v) {
-                        $matching++;
+                        $matchWeight += $w;
+                        if ($w > 2.0) {
+                            $highEntMatches++;
+                        }
                     }
                 }
-                if ($matching / $total < $threshold) {
+
+                if ($totalWeight < $minTotalWeight
+                    || $matchWeight / $totalWeight < $threshold
+                    || $highEntMatches < 1) {
                     continue;
                 }
+
                 $ri = $findRoot($i);
                 $rj = $findRoot($j);
                 if ($ri !== $rj) {
@@ -433,7 +476,7 @@ class FieldQualityController extends Controller
             }
         }
 
-        // 3. Raggruppa per radice
+        // 4. Raggruppa per radice, filtra cluster con meno di 8 interviste
         $rawClusters = [];
         for ($i = 0; $i < $n; $i++) {
             $rawClusters[$findRoot($i)][] = $i;
@@ -458,22 +501,25 @@ class FieldQualityController extends Controller
             ->get()
             ->keyBy('user_id');
 
-        // 5. Per ogni cluster: firma molle (soft signature) e duplicati nelle aperte
+        // 5. Per ogni cluster: soft signature, colonne bloccate, risposte complete, open duplicates
         $result = [];
         foreach ($rawClusters as $members) {
             $mc = count($members);
 
-            // Soft signature: per ogni domanda (choice + open) conta voti per risposta,
-            // mantieni quelle dove almeno il 70% ha dato la stessa risposta
+            // Soft signature: domande choice dove >= 70% del cluster ha dato la stessa risposta
             $questionVotes = [];
             foreach ($members as $idx) {
-                foreach ($interviews[$idx]['pairwise'] as $qid => $ans) {
+                foreach ($interviews[$idx]['choices'] as $qid => $ans) {
                     $questionVotes[$qid][$ans] = ($questionVotes[$qid][$ans] ?? 0) + 1;
                 }
             }
 
-            $softSig = [];
+            $softSig    = [];
+            $lockedQids = [];
             foreach ($questionVotes as $qid => $votes) {
+                if (isset($degenQids[$qid])) {
+                    continue;
+                }
                 $maxVotes = max($votes);
                 if ($maxVotes < 2) {
                     continue;
@@ -481,17 +527,30 @@ class FieldQualityController extends Controller
                 $dominant = (string) array_search($maxVotes, $votes);
                 $pct      = (int) round($maxVotes / $mc * 100);
                 if ($pct >= 70) {
-                    $softSig[$qid] = ['answer' => $dominant, 'pct' => $pct, 'count' => $maxVotes];
+                    $globalCount = $qidFreq[$qid][$dominant] ?? 0;
+                    $globalPct   = $n > 0 ? (int) round($globalCount / $n * 100) : 0;
+                    // Includi in firma solo se la risposta è sovra-rappresentata nel cluster:
+                    // - non deve essere già maggioritaria globalmente (≥70% → attesa per tutti)
+                    // - deve sovrastare il globale di almeno 20pp (delta reale di frode)
+                    if ($globalPct >= 70 || ($pct - $globalPct) < 20) {
+                        continue;
+                    }
+                    $softSig[$qid] = [
+                        'answer'     => $dominant,
+                        'pct'        => $pct,
+                        'count'      => $maxVotes,
+                        'entropy'    => round($entropy[$qid] ?? 0.0, 3),
+                        'global_pct' => $globalPct,
+                    ];
+                    if ($pct === 100) {
+                        $lockedQids[] = $qid;
+                    }
                 }
             }
             ksort($softSig);
 
-            // Salta cluster senza pattern chiaro
-            if (count($softSig) < $minCommon) {
-                continue;
-            }
-
-            // Risposte aperte duplicate: testo identico (case-insensitive) in >= 2 membri
+            // Open duplicates: testo identico (case-insensitive) in >= 2 membri.
+            // Calcolato prima del skip check: un cluster con aperte duplicate va sempre mostrato.
             $openVotes = [];
             foreach ($members as $idx) {
                 foreach ($interviews[$idx]['open'] as $qid => $text) {
@@ -517,7 +576,12 @@ class FieldQualityController extends Controller
             }
             usort($openDups, fn ($a, $b) => $b['count'] - $a['count']);
 
-            // Dati membro
+            // Salta il cluster solo se non ha né pattern significativo né aperte duplicate
+            if (count($softSig) < 2 && empty($openDups)) {
+                continue;
+            }
+
+            // Dati membro: risposte choice non-binarie (degenQids esclude solo nOpt≤2)
             $memberData = [];
             foreach ($members as $idx) {
                 $iv = $interviews[$idx];
@@ -531,6 +595,7 @@ class FieldQualityController extends Controller
                     'active'         => $ui ? (int) ($ui->active ?? 1) : null,
                     'city'           => $ui ? ($ui->city ?? null) : null,
                     'is_interactive' => $ui !== null,
+                    'answers'        => array_diff_key($iv['choices'], $degenQids),
                 ];
             }
             usort($memberData, fn ($a, $b) => (int) $a['iid'] - (int) $b['iid']);
@@ -538,6 +603,7 @@ class FieldQualityController extends Controller
             $result[] = [
                 'size'            => $mc,
                 'sig_count'       => count($softSig),
+                'locked_qids'     => $lockedQids,
                 'soft_signature'  => $softSig,
                 'open_duplicates' => $openDups,
                 'members'         => $memberData,
@@ -549,17 +615,21 @@ class FieldQualityController extends Controller
         }
 
         usort($result, function ($a, $b) {
-            if ($b['size'] !== $a['size']) {
-                return $b['size'] - $a['size'];
+            // Critico prima: ha risposte aperte duplicate
+            $aOd = count($a['open_duplicates']) > 0 ? 1 : 0;
+            $bOd = count($b['open_duplicates']) > 0 ? 1 : 0;
+            if ($bOd !== $aOd) {
+                return $bOd - $aOd;
             }
-            return $b['sig_count'] - $a['sig_count'];
+            // Alto: più locked_qids = più sospetto
+            $lk = count($b['locked_qids']) - count($a['locked_qids']);
+            if ($lk !== 0) {
+                return $lk;
+            }
+            return $b['size'] - $a['size'];
         });
 
-        $response = ['total_interviews' => $n, 'clusters' => $result];
-        if (config('app.debug') && isset($debugInfo)) {
-            $response['_debug_qid_dist'] = $debugInfo;
-        }
-        return response()->json($response);
+        return response()->json(['total_interviews' => $n, 'clusters' => $result]);
     }
 
     // =========================================================================

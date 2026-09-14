@@ -207,78 +207,11 @@
                 <p class="dq-page-sub">Monitoraggio qualità dati e controlli antifrode &middot; {{ $panelData->description ?? ($prj . '/' . $sid) }}</p>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
-                <button id="btnSimilarity" class="dq-btn dq-btn-sim" onclick="openSimModal()">
+                <button id="btnSimilarity" class="dq-btn dq-btn-sim" onclick="runSimilarityCheck()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg>
                     Controlla duplicati
                 </button>
                 <span class="dq-page-badge">{{ $totalInterviews }} interviste</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================================
-         MODAL: configurazione analisi duplicati
-         ============================================================ -->
-    <div class="modal fade" id="modalSimConfig" tabindex="-1" aria-labelledby="modalSimConfigLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" style="border-radius:10px;border:1.5px solid oklch(88% 0.04 80);">
-                <div class="modal-header" style="border-bottom:1px solid oklch(92% 0.03 80);padding:14px 20px;">
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(50% 0.12 80)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg>
-                        <h5 class="modal-title" id="modalSimConfigLabel" style="font-size:15px;font-weight:600;color:oklch(25% 0.04 255);margin:0;">Configura analisi duplicati</h5>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
-                </div>
-                <div class="modal-body" style="padding:18px 20px;">
-                    <p style="font-size:13px;color:#666;margin-bottom:16px;">
-                        Seleziona le domande da includere nell'analisi. Le domande con <strong>≤ 2 opzioni</strong> sono deselezionate di default (es. Sì/No, Maschio/Femmina).
-                    </p>
-
-                    <!-- Stato di caricamento -->
-                    <div id="sim-modal-loading" style="text-align:center;padding:24px 0;color:#888;font-size:13px;">
-                        <svg class="dq-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(55% 0.10 80)" stroke-width="2" stroke-linecap="round" style="vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
-                        Caricamento struttura domande...
-                    </div>
-
-                    <!-- Contenuto (nascosto durante loading) -->
-                    <div id="sim-modal-body" style="display:none;">
-
-                        <!-- Sezione Choice -->
-                        <div class="sim-modal-section">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                                <span class="sim-modal-section-title">
-                                    Domande a scelta
-                                    <span id="sim-choice-count" class="sim-modal-count"></span>
-                                </span>
-                                <span style="display:flex;gap:4px;">
-                                    <button onclick="simSelectAll('choice')" class="sim-sel-btn">Tutte</button>
-                                    <button onclick="simSelectNone('choice')" class="sim-sel-btn">Nessuna</button>
-                                </span>
-                            </div>
-                            <div id="sim-choice-list" class="sim-modal-list"></div>
-                        </div>
-
-                        <!-- Sezione Open -->
-                        <div class="sim-modal-section" style="margin-top:18px;">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                                <span class="sim-modal-section-title">
-                                    Domande aperte
-                                    <span id="sim-open-count" class="sim-modal-count"></span>
-                                </span>
-                                <span style="display:flex;gap:4px;">
-                                    <button onclick="simSelectAll('open')" class="sim-sel-btn">Tutte</button>
-                                    <button onclick="simSelectNone('open')" class="sim-sel-btn">Nessuna</button>
-                                </span>
-                            </div>
-                            <div id="sim-open-list" class="sim-modal-list"></div>
-                        </div>
-
-                    </div>
-                </div>
-                <div class="modal-footer" style="border-top:1px solid oklch(92% 0.03 80);padding:12px 20px;gap:8px;">
-                    <button type="button" class="dq-btn dq-btn-outline" data-bs-dismiss="modal" style="font-size:13px;">Annulla</button>
-                    <button type="button" id="btnExecSim" class="dq-btn dq-btn-sim" onclick="execSimilarityCheck()" style="font-size:13px;" disabled>Avvia analisi</button>
-                </div>
             </div>
         </div>
     </div>
@@ -945,155 +878,10 @@ function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-/* ---- Analisi duplicati (similarity check) ---- */
+/* ---- Analisi duplicati (similarity check — auto) ---- */
 var SIM_BTN_HTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/></svg> Controlla duplicati';
 
-function openSimModal() {
-    var modal = new bootstrap.Modal(document.getElementById('modalSimConfig'));
-    modal.show();
-
-    document.getElementById('sim-modal-loading').style.display = '';
-    document.getElementById('sim-modal-body').style.display   = 'none';
-    document.getElementById('btnExecSim').disabled = true;
-
-    fetch('{{ route("fieldQuality.questionsMeta") }}?prj={{ $prj }}&sid={{ $sid }}')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            populateSimModal(data.choice || {}, data.open || []);
-            document.getElementById('sim-modal-loading').style.display = 'none';
-            document.getElementById('sim-modal-body').style.display    = '';
-            document.getElementById('btnExecSim').disabled = false;
-        })
-        .catch(function() {
-            document.getElementById('sim-modal-loading').innerHTML =
-                '<span style="color:oklch(48% 0.15 25);font-size:13px;">Errore nel caricamento delle domande. Riprova.</span>';
-        });
-}
-
-function populateSimModal(choiceMeta, openQids) {
-    var choiceList = document.getElementById('sim-choice-list');
-    var openList   = document.getElementById('sim-open-list');
-
-    // ---- Choice ----
-    var sortedChoiceQids = Object.keys(choiceMeta).map(Number).sort(function(a,b){ return a-b; });
-    var choiceHtml = '';
-    sortedChoiceQids.forEach(function(qid) {
-        var nOpt  = choiceMeta[qid];
-        var q     = qMap[qid] || {};
-        var code  = q.code || ('Q' + qid);
-        var text  = cleanQText(q.text || '');
-        var autoOn = nOpt >= 5;
-        var nOptCls = autoOn ? 'sim-nopt sim-nopt-hi' : 'sim-nopt sim-nopt-lo';
-        choiceHtml += '<div class="sim-modal-qrow">';
-        choiceHtml += '<label>';
-        choiceHtml += '<input type="checkbox" class="sim-choice-cb" value="' + qid + '"' + (autoOn ? ' checked' : '') + '>';
-        choiceHtml += '<span class="sim-qcode">' + escHtml(code) + '</span>';
-        choiceHtml += '<span class="sim-qtext" title="' + escHtml(text) + '">' + escHtml(text) + '</span>';
-        choiceHtml += '<span class="' + nOptCls + '">' + nOpt + ' opz</span>';
-        choiceHtml += '</label>';
-        choiceHtml += '<button class="sim-expand-btn" title="Vedi opzioni" onclick="loadQOptions(' + qid + ', this)">&#9660;</button>';
-        choiceHtml += '<div id="sim-opts-' + qid + '" style="display:none;width:100%;"></div>';
-        choiceHtml += '</div>';
-    });
-    choiceList.innerHTML = choiceHtml || '<div style="padding:12px;color:#aaa;font-size:13px;">Nessuna domanda a scelta trovata.</div>';
-
-    // ---- Open ----
-    var sortedOpenQids = openQids.slice().sort(function(a,b){ return a-b; });
-    var openHtml = '';
-    sortedOpenQids.forEach(function(qid) {
-        var q    = qMap[qid] || {};
-        var code = q.code || ('Q' + qid);
-        var text = cleanQText(q.text || '');
-        openHtml += '<div class="sim-modal-qrow">';
-        openHtml += '<label>';
-        openHtml += '<input type="checkbox" class="sim-open-cb" value="' + qid + '" checked>';
-        openHtml += '<span class="sim-qcode">' + escHtml(code) + '</span>';
-        openHtml += '<span class="sim-qtext" title="' + escHtml(text) + '">' + escHtml(text) + '</span>';
-        openHtml += '</label>';
-        openHtml += '</div>';
-    });
-    openList.innerHTML = openHtml || '<div style="padding:12px;color:#aaa;font-size:13px;">Nessuna domanda aperta trovata.</div>';
-
-    updateSimCounts();
-    // aggiorna contatori al cambio checkbox
-    choiceList.addEventListener('change', updateSimCounts);
-    openList.addEventListener('change', updateSimCounts);
-}
-
-function updateSimCounts() {
-    var cc = document.querySelectorAll('#sim-choice-list .sim-choice-cb:checked').length;
-    var oc = document.querySelectorAll('#sim-open-list .sim-open-cb:checked').length;
-    var tot = document.querySelectorAll('#sim-choice-list .sim-choice-cb').length;
-    var totO = document.querySelectorAll('#sim-open-list .sim-open-cb').length;
-    var cel = document.getElementById('sim-choice-count');
-    var oel = document.getElementById('sim-open-count');
-    if (cel) cel.textContent = '(' + cc + '/' + tot + ' selezionate)';
-    if (oel) oel.textContent = '(' + oc + '/' + totO + ' selezionate)';
-}
-
-function simSelectAll(type) {
-    document.querySelectorAll('#sim-' + type + '-list .sim-' + type + '-cb')
-        .forEach(function(cb) { cb.checked = true; });
-    updateSimCounts();
-}
-
-function simSelectNone(type) {
-    document.querySelectorAll('#sim-' + type + '-list .sim-' + type + '-cb')
-        .forEach(function(cb) { cb.checked = false; });
-    updateSimCounts();
-}
-
-function loadQOptions(qid, btn) {
-    var container = document.getElementById('sim-opts-' + qid);
-    if (!container) return;
-
-    if (container.style.display !== 'none') {
-        container.style.display = 'none';
-        btn.innerHTML = '&#9660;';
-        return;
-    }
-    if (container.dataset.loaded) {
-        container.style.display = '';
-        btn.innerHTML = '&#9650;';
-        return;
-    }
-
-    btn.innerHTML = '&#8230;';
-    fetch('{{ route("targetField.getQuestionDetail") }}?prj={{ $prj }}&sid={{ $sid }}&question_id=' + qid)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            var html = '<div class="sim-options-panel">';
-            if (data.success && data.question && Array.isArray(data.question.options) && data.question.options.length) {
-                data.question.options.forEach(function(opt, i) {
-                    html += '<span class="sim-opt-tag">' + i + ' · ' + escHtml(opt) + '</span>';
-                });
-            } else {
-                html += '<span style="font-size:11px;color:#aaa;">Opzioni non disponibili</span>';
-            }
-            html += '</div>';
-            container.innerHTML = html;
-            container.dataset.loaded = '1';
-            container.style.display = '';
-            btn.innerHTML = '&#9650;';
-        })
-        .catch(function() {
-            container.innerHTML = '<div class="sim-options-panel"><span style="font-size:11px;color:#aaa;">Errore nel caricamento</span></div>';
-            container.style.display = '';
-            btn.innerHTML = '&#9650;';
-        });
-}
-
-function execSimilarityCheck() {
-    var choiceQids = Array.from(document.querySelectorAll('#sim-choice-list .sim-choice-cb:checked'))
-                         .map(function(cb) { return parseInt(cb.value); });
-    var openQids   = Array.from(document.querySelectorAll('#sim-open-list .sim-open-cb:checked'))
-                         .map(function(cb) { return parseInt(cb.value); });
-
-    bootstrap.Modal.getInstance(document.getElementById('modalSimConfig')).hide();
-    runSimilarityCheck(choiceQids, openQids);
-}
-
-function runSimilarityCheck(includeChoiceQids, includeOpenQids) {
+function runSimilarityCheck() {
     var btn     = document.getElementById('btnSimilarity');
     var section = document.getElementById('sez-similarita');
     var content = document.getElementById('sim-content');
@@ -1104,10 +892,6 @@ function runSimilarityCheck(includeChoiceQids, includeOpenQids) {
     section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     content.innerHTML = '<div class="dq-sim-loading"><svg class="dq-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="oklch(55% 0.10 80)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-opacity=".25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>Analisi in corso...</div>';
 
-    var payload = { prj: '{{ $prj }}', sid: '{{ $sid }}' };
-    if (includeChoiceQids && includeChoiceQids.length) payload.include_choice_qids = includeChoiceQids;
-    if (includeOpenQids   && includeOpenQids.length)   payload.include_open_qids   = includeOpenQids;
-
     fetch('{{ route("fieldQuality.similarityCheck") }}', {
         method: 'POST',
         headers: {
@@ -1115,7 +899,7 @@ function runSimilarityCheck(includeChoiceQids, includeOpenQids) {
             'X-CSRF-TOKEN': '{{ csrf_token() }}',
             'Accept': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ prj: '{{ $prj }}', sid: '{{ $sid }}' })
     })
     .then(function(r) {
         return r.text().then(function(text) {
@@ -1139,9 +923,24 @@ function runSimilarityCheck(includeChoiceQids, includeOpenQids) {
     });
 }
 
+var _simLastResult = null;
+
+function clusterSeverity(c) {
+    if ((c.open_duplicates || []).length > 0) return 'critico';
+    if ((c.locked_qids || []).length >= 2)    return 'alto';
+    return 'medio';
+}
+
+var _sevStyle = {
+    critico: { border: '#d04040', badge: 'background:#fde8e8;color:#8b1a1a;', label: 'Critico' },
+    alto:    { border: '#c07020', badge: 'background:#fdf0e0;color:#7a4800;', label: 'Alto'    },
+    medio:   { border: '#a0a020', badge: 'background:#f8f8e0;color:#5a5a00;', label: 'Medio'   },
+};
+
 function renderSimilarityResults(data, container) {
     var clusters = data.clusters || [];
     var total    = data.total_interviews || 0;
+    _simLastResult = data;
 
     if (clusters.length === 0) {
         container.innerHTML = '<div class="dq-sim-ok">Nessun gruppo sospetto rilevato su <strong>' + total + '</strong> interviste analizzate.</div>';
@@ -1151,137 +950,215 @@ function renderSimilarityResults(data, container) {
     var activeMap   = { 0: 'Inattivo', 1: 'Attivo', 8: 'Bannato', 9: 'Eliminato' };
     var activeColor = { 0: 'oklch(50% 0.02 250)', 1: 'oklch(40% 0.13 150)', 8: 'oklch(45% 0.16 25)', 9: 'oklch(48% 0.12 25)' };
 
-    var html = '<div class="dq-sim-summary">Trovati <strong>' + clusters.length + '</strong> gruppi sospetti su <strong>' + total + '</strong> interviste analizzate</div>';
-
-    if (data._debug_qid_dist) {
-        html += '<details style="margin-bottom:12px;font-size:12px;color:#666;border:1px dashed #ccc;padding:8px 12px;border-radius:6px;">';
-        html += '<summary style="cursor:pointer;font-weight:600;">DEBUG — distribuzione qid nel pairwise</summary><div style="margin-top:8px;">';
-        Object.keys(data._debug_qid_dist).forEach(function(qid) {
-            var d = data._debug_qid_dist[qid];
-            var q = qMap[parseInt(qid)] || {};
-            var code = q.code || ('Q' + qid);
-            html += '<div style="margin-bottom:4px;"><strong>' + escHtml(code) + '</strong> (qid=' + qid + ') — ' + d.n_interviews + ' interviste — top valori: ';
-            html += Object.entries(d.top_values).map(function(e){ return '"' + e[0] + '"×' + e[1]; }).join(', ');
-            html += '</div>';
+    // Unione di tutti i qid in soft_signature + metadati globali per tooltip
+    var sigQidSet  = {};
+    var sigQidMeta = {}; // qid → { global_pct, entropy } del primo cluster che lo menziona
+    clusters.forEach(function(c) {
+        Object.keys(c.soft_signature || {}).forEach(function(q) {
+            sigQidSet[q] = true;
+            if (!sigQidMeta[q]) sigQidMeta[q] = c.soft_signature[q];
         });
-        html += '</div></details>';
-    }
+    });
+    var allSigQids = Object.keys(sigQidSet).map(Number).sort(function(a, b) { return a - b; });
 
-    clusters.forEach(function(cluster, idx) {
-        var sig = cluster.soft_signature || {};
-        var sigKeys = Object.keys(sig).sort(function(a, b) { return parseInt(a) - parseInt(b); });
-        var openDups = cluster.open_duplicates || [];
-
-        html += '<div class="dq-sim-cluster">';
-
-        // Header
-        html += '<div class="dq-sim-cluster-header">';
-        html += '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">';
-        html += '<span class="dq-sim-cluster-num">Gruppo ' + (idx + 1) + '</span>';
-        html += '<span class="dq-sim-cluster-size">' + cluster.size + ' interviste</span>';
-        html += '<span class="dq-sim-cluster-sig">' + cluster.sig_count + ' domande con risposta prevalente</span>';
-        if (openDups.length > 0) {
-            html += '<span style="font-size:12px;color:oklch(45% 0.12 255);">' + openDups.length + ' duplicati nelle aperte</span>';
-        }
-        html += '</div>';
-        html += '<button class="dq-btn dq-btn-outline" style="font-size:11px;padding:4px 10px;" onclick="toggleSim(\'members-' + idx + '\')">Mostra panelisti</button>';
-        html += '</div>';
-
-        // Motivo del flag: soft signature (sempre visibile)
-        html += '<div class="dq-sim-reason">';
-        html += '<div class="dq-sim-reason-title">Perché questo gruppo è sospetto — risposte prevalenti (≥70% dei membri)</div>';
-        html += '<div class="dq-sim-sig-items">';
-        sigKeys.forEach(function(qid) {
-            var s    = sig[qid];
-            var qInfo = qMap[parseInt(qid)] || {};
-            var code = qInfo.code || ('Q' + qid);
-            var text = qInfo.text || '';
-            var pctColor = s.pct >= 90 ? 'oklch(45% 0.16 25)' : (s.pct >= 80 ? 'oklch(48% 0.14 75)' : 'oklch(45% 0.10 255)');
-            html += '<span class="dq-sim-sig-item fq-codice-pop" style="cursor:pointer;"'
-                  + ' data-codice="' + escHtml(code) + '"'
-                  + ' data-qid="' + qid + '"'
-                  + ' data-qtext="' + escHtml(text) + '"'
-                  + ' data-answer="' + escHtml(s.answer) + '">';
-            html += '<span class="dq-sim-qid" style="text-decoration:underline dotted #aaa;text-underline-offset:3px;">' + escHtml(code) + '</span>';
-            html += '<span class="dq-sim-qans">= ' + escHtml(s.answer) + '</span>';
-            html += '<span class="dq-sim-qpct" style="color:' + pctColor + '">' + s.pct + '%</span>';
-            html += '</span>';
-        });
-        html += '</div>';
-
-        // Risposte aperte duplicate (se presenti)
-        if (openDups.length > 0) {
-            html += '<div class="dq-sim-open-dups">';
-            html += '<div class="dq-sim-reason-title" style="margin-top:10px;">Risposte aperte duplicate</div>';
-            html += '<div class="dq-sim-sig-items">';
-            openDups.forEach(function(od) {
-                var qInfo = qMap[parseInt(od.questionId)] || {};
-                var code  = qInfo.code || ('Q' + od.questionId);
-                var text  = qInfo.text || '';
-                html += '<span class="dq-sim-sig-item fq-codice-pop" style="background:oklch(97% 0.015 255);border-color:oklch(88% 0.03 255);cursor:pointer;"'
-                      + ' data-codice="' + escHtml(code) + '"'
-                      + ' data-qid="' + od.questionId + '"'
-                      + ' data-qtext="' + escHtml(text) + '"'
-                      + ' data-is-open="1"'
-                      + ' data-answer="' + escHtml(String(od.text).substring(0, 60)) + '">';
-                html += '<span class="dq-sim-qid" style="text-decoration:underline dotted #aaa;text-underline-offset:3px;">' + escHtml(code) + '</span>';
-                var odText = String(od.text);
-                html += '<span class="dq-sim-qans" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">&ldquo;' + odText.substring(0, 60) + (odText.length > 60 ? '…' : '') + '&rdquo;</span>';
-                html += '<span class="dq-sim-qpct" style="color:oklch(45% 0.10 255);">×' + od.count + '</span>';
-                html += '</span>';
-            });
-            html += '</div>';
-            html += '</div>';
-        }
-
-        html += '</div>'; // dq-sim-reason
-
-        // Tabella membri (collassabile)
-        html += '<div id="members-' + idx + '" style="display:none;">';
-        html += '<div class="dq-table-scroll"><table class="dq-table dq-sim-table" style="width:100%;border-collapse:collapse;">';
-        html += '<thead><tr><th>IID</th><th>UID</th><th>Nome</th><th>Email</th><th>Bytes</th><th>Città</th><th>Account</th></tr></thead>';
-        html += '<tbody>';
-
+    // Appiattisci tutti i membri con metadati del loro cluster
+    var allMembers = [];
+    clusters.forEach(function(cluster) {
+        var sev  = clusterSeverity(cluster);
+        var lset = {};
+        (cluster.locked_qids || []).forEach(function(q) { lset[q] = true; });
         cluster.members.forEach(function(m) {
-            var activeVal = m.active !== null ? m.active : 1;
-            var activeStr = activeMap[activeVal] || ('Stato ' + activeVal);
-            var activeCol = activeColor[activeVal] || 'oklch(50% 0.02 250)';
-            if (!m.is_interactive) { activeStr = 'Esterno'; activeCol = 'oklch(50% 0.02 250)'; }
-            var bytes = m.bytes !== null ? m.bytes.toLocaleString('it-IT') : '—';
-            html += '<tr>';
-            html += '<td><strong>' + m.iid + '</strong></td>';
-            html += '<td><code>' + m.uid + '</code></td>';
-            html += '<td>' + (m.nome || '—') + '</td>';
-            html += '<td>' + (m.email || '—') + '</td>';
-            html += '<td>' + bytes + '</td>';
-            html += '<td>' + (m.city || '—') + '</td>';
-            html += '<td><span style="font-size:12px;font-weight:600;color:' + activeCol + '">' + activeStr + '</span></td>';
-            html += '</tr>';
+            allMembers.push({ m: m, sev: sev, sig: cluster.soft_signature || {}, lset: lset, openDups: cluster.open_duplicates || [] });
         });
-
-        html += '</tbody></table></div>';
-        html += '</div>'; // members
-
-        html += '</div>'; // dq-sim-cluster
     });
 
+    var totalSuspect = allMembers.length;
+    var nCrit = clusters.filter(function(c) { return (c.open_duplicates||[]).length > 0; }).length;
+
+    var html = '';
+
+    // ---- Barra sommario ----
+    html += '<div class="dq-sim-summary" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">';
+    html += '<span><strong>' + totalSuspect + '</strong> interviste sospette su <strong>' + total + '</strong> analizzate';
+    if (nCrit > 0) html += ' &nbsp;<span style="color:#8b1a1a;font-weight:700;">&#9888; ' + nCrit + ' con aperte duplicate</span>';
+    html += '</span>';
+    html += '<button onclick="simDownloadCsv()" class="dq-btn" style="font-size:12px;padding:5px 12px;gap:5px;">'
+          + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>'
+          + 'Scarica Excel (.csv)</button>';
+    html += '</div>';
+
+    // ---- Alert risposte aperte duplicate ----
+    var allOD = [];
+    clusters.forEach(function(c) { (c.open_duplicates || []).forEach(function(od) { allOD.push(od); }); });
+    if (allOD.length > 0) {
+        html += '<div style="margin-bottom:14px;padding:12px 16px;background:#fff5f5;border:1px solid #f5b8b8;border-left:4px solid #d04040;border-radius:6px;">';
+        html += '<div style="font-size:12px;font-weight:700;color:#8b1a1a;margin-bottom:10px;">';
+        html += '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:middle;margin-right:4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+        html += 'Segnale critico &mdash; Risposte aperte identiche tra intervistati distinti</div>';
+        html += '<div class="dq-sim-sig-items">';
+        allOD.forEach(function(od) {
+            var qInfo  = qMap[parseInt(od.questionId)] || {};
+            var code   = qInfo.code || ('Q' + od.questionId);
+            var odText = String(od.text);
+            html += '<span class="dq-sim-sig-item" style="background:white;border-color:#f5b8b8;">';
+            html += '<span class="dq-sim-qid" style="color:#8b1a1a;">' + escHtml(code) + '</span>';
+            html += '<span class="dq-sim-qans">&ldquo;' + escHtml(odText.substring(0, 80)) + (odText.length > 80 ? '…' : '') + '&rdquo;</span>';
+            html += '<span class="dq-sim-qpct" style="color:#8b1a1a;">&times;' + od.count + ' (' + od.pct + '%)</span>';
+            html += '</span>';
+        });
+        html += '</div></div>';
+    }
+
+    // ---- Unica tabella con intestazione sticky ----
+    html += '<div class="dq-sim-unified-wrap">';
+    html += '<table class="dq-table dq-sim-unified-table">';
+
+    // Thead sticky
+    html += '<thead><tr>';
+    html += '<th style="min-width:72px;">Gravità</th>';
+    html += '<th style="min-width:52px;">IID</th>';
+    html += '<th style="min-width:100px;">UID</th>';
+    html += '<th style="min-width:130px;">Nome</th>';
+    html += '<th style="min-width:60px;text-align:right;">Bytes</th>';
+    html += '<th style="min-width:70px;">Account</th>';
+    allSigQids.forEach(function(qid) {
+        var qInfo  = qMap[qid] || {};
+        var code   = qInfo.code || ('Q' + qid);
+        var qtext  = cleanQText(qInfo.text || '');
+        var meta   = sigQidMeta[qid] || {};
+        var tipParts = [];
+        if (qtext) tipParts.push(escHtml(qtext.substring(0, 100)));
+        if (meta.global_pct !== undefined) tipParts.push('Globale: ' + meta.global_pct + '%');
+        var tip = tipParts.length ? ' data-bs-toggle="tooltip" data-bs-placement="top" title="' + tipParts.join(' — ') + '"' : '';
+        html += '<th style="text-align:center;min-width:46px;"' + tip + '>' + escHtml(code) + '</th>';
+    });
+    html += '</tr></thead>';
+
+    // Tbody
+    html += '<tbody>';
+    allMembers.forEach(function(entry) {
+        var m    = entry.m;
+        var sev  = entry.sev;
+        var sig  = entry.sig;
+        var lset = entry.lset;
+        var sevS = _sevStyle[sev];
+
+        var activeVal = m.active !== null ? m.active : 1;
+        var activeStr = activeMap[activeVal] || ('Stato ' + activeVal);
+        var activeCol = activeColor[activeVal] || 'oklch(50% 0.02 250)';
+        if (!m.is_interactive) { activeStr = 'Esterno'; activeCol = 'oklch(50% 0.02 250)'; }
+        var bytes = m.bytes !== null ? m.bytes.toLocaleString('it-IT') : '—';
+
+        html += '<tr style="border-left:3px solid ' + sevS.border + ';">';
+        html += '<td><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;' + sevS.badge + '">' + sevS.label + '</span></td>';
+        html += '<td><strong>' + m.iid + '</strong></td>';
+        html += '<td style="font-family:monospace;font-size:11px;">' + escHtml(m.uid) + '</td>';
+        html += '<td style="white-space:nowrap;">' + escHtml(m.nome || '—') + '</td>';
+        html += '<td style="text-align:right;">' + bytes + '</td>';
+        html += '<td><span style="font-size:11px;font-weight:600;color:' + activeCol + '">' + activeStr + '</span></td>';
+
+        var answers = m.answers || {};
+        allSigQids.forEach(function(qid) {
+            var val     = answers[qid];
+            var sigData = sig[qid];
+            var isLock  = lset[qid];
+            // Evidenzia solo se il valore coincide con la risposta prevalente del cluster
+            var matches = sigData && val !== undefined && String(val) === String(sigData.answer);
+            var bg = matches && isLock ? 'background:oklch(91% 0.13 85);'
+                   : matches           ? 'background:oklch(97% 0.06 85);'
+                   : '';
+            var display = val !== undefined ? escHtml(String(val)) : '<span style="color:#ccc;">—</span>';
+            html += '<td style="text-align:center;' + bg + '">' + display + '</td>';
+        });
+        html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+
     container.innerHTML = html;
-    initSimPopovers();
+
+    container.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+        bootstrap.Tooltip.getOrCreateInstance(el, { sanitize: false });
+    });
 }
 
-function toggleSim(id) {
-    var el = document.getElementById(id);
-    if (el) { el.style.display = el.style.display === 'none' ? '' : 'none'; }
+function simDownloadCsv() {
+    if (!_simLastResult) return;
+    var clusters = _simLastResult.clusters || [];
+
+    // Raccogli tutti i qid presenti in soft_signature di almeno un cluster (col del pattern)
+    var sigQidSet = {};
+    clusters.forEach(function(c) {
+        Object.keys(c.soft_signature || {}).forEach(function(q) { sigQidSet[q] = true; });
+    });
+    var sigQids = Object.keys(sigQidSet).map(Number).sort(function(a, b) { return a - b; });
+
+    var activeMap = { 0: 'Inattivo', 1: 'Attivo', 8: 'Bannato', 9: 'Eliminato' };
+
+    // Header
+    var headers = ['Gravita', 'Gruppo', 'IID', 'UID', 'Nome', 'Email', 'Bytes', 'Account', 'Citta'];
+    sigQids.forEach(function(q) {
+        headers.push((qMap[q] || {}).code || ('Q' + q));
+    });
+    headers.push('Aperte_duplicate');
+
+    var rows = [headers];
+
+    clusters.forEach(function(cluster, idx) {
+        var sev      = clusterSeverity(cluster);
+        var openStr  = (cluster.open_duplicates || []).map(function(od) {
+            var code = ((qMap[parseInt(od.questionId)] || {}).code) || ('Q' + od.questionId);
+            return code + ':"' + String(od.text).replace(/"/g, "'") + '"x' + od.count + '(' + od.pct + '%)';
+        }).join('; ');
+
+        cluster.members.forEach(function(m) {
+            var row = [
+                _sevStyle[sev].label,
+                idx + 1,
+                m.iid,
+                m.uid,
+                m.nome || '',
+                m.email || '',
+                m.bytes !== null ? m.bytes : '',
+                m.is_interactive ? (activeMap[m.active] || String(m.active)) : 'Esterno',
+                m.city || ''
+            ];
+            var answers = m.answers || {};
+            sigQids.forEach(function(q) {
+                var val = answers[q];
+                row.push(val !== undefined ? val : '');
+            });
+            row.push(openStr);
+            rows.push(row);
+        });
+    });
+
+    var csv = rows.map(function(row) {
+        return row.map(function(cell) {
+            var s = String(cell === null || cell === undefined ? '' : cell);
+            if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0) {
+                s = '"' + s.replace(/"/g, '""') + '"';
+            }
+            return s;
+        }).join(',');
+    }).join('\r\n');
+
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'similarity_{{ $prj }}_{{ $sid }}.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 var _simOptCache = {};
 
 function buildSimPopContent(el) {
     var qtextHtml = el.dataset.qtext
-        ? '<span style="font-size:.78rem;color:#555">' + el.dataset.qtext + '</span>'
+        ? '<span style="font-size:.78rem;color:#555">' + escHtml(el.dataset.qtext) + '</span>'
         : '<span style="font-size:.78rem;color:#aaa;font-style:italic">Testo non disponibile</span>';
-
-    if (el.dataset.isOpen === '1') return qtextHtml;
 
     var ans = el.dataset.answer || '';
     var labelLine = '<hr style="margin:6px 0;border-color:#eee">'
@@ -1297,52 +1174,43 @@ function buildSimPopContent(el) {
 
 function initSimPopovers() {
     document.querySelectorAll('#sim-content .fq-codice-pop').forEach(function(el) {
-        var pop = new bootstrap.Popover(el, {
+        new bootstrap.Popover(el, {
             html: true,
             trigger: 'hover focus',
             placement: 'auto',
             sanitize: false,
-            title: '<span style="font-size:.8rem;font-weight:600">' + el.dataset.codice + '</span>'
-                 + '<span style="font-size:.75rem;color:#888;font-weight:400;margin-left:6px">#' + el.dataset.qid + '</span>',
+            title: '<span style="font-size:.8rem;font-weight:600">' + escHtml(el.dataset.codice || '') + '</span>'
+                 + '<span style="font-size:.75rem;color:#888;font-weight:400;margin-left:6px">#' + escHtml(el.dataset.qid || '') + '</span>',
             content: function() { return buildSimPopContent(el); }
         });
 
-        if (el.dataset.isOpen !== '1' && el.dataset.answer !== undefined) {
-            el.addEventListener('shown.bs.popover', function() {
-                if (el.dataset.labelLoaded) return;
-                var qid = el.dataset.qid;
-                function applyLabel() {
-                    var idx = parseInt(el.dataset.answer);
-                    var opts = _simOptCache[qid];
-                    el.dataset.optLabel = (opts && opts[idx]) ? opts[idx] : '';
-                    el.dataset.labelLoaded = '1';
-                    var descId = el.getAttribute('aria-describedby');
-                    if (descId) {
-                        var popEl = document.getElementById(descId);
-                        if (popEl) {
-                            var body = popEl.querySelector('.popover-body');
-                            if (body) body.innerHTML = buildSimPopContent(el);
-                        }
+        el.addEventListener('shown.bs.popover', function() {
+            if (el.dataset.labelLoaded) return;
+            var qid = el.dataset.qid;
+            function applyLabel() {
+                var idx  = parseInt(el.dataset.answer);
+                var opts = _simOptCache[qid];
+                el.dataset.optLabel    = (opts && opts[idx]) ? opts[idx] : '';
+                el.dataset.labelLoaded = '1';
+                var descId = el.getAttribute('aria-describedby');
+                if (descId) {
+                    var popEl = document.getElementById(descId);
+                    if (popEl) {
+                        var body = popEl.querySelector('.popover-body');
+                        if (body) body.innerHTML = buildSimPopContent(el);
                     }
                 }
-                if (_simOptCache[qid] !== undefined) {
+            }
+            if (_simOptCache[qid] !== undefined) { applyLabel(); return; }
+            _simOptCache[qid] = null;
+            fetch('{{ route("targetField.getQuestionDetail") }}?prj={{ $prj }}&sid={{ $sid }}&question_id=' + qid)
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    _simOptCache[qid] = (d.success && d.question && d.question.options) ? d.question.options : {};
                     applyLabel();
-                    return;
-                }
-                _simOptCache[qid] = null; // mark as loading
-                fetch('{{ route("targetField.getQuestionDetail") }}?prj={{ $prj }}&sid={{ $sid }}&question_id=' + qid)
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        _simOptCache[qid] = (data.success && data.question && data.question.options)
-                            ? data.question.options : {};
-                        applyLabel();
-                    })
-                    .catch(function() {
-                        _simOptCache[qid] = {};
-                        applyLabel();
-                    });
-            });
-        }
+                })
+                .catch(function() { _simOptCache[qid] = {}; applyLabel(); });
+        });
     });
 }
 
@@ -2019,46 +1887,6 @@ body { font-family: 'Inter', system-ui, sans-serif; }
     border: 1px solid oklch(82% 0.08 80); font-size: 13px;
 }
 .dq-btn-sim:disabled { opacity: .6; cursor: not-allowed; }
-/* ---- Modal config duplicati ---- */
-.sim-modal-section { }
-.sim-modal-section-title { font-size:13px;font-weight:600;color:oklch(30% 0.06 255); }
-.sim-modal-count { font-size:12px;font-weight:400;color:#999;margin-left:6px; }
-.sim-modal-list {
-    border:1px solid oklch(90% 0.03 255);border-radius:6px;
-    max-height:240px;overflow-y:auto;background:#fafafa;
-}
-.sim-modal-qrow {
-    display:flex;align-items:center;gap:6px;
-    padding:6px 10px;border-bottom:1px solid oklch(93% 0.02 255);
-    transition:background .12s;
-}
-.sim-modal-qrow:last-child { border-bottom:none; }
-.sim-modal-qrow:hover { background:oklch(97% 0.01 255); }
-.sim-modal-qrow label { display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;min-width:0; }
-.sim-modal-qrow input[type=checkbox] { flex-shrink:0;width:14px;height:14px;cursor:pointer; }
-.sim-qcode { font-size:12px;font-weight:600;color:oklch(35% 0.10 255);min-width:54px;flex-shrink:0; }
-.sim-qtext { font-size:12px;color:#555;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1; }
-.sim-nopt { font-size:11px;padding:1px 6px;border-radius:3px;flex-shrink:0; }
-.sim-nopt-lo  { background:oklch(93% 0.05 25);color:oklch(40% 0.15 25); }
-.sim-nopt-hi  { background:oklch(93% 0.05 150);color:oklch(30% 0.12 150); }
-.sim-expand-btn {
-    font-size:12px;color:oklch(50% 0.08 255);background:none;border:none;
-    cursor:pointer;padding:2px 5px;flex-shrink:0;line-height:1;
-    border-radius:3px;transition:background .12s;
-}
-.sim-expand-btn:hover { background:oklch(92% 0.04 255); }
-.sim-options-panel { padding:4px 0 4px 36px;display:flex;flex-wrap:wrap;gap:4px; }
-.sim-opt-tag {
-    font-size:11px;background:#f0f0f0;border:1px solid #ddd;
-    border-radius:3px;padding:1px 6px;color:#444;
-}
-.sim-sel-btn {
-    font-size:11px;padding:2px 8px;border-radius:4px;
-    border:1px solid oklch(82% 0.04 255);background:white;
-    color:oklch(40% 0.08 255);cursor:pointer;transition:background .1s;
-}
-.sim-sel-btn:hover { background:oklch(95% 0.02 255); }
-/* ---- Fine modal ---- */
 .dq-sim-loading {
     display: flex; align-items: center; gap: 10px;
     color: oklch(48% 0.08 80); font-size: 14px; padding: 12px 0;
@@ -2088,6 +1916,37 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 .dq-sim-table td { font-size: 13px; padding: 9px 14px; border-bottom: 1px solid oklch(95% 0.004 250); color: oklch(25% 0.02 250); }
 .dq-sim-table tr:last-child td { border-bottom: none; }
 .dq-sim-table code  { font-size: 11px; background: oklch(96% 0.008 250); padding: 2px 6px; border-radius: 5px; color: oklch(40% 0.06 255); }
+/* Tabella unificata similarity — intestazione fissa */
+.dq-sim-unified-wrap {
+    max-height: 72vh;
+    overflow: auto;
+    border: 1px solid oklch(90% 0.006 250);
+    border-radius: 8px;
+    margin-top: 4px;
+}
+.dq-sim-unified-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.dq-sim-unified-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: oklch(97% 0.006 250);
+    border-bottom: 2px solid oklch(88% 0.01 250);
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: oklch(40% 0.04 250);
+    white-space: nowrap;
+    box-shadow: 0 1px 0 oklch(88% 0.01 250);
+}
+.dq-sim-unified-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid oklch(95% 0.004 250);
+    color: oklch(25% 0.02 250);
+    vertical-align: middle;
+}
+.dq-sim-unified-table tbody tr:hover td { background: oklch(98% 0.005 250); }
 .dq-sim-sig { padding: 14px 18px; background: oklch(98.5% 0.01 250); border-top: 1px solid oklch(93% 0.006 250); }
 .dq-sim-reason       { padding: 14px 18px; background: oklch(99% 0.015 80); border-bottom: 1px solid oklch(93% 0.006 250); }
 .dq-sim-reason-title { font-size: 11px; font-weight: 700; color: oklch(48% 0.02 250); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
