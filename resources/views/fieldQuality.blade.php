@@ -916,6 +916,7 @@ function runSimilarityCheck() {
             return;
         }
         renderSimilarityResults(data, content);
+        loadFlaggedUids();
     })
     .catch(function(e) {
         btn.disabled = false;
@@ -1187,6 +1188,24 @@ function buildSimPopContent(el) {
 
 /* ---- Segnalazione duplicati ---- */
 
+function loadFlaggedUids() {
+    fetch('{{ route("fieldQuality.similarityFlaggedUids") }}?prj={{ $prj }}&sid={{ $sid }}')
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var flagged = {};
+            (d.flagged_uids || []).forEach(function(uid) { flagged[uid] = true; });
+            document.querySelectorAll('#sim-content .sim-row-chk').forEach(function(chk) {
+                if (flagged[chk.dataset.uid]) {
+                    chk.disabled = true;
+                    chk.checked  = false;
+                    chk.title    = 'Già segnalato per questa ricerca';
+                    chk.closest('tr').style.opacity = '.55';
+                }
+            });
+            simUpdateFlagBar();
+        });
+}
+
 function simUpdateFlagBar() {
     var checked = document.querySelectorAll('#sim-content .sim-row-chk:checked');
     var btn     = document.getElementById('sim-flag-btn');
@@ -1241,10 +1260,8 @@ function simFlagSelected() {
         if (d.success) {
             fb.style.color  = 'oklch(38% 0.14 150)';
             fb.textContent  = '✓ ' + d.flagged + ' record salvati';
-            // deseleziona le righe flaggate
-            checked.forEach(function(chk) { chk.checked = false; });
             document.getElementById('sim-chk-all').checked = false;
-            simUpdateFlagBar();
+            loadFlaggedUids(); // disabilita i checkbox degli UID appena segnalati
         } else {
             fb.style.color = 'oklch(45% 0.16 25)';
             fb.textContent = 'Errore: ' + (d.error || 'sconosciuto');

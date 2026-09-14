@@ -632,6 +632,26 @@ class FieldQualityController extends Controller
         return response()->json(['total_interviews' => $n, 'clusters' => $result]);
     }
 
+    public function similarityFlaggedUids(Request $request)
+    {
+        $prj = (string) $request->input('prj', '');
+        $sid = (string) $request->input('sid', '');
+
+        if ($prj === '' || $sid === '') {
+            return response()->json(['flagged_uids' => []]);
+        }
+
+        $uids = DB::table('t_panel_similar')
+            ->where('prj', $prj)
+            ->where('sid', $sid)
+            ->pluck('uid')
+            ->unique()
+            ->values()
+            ->all();
+
+        return response()->json(['flagged_uids' => $uids]);
+    }
+
     public function similarityFlag(Request $request)
     {
         $prj  = (string) $request->input('prj', '');
@@ -645,6 +665,21 @@ class FieldQualityController extends Controller
         $uids = array_values(array_unique(array_filter($uids)));
         if (count($uids) < 2) {
             return response()->json(['error' => 'UID duplicati o non validi'], 422);
+        }
+
+        // Guardia server-side: rifiuta se uno degli UID è già segnalato per questo studio
+        $already = DB::table('t_panel_similar')
+            ->where('prj', $prj)
+            ->where('sid', $sid)
+            ->whereIn('uid', $uids)
+            ->pluck('uid')
+            ->all();
+
+        if (!empty($already)) {
+            return response()->json([
+                'error'   => 'UID già segnalati per questa ricerca: ' . implode(', ', $already),
+                'already' => $already,
+            ], 422);
         }
 
         $now  = now()->format('Y-m-d H:i:s');

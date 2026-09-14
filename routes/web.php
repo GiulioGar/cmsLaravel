@@ -75,6 +75,7 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/fieldQuality/addToBlackList', [FieldQualityController::class, 'addToBlackList'])->name('fieldQuality.addToBlackList');
     Route::post('/fieldQuality/similarity-check', [FieldQualityController::class, 'similarityCheck'])->name('fieldQuality.similarityCheck');
     Route::post('/fieldQuality/similarity-flag', [FieldQualityController::class, 'similarityFlag'])->name('fieldQuality.similarityFlag');
+    Route::get('/fieldQuality/similarity-flags', [FieldQualityController::class, 'similarityFlaggedUids'])->name('fieldQuality.similarityFlaggedUids');
     Route::get('/fieldQuality/questions-meta', [FieldQualityController::class, 'questionsMeta'])->name('fieldQuality.questionsMeta');
 
     // ============================================
