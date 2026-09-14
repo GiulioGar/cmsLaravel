@@ -25,13 +25,51 @@
         </div>
     </div>
 
-    {{-- ═══ KPI GLOBALI ════════════════════════════════════════════════════ --}}
+    {{-- ═══ TABS (in cima) ════════════════════════════════════════════════ --}}
+    <div class="pq-tabs-bar">
+        <ul class="nav pq-tabs" id="pqTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-panelisti-btn"
+                        data-bs-toggle="tab" data-bs-target="#tab-panelisti"
+                        type="button" role="tab">
+                    <i class="bi bi-people me-1"></i>Panelisti
+                    <span class="pq-tab-count" id="countPanelisti">{{ $panelisti->count() }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-ricerche-btn"
+                        data-bs-toggle="tab" data-bs-target="#tab-ricerche"
+                        type="button" role="tab">
+                    <i class="bi bi-journal-text me-1"></i>Ricerche
+                    <span class="pq-tab-count">{{ $ricercheConDati->count() + $ricerceSenzaDati->count() }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-panel-esterni-btn"
+                        data-bs-toggle="tab" data-bs-target="#tab-panel-esterni"
+                        type="button" role="tab">
+                    <i class="bi bi-globe me-1"></i>Panel Esterni
+                    <span class="pq-tab-count">{{ $panelEsterniRollup->count() }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-duplicati-btn"
+                        data-bs-toggle="tab" data-bs-target="#tab-duplicati"
+                        type="button" role="tab">
+                    <i class="bi bi-copy me-1"></i>Duplicati
+                    <span class="pq-tab-count" style="{{ $nUidDuplicati > 0 ? 'background:oklch(88% 0.10 25);color:oklch(40% 0.16 25);' : '' }}">{{ $nUidDuplicati }}</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    {{-- ═══ KPI (swap su cambio tab) ══════════════════════════════════════ --}}
     @php
         $scoreColor = ($globalStats->score_medio ?? 0) >= 70
             ? 'oklch(55% 0.13 150)'
             : (($globalStats->score_medio ?? 0) >= 50 ? 'oklch(58% 0.14 75)' : 'oklch(55% 0.17 25)');
     @endphp
-    <div class="pq-kpi-grid">
+    <div id="kpi-global" class="pq-kpi-grid">
         <div class="pq-kpi-cell">
             <div class="pq-kpi-label">
                 <i class="bi bi-people-fill" style="color:oklch(55% 0.10 255);"></i>
@@ -82,41 +120,115 @@
         </div>
     </div>
 
-    {{-- ═══ TABS ════════════════════════════════════════════════════════════ --}}
-    <ul class="nav pq-tabs" id="pqTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="tab-panelisti-btn"
-                    data-bs-toggle="tab" data-bs-target="#tab-panelisti"
-                    type="button" role="tab">
-                <i class="bi bi-people me-1"></i>Panelisti
-                <span class="pq-tab-count" id="countPanelisti">{{ $panelisti->count() }}</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-ricerche-btn"
-                    data-bs-toggle="tab" data-bs-target="#tab-ricerche"
-                    type="button" role="tab">
-                <i class="bi bi-journal-text me-1"></i>Ricerche
-                <span class="pq-tab-count">{{ $ricercheConDati->count() + $ricerceSenzaDati->count() }}</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-panel-esterni-btn"
-                    data-bs-toggle="tab" data-bs-target="#tab-panel-esterni"
-                    type="button" role="tab">
-                <i class="bi bi-globe me-1"></i>Panel Esterni
-                <span class="pq-tab-count">{{ $panelEsterniRollup->count() }}</span>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-duplicati-btn"
-                    data-bs-toggle="tab" data-bs-target="#tab-duplicati"
-                    type="button" role="tab">
-                <i class="bi bi-copy me-1"></i>Duplicati
-                <span class="pq-tab-count" style="{{ $nUidDuplicati > 0 ? 'background:oklch(88% 0.10 25);color:oklch(40% 0.16 25);' : '' }}">{{ $nUidDuplicati }}</span>
-            </button>
-        </li>
-    </ul>
+    <div id="kpi-duplicati" class="pq-kpi-grid" style="display:none;">
+        <div class="pq-kpi-cell">
+            <div class="pq-kpi-label"><i class="bi bi-diagram-3-fill" style="color:oklch(50% 0.14 55);"></i> Gruppi sospetti</div>
+            <div class="pq-kpi-value" style="color:oklch(38% 0.12 55);">{{ $nGruppi }}</div>
+            <div class="pq-kpi-sub">identità probabilmente doppie</div>
+        </div>
+        <div class="pq-kpi-cell">
+            <div class="pq-kpi-label"><i class="bi bi-people-fill" style="color:oklch(42% 0.13 255);"></i> UID coinvolti</div>
+            <div class="pq-kpi-value" style="color:oklch(38% 0.10 255);">{{ $nUidDuplicati }}</div>
+            <div class="pq-kpi-sub">panelisti segnalati almeno una volta</div>
+        </div>
+        <div class="pq-kpi-cell">
+            <div class="pq-kpi-label"><i class="bi bi-journal-text" style="color:oklch(45% 0.10 190);"></i> Ricerche</div>
+            <div class="pq-kpi-value" style="color:oklch(38% 0.08 190);">{{ $nRicercheDuplicati }}</div>
+            <div class="pq-kpi-sub">ricerche con almeno una segnalazione</div>
+        </div>
+        <div class="pq-kpi-cell">
+            <div class="pq-kpi-label"><i class="bi bi-exclamation-triangle-fill" style="color:oklch(50% 0.17 25);"></i> Alto rischio</div>
+            <div class="pq-kpi-value" style="color:{{ $nAltoRischio > 0 ? 'oklch(45% 0.18 25)' : 'oklch(50% 0.02 250)' }};">{{ $nAltoRischio }}</div>
+            <div class="pq-kpi-sub">gruppi segnalati in 2+ ricerche</div>
+        </div>
+    </div>
+
+    {{-- ═══ ANALISI GRUPPI (visibile solo su tab Duplicati) ══════════════ --}}
+    @if($nGruppi > 0)
+    <div id="analisi-gruppi-section" style="display:none;margin-bottom:20px;">
+        <div class="pq-card" style="margin-bottom:0;">
+            <div class="pq-card-header pq-border-amber" style="cursor:pointer;" onclick="bootstrap.Collapse.getOrCreateInstance(document.getElementById('collapseGruppi')).toggle()">
+                <div class="pq-card-header-left">
+                    <i class="bi bi-diagram-3-fill" style="font-size:16px;color:oklch(50% 0.14 55);"></i>
+                    <div>
+                        <div class="pq-card-title" style="color:oklch(38% 0.12 55);">Analisi gruppi probabilmente identici</div>
+                        <div class="pq-card-sub">Connessioni transitive tra UID segnalati — ogni gruppo è una potenziale identità duplicata</div>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    @if($nAltoRischio > 0)
+                    <span style="font-size:11px;padding:3px 10px;background:oklch(93% 0.08 25);color:oklch(40% 0.16 25);border-radius:999px;font-weight:700;">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ $nAltoRischio }} alto rischio
+                    </span>
+                    @endif
+                    <span style="font-size:11px;padding:3px 10px;background:oklch(94% 0.06 55);color:oklch(38% 0.12 55);border-radius:999px;font-weight:700;">{{ $nGruppi }} gruppi</span>
+                    <i class="bi bi-chevron-down" id="icnGruppi" style="font-size:12px;color:oklch(55% 0.04 250);transition:transform .2s;"></i>
+                </div>
+            </div>
+            <div class="collapse show" id="collapseGruppi">
+                <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr style="border-bottom:2px solid oklch(92% 0.006 250);background:oklch(98% 0.004 250);">
+                            <th style="padding:10px 16px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Rischio</th>
+                            <th style="padding:10px 16px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Utenti del gruppo</th>
+                            <th style="padding:10px 16px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Ricerche coinvolte</th>
+                            <th style="padding:10px 16px;text-align:center;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Segn.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($gruppiSospetti as $gi => $g)
+                    @php
+                        $isAlto  = $g['risk'] === 'alto';
+                        $rowBg   = $gi % 2 === 0 ? '#fff' : 'oklch(98.5% 0.003 250)';
+                        $riskClr = $isAlto ? 'oklch(42% 0.18 25)' : 'oklch(44% 0.13 75)';
+                        $riskBg  = $isAlto ? 'oklch(93% 0.08 25)' : 'oklch(95% 0.07 80)';
+                        $riskLbl = $isAlto ? 'Alto' : 'Medio';
+                        $riskIco = $isAlto ? 'bi-exclamation-triangle-fill' : 'bi-dash-circle-fill';
+                    @endphp
+                    <tr style="background:{{ $rowBg }};border-bottom:1px solid oklch(93% 0.004 250);">
+                        <td style="padding:10px 16px;white-space:nowrap;">
+                            <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:{{ $riskBg }};color:{{ $riskClr }};border-radius:999px;font-weight:700;font-size:11px;">
+                                <i class="bi {{ $riskIco }}" style="font-size:10px;"></i>{{ $riskLbl }}
+                            </span>
+                        </td>
+                        <td style="padding:10px 16px;">
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                            @foreach($g['membri'] as $m)
+                                <a href="{{ url('user/' . $m['uid']) }}" target="_blank"
+                                   style="display:inline-flex;flex-direction:column;padding:4px 10px;background:oklch(97% 0.025 250);border:1px solid oklch(88% 0.05 250);border-radius:8px;text-decoration:none;transition:background .12s;">
+                                    <span style="font-family:monospace;font-size:10px;color:oklch(32% 0.10 255);font-weight:600;">{{ $m['uid'] }}</span>
+                                    @if($m['name'])
+                                        <span style="font-size:10px;color:oklch(48% 0.04 250);margin-top:1px;">{{ $m['name'] }}</span>
+                                    @endif
+                                </a>
+                            @endforeach
+                            </div>
+                        </td>
+                        <td style="padding:10px 16px;">
+                            <div style="display:flex;flex-direction:column;gap:3px;">
+                            @foreach($g['ricerche'] as $rKey => $rDesc)
+                                <span style="font-size:11px;">
+                                    <span style="font-family:monospace;color:oklch(48% 0.08 250);font-weight:600;">{{ $rKey }}</span>
+                                    @if($rDesc && $rDesc !== $rKey)
+                                        <span style="color:oklch(55% 0.03 250);"> — {{ Str::limit($rDesc, 38) }}</span>
+                                    @endif
+                                </span>
+                            @endforeach
+                            </div>
+                        </td>
+                        <td style="padding:10px 16px;text-align:center;font-weight:800;font-size:15px;color:{{ $riskClr }};">
+                            {{ $g['segnalazioni'] }}
+                        </td>
+                    </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <div class="tab-content">
 
@@ -723,58 +835,80 @@
 
                 <div class="pq-filters">
                     <input type="text" class="pq-filter-input" id="fltDuplicatiSearch"
-                           placeholder="Cerca per PRJ, SID o UID…">
-                    <span class="pq-filter-count" id="duplicatiVisibili">{{ $duplicati->count() }} righe</span>
+                           placeholder="Cerca per UID o nome…">
+                    <span class="pq-filter-count" id="duplicatiVisibili">{{ $duplicati->count() }} panelisti</span>
                 </div>
 
                 <div class="pq-table-wrap">
                     <table class="pq-table" id="tblDuplicati">
                         <thead class="pq-thead">
                             <tr>
-                                <th class="pq-th">PRJ / SID</th>
-                                <th class="pq-th">Ricerca</th>
                                 <th class="pq-th">UID</th>
                                 <th class="pq-th">Nome</th>
+                                <th class="pq-th">Segnalazioni</th>
                                 <th class="pq-th">Simile a</th>
-                                <th class="pq-th" style="white-space:nowrap;">Segnalato il</th>
+                                <th class="pq-th" style="white-space:nowrap;">Ultima segn.</th>
                             </tr>
                         </thead>
                         <tbody id="bodyDuplicati">
                         @foreach($duplicati as $d)
                         @php
-                            $similarUids = array_filter(array_map('trim', explode(';', $d->similar_to)));
+                            $ricercheTooltip = implode('<br>', array_map(
+                                fn($key, $desc) => '<span style="font-family:monospace;font-size:11px;">' . e($key) . '</span>'
+                                    . ($desc && $desc !== $key ? ' &mdash; ' . e($desc) : ''),
+                                array_keys($d['ricerche']),
+                                array_values($d['ricerche'])
+                            ));
                         @endphp
                         <tr class="pq-row"
-                            data-prj="{{ strtolower($d->prj) }}"
-                            data-sid="{{ strtolower($d->sid) }}"
-                            data-uid="{{ strtolower($d->uid) }}">
+                            data-uid="{{ strtolower($d['uid']) }}"
+                            data-name="{{ strtolower($d['full_name'] ?? '') }}">
                             <td class="pq-td">
-                                <div class="pq-td-mono" style="font-size:11px;color:oklch(50% 0.02 250);">{{ $d->prj }}</div>
-                                <div class="pq-td-mono fw-semibold">{{ $d->sid }}</div>
-                            </td>
-                            <td class="pq-td" style="max-width:200px;">
-                                <span style="font-weight:500;color:oklch(25% 0.02 250);">{{ $d->description ?? '—' }}</span>
-                            </td>
-                            <td class="pq-td">
-                                <a href="{{ url('user/' . $d->uid) }}" target="_blank" class="pq-user-link">
-                                    <span class="pq-td-mono" style="font-size:11px;">{{ $d->uid }}</span>
+                                <a href="{{ url('user/' . $d['uid']) }}" target="_blank" class="pq-user-link">
+                                    <span class="pq-td-mono" style="font-size:11px;">{{ $d['uid'] }}</span>
                                 </a>
                             </td>
                             <td class="pq-td">
-                                <span style="font-size:13px;">{{ $d->full_name ?: '—' }}</span>
+                                <span style="font-size:13px;">{{ $d['full_name'] ?: '—' }}</span>
                             </td>
                             <td class="pq-td">
-                                <div style="display:flex;flex-wrap:wrap;gap:4px;">
-                                @foreach($similarUids as $sUid)
-                                    <a href="{{ url('user/' . $sUid) }}" target="_blank"
-                                       style="font-family:monospace;font-size:10px;padding:2px 6px;background:oklch(95% 0.03 250);border:1px solid oklch(88% 0.04 250);border-radius:4px;color:oklch(35% 0.08 255);text-decoration:none;">
-                                        {{ $sUid }}
-                                    </a>
-                                @endforeach
-                                </div>
+                                <span data-bs-toggle="tooltip" data-bs-html="true"
+                                      data-bs-placement="right"
+                                      title="{{ $ricercheTooltip }}"
+                                      style="display:inline-flex;align-items:center;gap:5px;cursor:default;">
+                                    <span style="font-size:15px;font-weight:700;color:oklch(42% 0.14 55);">{{ $d['segnalazioni'] }}</span>
+                                    <i class="bi bi-info-circle" style="font-size:11px;color:oklch(60% 0.08 250);"></i>
+                                </span>
+                            </td>
+                            <td class="pq-td">
+                                @php
+                                    $simList  = $d['simile_a'];
+                                    $simTotal = count($simList);
+                                    $popLines = [];
+                                    foreach ($simList as $sUid => $cnt) {
+                                        $line = '<a href="' . url('user/' . $sUid) . '" target="_blank"'
+                                              . ' style="font-family:monospace;font-size:11px;color:#1a6fc4;text-decoration:none;">'
+                                              . e($sUid) . '</a>';
+                                        if ($cnt > 1) {
+                                            $line .= ' <span style="font-size:10px;font-weight:700;color:#b45309;">×' . $cnt . '</span>';
+                                        }
+                                        $popLines[] = $line;
+                                    }
+                                    $popContent = implode('<br>', $popLines);
+                                @endphp
+                                <span class="dup-sim-trigger" tabindex="0"
+                                      data-bs-toggle="popover"
+                                      data-bs-trigger="click"
+                                      data-bs-html="true"
+                                      data-bs-placement="left"
+                                      data-bs-content="{{ $popContent }}"
+                                      style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:3px 8px;background:oklch(95% 0.03 250);border:1px solid oklch(85% 0.05 250);border-radius:5px;font-size:12px;color:oklch(35% 0.10 255);white-space:nowrap;">
+                                    <i class="bi bi-people-fill" style="font-size:11px;opacity:.7;"></i>
+                                    Simile a <strong style="margin-left:2px;">{{ $simTotal }}</strong>&nbsp;{{ $simTotal === 1 ? 'utente' : 'utenti' }}
+                                </span>
                             </td>
                             <td class="pq-td pq-td-muted" style="white-space:nowrap;font-size:12px;">
-                                {{ \Carbon\Carbon::parse($d->flagged_at)->format('d/m/Y H:i') }}
+                                {{ \Carbon\Carbon::parse($d['ultima'])->format('d/m/Y H:i') }}
                             </td>
                         </tr>
                         @endforeach
@@ -869,6 +1003,44 @@ document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
     new bootstrap.Tooltip(el, { trigger: 'hover' });
 });
 
+/* ── Swap KPI globali ↔ KPI duplicati al cambio tab ───────────── */
+(function () {
+    var kpiGlobal = document.getElementById('kpi-global');
+    var kpiDup    = document.getElementById('kpi-duplicati');
+    if (!kpiGlobal || !kpiDup) return;
+
+    function syncKpi(targetId) {
+        var isDup    = targetId === 'tab-duplicati';
+        var gruppiEl = document.getElementById('analisi-gruppi-section');
+        kpiGlobal.style.display = isDup ? 'none' : '';
+        kpiDup.style.display    = isDup ? ''     : 'none';
+        if (gruppiEl) gruppiEl.style.display = isDup ? '' : 'none';
+    }
+
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function (btn) {
+        btn.addEventListener('shown.bs.tab', function (e) {
+            syncKpi(e.target.getAttribute('data-bs-target').replace('#', ''));
+        });
+    });
+})();
+
+/* ── Popover duplicati (click, con link cliccabili) ────────────── */
+document.querySelectorAll('.dup-sim-trigger').forEach(function (el) {
+    var pop = new bootstrap.Popover(el, { trigger: 'manual', html: true });
+    el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        document.querySelectorAll('.dup-sim-trigger').forEach(function (other) {
+            if (other !== el) bootstrap.Popover.getInstance(other)?.hide();
+        });
+        pop.toggle();
+    });
+});
+document.addEventListener('click', function () {
+    document.querySelectorAll('.dup-sim-trigger').forEach(function (el) {
+        bootstrap.Popover.getInstance(el)?.hide();
+    });
+});
+
 /* ── Panelisti ─────────────────────────────────────────────────── */
 var _pan = pqTable({
     rowsSelector: '#bodyPanelisti .pq-row',
@@ -960,13 +1132,24 @@ if (document.getElementById('bodyDuplicati')) {
         pageSize:     30,
         match: function (r) {
             var term = document.getElementById('fltDuplicatiSearch').value.toLowerCase().trim();
-            return !term || r.dataset.prj.includes(term) || r.dataset.sid.includes(term) || r.dataset.uid.includes(term);
+            return !term || (r.dataset.uid || '').includes(term) || (r.dataset.name || '').includes(term);
         }
     });
     window.pqGoDup = function (p) { _dup.go(p); };
     document.getElementById('fltDuplicatiSearch').addEventListener('input', function () { _dup.reset(); });
     _dup.render();
+
+    var elCG = document.getElementById('collapseGruppi');
+    if (elCG) {
+        elCG.addEventListener('hide.bs.collapse', function () {
+            document.getElementById('icnGruppi').style.transform = 'rotate(-90deg)';
+        });
+        elCG.addEventListener('show.bs.collapse', function () {
+            document.getElementById('icnGruppi').style.transform = 'rotate(0deg)';
+        });
+    }
 }
+
 
 /* ── Panel esterni — dettaglio per ricerca ───────────────────────── */
 if (document.getElementById('bodyPanelEst')) {

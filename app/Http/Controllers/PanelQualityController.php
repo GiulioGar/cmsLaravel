@@ -179,31 +179,111 @@ class PanelQualityController extends Controller
             ->get();
 
         // ── Tab Duplicati ─────────────────────────────────────────────────────
-        $duplicati = DB::table('t_panel_similar as ps')
+        $duplicatiRaw = DB::table('t_panel_similar as ps')
             ->leftJoin('t_panel_control as pc', function ($join) {
                 $join->on('ps.sid', '=', 'pc.sur_id')
                      ->on('ps.prj', '=', 'pc.prj');
             })
-            ->select('ps.prj', 'ps.sid', 'ps.uid', 'ps.similar_to', 'ps.flagged_at', 'pc.description')
-            ->orderBy('ps.prj')
-            ->orderBy('ps.sid')
+            ->select('ps.uid', 'ps.prj', 'ps.sid', 'ps.similar_to', 'ps.flagged_at', 'pc.description')
             ->orderByDesc('ps.flagged_at')
-            ->orderBy('ps.uid')
             ->get();
 
+        // Aggrega per uid: segnalazioni count, ricerche coinvolte, conteggio simile_a
+        $byUid = [];
+        foreach ($duplicatiRaw as $d) {
+            $uid = $d->uid;
+            if (!isset($byUid[$uid])) {
+                $byUid[$uid] = [
+                    'uid'          => $uid,
+                    'full_name'    => null,
+                    'segnalazioni' => 0,
+                    'ricerche'     => [], // 'PRJ/SID' => description
+                    'simile_a'     => [], // uid => count
+                    'ultima'       => $d->flagged_at,
+                ];
+            }
+            $byUid[$uid]['segnalazioni']++;
+            $rKey = $d->prj . '/' . $d->sid;
+            $byUid[$uid]['ricerche'][$rKey] = $d->description ?? $rKey;
+            foreach (array_filter(array_map('trim', explode(';', $d->similar_to))) as $other) {
+                $byUid[$uid]['simile_a'][$other] = ($byUid[$uid]['simile_a'][$other] ?? 0) + 1;
+            }
+            if ($d->flagged_at > $byUid[$uid]['ultima']) {
+                $byUid[$uid]['ultima'] = $d->flagged_at;
+            }
+        }
+
         $nomiDuplicati = DB::table('t_user_info')
-            ->whereIn('user_id', $duplicati->pluck('uid')->unique()->values())
+            ->whereIn('user_id', array_keys($byUid))
             ->select('user_id', 'first_name', 'second_name')
             ->get()
             ->keyBy('user_id');
 
-        $duplicati->each(function ($d) use ($nomiDuplicati) {
-            $ui = $nomiDuplicati->get($d->uid);
-            $d->full_name = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null;
+        foreach ($byUid as $uid => &$row) {
+            $ui = $nomiDuplicati->get($uid);
+            $row['full_name'] = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null;
+            arsort($row['simile_a']); // ordina per occorrenze desc
+        }
+        unset($row);
+
+        usort($byUid, fn ($a, $b) => $b['segnalazioni'] - $a['segnalazioni']);
+
+        $duplicati          = collect(array_values($byUid));
+        $nUidDuplicati      = $duplicati->count();
+        $nRicercheDuplicati = $duplicatiRaw->map(fn ($d) => $d->prj . '|' . $d->sid)->unique()->count();
+
+        // ── Componenti connesse (BFS) — gruppi "probabilmente stessa persona" ──
+        // Il grafo è già simmetrico (record speculari in t_panel_similar).
+        $byUidMap = array_column(iterator_to_array($duplicati), null, 'uid');
+        $visitati = [];
+        $gruppiSospetti = [];
+
+        foreach (array_keys($byUidMap) as $startUid) {
+            if (isset($visitati[$startUid])) continue;
+            $membri = [];
+            $coda   = [$startUid];
+            while (!empty($coda)) {
+                $node = array_shift($coda);
+                if (isset($visitati[$node])) continue;
+                $visitati[$node] = true;
+                $membri[] = $node;
+                foreach (array_keys($byUidMap[$node]['simile_a'] ?? []) as $vicino) {
+                    if (!isset($visitati[$vicino]) && isset($byUidMap[$vicino])) {
+                        $coda[] = $vicino;
+                    }
+                }
+            }
+            if (count($membri) < 2) continue;
+
+            $ricercheGruppo  = [];
+            $maxRipetizioni  = 0;
+            $segnTotali      = 0;
+            $membriDettaglio = [];
+            foreach ($membri as $uid) {
+                $row = $byUidMap[$uid];
+                $segnTotali += $row['segnalazioni'];
+                foreach ($row['ricerche'] as $k => $v) { $ricercheGruppo[$k] = $v; }
+                foreach ($row['simile_a'] as $cnt) { if ($cnt > $maxRipetizioni) $maxRipetizioni = $cnt; }
+                $membriDettaglio[] = ['uid' => $uid, 'name' => $row['full_name']];
+            }
+
+            $gruppiSospetti[] = [
+                'membri'         => $membriDettaglio,
+                'size'           => count($membri),
+                'ricerche'       => $ricercheGruppo,
+                'segnalazioni'   => $segnTotali,
+                'max_rip'        => $maxRipetizioni,
+                'risk'           => $maxRipetizioni >= 2 ? 'alto' : 'medio',
+            ];
+        }
+
+        usort($gruppiSospetti, function ($a, $b) {
+            if ($a['risk'] !== $b['risk']) return $a['risk'] === 'alto' ? -1 : 1;
+            return $b['size'] - $a['size'];
         });
 
-        $nUidDuplicati      = $duplicati->pluck('uid')->unique()->count();
-        $nRicercheDuplicati = $duplicati->map(fn ($d) => $d->prj . '|' . $d->sid)->unique()->count();
+        $nGruppi         = count($gruppiSospetti);
+        $nAltoRischio    = count(array_filter($gruppiSospetti, fn ($g) => $g['risk'] === 'alto'));
 
         return view('panelQuality', compact(
             'globalStats',
@@ -218,7 +298,10 @@ class PanelQualityController extends Controller
             'panelEsterniPerRicerca',
             'duplicati',
             'nUidDuplicati',
-            'nRicercheDuplicati'
+            'nRicercheDuplicati',
+            'gruppiSospetti',
+            'nGruppi',
+            'nAltoRischio'
         ));
     }
 
