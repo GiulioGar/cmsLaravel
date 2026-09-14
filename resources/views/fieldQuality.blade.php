@@ -865,6 +865,7 @@
     }
 @endphp
 var qMap = @json($qMapForJs);
+var _userProfileBase = "{{ url('/user') }}";
 
 function cleanQText(s) {
     if (!s) return '';
@@ -1064,7 +1065,7 @@ function renderSimilarityResults(data, container) {
         html += '<td style="text-align:center;"><input type="checkbox" class="sim-row-chk" data-uid="' + escHtml(m.uid) + '" onchange="simUpdateFlagBar()"></td>';
         html += '<td><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;' + sevS.badge + '">' + sevS.label + '</span></td>';
         html += '<td><strong>' + m.iid + '</strong></td>';
-        html += '<td style="font-family:monospace;font-size:11px;"><a href="{{ url(\'/user\') }}/' + encodeURIComponent(m.uid) + '" target="_blank" style="color:inherit;text-decoration:underline dotted;">' + escHtml(m.uid) + '</a></td>';
+        html += '<td style="font-family:monospace;font-size:11px;"><a href="' + _userProfileBase + '/' + encodeURIComponent(m.uid) + '" target="_blank" style="color:inherit;text-decoration:underline dotted;">' + escHtml(m.uid) + '</a></td>';
         html += '<td style="white-space:nowrap;">' + escHtml(m.nome || '—') + '</td>';
         html += '<td style="text-align:right;">' + bytes + '</td>';
         html += '<td><span style="font-size:11px;font-weight:600;color:' + activeCol + '">' + activeStr + '</span></td>';
