@@ -1009,12 +1009,23 @@ function renderSimilarityResults(data, container) {
         html += '</div></div>';
     }
 
+    // ---- Barra segnalazione duplicati ----
+    html += '<div id="sim-flag-bar" style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">';
+    html += '<span id="sim-flag-count" style="font-size:12px;color:#888;">Seleziona righe per segnalarle come duplicati</span>';
+    html += '<button id="sim-flag-btn" onclick="simFlagSelected()" disabled'
+          + ' class="dq-btn" style="font-size:12px;padding:5px 12px;gap:5px;opacity:.4;cursor:default;">'
+          + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>'
+          + 'Segna come duplicati</button>';
+    html += '<span id="sim-flag-feedback" style="font-size:12px;display:none;"></span>';
+    html += '</div>';
+
     // ---- Unica tabella con intestazione sticky ----
     html += '<div class="dq-sim-unified-wrap">';
     html += '<table class="dq-table dq-sim-unified-table">';
 
     // Thead sticky
     html += '<thead><tr>';
+    html += '<th style="min-width:28px;"><input type="checkbox" id="sim-chk-all" title="Seleziona tutto" onchange="simToggleAll(this.checked)"></th>';
     html += '<th style="min-width:72px;">Gravità</th>';
     html += '<th style="min-width:52px;">IID</th>';
     html += '<th style="min-width:100px;">UID</th>';
@@ -1050,9 +1061,10 @@ function renderSimilarityResults(data, container) {
         var bytes = m.bytes !== null ? m.bytes.toLocaleString('it-IT') : '—';
 
         html += '<tr style="border-left:3px solid ' + sevS.border + ';">';
+        html += '<td style="text-align:center;"><input type="checkbox" class="sim-row-chk" data-uid="' + escHtml(m.uid) + '" onchange="simUpdateFlagBar()"></td>';
         html += '<td><span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;' + sevS.badge + '">' + sevS.label + '</span></td>';
         html += '<td><strong>' + m.iid + '</strong></td>';
-        html += '<td style="font-family:monospace;font-size:11px;">' + escHtml(m.uid) + '</td>';
+        html += '<td style="font-family:monospace;font-size:11px;"><a href="{{ url(\'/user\') }}/' + encodeURIComponent(m.uid) + '" target="_blank" style="color:inherit;text-decoration:underline dotted;">' + escHtml(m.uid) + '</a></td>';
         html += '<td style="white-space:nowrap;">' + escHtml(m.nome || '—') + '</td>';
         html += '<td style="text-align:right;">' + bytes + '</td>';
         html += '<td><span style="font-size:11px;font-weight:600;color:' + activeCol + '">' + activeStr + '</span></td>';
@@ -1170,6 +1182,81 @@ function buildSimPopContent(el) {
     }
     labelLine += '</span>';
     return qtextHtml + labelLine;
+}
+
+/* ---- Segnalazione duplicati ---- */
+
+function simUpdateFlagBar() {
+    var checked = document.querySelectorAll('#sim-content .sim-row-chk:checked');
+    var btn     = document.getElementById('sim-flag-btn');
+    var lbl     = document.getElementById('sim-flag-count');
+    var n       = checked.length;
+    if (n >= 2) {
+        btn.disabled     = false;
+        btn.style.opacity = '1';
+        btn.style.cursor  = 'pointer';
+        lbl.textContent   = n + ' utenti selezionati';
+        lbl.style.color   = 'oklch(40% 0.14 150)';
+    } else {
+        btn.disabled      = true;
+        btn.style.opacity = '.4';
+        btn.style.cursor  = 'default';
+        lbl.textContent   = n === 1 ? '1 utente selezionato — selezionane almeno 2' : 'Seleziona righe per segnalarle come duplicati';
+        lbl.style.color   = '#888';
+    }
+    document.getElementById('sim-flag-feedback').style.display = 'none';
+}
+
+function simToggleAll(checked) {
+    document.querySelectorAll('#sim-content .sim-row-chk').forEach(function(chk) {
+        chk.checked = checked;
+    });
+    simUpdateFlagBar();
+}
+
+function simFlagSelected() {
+    var checked = document.querySelectorAll('#sim-content .sim-row-chk:checked');
+    if (checked.length < 2) return;
+
+    var uids = Array.from(checked).map(function(chk) { return chk.dataset.uid; });
+    var prj  = '{{ $prj }}';
+    var sid  = '{{ $sid }}';
+    var btn  = document.getElementById('sim-flag-btn');
+    var fb   = document.getElementById('sim-flag-feedback');
+
+    btn.disabled = true;
+    btn.style.opacity = '.4';
+    fb.style.display  = 'inline';
+    fb.style.color    = '#888';
+    fb.textContent    = 'Salvataggio…';
+
+    fetch('{{ route("fieldQuality.similarityFlag") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ prj: prj, sid: sid, uids: uids })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) {
+            fb.style.color  = 'oklch(38% 0.14 150)';
+            fb.textContent  = '✓ ' + d.flagged + ' record salvati';
+            // deseleziona le righe flaggate
+            checked.forEach(function(chk) { chk.checked = false; });
+            document.getElementById('sim-chk-all').checked = false;
+            simUpdateFlagBar();
+        } else {
+            fb.style.color = 'oklch(45% 0.16 25)';
+            fb.textContent = 'Errore: ' + (d.error || 'sconosciuto');
+            btn.disabled   = false;
+            btn.style.opacity = '1';
+        }
+    })
+    .catch(function() {
+        fb.style.color = 'oklch(45% 0.16 25)';
+        fb.textContent = 'Errore di rete';
+        btn.disabled   = false;
+        btn.style.opacity = '1';
+    });
 }
 
 function initSimPopovers() {

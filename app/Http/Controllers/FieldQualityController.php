@@ -632,6 +632,39 @@ class FieldQualityController extends Controller
         return response()->json(['total_interviews' => $n, 'clusters' => $result]);
     }
 
+    public function similarityFlag(Request $request)
+    {
+        $prj  = (string) $request->input('prj', '');
+        $sid  = (string) $request->input('sid', '');
+        $uids = $request->input('uids', []);
+
+        if ($prj === '' || $sid === '' || !is_array($uids) || count($uids) < 2) {
+            return response()->json(['error' => 'PRJ, SID e almeno 2 UID richiesti'], 422);
+        }
+
+        $uids = array_values(array_unique(array_filter($uids)));
+        if (count($uids) < 2) {
+            return response()->json(['error' => 'UID duplicati o non validi'], 422);
+        }
+
+        $now  = now()->format('Y-m-d H:i:s');
+        $rows = [];
+        foreach ($uids as $uid) {
+            $others = implode(';', array_filter($uids, fn ($u) => $u !== $uid));
+            $rows[] = [
+                'prj'        => $prj,
+                'sid'        => $sid,
+                'uid'        => $uid,
+                'similar_to' => $others,
+                'flagged_at' => $now,
+            ];
+        }
+
+        DB::table('t_panel_similar')->insert($rows);
+
+        return response()->json(['success' => true, 'flagged' => count($rows)]);
+    }
+
     // =========================================================================
     // PARSING
     // =========================================================================
