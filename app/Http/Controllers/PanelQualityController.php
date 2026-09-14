@@ -178,6 +178,33 @@ class PanelQualityController extends Controller
             ->orderByRaw('AVG(uq.quality_score) ASC')
             ->get();
 
+        // ── Tab Duplicati ─────────────────────────────────────────────────────
+        $duplicati = DB::table('t_panel_similar as ps')
+            ->leftJoin('t_panel_control as pc', function ($join) {
+                $join->on('ps.sid', '=', 'pc.sur_id')
+                     ->on('ps.prj', '=', 'pc.prj');
+            })
+            ->select('ps.prj', 'ps.sid', 'ps.uid', 'ps.similar_to', 'ps.flagged_at', 'pc.description')
+            ->orderBy('ps.prj')
+            ->orderBy('ps.sid')
+            ->orderByDesc('ps.flagged_at')
+            ->orderBy('ps.uid')
+            ->get();
+
+        $nomiDuplicati = DB::table('t_user_info')
+            ->whereIn('user_id', $duplicati->pluck('uid')->unique()->values())
+            ->select('user_id', 'first_name', 'second_name')
+            ->get()
+            ->keyBy('user_id');
+
+        $duplicati->each(function ($d) use ($nomiDuplicati) {
+            $ui = $nomiDuplicati->get($d->uid);
+            $d->full_name = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null;
+        });
+
+        $nUidDuplicati      = $duplicati->pluck('uid')->unique()->count();
+        $nRicercheDuplicati = $duplicati->map(fn ($d) => $d->prj . '|' . $d->sid)->unique()->count();
+
         return view('panelQuality', compact(
             'globalStats',
             'pctAnomali',
@@ -188,7 +215,10 @@ class PanelQualityController extends Controller
             'annoSenzaDati',
             'anniDisponibili',
             'panelEsterniRollup',
-            'panelEsterniPerRicerca'
+            'panelEsterniPerRicerca',
+            'duplicati',
+            'nUidDuplicati',
+            'nRicercheDuplicati'
         ));
     }
 

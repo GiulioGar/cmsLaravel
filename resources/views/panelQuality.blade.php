@@ -108,6 +108,14 @@
                 <span class="pq-tab-count">{{ $panelEsterniRollup->count() }}</span>
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-duplicati-btn"
+                    data-bs-toggle="tab" data-bs-target="#tab-duplicati"
+                    type="button" role="tab">
+                <i class="bi bi-copy me-1"></i>Duplicati
+                <span class="pq-tab-count" style="{{ $nUidDuplicati > 0 ? 'background:oklch(88% 0.10 25);color:oklch(40% 0.16 25);' : '' }}">{{ $nUidDuplicati }}</span>
+            </button>
+        </li>
     </ul>
 
     <div class="tab-content">
@@ -691,6 +699,94 @@
 
         </div>{{-- /tab-panel-esterni --}}
 
+        {{-- ───────────────────────────────────────────────────────────────── --}}
+        {{-- TAB 4 — DUPLICATI                                                  --}}
+        {{-- ───────────────────────────────────────────────────────────────── --}}
+        <div class="tab-pane fade" id="tab-duplicati" role="tabpanel">
+            <div class="pq-card">
+
+                <div class="pq-card-header pq-border-amber">
+                    <div class="pq-card-header-left">
+                        <i class="bi bi-copy" style="font-size:18px;color:oklch(50% 0.14 55);"></i>
+                        <div>
+                            <div class="pq-card-title" style="color:oklch(38% 0.12 55);">Segnalazioni duplicati</div>
+                            <div class="pq-card-sub">
+                                {{ $nUidDuplicati }} UID segnalati in {{ $nRicercheDuplicati }} {{ $nRicercheDuplicati === 1 ? 'ricerca' : 'ricerche' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if($duplicati->isEmpty())
+                    <div class="pq-empty">Nessuna segnalazione di duplicati.</div>
+                @else
+
+                <div class="pq-filters">
+                    <input type="text" class="pq-filter-input" id="fltDuplicatiSearch"
+                           placeholder="Cerca per PRJ, SID o UID…">
+                    <span class="pq-filter-count" id="duplicatiVisibili">{{ $duplicati->count() }} righe</span>
+                </div>
+
+                <div class="pq-table-wrap">
+                    <table class="pq-table" id="tblDuplicati">
+                        <thead class="pq-thead">
+                            <tr>
+                                <th class="pq-th">PRJ / SID</th>
+                                <th class="pq-th">Ricerca</th>
+                                <th class="pq-th">UID</th>
+                                <th class="pq-th">Nome</th>
+                                <th class="pq-th">Simile a</th>
+                                <th class="pq-th" style="white-space:nowrap;">Segnalato il</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodyDuplicati">
+                        @foreach($duplicati as $d)
+                        @php
+                            $similarUids = array_filter(array_map('trim', explode(';', $d->similar_to)));
+                        @endphp
+                        <tr class="pq-row"
+                            data-prj="{{ strtolower($d->prj) }}"
+                            data-sid="{{ strtolower($d->sid) }}"
+                            data-uid="{{ strtolower($d->uid) }}">
+                            <td class="pq-td">
+                                <div class="pq-td-mono" style="font-size:11px;color:oklch(50% 0.02 250);">{{ $d->prj }}</div>
+                                <div class="pq-td-mono fw-semibold">{{ $d->sid }}</div>
+                            </td>
+                            <td class="pq-td" style="max-width:200px;">
+                                <span style="font-weight:500;color:oklch(25% 0.02 250);">{{ $d->description ?? '—' }}</span>
+                            </td>
+                            <td class="pq-td">
+                                <a href="{{ url('user/' . $d->uid) }}" target="_blank" class="pq-user-link">
+                                    <span class="pq-td-mono" style="font-size:11px;">{{ $d->uid }}</span>
+                                </a>
+                            </td>
+                            <td class="pq-td">
+                                <span style="font-size:13px;">{{ $d->full_name ?: '—' }}</span>
+                            </td>
+                            <td class="pq-td">
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                                @foreach($similarUids as $sUid)
+                                    <a href="{{ url('user/' . $sUid) }}" target="_blank"
+                                       style="font-family:monospace;font-size:10px;padding:2px 6px;background:oklch(95% 0.03 250);border:1px solid oklch(88% 0.04 250);border-radius:4px;color:oklch(35% 0.08 255);text-decoration:none;">
+                                        {{ $sUid }}
+                                    </a>
+                                @endforeach
+                                </div>
+                            </td>
+                            <td class="pq-td pq-td-muted" style="white-space:nowrap;font-size:12px;">
+                                {{ \Carbon\Carbon::parse($d->flagged_at)->format('d/m/Y H:i') }}
+                            </td>
+                        </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div id="duplicatiPaginator" class="pq-paginator-wrap"></div>
+
+                @endif
+            </div>
+        </div>{{-- /tab-duplicati --}}
+
     </div>{{-- /tab-content --}}
 
 </div>{{-- /pq-container --}}
@@ -850,6 +946,26 @@ if (document.getElementById('bodySenzaDati')) {
         });
     });
     _senza.render();
+}
+
+/* ── Duplicati ───────────────────────────────────────────────────── */
+if (document.getElementById('bodyDuplicati')) {
+    var _dup = pqTable({
+        rowsSelector: '#bodyDuplicati .pq-row',
+        paginatorId:  'duplicatiPaginator',
+        countId:      'duplicatiVisibili',
+        tableId:      'tblDuplicati',
+        goFn:         'pqGoDup',
+        label:        'righe',
+        pageSize:     30,
+        match: function (r) {
+            var term = document.getElementById('fltDuplicatiSearch').value.toLowerCase().trim();
+            return !term || r.dataset.prj.includes(term) || r.dataset.sid.includes(term) || r.dataset.uid.includes(term);
+        }
+    });
+    window.pqGoDup = function (p) { _dup.go(p); };
+    document.getElementById('fltDuplicatiSearch').addEventListener('input', function () { _dup.reset(); });
+    _dup.render();
 }
 
 /* ── Panel esterni — dettaglio per ricerca ───────────────────────── */
