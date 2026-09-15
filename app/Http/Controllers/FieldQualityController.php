@@ -158,6 +158,14 @@ class FieldQualityController extends Controller
         }
         unset($iv);
 
+        // 8b) Nome/email per UID (batch whereIn, evita N+1 su centinaia/migliaia di righe)
+        $ivUids = array_unique(array_column($completeInterviews, 'uid'));
+        $userInfoByUid = DB::table('t_user_info')
+            ->whereIn('user_id', $ivUids)
+            ->select('user_id', 'first_name', 'second_name', 'email')
+            ->get()
+            ->keyBy('user_id');
+
         // 9) Dati DB (navbar e panel)
         $ricercheInCorso = DB::table('t_panel_control')
             ->where('stato', 0)
@@ -186,6 +194,7 @@ class FieldQualityController extends Controller
             'loiSecByIid'        => $loiSecByIid,
             'scaleQsByIidQid'    => $scaleQsByIidQid,
             'loiSurveyMeta'      => $loiSurveyMeta,
+            'userInfoByUid'      => $userInfoByUid,
         ], $classification));
     }
 

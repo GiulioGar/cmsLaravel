@@ -380,7 +380,12 @@
                     <option value="incerta">Incerta</option>
                     <option value="anomala">Anomala</option>
                 </select>
-                <button class="dq-btn dq-btn-outline-teal" onclick="exportCsv('tbl-interviews', ['ID','UID','Panel','Score','Stato'])">
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <label for="flt-iv-score-max" style="font-size:12px;color:oklch(45% 0.02 250);white-space:nowrap;">Score ≤</label>
+                    <input type="number" id="flt-iv-score-max" class="dq-filter-input" min="0" max="100" step="1"
+                           placeholder="100" style="width:70px;">
+                </div>
+                <button class="dq-btn dq-btn-outline-teal" onclick="exportCsv('tbl-interviews', ['ID','UID','Nome','Email','Panel','Score','Stato'])">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Esporta CSV
                 </button>
@@ -388,12 +393,14 @@
         </div>
 
         @if(count($completeInterviews) > 0)
-        <div class="dq-table-scroll">
-            <table id="tbl-interviews" class="dq-table" style="min-width:820px;">
+        <div class="dq-table-scroll" style="max-height:1320px;">
+            <table id="tbl-interviews" class="dq-table" style="min-width:980px;">
                 <thead class="dq-thead">
                     <tr>
                         <th class="dq-th">ID</th>
                         <th class="dq-th">UID</th>
+                        <th class="dq-th">Nome</th>
+                        <th class="dq-th">Email</th>
                         <th class="dq-th">Panel</th>
                         <th class="dq-th">Score</th>
                         <th class="dq-th">Stato</th>
@@ -405,9 +412,9 @@
                 @php
                     $ivSc    = $interview['score'] !== null ? (int) $interview['score'] : null;
                     $ivTier  = $ivSc === null ? 'na' : ($ivSc >= 70 ? 'regolare' : ($ivSc >= 50 ? 'incerta' : 'anomala'));
-                    $ivBadge = $ivTier === 'regolare' ? 'dq-badge-high'
-                             : ($ivTier === 'incerta' ? 'dq-badge-accept'
-                             : ($ivTier === 'anomala' ? 'dq-badge-low' : 'dq-badge-unknown'));
+                    $ivRingColor = $ivTier === 'regolare' ? 'oklch(52% 0.15 150)'
+                                 : ($ivTier === 'incerta' ? 'oklch(58% 0.15 75)'
+                                 : ($ivTier === 'anomala' ? 'oklch(58% 0.19 25)' : 'oklch(70% 0.01 250)'));
                     $ivStatoCls = $ivTier === 'regolare' ? 'dq-stato-high'
                                 : ($ivTier === 'incerta' ? 'dq-stato-accept'
                                 : ($ivTier === 'anomala' ? 'dq-stato-low' : 'dq-stato-unknown'));
@@ -416,18 +423,22 @@
                     $ivCovLabel   = $interview['quality_coverage']['label'] ?? 'Non valutabile';
                     $mot          = $interview['quality_motivation'] ?? [];
                     $ivMotData    = array_values(array_filter([
+                        ['label'=>'Copertura', 'text'=>$ivCovLabel],
                         ($mot['open']  ?? null) !== null ? ['label'=>'Open',  'text'=>$mot['open']]  : null,
                         ($mot['scale'] ?? null) !== null ? ['label'=>'Scale', 'text'=>$mot['scale']] : null,
                         ($mot['loi']   ?? null) !== null ? ['label'=>'LOI',   'text'=>$mot['loi']]   : null,
                         $ivCapApplied            ? ['label'=>'Cap',   'text'=>'Ridotto da ' . $ivCapBaseScore . ' per anomalia rilevata'] : null,
                     ]));
                     $ivPanelLow = strtolower($interview['panel'] ?? '');
+                    $ivUserInfo = $userInfoByUid->get($interview['uid']);
+                    $ivFullName = $ivUserInfo ? trim(($ivUserInfo->first_name ?? '') . ' ' . ($ivUserInfo->second_name ?? '')) : '';
                 @endphp
                 <tr class="dq-row"
                     data-iid="{{ $interview['iid'] }}"
                     data-uid="{{ $interview['uid'] }}"
                     data-panel="{{ $ivPanelLow }}"
-                    data-tier="{{ $ivTier }}">
+                    data-tier="{{ $ivTier }}"
+                    data-score="{{ $ivSc !== null ? $ivSc : '' }}">
                     <td class="dq-td" style="font-weight:600;">{{ $interview['iid'] }}</td>
                     <td class="dq-td dq-td-mono">
                         @if(($interview['panel'] ?? '') === 'Interactive')
@@ -436,11 +447,13 @@
                             {{ $interview['uid'] }}
                         @endif
                     </td>
+                    <td class="dq-td">{{ $ivFullName ?: '—' }}</td>
+                    <td class="dq-td" style="color:oklch(45% 0.02 250);font-size:12px;">{{ $ivUserInfo->email ?? '—' }}</td>
                     <td class="dq-td dq-td-panel">{{ $interview['panel'] ?? '—' }}</td>
                     <td class="dq-td">
                         @if($ivSc !== null)
-                            <div class="dq-badge {{ $ivBadge }}">
-                                {{ $ivSc }}<span class="dq-badge-denom">/100</span>
+                            <div class="dq-score-ring" style="--ring-pct:{{ $ivSc }};--ring-color:{{ $ivRingColor }};">
+                                <span class="dq-score-ring-label" style="color:{{ $ivRingColor }};">{{ $ivSc }}</span>
                             </div>
                         @else
                             <span style="color:oklch(55% 0.02 250);font-size:13px;">—</span>
@@ -448,7 +461,6 @@
                     </td>
                     <td class="dq-td">
                         <div class="{{ $ivStatoCls }}">{{ mb_strtoupper($interview['rating_label'] ?? 'N/D', 'UTF-8') }}</div>
-                        <div class="dq-coverage-sub">{{ $ivCovLabel }}</div>
                     </td>
                     <td class="dq-td" style="text-align:center;vertical-align:middle;padding:0 12px;">
                         <button type="button" class="dq-info-btn"
@@ -1536,25 +1548,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /* -- Lista interviste -- */
-    var fltIvSearch = document.getElementById('flt-iv-search');
-    var fltIvPanel  = document.getElementById('flt-iv-panel');
-    var fltIvTier   = document.getElementById('flt-iv-tier');
-    var ivCount     = document.getElementById('iv-count');
+    var fltIvSearch   = document.getElementById('flt-iv-search');
+    var fltIvPanel    = document.getElementById('flt-iv-panel');
+    var fltIvTier     = document.getElementById('flt-iv-tier');
+    var fltIvScoreMax = document.getElementById('flt-iv-score-max');
+    var ivCount       = document.getElementById('iv-count');
 
     function applyIvFilter() {
-        var q = (fltIvSearch ? fltIvSearch.value.trim().toLowerCase() : '');
-        var p = (fltIvPanel  ? fltIvPanel.value.toLowerCase()  : '');
-        var t = (fltIvTier   ? fltIvTier.value.toLowerCase()   : '');
+        var q  = (fltIvSearch   ? fltIvSearch.value.trim().toLowerCase() : '');
+        var p  = (fltIvPanel    ? fltIvPanel.value.toLowerCase()  : '');
+        var t  = (fltIvTier     ? fltIvTier.value.toLowerCase()   : '');
+        var sm = (fltIvScoreMax && fltIvScoreMax.value !== '') ? parseFloat(fltIvScoreMax.value) : null;
         var n = filterRows('tbl-interviews', function (row) {
+            var rowScore = row.dataset.score !== '' ? parseFloat(row.dataset.score) : null;
             return iidUidMatch(row, q)
                 && (!p || (row.dataset.panel || '') === p)
-                && (!t || (row.dataset.tier  || '') === t);
+                && (!t || (row.dataset.tier  || '') === t)
+                && (sm === null || (rowScore !== null && rowScore <= sm));
         });
         if (ivCount) ivCount.textContent = n + ' risultati';
     }
-    if (fltIvSearch) fltIvSearch.addEventListener('input', applyIvFilter);
-    if (fltIvPanel)  fltIvPanel.addEventListener('change', applyIvFilter);
-    if (fltIvTier)   fltIvTier.addEventListener('change', applyIvFilter);
+    if (fltIvSearch)   fltIvSearch.addEventListener('input', applyIvFilter);
+    if (fltIvPanel)    fltIvPanel.addEventListener('change', applyIvFilter);
+    if (fltIvTier)     fltIvTier.addEventListener('change', applyIvFilter);
+    if (fltIvScoreMax) fltIvScoreMax.addEventListener('input', applyIvFilter);
 
     /* -- LOI: filtro sotto-soglia + ricerca + ordinamento -- */
     var loiActive = false;
@@ -1864,13 +1881,29 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 .dq-td-mono   { font-family: 'SF Mono', Consolas, monospace; font-size: 12px; color: oklch(35% 0.02 250); }
 .dq-td-panel  { color: oklch(40% 0.02 250); }
 
-/* Score badges */
-.dq-badge         { display: inline-flex; align-items: baseline; gap: 4px; padding: 4px 10px; border-radius: 7px; font-weight: 700; font-size: 13px; }
-.dq-badge-high    { background: oklch(95% 0.05 150); color: oklch(40% 0.13 150); }
-.dq-badge-accept  { background: oklch(95% 0.05 75);  color: oklch(42% 0.13 75);  }
-.dq-badge-low     { background: oklch(95% 0.04 25);  color: oklch(45% 0.16 25);  }
-.dq-badge-unknown { background: oklch(94% 0.006 250); color: oklch(50% 0.02 250); }
-.dq-badge-denom   { font-size: 10px; font-weight: 600; opacity: 0.75; }
+/* Score ring — badge circolare stile gauge */
+.dq-score-ring {
+    --ring-pct: 0;
+    --ring-color: oklch(70% 0.01 250);
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: conic-gradient(var(--ring-color) calc(var(--ring-pct) * 1%), oklch(93% 0.006 250) 0);
+    display: inline-flex; align-items: center; justify-content: center;
+    position: relative;
+    box-shadow: 0 2px 6px -1px oklch(30% 0.04 260 / 0.15);
+}
+.dq-score-ring::after {
+    content: '';
+    position: absolute; inset: 4px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.06);
+}
+.dq-score-ring-label {
+    position: relative; z-index: 1;
+    font-size: 12px; font-weight: 800;
+    letter-spacing: -0.02em;
+}
 
 .dq-cap-pill {
     display: inline-flex; align-items: center; gap: 3px;
@@ -1884,7 +1917,6 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 .dq-stato-accept  { font-size: 12px; font-weight: 700; color: oklch(42% 0.13 75);  }
 .dq-stato-low     { font-size: 12px; font-weight: 700; color: oklch(45% 0.16 25);  }
 .dq-stato-unknown { font-size: 12px; font-weight: 700; color: oklch(50% 0.02 250); }
-.dq-coverage-sub  { font-size: 11px; color: oklch(45% 0.02 250); margin-top: 2px; }
 
 /* Motivazioni */
 .dq-mot-list { margin: 0; padding-left: 16px; color: oklch(35% 0.02 250); font-size: 12.5px; line-height: 1.6; }
