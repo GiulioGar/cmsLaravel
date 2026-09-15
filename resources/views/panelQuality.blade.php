@@ -199,9 +199,11 @@
                         <td style="padding:10px 16px;">
                             @php
                                 $grpPopLines = array_map(function ($m) {
+                                    $mInactive = $m['active'] !== null && (int) $m['active'] !== 1;
+                                    $mColor = $mInactive ? '#dc2626' : '#1a6fc4';
                                     $label = e($m['uid']) . ($m['name'] ? ' — ' . e($m['name']) : '');
                                     return '<a href="' . url('user/' . $m['uid']) . '" target="_blank"'
-                                          . ' style="font-family:monospace;font-size:11px;color:#1a6fc4;text-decoration:none;">'
+                                          . ' style="font-family:monospace;font-size:11px;color:' . $mColor . ';text-decoration:none;' . ($mInactive ? 'font-weight:700;' : '') . '">'
                                           . $label . '</a>';
                                 }, $g['membri']);
                                 $grpPopContent = implode('<br>', $grpPopLines);
@@ -840,6 +842,18 @@
                     <div class="pq-empty">Nessuna segnalazione di duplicati.</div>
                 @else
 
+                @php
+                    $activeByUid = $duplicati->pluck('active', 'uid');
+                    $activeLabel = function ($active) {
+                        switch ((int) $active) {
+                            case 1: return 'Attivo';
+                            case 8: return 'Bannato/Sospeso';
+                            case 9: return 'Cancellato';
+                            default: return 'Non attivo';
+                        }
+                    };
+                @endphp
+
                 <div class="pq-filters">
                     <input type="text" class="pq-filter-input" id="fltDuplicatiSearch"
                            placeholder="Cerca per UID o nome…">
@@ -866,17 +880,19 @@
                                 array_keys($d['ricerche']),
                                 array_values($d['ricerche'])
                             ));
+                            $isInactive = $d['active'] !== null && (int) $d['active'] !== 1;
                         @endphp
                         <tr class="pq-row"
                             data-uid="{{ strtolower($d['uid']) }}"
                             data-name="{{ strtolower($d['full_name'] ?? '') }}">
                             <td class="pq-td">
-                                <a href="{{ url('user/' . $d['uid']) }}" target="_blank" class="pq-user-link">
-                                    <span class="pq-td-mono" style="font-size:11px;">{{ $d['uid'] }}</span>
+                                <a href="{{ url('user/' . $d['uid']) }}" target="_blank" class="pq-user-link"
+                                   title="{{ $isInactive ? $activeLabel($d['active']) : '' }}">
+                                    <span class="pq-td-mono" style="font-size:11px;{{ $isInactive ? 'color:#dc2626;font-weight:700;' : '' }}">{{ $d['uid'] }}</span>
                                 </a>
                             </td>
                             <td class="pq-td">
-                                <span style="font-size:13px;">{{ $d['full_name'] ?: '—' }}</span>
+                                <span style="font-size:13px;{{ $isInactive ? 'color:#dc2626;font-weight:600;' : '' }}">{{ $d['full_name'] ?: '—' }}</span>
                             </td>
                             <td class="pq-td">
                                 <span data-bs-toggle="tooltip" data-bs-html="true"
@@ -893,8 +909,11 @@
                                     $simTotal = count($simList);
                                     $popLines = [];
                                     foreach ($simList as $sUid => $cnt) {
+                                        $sActive = $activeByUid[$sUid] ?? null;
+                                        $sInactive = $sActive !== null && (int) $sActive !== 1;
+                                        $sColor = $sInactive ? '#dc2626' : '#1a6fc4';
                                         $line = '<a href="' . url('user/' . $sUid) . '" target="_blank"'
-                                              . ' style="font-family:monospace;font-size:11px;color:#1a6fc4;text-decoration:none;">'
+                                              . ' style="font-family:monospace;font-size:11px;color:' . $sColor . ';text-decoration:none;' . ($sInactive ? 'font-weight:700;' : '') . '">'
                                               . e($sUid) . '</a>';
                                         if ($cnt > 1) {
                                             $line .= ' <span style="font-size:10px;font-weight:700;color:#b45309;">×' . $cnt . '</span>';

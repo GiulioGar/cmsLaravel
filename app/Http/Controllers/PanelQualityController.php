@@ -271,6 +271,7 @@ class PanelQualityController extends Controller
                     'uid'          => $uid,
                     'full_name'    => null,
                     'email'        => null,
+                    'active'       => null,
                     'segnalazioni' => 0,
                     'ricerche'     => [], // 'PRJ/SID' => description
                     'simile_a'     => [], // uid => count
@@ -290,7 +291,7 @@ class PanelQualityController extends Controller
 
         $nomiDuplicati = DB::table('t_user_info')
             ->whereIn('user_id', array_keys($byUid))
-            ->select('user_id', 'first_name', 'second_name', 'email')
+            ->select('user_id', 'first_name', 'second_name', 'email', 'active')
             ->get()
             ->keyBy('user_id');
 
@@ -298,6 +299,7 @@ class PanelQualityController extends Controller
             $ui = $nomiDuplicati->get($uid);
             $row['full_name'] = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null;
             $row['email']     = $ui ? ($ui->email ?? null) : null;
+            $row['active']    = $ui ? (int) $ui->active : null;
             arsort($row['simile_a']); // ordina per occorrenze desc
         }
         unset($row);
@@ -340,7 +342,7 @@ class PanelQualityController extends Controller
                 $segnTotali += $row['segnalazioni'];
                 foreach ($row['ricerche'] as $k => $v) { $ricercheGruppo[$k] = $v; }
                 foreach ($row['simile_a'] as $cnt) { if ($cnt > $maxRipetizioni) $maxRipetizioni = $cnt; }
-                $membriDettaglio[] = ['uid' => $uid, 'name' => $row['full_name'], 'email' => $row['email']];
+                $membriDettaglio[] = ['uid' => $uid, 'name' => $row['full_name'], 'email' => $row['email'], 'active' => $row['active']];
             }
 
             $gruppiSospetti[] = [
