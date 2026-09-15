@@ -127,6 +127,7 @@ Route::middleware(['auth.custom'])->group(function () {
 
         Route::get('/panelQuality', [PanelQualityController::class, 'index'])->name('panelQuality.index');
         Route::get('/panelQuality/export-panelisti', [PanelQualityController::class, 'exportPanelisti'])->name('panelQuality.exportPanelisti');
+        Route::get('/panelQuality/export-gruppi', [PanelQualityController::class, 'exportGruppi'])->name('panelQuality.exportGruppi');
 
     // ============================================
     // PANEL - Gestione Utenti

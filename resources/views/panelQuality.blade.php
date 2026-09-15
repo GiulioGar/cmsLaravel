@@ -162,18 +162,22 @@
                     </span>
                     @endif
                     <span style="font-size:11px;padding:3px 10px;background:oklch(94% 0.06 55);color:oklch(38% 0.12 55);border-radius:999px;font-weight:700;">{{ $nGruppi }} gruppi</span>
-                    <i class="bi bi-chevron-down" id="icnGruppi" style="font-size:12px;color:oklch(55% 0.04 250);transition:transform .2s;"></i>
+                    <a href="{{ route('panelQuality.exportGruppi') }}" target="_blank" onclick="event.stopPropagation();"
+                       style="display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;background:oklch(94% 0.02 250);color:oklch(40% 0.05 250);border:1px solid oklch(85% 0.03 250);border-radius:999px;font-weight:700;text-decoration:none;">
+                        <i class="bi bi-download"></i>Esporta tutti
+                    </a>
+                    <i class="bi bi-chevron-down" id="icnGruppi" style="font-size:12px;color:oklch(55% 0.04 250);transition:transform .2s;transform:rotate(-90deg);"></i>
                 </div>
             </div>
-            <div class="collapse show" id="collapseGruppi">
+            <div class="collapse" id="collapseGruppi">
                 <div style="overflow-x:auto;">
                 <table style="width:100%;border-collapse:collapse;font-size:12px;">
                     <thead>
                         <tr style="border-bottom:2px solid oklch(92% 0.006 250);background:oklch(98% 0.004 250);">
                             <th style="padding:10px 16px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Rischio</th>
                             <th style="padding:10px 16px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Utenti del gruppo</th>
-                            <th style="padding:10px 16px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Ricerche coinvolte</th>
                             <th style="padding:10px 16px;text-align:center;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Segn.</th>
+                            <th style="padding:10px 16px;text-align:center;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -193,32 +197,35 @@
                             </span>
                         </td>
                         <td style="padding:10px 16px;">
-                            <div style="display:flex;flex-wrap:wrap;gap:6px;">
-                            @foreach($g['membri'] as $m)
-                                <a href="{{ url('user/' . $m['uid']) }}" target="_blank"
-                                   style="display:inline-flex;flex-direction:column;padding:4px 10px;background:oklch(97% 0.025 250);border:1px solid oklch(88% 0.05 250);border-radius:8px;text-decoration:none;transition:background .12s;">
-                                    <span style="font-family:monospace;font-size:10px;color:oklch(32% 0.10 255);font-weight:600;">{{ $m['uid'] }}</span>
-                                    @if($m['name'])
-                                        <span style="font-size:10px;color:oklch(48% 0.04 250);margin-top:1px;">{{ $m['name'] }}</span>
-                                    @endif
-                                </a>
-                            @endforeach
-                            </div>
-                        </td>
-                        <td style="padding:10px 16px;">
-                            <div style="display:flex;flex-direction:column;gap:3px;">
-                            @foreach($g['ricerche'] as $rKey => $rDesc)
-                                <span style="font-size:11px;">
-                                    <span style="font-family:monospace;color:oklch(48% 0.08 250);font-weight:600;">{{ $rKey }}</span>
-                                    @if($rDesc && $rDesc !== $rKey)
-                                        <span style="color:oklch(55% 0.03 250);"> — {{ Str::limit($rDesc, 38) }}</span>
-                                    @endif
-                                </span>
-                            @endforeach
-                            </div>
+                            @php
+                                $grpPopLines = array_map(function ($m) {
+                                    $label = e($m['uid']) . ($m['name'] ? ' — ' . e($m['name']) : '');
+                                    return '<a href="' . url('user/' . $m['uid']) . '" target="_blank"'
+                                          . ' style="font-family:monospace;font-size:11px;color:#1a6fc4;text-decoration:none;">'
+                                          . $label . '</a>';
+                                }, $g['membri']);
+                                $grpPopContent = implode('<br>', $grpPopLines);
+                            @endphp
+                            <span class="dup-sim-trigger" tabindex="0"
+                                  data-bs-toggle="popover"
+                                  data-bs-trigger="click"
+                                  data-bs-html="true"
+                                  data-bs-placement="right"
+                                  data-bs-content="{{ $grpPopContent }}"
+                                  style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:3px 8px;background:oklch(95% 0.03 250);border:1px solid oklch(85% 0.05 250);border-radius:5px;font-size:12px;color:oklch(35% 0.10 255);white-space:nowrap;">
+                                <i class="bi bi-people-fill" style="font-size:11px;opacity:.7;"></i>
+                                {{ $g['size'] }}&nbsp;{{ $g['size'] === 1 ? 'utente' : 'utenti' }}
+                            </span>
                         </td>
                         <td style="padding:10px 16px;text-align:center;font-weight:800;font-size:15px;color:{{ $riskClr }};">
                             {{ $g['segnalazioni'] }}
+                        </td>
+                        <td style="padding:10px 16px;text-align:center;">
+                            <a href="{{ route('panelQuality.exportGruppi', ['gruppo' => $gi + 1]) }}" target="_blank"
+                               title="Esporta questo gruppo"
+                               style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:oklch(95% 0.03 250);border:1px solid oklch(85% 0.05 250);border-radius:6px;color:oklch(40% 0.08 250);">
+                                <i class="bi bi-download" style="font-size:12px;"></i>
+                            </a>
                         </td>
                     </tr>
                     @endforeach
