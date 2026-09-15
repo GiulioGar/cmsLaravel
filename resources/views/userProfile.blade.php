@@ -229,10 +229,16 @@
                         <div class="up-section-icon up-icon-purple"><i class="bi bi-shield-check"></i></div>
                         <h5 class="up-section-title up-title-purple mb-0">Qualità interviste</h5>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-danger up-qm-header-btn" id="btnQualityMalus"
-                            title="Assegna malus qualità">
-                        <i class="bi bi-exclamation-triangle me-1"></i>Malus
-                    </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="up-quality-malus-pill badge {{ $quality['malusCount'] > 0 ? 'badge-soft-danger' : 'badge-soft-secondary' }}" id="qmCountPill">
+                            <i class="bi bi-exclamation-triangle{{ $quality['malusCount'] > 0 ? '-fill' : '' }} me-1"></i>
+                            <span id="qmCountPillText">{{ $quality['malusCount'] }} malus assegnat{{ $quality['malusCount'] == 1 ? 'o' : 'i' }}</span>
+                        </span>
+                        <button type="button" class="btn btn-sm btn-outline-danger up-qm-header-btn" id="btnQualityMalus"
+                                title="Assegna malus qualità">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Malus
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     @php
@@ -260,10 +266,6 @@
                                 <span class="up-quality-gauge-label">{{ $quality['media'] ?? '—' }}</span>
                             </div>
                             <div class="up-quality-gauge-sub">Media score</div>
-                            <span class="up-quality-malus-pill badge {{ $quality['malusCount'] > 0 ? 'badge-soft-danger' : 'badge-soft-secondary' }}" id="qmCountPill">
-                                <i class="bi bi-exclamation-triangle{{ $quality['malusCount'] > 0 ? '-fill' : '' }} me-1"></i>
-                                <span id="qmCountPillText">{{ $quality['malusCount'] }} malus assegnat{{ $quality['malusCount'] == 1 ? 'o' : 'i' }}</span>
-                            </span>
                         </div>
                         <div class="up-quality-condensed-stats">
                             <div class="up-quality-stat">
@@ -315,6 +317,51 @@
                     </div>
                     @else
                         <p class="text-muted text-center py-3 mb-0">Nessun dato di qualità disponibile.</p>
+                    @endif
+
+                    @if($duplicatiSospetti->count() > 0)
+                    <div class="border-top mt-3 pt-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="up-quality-recent-label mb-0">
+                                <i class="bi bi-shield-exclamation me-1 text-warning"></i>Segnalazioni duplicati/sospetti
+                            </div>
+                            <span class="badge" style="background:oklch(93% 0.08 55);color:oklch(40% 0.14 55);font-weight:700;">{{ $duplicatiSospetti->count() }}</span>
+                        </div>
+                        <table class="table table-sm align-middle mb-0">
+                            <tbody>
+                                @foreach($duplicatiSospetti as $ds)
+                                @php
+                                    $dsPopLines = array_map(function ($m) {
+                                        $label = e($m['uid']) . ($m['name'] ? ' — ' . e($m['name']) : '');
+                                        return '<a href="' . url('user/' . $m['uid']) . '" target="_blank"'
+                                              . ' style="font-family:monospace;font-size:11px;color:#1a6fc4;text-decoration:none;">'
+                                              . $label . '</a>';
+                                    }, $ds['membri']);
+                                    $dsPopContent = implode('<br>', $dsPopLines);
+                                @endphp
+                                <tr>
+                                    <td class="fw-semibold">
+                                        <a href="{{ url('fieldControl') }}?prj={{ urlencode($ds['prj']) }}&sid={{ urlencode($ds['sid']) }}"
+                                           target="_blank" rel="noopener" class="text-decoration-none text-primary small">{{ $ds['sid'] }}</a>
+                                    </td>
+                                    <td>
+                                        <span class="up-dup-sim-trigger" tabindex="0"
+                                              data-bs-toggle="popover"
+                                              data-bs-trigger="click"
+                                              data-bs-html="true"
+                                              data-bs-placement="left"
+                                              data-bs-content="{{ $dsPopContent }}"
+                                              style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:2px 8px;background:oklch(95% 0.03 250);border:1px solid oklch(85% 0.05 250);border-radius:5px;font-size:11px;color:oklch(35% 0.10 255);white-space:nowrap;">
+                                            <i class="bi bi-people-fill" style="font-size:10px;opacity:.7;"></i>
+                                            {{ count($ds['membri']) }}&nbsp;{{ count($ds['membri']) === 1 ? 'utente' : 'utenti' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-muted small">{{ \Carbon\Carbon::parse($ds['flagged_at'])->format('d/m/Y') }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                     @endif
                 </div>
             </div>
@@ -410,138 +457,6 @@
                 </div>
             </div>
         </div>
-
-{{-- Qualità integrata nella sezione Informazioni (condensed, col-lg-5) --}}
-<div style="display:none">
-    <div class="card">
-        <div>
-        <div class="card-body p-0">
-            @php
-                $gaugeScore  = $quality['media'] !== null ? (int) round($quality['media']) : 0;
-                $gaugeColor  = $gaugeScore >= 70 ? '#16a34a' : ($gaugeScore >= 50 ? '#d97706' : '#dc2626');
-                $gaugeTier   = $gaugeScore >= 70 ? 'Regolare'  : ($gaugeScore >= 50 ? 'Incerta' : 'Anomala');
-                $gaugeBadge  = $gaugeScore >= 70 ? 'badge-soft-success' : ($gaugeScore >= 50 ? 'badge-soft-warning' : 'badge-soft-danger');
-                $qTotal      = max($quality['count'], 1);
-                $qPctReg     = round($quality['regolari'] / $qTotal * 100);
-                $qPctInc     = round($quality['incerte']  / $qTotal * 100);
-                $qPctAno     = 100 - $qPctReg - $qPctInc;
-            @endphp
-
-            @if($quality['count'] > 0)
-            <div class="up-quality-overview">
-
-                {{-- Gauge conic-gradient --}}
-                <div class="up-quality-gauge-wrap">
-                    <div class="up-quality-gauge"
-                         style="--gauge-pct:{{ $quality['media'] !== null ? $gaugeScore : 0 }};--gauge-color:{{ $quality['media'] !== null ? $gaugeColor : '#e2e8f0' }};">
-                        <span class="up-quality-gauge-label">{{ $quality['media'] ?? '—' }}</span>
-                    </div>
-                    <div class="up-quality-gauge-sub">Media score</div>
-                    @if($quality['media'] !== null)
-                        <span class="badge {{ $gaugeBadge }}">{{ mb_strtoupper($gaugeTier, 'UTF-8') }}</span>
-                    @endif
-                </div>
-
-                {{-- Stat boxes + distribution bar --}}
-                <div class="up-quality-stats">
-                    <div class="up-quality-stat-row">
-                        <div class="up-quality-stat">
-                            <div class="up-quality-stat-value">{{ $quality['count'] }}</div>
-                            <div class="up-quality-stat-label">Interviste</div>
-                        </div>
-                        <div class="up-quality-stat up-quality-stat-success">
-                            <div class="up-quality-stat-value">{{ $quality['regolari'] }}</div>
-                            <div class="up-quality-stat-label">Regolari</div>
-                        </div>
-                        <div class="up-quality-stat up-quality-stat-warning">
-                            <div class="up-quality-stat-value">{{ $quality['incerte'] }}</div>
-                            <div class="up-quality-stat-label">Incerte</div>
-                        </div>
-                        <div class="up-quality-stat up-quality-stat-danger">
-                            <div class="up-quality-stat-value">{{ $quality['anomale'] }}</div>
-                            <div class="up-quality-stat-label">Anomale</div>
-                        </div>
-                    </div>
-                    <div class="up-quality-bar">
-                        @if($quality['regolari'] > 0)
-                            <div class="up-quality-bar-seg up-quality-bar-success"
-                                 style="width:{{ $qPctReg }}%"
-                                 title="Regolari: {{ $quality['regolari'] }} ({{ $qPctReg }}%)"></div>
-                        @endif
-                        @if($quality['incerte'] > 0)
-                            <div class="up-quality-bar-seg up-quality-bar-warning"
-                                 style="width:{{ $qPctInc }}%"
-                                 title="Incerte: {{ $quality['incerte'] }} ({{ $qPctInc }}%)"></div>
-                        @endif
-                        @if($quality['anomale'] > 0)
-                            <div class="up-quality-bar-seg up-quality-bar-danger"
-                                 style="width:{{ $qPctAno }}%"
-                                 title="Anomale: {{ $quality['anomale'] }} ({{ $qPctAno }}%)"></div>
-                        @endif
-                    </div>
-                    <div class="up-quality-bar-legend">
-                        <span class="up-quality-legend-dot" style="background:#16a34a;"></span> Regolari
-                        <span class="up-quality-legend-dot ms-2" style="background:#d97706;"></span> Incerte
-                        <span class="up-quality-legend-dot ms-2" style="background:#dc2626;"></span> Anomale
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-3">
-                <table class="table table-sm table-striped text-center align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>PRJ</th>
-                            <th>SID</th>
-                            <th>IID</th>
-                            <th>Score</th>
-                            <th>Stato</th>
-                            <th>Data</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($quality['lista'] as $q)
-                        @php
-                            $qTier     = $q->quality_tier ?? '';
-                            $qTierNorm = in_array($qTier, ['alta', 'regolare'])        ? 'regolare'
-                                       : (in_array($qTier, ['accettabile', 'incerta']) ? 'incerta'
-                                       : (in_array($qTier, ['bassa', 'anomala'])       ? 'anomala' : $qTier));
-                            $qBadgeCls = $qTierNorm === 'regolare' ? 'badge-soft-success'
-                                       : ($qTierNorm === 'incerta'  ? 'badge-soft-warning'
-                                       : ($qTierNorm === 'anomala'  ? 'badge-soft-danger' : 'badge-soft-secondary'));
-                        @endphp
-                        <tr>
-                            <td>{{ $q->prj }}</td>
-                            <td>
-                                <a href="{{ url('fieldControl') }}?prj={{ urlencode($q->prj) }}&sid={{ urlencode($q->sid) }}"
-                                   target="_blank" rel="noopener" class="text-decoration-none fw-semibold">
-                                    {{ $q->sid }}
-                                </a>
-                            </td>
-                            <td>{{ $q->iid }}</td>
-                            <td>
-                                @if($q->quality_score !== null)
-                                    <span class="badge {{ $qBadgeCls }}">{{ $q->quality_score }}/100</span>
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
-                            </td>
-                            <td>
-                                <span class="badge {{ $qBadgeCls }}">{{ mb_strtoupper($qTierNorm ?: '—', 'UTF-8') }}</span>
-                            </td>
-                            <td>{{ $q->computed_at ? \Carbon\Carbon::parse($q->computed_at)->format('d/m/Y') : '—' }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            @else
-                <p class="text-muted text-center py-4 mb-0">Nessun dato di qualità disponibile per questo utente.</p>
-            @endif
-        </div>
-    </div>
-</div>
-</div>
 
 {{-- ===== 4) STORICO ===== --}}
 <div class="col-12">
@@ -726,6 +641,13 @@
             </div>
             <div class="modal-body">
                 <p class="small text-muted mb-3">L'utente verrà sospeso (active=8). Puoi inviare una notifica via email.</p>
+                <div class="mb-3">
+                    <label class="form-label small mb-1">Tipo</label>
+                    <select id="banTipo" class="form-select form-select-sm">
+                        <option value="qualita">Bad quality</option>
+                        <option value="duplicato">Utente duplicato</option>
+                    </select>
+                </div>
                 <div class="mb-3">
                     <label class="form-label small mb-1">Motivazione interna</label>
                     <textarea id="banMotivazione" class="form-control form-control-sm" rows="2" maxlength="255">Anomalie rilevate durante i controlli qualitativi e di conformità al Regolamento.</textarea>
@@ -955,6 +877,7 @@ function showToast(message, type = 'success') {
         return [
             'valore' => $m->valore,
             'motivazione' => $m->motivazione,
+            'tipo' => $m->tipo ?? 'qualita',
             'assigned_by' => $m->assigned_by,
             'created_at' => $m->created_at,
             'email_sent' => (bool) $m->email_sent,
@@ -1078,7 +1001,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Ban
+    const banMotivazioneDefaults = {
+        qualita: 'Anomalie rilevate durante i controlli qualitativi e di conformità al Regolamento.',
+        duplicato: 'Rilevata sospetta duplicazione di account nei controlli anti-frode.',
+    };
+
+    document.getElementById('banTipo')?.addEventListener('change', (e) => {
+        const motivazioneEl = document.getElementById('banMotivazione');
+        if (motivazioneEl) motivazioneEl.value = banMotivazioneDefaults[e.target.value] || '';
+    });
+
     document.getElementById('btnBanConfirm')?.addEventListener('click', () => {
+        const tipo        = document.getElementById('banTipo').value;
         const motivazione = document.getElementById('banMotivazione').value.trim();
         const sendEmail   = document.getElementById('banSendEmail').checked;
 
@@ -1094,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ motivazione, send_email: sendEmail }),
+            body: JSON.stringify({ motivazione, tipo, send_email: sendEmail }),
         })
         .then(res => res.json())
         .then(data => {
@@ -1345,6 +1279,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="up-qm-history-row">
                 <div class="up-qm-history-top">
                     <span class="fw-semibold text-danger">-${escapeHtml(m.valore)} pt</span>
+                    <span class="badge ${m.tipo === 'duplicato' ? 'badge-soft-warning' : 'badge-soft-danger'}" style="font-size:10px;">${m.tipo === 'duplicato' ? 'DUPLICATO' : 'QUALITÀ'}</span>
                     <span class="text-muted small">${formatDateIt(m.created_at)}</span>
                 </div>
                 <div class="small">${escapeHtml(m.motivazione)}</div>
@@ -1360,6 +1295,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<div class="up-qm-history-list">${rows}</div>`;
     }
 
+    const qmMotivazioneDefaults = {
+        qualita: 'Rilevate anomalie ricorrenti nella qualità delle interviste',
+        duplicato: 'Rilevata una possibile duplicazione di account nei controlli anti-frode',
+    };
+
     function buildQualityMalusPopoverHtml() {
         return `
             <div class="up-qm-popover">
@@ -1367,12 +1307,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${buildQualityMalusHistoryHtml()}
                 <hr class="my-2">
                 <div class="mb-2">
+                    <label class="form-label small mb-1">Tipo</label>
+                    <select id="qmTipo" class="form-select form-select-sm">
+                        <option value="qualita">Bad quality</option>
+                        <option value="duplicato">Utente duplicato</option>
+                    </select>
+                </div>
+                <div class="mb-2">
                     <label class="form-label small mb-1">Valore malus</label>
                     <input type="number" id="qmValore" class="form-control form-control-sm" min="1" value="1">
                 </div>
                 <div class="mb-2">
                     <label class="form-label small mb-1">Motivazione</label>
-                    <textarea id="qmMotivazione" class="form-control form-control-sm" rows="2" maxlength="255">Rilevate anomalie ricorrenti nella qualità delle interviste</textarea>
+                    <textarea id="qmMotivazione" class="form-control form-control-sm" rows="2" maxlength="255">${qmMotivazioneDefaults.qualita}</textarea>
                 </div>
                 <div class="form-check mb-2">
                     <input type="checkbox" id="qmSendEmail" class="form-check-input" checked>
@@ -1409,7 +1356,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             popEl.querySelector('#qmCancel')?.addEventListener('click', closeQualityMalusPopover);
 
+            popEl.querySelector('#qmTipo')?.addEventListener('change', (e) => {
+                const motivazioneEl = popEl.querySelector('#qmMotivazione');
+                if (motivazioneEl) motivazioneEl.value = qmMotivazioneDefaults[e.target.value] || '';
+            });
+
             popEl.querySelector('#qmSubmit')?.addEventListener('click', () => {
+                const tipo = popEl.querySelector('#qmTipo').value;
                 const valore = parseInt(popEl.querySelector('#qmValore').value, 10);
                 const motivazione = popEl.querySelector('#qmMotivazione').value.trim();
                 const sendEmail = popEl.querySelector('#qmSendEmail').checked;
@@ -1426,7 +1379,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ valore, motivazione, send_email: sendEmail }),
+                    body: JSON.stringify({ valore, motivazione, tipo, send_email: sendEmail }),
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -1440,6 +1393,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     qualityMalusHistory.unshift({
                         valore,
                         motivazione,
+                        tipo,
                         assigned_by: '{{ session('user_name') }}',
                         created_at: new Date().toISOString(),
                         email_sent: !!data.email_sent,
@@ -1695,6 +1649,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showToast('Errore durante il caricamento del log.', 'error');
+        });
+    });
+
+    // ===========================
+    // POPOVER SEGNALAZIONI DUPLICATI
+    // ===========================
+    document.querySelectorAll('.up-dup-sim-trigger').forEach(function (el) {
+        var pop = new bootstrap.Popover(el, { trigger: 'manual', html: true });
+        el.addEventListener('click', function (e) {
+            e.stopPropagation();
+            document.querySelectorAll('.up-dup-sim-trigger').forEach(function (other) {
+                if (other !== el) bootstrap.Popover.getInstance(other)?.hide();
+            });
+            pop.toggle();
+        });
+    });
+    document.addEventListener('click', function () {
+        document.querySelectorAll('.up-dup-sim-trigger').forEach(function (el) {
+            bootstrap.Popover.getInstance(el)?.hide();
         });
     });
 

@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\QualityMalusNotification;
+use App\Mail\DuplicateMalusNotification;
+use App\Mail\BanNotification;
+use App\Mail\DuplicateBanNotification;
 
 class UserProfileController extends Controller
 {
@@ -120,10 +123,54 @@ class UserProfileController extends Controller
     $malusHistory = DB::table('t_quality_malus')
         ->where('uid', $uid)
         ->orderByDesc('created_at')
-        ->get(['valore', 'motivazione', 'assigned_by', 'email_sent', 'created_at']);
+        ->get(['valore', 'motivazione', 'tipo', 'assigned_by', 'email_sent', 'created_at']);
 
     // ===============================
-    // 7) RETURN ALLA VIEW
+    // 7) SEGNALAZIONI DUPLICATI/SOSPETTI
+    // ===============================
+    $similarRaw = DB::table('t_panel_similar as ps')
+        ->leftJoin('t_panel_control as pc', function ($join) {
+            $join->on('ps.sid', '=', 'pc.sur_id')
+                 ->on('ps.prj', '=', 'pc.prj');
+        })
+        ->where('ps.uid', $uid)
+        ->select('ps.prj', 'ps.sid', 'ps.similar_to', 'ps.flagged_at', 'pc.description')
+        ->orderByDesc('ps.flagged_at')
+        ->get();
+
+    $similarOtherUids = [];
+    foreach ($similarRaw as $s) {
+        foreach (array_filter(array_map('trim', explode(';', $s->similar_to))) as $other) {
+            $similarOtherUids[$other] = true;
+        }
+    }
+
+    $similarNames = DB::table('t_user_info')
+        ->whereIn('user_id', array_keys($similarOtherUids))
+        ->select('user_id', 'first_name', 'second_name')
+        ->get()
+        ->keyBy('user_id');
+
+    $duplicatiSospetti = $similarRaw->map(function ($s) use ($similarNames) {
+        $membri = array_map(function ($other) use ($similarNames) {
+            $ui = $similarNames->get($other);
+            return [
+                'uid'  => $other,
+                'name' => $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null,
+            ];
+        }, array_filter(array_map('trim', explode(';', $s->similar_to))));
+
+        return [
+            'prj'         => $s->prj,
+            'sid'         => $s->sid,
+            'description' => $s->description,
+            'membri'      => $membri,
+            'flagged_at'  => $s->flagged_at,
+        ];
+    })->values();
+
+    // ===============================
+    // 8) RETURN ALLA VIEW
     // ===============================
     return view('userProfile', [
         'user' => $user,
@@ -150,6 +197,7 @@ class UserProfileController extends Controller
             'malusCount'  => $malusHistory->count(),
         ],
         'storico' => $storico,
+        'duplicatiSospetti' => $duplicatiSospetti,
     ]);
 }
 
@@ -207,10 +255,12 @@ public function delete($user_id)
     {
         $validated = $request->validate([
             'motivazione' => 'required|string|max:255',
+            'tipo'        => 'required|string|in:qualita,duplicato',
             'send_email'  => 'boolean',
         ]);
 
         $sendEmail = (bool) ($validated['send_email'] ?? false);
+        $tipo      = $validated['tipo'];
 
         try {
             $user = DB::table('t_user_info')->where('user_id', $user_id)->first();
@@ -226,7 +276,7 @@ public function delete($user_id)
             DB::table('t_user_history')->insert([
                 'user_id'    => $user_id,
                 'event_date' => now(),
-                'event_type' => 'BAN',
+                'event_type' => $tipo === 'duplicato' ? 'BAN DUPLICATO' : 'BAN',
                 'event_info' => $validated['motivazione'],
                 'prev_level' => $currentPoints,
                 'new_level'  => $currentPoints,
@@ -237,11 +287,10 @@ public function delete($user_id)
             if ($sendEmail && !empty($user->email)) {
                 try {
                     $nome = $user->first_name ?: $user_id;
-                    Mail::to($user->email)->send(new \App\Mail\BanNotification(
-                        $validated['motivazione'],
-                        $nome,
-                        $user_id
-                    ));
+                    $mailable = $tipo === 'duplicato'
+                        ? new DuplicateBanNotification($validated['motivazione'], $nome, $user_id)
+                        : new BanNotification($validated['motivazione'], $nome, $user_id);
+                    Mail::to($user->email)->send($mailable);
                     $emailSent = true;
                 } catch (\Exception $e) {
                     Log::error('Errore invio email ban: ' . $e->getMessage());
@@ -429,13 +478,15 @@ public function assignQualityMalus(Request $request, $user_id)
     $validated = $request->validate([
         'valore'     => 'required|integer|min:1',
         'motivazione' => 'required|string|max:255',
+        'tipo'       => 'required|string|in:qualita,duplicato',
         'send_email' => 'nullable|boolean',
     ]);
 
     $sendEmail = (bool) ($validated['send_email'] ?? false);
+    $tipo      = $validated['tipo'];
 
     try {
-        $result = DB::transaction(function () use ($user_id, $validated) {
+        $result = DB::transaction(function () use ($user_id, $validated, $tipo) {
             $user = DB::table('t_user_info')
                 ->where('user_id', $user_id)
                 ->lockForUpdate()
@@ -455,6 +506,7 @@ public function assignQualityMalus(Request $request, $user_id)
                 'quality_score_snapshot' => $scoreSnapshot !== null ? round($scoreSnapshot, 1) : null,
                 'valore' => (int) $validated['valore'],
                 'motivazione' => $validated['motivazione'],
+                'tipo' => $tipo,
                 'assigned_by' => session('user_name'),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -469,7 +521,7 @@ public function assignQualityMalus(Request $request, $user_id)
             DB::table('t_user_history')->insert([
                 'user_id'    => $user_id,
                 'event_date' => now(),
-                'event_type' => 'MALUS QUALITA',
+                'event_type' => $tipo === 'duplicato' ? 'MALUS DUPLICATO' : 'MALUS QUALITA',
                 'event_info' => $validated['motivazione'],
                 'prev_level' => $prev,
                 'new_level'  => $new,
@@ -477,7 +529,7 @@ public function assignQualityMalus(Request $request, $user_id)
 
             return [
                 'success' => true,
-                'message' => 'Malus qualità assegnato correttamente.',
+                'message' => 'Malus assegnato correttamente.',
                 'points' => $new,
                 'malus_id' => $malusId,
                 'user_email' => $user->email,
@@ -493,12 +545,10 @@ public function assignQualityMalus(Request $request, $user_id)
 
         if ($sendEmail && !empty($result['user_email'])) {
             try {
-                Mail::to($result['user_email'])->send(new QualityMalusNotification(
-                    $validated['motivazione'],
-                    (int) $validated['valore'],
-                    $result['user_name'],
-                    $user_id
-                ));
+                $mailable = $tipo === 'duplicato'
+                    ? new DuplicateMalusNotification($validated['motivazione'], (int) $validated['valore'], $result['user_name'], $user_id)
+                    : new QualityMalusNotification($validated['motivazione'], (int) $validated['valore'], $result['user_name'], $user_id);
+                Mail::to($result['user_email'])->send($mailable);
 
                 DB::table('t_quality_malus')->where('id', $result['malus_id'])->update([
                     'email_sent' => true,
@@ -506,7 +556,7 @@ public function assignQualityMalus(Request $request, $user_id)
                 ]);
                 $emailSent = true;
             } catch (\Exception $mailException) {
-                Log::error('Errore invio email malus qualità: ' . $mailException->getMessage());
+                Log::error('Errore invio email malus: ' . $mailException->getMessage());
             }
         }
 
@@ -750,11 +800,26 @@ $storicoQuery = DB::table('t_user_history')
                 $item->tipologia = $item->event_info ?? 'Malus qualità';
                 break;
 
+            case 'malus duplicato':
+                $item->bytes = -abs($diff);
+                $item->evento_label = 'MALUS DUPLICATO';
+                $item->evento_color = 'danger';
+                $item->evento_icon = 'bi-fingerprint';
+                $item->tipologia = $item->event_info ?? 'Malus utente duplicato';
+                break;
+
             case 'ban':
                 $item->evento_label = 'BAN';
                 $item->evento_color = 'dark';
                 $item->evento_icon = 'bi-slash-circle';
                 $item->tipologia = $item->event_info ?? 'Sospensione account';
+                break;
+
+            case 'ban duplicato':
+                $item->evento_label = 'BAN DUPLICATO';
+                $item->evento_color = 'dark';
+                $item->evento_icon = 'bi-fingerprint';
+                $item->tipologia = $item->event_info ?? 'Sospensione per duplicazione account';
                 break;
 
             case 'riattivazione':
