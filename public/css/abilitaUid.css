@@ -223,7 +223,8 @@
 .au-pill--4{ background: rgba(249,115,22,.15); border-color: rgba(249,115,22,.35); color:#9a3412; }  /* screenout */
 .au-pill--5{ background: rgba(239,68,68,.15);  border-color: rgba(239,68,68,.35);  color:#991b1b; }  /* quotafull */
 .au-pill--6{ background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.35); color:#1d4ed8; }  /* guest */
-.au-pill--7{ background: rgba(100,116,139,.18);border-color: rgba(100,116,139,.35); color:#334155; }  /* bloccata */
+.au-pill--7{ background: rgba(100,116,139,.18);border-color: rgba(100,116,139,.35); color:#334155; }  /* stop int */
+.au-pill--10{ background: rgba(185,28,28,.18); border-color: rgba(185,28,28,.4);    color:#7f1d1d; }  /* bad quality */
 
 
 /* =========================

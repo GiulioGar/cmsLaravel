@@ -247,6 +247,11 @@ body {
     background: #eef2ff;
 }
 
+.respint-report-10 {
+    border-left-color: #991b1b;
+    background: #fef2f2;
+}
+
 .respint-report-other {
     border-left-color: #71717a;
     background: #fafafa;
@@ -332,6 +337,11 @@ body {
     --bs-table-striped-bg: #e0e7ff;
 }
 
+.respint-log-table tbody tr.respint-row-10 {
+    --bs-table-bg: #fef2f2;
+    --bs-table-striped-bg: #fee2e2;
+}
+
 .badge.respint-status-badge {
     min-width: 118px;
     color: #ffffff;
@@ -359,6 +369,10 @@ body {
 
 .badge.respint-status-7 {
     background: #4f46e5;
+}
+
+.badge.respint-status-10 {
+    background: #991b1b;
 }
 
 .badge.respint-status-other {

@@ -77,6 +77,9 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/fieldQuality/similarity-flag', [FieldQualityController::class, 'similarityFlag'])->name('fieldQuality.similarityFlag');
     Route::get('/fieldQuality/similarity-flags', [FieldQualityController::class, 'similarityFlaggedUids'])->name('fieldQuality.similarityFlaggedUids');
     Route::get('/fieldQuality/questions-meta', [FieldQualityController::class, 'questionsMeta'])->name('fieldQuality.questionsMeta');
+    Route::post('/fieldQuality/bad-quality/flag', [FieldQualityController::class, 'flagBadQuality'])->name('fieldQuality.badQuality.flag');
+    Route::post('/fieldQuality/bad-quality/unflag', [FieldQualityController::class, 'unflagBadQuality'])->name('fieldQuality.badQuality.unflag');
+    Route::post('/fieldQuality/bad-quality/flag-bulk', [FieldQualityController::class, 'flagBadQualityBulk'])->name('fieldQuality.badQuality.flagBulk');
 
     // ============================================
     // CAMPIONAMENTO

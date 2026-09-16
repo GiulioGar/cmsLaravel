@@ -97,7 +97,7 @@
 <!-- FINE NAVBAR -->
 
 @php
-    /* ---- Panel stats per breakdown table ---- */
+    /* ---- Panel stats per breakdown table (include anche le Bad Quality) ---- */
     $panelStats = [];
     foreach ($completeInterviews as $iv) {
         $pKey = ($iv['panel'] ?: 'N/D');
@@ -258,6 +258,9 @@
                 @if($notEvaluableInterviews > 0)
                 <div style="font-size:11px;color:oklch(55% 0.02 250);margin-top:4px;">{{ $notEvaluableInterviews }} non valutabili</div>
                 @endif
+                @if($badQualityCount > 0)
+                <div style="font-size:11px;color:oklch(48% 0.16 25);margin-top:4px;">di cui {{ $badQualityCount }} bad quality</div>
+                @endif
             </div>
             <div class="dq-stat-cell">
                 <div class="dq-stat-label">
@@ -385,11 +388,16 @@
                     <input type="number" id="flt-iv-score-max" class="dq-filter-input" min="0" max="100" step="1"
                            placeholder="100" style="width:70px;">
                 </div>
-                <button class="dq-btn dq-btn-outline-teal" onclick="exportCsv('tbl-interviews', ['ID','UID','Nome','Email','Panel','Score','Stato'])">
+                <button class="dq-btn dq-btn-outline-teal" onclick="exportCsv('tbl-interviews', ['','ID','UID','Nome','Email','Panel','Score','Stato','Bad Quality'])">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Esporta CSV
                 </button>
             </div>
+        </div>
+
+        <div id="iv-bulk-bar" style="display:none;align-items:center;gap:12px;padding:8px 20px;background:oklch(97% 0.02 25);border-bottom:1px solid oklch(90% 0.03 25);">
+            <span id="iv-bulk-count" style="font-size:12px;font-weight:600;color:oklch(45% 0.02 250);">0 selezionate</span>
+            <button type="button" class="dq-bq-btn dq-bq-btn--flag" style="display:inline-block;" onclick="bulkFlagBadQuality()">Segnala selezionate come Bad Quality</button>
         </div>
 
         @if(count($completeInterviews) > 0)
@@ -397,6 +405,9 @@
             <table id="tbl-interviews" class="dq-table" style="min-width:980px;">
                 <thead class="dq-thead">
                     <tr>
+                        <th class="dq-th" style="width:32px;text-align:center;">
+                            <input type="checkbox" id="iv-select-all" onclick="toggleSelectAllBadQuality(this)">
+                        </th>
                         <th class="dq-th">ID</th>
                         <th class="dq-th">UID</th>
                         <th class="dq-th">Nome</th>
@@ -404,6 +415,7 @@
                         <th class="dq-th">Panel</th>
                         <th class="dq-th">Score</th>
                         <th class="dq-th">Stato</th>
+                        <th class="dq-th" style="width:130px;text-align:center;">Bad Quality</th>
                         <th class="dq-th" style="width:40px;text-align:center;">Info</th>
                     </tr>
                 </thead>
@@ -438,7 +450,13 @@
                     data-uid="{{ $interview['uid'] }}"
                     data-panel="{{ $ivPanelLow }}"
                     data-tier="{{ $ivTier }}"
-                    data-score="{{ $ivSc !== null ? $ivSc : '' }}">
+                    data-score="{{ $ivSc !== null ? $ivSc : '' }}"
+                    data-bad-quality="{{ $interview['is_bad_quality'] ? '1' : '0' }}">
+                    <td class="dq-td" style="text-align:center;vertical-align:middle;">
+                        @if(!$interview['is_bad_quality'])
+                            <input type="checkbox" class="iv-row-chk" data-iid="{{ $interview['iid'] }}" onclick="syncBulkBadQualityBar()">
+                        @endif
+                    </td>
                     <td class="dq-td" style="font-weight:600;">{{ $interview['iid'] }}</td>
                     <td class="dq-td dq-td-mono">
                         @if(($interview['panel'] ?? '') === 'Interactive')
@@ -462,6 +480,16 @@
                     <td class="dq-td">
                         <div class="{{ $ivStatoCls }}">{{ mb_strtoupper($interview['rating_label'] ?? 'N/D', 'UTF-8') }}</div>
                     </td>
+                    <td class="dq-td" style="text-align:center;vertical-align:middle;">
+                        @if($interview['is_bad_quality'])
+                            <span class="dq-badge-badquality" title="Bad Quality — segnalata da {{ optional($interview['flag_meta'])->flagged_by ?? 'N/D' }}">Segnalata</span>
+                            <button type="button" class="dq-bq-btn dq-bq-btn--unflag"
+                                    onclick="toggleBadQuality(this, '{{ $interview['iid'] }}', false)">Ripristina</button>
+                        @else
+                            <button type="button" class="dq-bq-btn dq-bq-btn--flag"
+                                    onclick="toggleBadQuality(this, '{{ $interview['iid'] }}', true)">Segnala</button>
+                        @endif
+                    </td>
                     <td class="dq-td" style="text-align:center;vertical-align:middle;padding:0 12px;">
                         <button type="button" class="dq-info-btn"
                             data-bs-toggle="popover"
@@ -476,7 +504,12 @@
                 </tbody>
             </table>
         </div>
-        <div class="dq-table-footer" id="iv-count">{{ count($completeInterviews) }} risultati</div>
+        <div class="dq-table-footer" id="iv-count">
+            {{ $totalInterviews - $badQualityCount }} complete
+            @if($badQualityCount > 0)
+                <span style="color:oklch(48% 0.16 25);">({{ $badQualityCount }} bad quality)</span>
+            @endif
+        </div>
         @else
         <div style="padding:24px;color:oklch(55% 0.02 250);font-style:italic;">Nessuna intervista completa trovata.</div>
         @endif
@@ -1289,6 +1322,89 @@ function simFlagSelected() {
     });
 }
 
+function toggleBadQuality(btn, iid, flag) {
+    var url = flag
+        ? '{{ route("fieldQuality.badQuality.flag") }}'
+        : '{{ route("fieldQuality.badQuality.unflag") }}';
+
+    btn.disabled = true;
+    btn.style.opacity = '.5';
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ prj: '{{ $prj }}', sid: '{{ $sid }}', iid: iid })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success) {
+            location.reload();
+        } else {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            alert(d.error || 'Operazione non riuscita.');
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        alert('Errore di rete.');
+    });
+}
+
+function toggleSelectAllBadQuality(el) {
+    document.querySelectorAll('#tbl-interviews tbody tr').forEach(function (row) {
+        if (row.style.display === 'none') return;
+        var chk = row.querySelector('.iv-row-chk');
+        if (chk) chk.checked = el.checked;
+    });
+    syncBulkBadQualityBar();
+}
+
+function syncBulkBadQualityBar() {
+    var checked = document.querySelectorAll('#tbl-interviews tbody .iv-row-chk:checked');
+    var bar = document.getElementById('iv-bulk-bar');
+    var count = document.getElementById('iv-bulk-count');
+    if (checked.length > 0) {
+        bar.style.display = 'flex';
+        count.textContent = checked.length + ' selezionate';
+    } else {
+        bar.style.display = 'none';
+    }
+}
+
+function bulkFlagBadQuality() {
+    var checked = document.querySelectorAll('#tbl-interviews tbody .iv-row-chk:checked');
+    if (checked.length === 0) return;
+
+    var iids = Array.from(checked).map(function (chk) { return chk.dataset.iid; });
+    if (!confirm('Segnalare ' + iids.length + ' interviste come Bad Quality?')) return;
+
+    var btn = document.querySelector('#iv-bulk-bar button');
+    btn.disabled = true;
+    btn.style.opacity = '.5';
+
+    fetch('{{ route("fieldQuality.badQuality.flagBulk") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ prj: '{{ $prj }}', sid: '{{ $sid }}', iids: iids })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.failed > 0) {
+            var errors = d.results.filter(function (r) { return !r.success; })
+                .map(function (r) { return r.iid + ': ' + r.error; }).join('\n');
+            alert(d.flagged + ' segnalate, ' + d.failed + ' fallite:\n' + errors);
+        }
+        location.reload();
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        alert('Errore di rete.');
+    });
+}
+
 function initSimPopovers() {
     document.querySelectorAll('#sim-content .fq-codice-pop').forEach(function(el) {
         new bootstrap.Popover(el, {
@@ -1566,7 +1682,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 && (!t || (row.dataset.tier  || '') === t)
                 && (sm === null || (rowScore !== null && rowScore <= sm));
         });
-        if (ivCount) ivCount.textContent = n + ' risultati';
+        if (ivCount) {
+            var bqVisible = document.querySelectorAll('#tbl-interviews tbody tr[data-bad-quality="1"]:not([style*="display: none"])').length;
+            var complete = n - bqVisible;
+            ivCount.textContent = complete + ' complete' + (bqVisible > 0 ? ' (' + bqVisible + ' bad quality)' : '');
+        }
     }
     if (fltIvSearch)   fltIvSearch.addEventListener('input', applyIvFilter);
     if (fltIvPanel)    fltIvPanel.addEventListener('change', applyIvFilter);
@@ -1974,6 +2094,22 @@ body { font-family: 'Inter', system-ui, sans-serif; }
 .dq-badge-scale-normale  { background: oklch(95% 0.04 150); color: oklch(45% 0.12 150); font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
 .dq-badge-scale-sospetta { background: oklch(95% 0.05 75);  color: oklch(48% 0.12 75);  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
 .dq-badge-scale-daverif  { background: oklch(95% 0.04 25);  color: oklch(48% 0.12 25);  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
+
+/* Bad Quality flag */
+.dq-badge-badquality {
+    background: oklch(93% 0.08 25); color: oklch(42% 0.16 25);
+    font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
+    display: inline-block; margin-bottom: 4px;
+}
+.dq-bq-btn {
+    display: block; margin: 0 auto; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 6px; border: 1px solid transparent;
+    cursor: pointer; background: none;
+}
+.dq-bq-btn--flag { color: oklch(48% 0.16 25); border-color: oklch(85% 0.06 25); background: oklch(97% 0.02 25); }
+.dq-bq-btn--flag:hover { background: oklch(93% 0.06 25); }
+.dq-bq-btn--unflag { color: oklch(45% 0.02 250); border-color: oklch(85% 0.01 250); background: oklch(97% 0.005 250); }
+.dq-bq-btn--unflag:hover { background: oklch(93% 0.01 250); }
 
 /* Open fake badge */
 .dq-fake-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }

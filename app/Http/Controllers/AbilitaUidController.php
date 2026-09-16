@@ -282,6 +282,7 @@ public function showRightPanelData(Request $request)
     // Status counts presi dai file .sre (status è in 8ª posizione -> index 7)
     $statusCounts = []; // es: [0=>123, 1=>4, ...]
     for ($i = 0; $i <= 7; $i++) $statusCounts[$i] = 0;
+    $statusCounts[10] = 0; // Bad Quality
 
     if (is_dir($directory)) {
         $files = glob($directory . "/*.sre");
@@ -326,10 +327,10 @@ public function showRightPanelData(Request $request)
                         if (isset($parts[8])) {
                             $st = trim($parts[8]);
 
-                                // conta solo 0..7, altrimenti ignoriamo
+                                // conta solo 0..7 e 10 (Bad Quality), altrimenti ignoriamo
                                 if ($st !== '' && ctype_digit($st)) {
                                     $stInt = (int)$st;
-                                    if ($stInt >= 0 && $stInt <= 7) {
+                                    if (($stInt >= 0 && $stInt <= 7) || $stInt === 10) {
                                         $statusCounts[$stInt]++;
                                     }
                                 }

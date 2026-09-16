@@ -464,6 +464,7 @@
                             'over_quota' => round(((int) ($counts['over_quota'] ?? 0) / $totContatti) * 100, 1),
                             'sospese' => round(((int) ($counts['sospese'] ?? 0) / $totContatti) * 100, 1),
                             'bloccate' => round(((int) ($counts['bloccate'] ?? 0) / $totContatti) * 100, 1),
+                            'bad_quality' => round(((int) ($counts['bad_quality'] ?? 0) / $totContatti) * 100, 1),
                             'contatti' => 100.0,
                         ];
                     @endphp
@@ -588,6 +589,26 @@
                                         data-bs-toggle="tooltip"
                                         title="Percentuale di Bloccate sui contatti">
                                         {{ rtrim(rtrim(number_format($totPerc['bloccate'], 1), '0'), '.') }}%
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="fc-kpi-item fc-badquality">
+                                <div class="fc-kpi-top">
+                                    <div class="fc-kpi-icon">
+                                        <i class="fas fa-flag"></i>
+                                    </div>
+                                    <div class="fc-kpi-label">Bad Quality</div>
+                                </div>
+
+                                <div class="fc-kpi-value">{{ $counts['bad_quality'] ?? 0 }}</div>
+
+                                <div class="fc-kpi-meta-row">
+                                    <div class="fc-kpi-pill"
+                                        data-bs-toggle="tooltip"
+                                        title="Percentuale di Bad Quality sui contatti">
+                                        {{ rtrim(rtrim(number_format($totPerc['bad_quality'] ?? 0, 1), '0'), '.') }}%
                                     </div>
 
                                 </div>
@@ -741,6 +762,7 @@
                                 'over_quota' => round(((int) ($panelData['over_quota'] ?? 0) / $panelContatti) * 100, 1),
                                 'sospese' => round(((int) ($panelData['sospese'] ?? 0) / $panelContatti) * 100, 1),
                                 'bloccate' => round(((int) ($panelData['bloccate'] ?? 0) / $panelContatti) * 100, 1),
+                                'bad_quality' => round(((int) ($panelData['bad_quality'] ?? 0) / $panelContatti) * 100, 1),
                                 'contatti' => 100.0,
                             ];
                         @endphp
@@ -886,6 +908,26 @@
                                         data-bs-toggle="tooltip"
                                         title="Percentuale di Bloccate sui contatti del panel">
                                         {{ rtrim(rtrim(number_format($panelPerc['bloccate'], 1), '0'), '.') }}%
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="fc-kpi-item fc-badquality">
+                                <div class="fc-kpi-top">
+                                    <div class="fc-kpi-icon">
+                                        <i class="fas fa-flag"></i>
+                                    </div>
+                                    <div class="fc-kpi-label">Bad Quality</div>
+                                </div>
+
+                                <div class="fc-kpi-value">{{ $panelData['bad_quality'] ?? 0 }}</div>
+
+                                <div class="fc-kpi-meta-row">
+                                    <div class="fc-kpi-pill"
+                                        data-bs-toggle="tooltip"
+                                        title="Percentuale di Bad Quality sui contatti del panel">
+                                        {{ rtrim(rtrim(number_format($panelPerc['bad_quality'] ?? 0, 1), '0'), '.') }}%
                                     </div>
 
                                 </div>
@@ -1316,9 +1358,13 @@
                                                 <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="In Corso">
                                                     <i class="fas fa-hourglass-half text-primary"></i>
                                                 </span>
-                                            @elseif ($log['stato'] === 'Bloccata')
-                                                <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="Bloccata">
+                                            @elseif ($log['stato'] === 'Stop Int')
+                                                <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="Stop Int">
                                                     <i class="fas fa-ban text-dark"></i>
+                                                </span>
+                                            @elseif ($log['stato'] === 'Bad Quality')
+                                                <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="Bad Quality">
+                                                    <i class="fas fa-flag text-danger"></i>
                                                 </span>
                                             @else
                                                 <span class="fc-log-status-icon" data-bs-toggle="tooltip" title="{{ $log['stato'] }}">
@@ -1413,6 +1459,7 @@
                                             <th>Non in target</th>
                                             <th>Quotafull</th>
                                             <th>Bloccate</th>
+                                            <th>Bad Quality</th>
                                             <th>IR (%)</th>
                                             <th>LOI (Media)</th>
                                         </tr>
@@ -1429,7 +1476,8 @@
                                             $stats = $rows[$date];
 
                                             // ==== IR (come già fai) ====
-                                            $sospese = $stats['contatti'] - ($stats['non_target'] + $stats['quotafull'] + $stats['complete'] + $stats['bloccate']);
+                                            $badQualityDay = $stats['bad_quality'] ?? 0;
+                                            $sospese = $stats['contatti'] - ($stats['non_target'] + $stats['quotafull'] + $stats['complete'] + $stats['bloccate'] + $badQualityDay);
                                             $denominator = $stats['contatti'] - $sospese - $stats['quotafull'] - $stats['bloccate'];
                                             $ir = ($denominator > 0) ? round(($stats['complete'] / $denominator) * 100, 2) : 0;
 
@@ -1451,7 +1499,8 @@
                                                 $prev = $rows[$prevDate];
 
                                                 // IR prev
-                                                $prevSospese = $prev['contatti'] - ($prev['non_target'] + $prev['quotafull'] + $prev['complete'] + $prev['bloccate']);
+                                                $prevBadQuality = $prev['bad_quality'] ?? 0;
+                                                $prevSospese = $prev['contatti'] - ($prev['non_target'] + $prev['quotafull'] + $prev['complete'] + $prev['bloccate'] + $prevBadQuality);
                                                 $prevDen = $prev['contatti'] - $prevSospese - $prev['quotafull'] - $prev['bloccate'];
                                                 $prevIr = ($prevDen > 0) ? round(($prev['complete'] / $prevDen) * 100, 2) : 0;
 
@@ -1489,6 +1538,7 @@
                                             <td class="text-warning fw-bold">{{ $stats['non_target'] }}</td>
                                             <td class="text-danger fw-bold">{{ $stats['quotafull'] }}</td>
                                             <td class="text-danger fw-bold">{{ $stats['bloccate'] }}</td>
+                                            <td class="fw-bold" style="color:#991b1b;">{{ $stats['bad_quality'] ?? 0 }}</td>
 
                                             <td class="text-primary fw-bold">
                                                 {{ $ir }}%
@@ -1506,7 +1556,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="8" class="p-0 border-0">
+                                            <td colspan="9" class="p-0 border-0">
                                                 <div class="fc-empty-state fc-empty-state--compact">
                                                     <div class="fc-empty-robot">
                                                         <i class="fa-solid fa-robot"></i>

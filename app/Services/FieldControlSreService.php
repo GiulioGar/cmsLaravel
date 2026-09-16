@@ -161,7 +161,7 @@ class FieldControlSreService
     |--------------------------------------------------------------------------
     */
 
-    public function buildInterviewDataset(array $files, string $prj, string $sid): array
+    public function buildInterviewDataset(array $files, string $prj, string $sid, bool $keepRaw = false): array
     {
         $parsedList = [];
         $uidsToCheck = [];
@@ -188,7 +188,9 @@ class FieldControlSreService
                 }
             }
 
-            unset($parsed['raw']);
+            if (!$keepRaw) {
+                unset($parsed['raw']);
+            }
 
             $parsed['pan'] = $pan;
             $parsed['_uid_interactive'] = $uidInteractive;
@@ -285,6 +287,7 @@ class FieldControlSreService
             'over_quota' => 0,
             'sospese' => 0,
             'bloccate' => 0,
+            'bad_quality' => 0,
             'contatti' => $totalFiles,
         ];
 
@@ -301,6 +304,7 @@ class FieldControlSreService
                     'over_quota' => 0,
                     'sospese' => 0,
                     'bloccate' => 0,
+                    'bad_quality' => 0,
                     'contatti' => 0,
                     'redemption' => 0,
                 ];
@@ -328,6 +332,10 @@ class FieldControlSreService
                 case 7:
                     $counts['bloccate']++;
                     $panelCounts[$panel]['bloccate']++;
+                    break;
+                case 10:
+                    $counts['bad_quality']++;
+                    $panelCounts[$panel]['bad_quality']++;
                     break;
             }
         }
@@ -410,6 +418,7 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
                 'non_target' => 0,
                 'quotafull' => 0,
                 'bloccate' => 0,
+                'bad_quality' => 0,
                 'total_duration' => 0,
             ];
         }
@@ -429,6 +438,9 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
                 break;
             case 7:
                 $dataSummaryByPanel[$panel][$dayKey]['bloccate']++;
+                break;
+            case 10:
+                $dataSummaryByPanel[$panel][$dayKey]['bad_quality']++;
                 break;
         }
     }
@@ -557,22 +569,24 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
     public function getInterviewStatusMap(): array
     {
         return [
-            0 => 'In Corso',
-            3 => 'Completa',
-            4 => 'Non in target',
-            5 => 'Quotafull',
-            7 => 'Bloccata',
+            0  => 'In Corso',
+            3  => 'Completa',
+            4  => 'Non in target',
+            5  => 'Quotafull',
+            7  => 'Stop Int',
+            10 => 'Bad Quality',
         ];
     }
 
     public function getDownloadStatusMap(): array
     {
         return [
-            0 => 'suspended',
-            3 => 'complete',
-            4 => 'screenout',
-            5 => 'quotafull',
-            7 => 'badQuality',
+            0  => 'suspended',
+            3  => 'complete',
+            4  => 'screenout',
+            5  => 'quotafull',
+            7  => 'stopInt',
+            10 => 'badQuality',
         ];
     }
 
@@ -706,5 +720,99 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
     private function extractSreFileNumber(string $file): int
     {
         return (int) substr(pathinfo($file, PATHINFO_FILENAME), 3);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | WRITE — Bad Quality flag (scrittura sicura sul .sre)
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Trova il file .sre corrispondente a un IID in una directory, leggendo
+     * solo la prima riga di ciascun file (stesso pattern di parseSreFile()).
+     */
+    public function locateSreFileByIid(string $directory, string $iid): ?string
+    {
+        foreach ($this->getSreFiles($directory) as $file) {
+            $parsed = $this->parseSreFile($file);
+            if (!empty($parsed) && (string) $parsed['iid'] === $iid) {
+                return $file;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Aggiorna atomicamente lo status (campo 8/9 in prima riga, offset-aware) di un
+     * file .sre, SOLO se lo stato corrente è $fromStatus. Preserva byte-per-byte tutto
+     * il contenuto successivo alla prima riga (incluso il terminatore di riga originale),
+     * fa backup non distruttivo in resBackup/ e scrive via file temporaneo + rename
+     * (mai un file a metà scritto).
+     *
+     * @return array{success: bool, error: ?string, current_status: ?int, uid: ?string, iid: ?string}
+     */
+    public function writeSreStatus(string $file, int $fromStatus, int $toStatus): array
+    {
+        $raw = @file_get_contents($file);
+        if ($raw === false) {
+            return ['success' => false, 'error' => 'read_failed', 'current_status' => null, 'uid' => null, 'iid' => null];
+        }
+
+        $pos = strpos($raw, "\n");
+        if ($pos === false) {
+            $firstLineRaw = $raw;
+            $eol  = '';
+            $rest = '';
+        } elseif ($pos > 0 && $raw[$pos - 1] === "\r") {
+            $firstLineRaw = substr($raw, 0, $pos - 1);
+            $eol  = "\r\n";
+            $rest = substr($raw, $pos + 1);
+        } else {
+            $firstLineRaw = substr($raw, 0, $pos);
+            $eol  = "\n";
+            $rest = substr($raw, $pos + 1);
+        }
+
+        $columns = explode(';', trim($firstLineRaw));
+        $colMap  = $this->getSreColumnMap($columns);
+        $idx     = $colMap['status'];
+
+        if (!isset($columns[$idx])) {
+            return ['success' => false, 'error' => 'status_index_missing', 'current_status' => null, 'uid' => null, 'iid' => null];
+        }
+
+        $current = (int) trim($columns[$idx]);
+        $uid = (string) $this->getSreValue($columns, $colMap['uid']);
+        $iid = (string) $this->getSreValue($columns, $colMap['iid']);
+
+        if ($current !== $fromStatus) {
+            return ['success' => false, 'error' => 'unexpected_status', 'current_status' => $current, 'uid' => $uid, 'iid' => $iid];
+        }
+
+        $columns[$idx] = (string) $toStatus;
+        $newContent = implode(';', $columns) . $eol . $rest;
+
+        $backupDir = dirname($file) . '/../resBackup';
+        if (!is_dir($backupDir)) {
+            @mkdir($backupDir, 0755, true);
+        }
+        $backupFile = $backupDir . '/' . basename($file);
+        if (!file_exists($backupFile)) {
+            @copy($file, $backupFile);
+        }
+
+        $tmpFile = $file . '.tmp' . uniqid('', true);
+        if (@file_put_contents($tmpFile, $newContent, LOCK_EX) === false) {
+            @unlink($tmpFile);
+            return ['success' => false, 'error' => 'write_failed', 'current_status' => $current, 'uid' => $uid, 'iid' => $iid];
+        }
+        if (!@rename($tmpFile, $file)) {
+            @unlink($tmpFile);
+            return ['success' => false, 'error' => 'rename_failed', 'current_status' => $current, 'uid' => $uid, 'iid' => $iid];
+        }
+
+        return ['success' => true, 'error' => null, 'current_status' => $toStatus, 'uid' => $uid, 'iid' => $iid];
     }
 }

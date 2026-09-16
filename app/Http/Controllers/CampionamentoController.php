@@ -396,7 +396,7 @@ private function buildSampleQuery(
                 })
                 ->where('ut.target_id', $targetId)
                 ->whereNotNull('ut.uid')
-                ->whereNotIn('r.status', [3, 4, 5])
+                ->whereNotIn('r.status', [3, 4, 5, 10])
                 ->select('u.user_id')
                 ->distinct();
         } else {
@@ -421,7 +421,7 @@ private function buildSampleQuery(
                     ->from('t_respint as r')
                     ->whereColumn('r.uid', "u.$userKey")
                     ->where('r.sid', $surId)
-                    ->whereNotIn('r.status', [3, 4, 5]);
+                    ->whereNotIn('r.status', [3, 4, 5, 10]);
             });
         } else {
             $q->whereNotExists(function ($sub) use ($surId, $userKey) {

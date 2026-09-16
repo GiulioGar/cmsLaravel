@@ -713,6 +713,8 @@ $storicoQuery = DB::table('t_user_history')
             'interview_complete',
             'interview_quotafull',
             'interview_complete_cint',
+            'PREMIO REVOCATO',
+            'PREMIO RIPRISTINATO',
         ], true);
 
         if ($isInterviewEvent && !empty($item->event_info)) {
@@ -850,6 +852,22 @@ $storicoQuery = DB::table('t_user_history')
                 $item->tipologia = $item->event_info ?? '';
                 break;
 
+            case 'premio revocato':
+                $item->bytes = -abs($diff);
+                $item->evento_label = 'PREMIO REVOCATO';
+                $item->evento_color = 'danger';
+                $item->evento_icon = 'bi-flag-fill';
+                $item->tipologia = 'Intervista segnalata Bad Quality';
+                break;
+
+            case 'premio ripristinato':
+                $item->bytes = abs($diff);
+                $item->evento_label = 'PREMIO RIPRISTINATO';
+                $item->evento_color = 'success';
+                $item->evento_icon = 'bi-arrow-counterclockwise';
+                $item->tipologia = 'Flag Bad Quality rimosso';
+                break;
+
             default:
                 $item->evento_label = strtoupper($item->event_type ?? '-');
                 $item->evento_color = 'secondary';
@@ -882,7 +900,7 @@ private function buildRespintStatusReport($user_id): array
 
 private function formatRespintStatusReport(array $statusCounts): array
 {
-    $knownStatuses = [0, 1, 3, 4, 5, 7];
+    $knownStatuses = [0, 1, 3, 4, 5, 7, 10];
     $items = [];
     $total = array_sum($statusCounts);
 
@@ -983,10 +1001,17 @@ private function getRespintStatusMeta($status): array
             ];
         case 7:
             return [
-                'label' => 'Bad quality',
+                'label' => 'Stop Int',
                 'badge_class' => 'respint-status-badge respint-status-7',
                 'report_class' => 'respint-report-7',
                 'row_class' => 'respint-row-7',
+            ];
+        case 10:
+            return [
+                'label' => 'Bad quality',
+                'badge_class' => 'respint-status-badge respint-status-10',
+                'report_class' => 'respint-report-10',
+                'row_class' => 'respint-row-10',
             ];
         default:
             return [

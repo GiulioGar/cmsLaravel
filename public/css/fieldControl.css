@@ -1122,6 +1122,7 @@ h3 {font-size: 15px!important;}
 .fc-info::after{ background: linear-gradient(90deg, rgba(59,130,246,0), rgba(59,130,246,.38), rgba(59,130,246,0)); }
 .fc-dark::after{ background: linear-gradient(90deg, rgba(15,23,42,0), rgba(15,23,42,.28), rgba(15,23,42,0)); }
 .fc-base::after{ background: linear-gradient(90deg, rgba(124,58,237,0), rgba(124,58,237,.32), rgba(124,58,237,0)); }
+.fc-badquality::after{ background: linear-gradient(90deg, rgba(153,27,27,0), rgba(153,27,27,.4), rgba(153,27,27,0)); }
 
 .fc-kpi-extra{
   display:grid;
@@ -1888,6 +1889,16 @@ h3 {font-size: 15px!important;}
 .fc-base .fc-kpi-pill{
   color:#6d28d9;
   background: rgba(245,243,255,.95);
+}
+
+.fc-badquality .fc-kpi-icon{
+  background: rgba(254,242,242,.95);
+  color: #991b1b;
+}
+
+.fc-badquality .fc-kpi-pill{
+  color:#991b1b;
+  background: rgba(254,242,242,.95);
 }
 
 @media (max-width: 576px){

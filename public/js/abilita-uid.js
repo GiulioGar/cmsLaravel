@@ -410,7 +410,8 @@ async function copyLinks() {
                         { code: 4, label: 'Screenout', icon: 'fa-circle-exclamation', cls: 'au-pill--4' },
                         { code: 5, label: 'Quota full', icon: 'fa-ban', cls: 'au-pill--5' },
                         { code: 6, label: 'Guest', icon: 'fa-user', cls: 'au-pill--6' },
-                        { code: 7, label: 'Bloccata', icon: 'fa-lock', cls: 'au-pill--7' }
+                        { code: 7, label: 'Stop Int', icon: 'fa-lock', cls: 'au-pill--7' },
+                        { code: 10, label: 'Bad Quality', icon: 'fa-flag', cls: 'au-pill--10' }
                     ];
 
                     STATUS_META.forEach(function (s) {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\PrimisApiService;
+use App\Services\FieldControlSreService;
 use Illuminate\Support\Facades\Log;
 use App\Models\UserQuality;
 
@@ -120,9 +121,23 @@ class FieldQualityController extends Controller
         // 7a) Persistenza score in t_user_quality (insert-only, skip se già presente)
         $this->persistQualityScores($completeInterviews, $prj, $sid);
 
-        // 7) Statistiche e classificazione
+        // 7) Statistiche e classificazione — su TUTTE le interviste (incluse le Bad Quality):
+        //    restano comunque interviste complete con una valutazione reale, quindi vanno
+        //    considerate nella media/percentuali, ma il conteggio le distingue (badQualityCount).
+        $badQualityCount = count(array_filter($completeInterviews, fn ($iv) => ($iv['status'] ?? 3) === 10));
+
         $stats          = $this->computeScoreStats($completeInterviews);
         $classification = $this->computeQualityClassification($completeInterviews);
+
+        // 7b) Ledger Bad Quality: la fonte di verità dello stato resta il campo 'status' letto
+        //     dal .sre; questo batch join serve solo per arricchire la UI (chi/quando ha flaggato).
+        $ivIids = array_column($completeInterviews, 'iid');
+        $ledgerByIid = DB::table('t_interview_quality_flag')
+            ->where('prj', $prj)->where('sid', $sid)
+            ->whereIn('iid', $ivIids)
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('iid');
 
         // 8) Estrae lookup per la view ed elimina i campi annidati pesanti da $completeInterviews
         //    (quality_criteria / quality_risks / quality_weights non servono al rendering HTML)
@@ -135,6 +150,9 @@ class FieldQualityController extends Controller
         ];
 
         foreach ($completeInterviews as &$iv) {
+            $iv['is_bad_quality'] = ($iv['status'] ?? 3) === 10;
+            $iv['flag_meta']      = $ledgerByIid->get($iv['iid']);
+
             $loi = $iv['quality_criteria']['loi'] ?? [];
             $loiCriteriaByIid[$iv['iid']] = $loi;
             $loiSecByIid[$iv['iid']]      = $iv['loiSec'];
@@ -183,6 +201,7 @@ class FieldQualityController extends Controller
             'minScore'           => $stats['min'],
             'loiMediaFormatted'  => $this->formatLoiSec($loiMedianSec),
             'completeInterviews' => $completeInterviews,
+            'badQualityCount'    => $badQualityCount,
             'loiData'            => $loiData,
             'openQuestionsData'  => $openQuestionsData,
             'scaleData'          => $scaleData,
@@ -710,6 +729,225 @@ class FieldQualityController extends Controller
     }
 
     // =========================================================================
+    // BAD QUALITY FLAG (reversibile, scrive fisicamente sul .sre)
+    // =========================================================================
+
+    public function flagBadQuality(Request $request, FieldControlSreService $sreService)
+    {
+        $prj = (string) $request->input('prj', '');
+        $sid = (string) $request->input('sid', '');
+        $iid = (string) $request->input('iid', '');
+
+        if ($prj === '' || $sid === '' || $iid === '') {
+            return response()->json(['success' => false, 'error' => 'PRJ, SID e IID richiesti'], 422);
+        }
+
+        $result = $this->performBadQualityToggle($prj, $sid, $iid, $sreService, 3, 10, 'PREMIO REVOCATO');
+        $status = $result['http_status'];
+        unset($result['http_status']);
+
+        return response()->json($result, $status);
+    }
+
+    public function unflagBadQuality(Request $request, FieldControlSreService $sreService)
+    {
+        $prj = (string) $request->input('prj', '');
+        $sid = (string) $request->input('sid', '');
+        $iid = (string) $request->input('iid', '');
+
+        if ($prj === '' || $sid === '' || $iid === '') {
+            return response()->json(['success' => false, 'error' => 'PRJ, SID e IID richiesti'], 422);
+        }
+
+        $result = $this->performBadQualityToggle($prj, $sid, $iid, $sreService, 10, 3, 'PREMIO RIPRISTINATO');
+        $status = $result['http_status'];
+        unset($result['http_status']);
+
+        return response()->json($result, $status);
+    }
+
+    public function flagBadQualityBulk(Request $request, FieldControlSreService $sreService)
+    {
+        $prj  = (string) $request->input('prj', '');
+        $sid  = (string) $request->input('sid', '');
+        $iids = $request->input('iids', []);
+
+        if ($prj === '' || $sid === '' || !is_array($iids) || count($iids) < 1) {
+            return response()->json(['success' => false, 'error' => 'PRJ, SID e almeno un IID richiesti'], 422);
+        }
+
+        $iids = array_values(array_unique(array_map('strval', array_filter($iids, fn ($v) => $v !== null && $v !== ''))));
+
+        $results = [];
+        $flagged = 0;
+        $failed  = 0;
+
+        foreach ($iids as $iid) {
+            $r = $this->performBadQualityToggle($prj, $sid, $iid, $sreService, 3, 10, 'PREMIO REVOCATO');
+            $results[] = ['iid' => $iid, 'success' => $r['success'], 'error' => $r['error']];
+            if ($r['success']) {
+                $flagged++;
+            } else {
+                $failed++;
+            }
+        }
+
+        return response()->json([
+            'success'  => $failed === 0,
+            'flagged'  => $flagged,
+            'failed'   => $failed,
+            'results'  => $results,
+        ]);
+    }
+
+    private function performBadQualityToggle(
+        string $prj,
+        string $sid,
+        string $iid,
+        FieldControlSreService $sreService,
+        int $fromStatus,
+        int $toStatus,
+        string $historyEventType
+    ): array {
+        $directory = $sreService->resolveResultsDirectory($prj, $sid);
+        if (!$directory) {
+            return ['success' => false, 'error' => 'Directory risultati non trovata', 'http_status' => 404];
+        }
+
+        $file = $sreService->locateSreFileByIid($directory, $iid);
+        if (!$file) {
+            return ['success' => false, 'error' => 'Intervista non trovata', 'http_status' => 404];
+        }
+
+        $lockKey = "qflag:{$prj}:{$sid}:{$iid}";
+        $gotLock = (int) DB::selectOne('SELECT GET_LOCK(?, 5) AS ok', [$lockKey])->ok;
+        if ($gotLock !== 1) {
+            return ['success' => false, 'error' => 'Operazione già in corso su questa intervista, riprova.', 'http_status' => 409];
+        }
+
+        $fileWritten = false;
+
+        try {
+            $writeResult = $sreService->writeSreStatus($file, $fromStatus, $toStatus);
+            if (!$writeResult['success']) {
+                $msg = $writeResult['error'] === 'unexpected_status'
+                    ? 'Stato intervista non compatibile con l\'operazione (attuale: ' . $writeResult['current_status'] . ').'
+                    : 'Impossibile scrivere il file dell\'intervista (' . $writeResult['error'] . ').';
+
+                return ['success' => false, 'error' => $msg, 'http_status' => 409];
+            }
+            $fileWritten = true;
+            $uid = $writeResult['uid'];
+
+            $result = DB::transaction(function () use ($prj, $sid, $iid, $uid, $toStatus, $historyEventType) {
+                $user = DB::table('t_user_info')->where('user_id', $uid)->lockForUpdate()->first();
+                if (!$user) {
+                    throw new \RuntimeException('user_not_found');
+                }
+
+                $ledger = DB::table('t_interview_quality_flag')
+                    ->where('prj', $prj)->where('sid', $sid)->where('iid', $iid)
+                    ->lockForUpdate()->first();
+
+                $prevPoints = (int) $user->points;
+                $now = now()->format('Y-m-d H:i:s');
+                $who = session('user_name');
+
+                // t_respint è una tabella separata dal file .sre, letta da CampionamentoController
+                // (targeting follow-up) e da UserProfileController (log t_respint) — deve restare
+                // sincronizzata con lo stato scritto nel file, altrimenti quei punti del portale
+                // continuano a vedere lo stato vecchio (es. 3) anche dopo il flag/unflag.
+                DB::table('t_respint')
+                    ->where('sid', $sid)
+                    ->where('iid', $iid)
+                    ->update(['status' => $toStatus]);
+
+                if ($toStatus === 10) {
+                    // ---- FLAG: decurta punti = bytes ricerca, floor a 0, snapshot del delta reale ----
+                    $panelData = DB::table('t_panel_control')->where('sur_id', $sid)->first();
+                    $bytes = (int) ($panelData->bytes ?? 0);
+                    $newPoints = max(0, $prevPoints - $bytes);
+                    $actualRevoked = $prevPoints - $newPoints;
+
+                    DB::table('t_user_info')->where('user_id', $uid)->update(['points' => $newPoints]);
+
+                    $ledgerData = [
+                        'points_revoked' => $actualRevoked,
+                        'flagged_by'     => $who,
+                        'flagged_at'     => $now,
+                        'unflagged_by'   => null,
+                        'unflagged_at'   => null,
+                        'is_active'      => true,
+                    ];
+                    if ($ledger) {
+                        DB::table('t_interview_quality_flag')->where('id', $ledger->id)->update($ledgerData);
+                    } else {
+                        DB::table('t_interview_quality_flag')->insert(array_merge($ledgerData, [
+                            'prj' => $prj, 'sid' => $sid, 'iid' => $iid, 'uid' => $uid,
+                        ]));
+                    }
+
+                    DB::table('t_user_history')->insert([
+                        'user_id'    => $uid,
+                        'event_date' => now(),
+                        'event_type' => $historyEventType,
+                        'event_info' => "({$iid},{$sid},{$prj})",
+                        'prev_level' => $prevPoints,
+                        'new_level'  => $newPoints,
+                    ]);
+
+                    return ['points' => $newPoints, 'points_revoked' => $actualRevoked];
+                }
+
+                // ---- UNFLAG: ripristina esattamente points_revoked della riga ledger ----
+                $revoked = $ledger ? (int) $ledger->points_revoked : 0;
+                $newPoints = $prevPoints + $revoked;
+
+                DB::table('t_user_info')->where('user_id', $uid)->update(['points' => $newPoints]);
+
+                if ($ledger) {
+                    DB::table('t_interview_quality_flag')->where('id', $ledger->id)->update([
+                        'is_active'    => false,
+                        'unflagged_by' => $who,
+                        'unflagged_at' => $now,
+                    ]);
+                }
+
+                if (!$ledger) {
+                    Log::warning("BadQuality unflag: nessuna riga ledger trovata, punti non ripristinati. prj={$prj} sid={$sid} iid={$iid} uid={$uid}");
+                }
+
+                DB::table('t_user_history')->insert([
+                    'user_id'    => $uid,
+                    'event_date' => now(),
+                    'event_type' => $historyEventType,
+                    'event_info' => "({$iid},{$sid},{$prj})",
+                    'prev_level' => $prevPoints,
+                    'new_level'  => $newPoints,
+                ]);
+
+                return ['points' => $newPoints, 'points_revoked' => $revoked];
+            });
+
+            return array_merge(['success' => true, 'error' => null, 'http_status' => 200], $result);
+        } catch (\Throwable $e) {
+            if ($fileWritten) {
+                $revert = $sreService->writeSreStatus($file, $toStatus, $fromStatus);
+                if ($revert['success']) {
+                    Log::warning("BadQuality toggle: DB fallito dopo scrittura file, file ripristinato. prj={$prj} sid={$sid} iid={$iid}: " . $e->getMessage());
+                    return ['success' => false, 'error' => 'Operazione fallita, riprova.', 'http_status' => 500];
+                }
+                Log::critical("BadQuality toggle: file={$toStatus} ma DB non aggiornato e rollback file fallito. RICHIEDE INTERVENTO MANUALE (backup in resBackup). prj={$prj} sid={$sid} iid={$iid} file={$file}: " . $e->getMessage());
+                return ['success' => false, 'error' => 'Errore critico, contattare il supporto tecnico.', 'http_status' => 500];
+            }
+            Log::error('BadQuality toggle error: ' . $e->getMessage());
+            return ['success' => false, 'error' => 'Errore durante l\'operazione.', 'http_status' => 500];
+        } finally {
+            DB::select('SELECT RELEASE_LOCK(?)', [$lockKey]);
+        }
+    }
+
+    // =========================================================================
     // PARSING
     // =========================================================================
 
@@ -746,7 +984,7 @@ class FieldQualityController extends Controller
             $offset = (isset($data[0]) && $data[0] === '2.0') ? 0 : -1;
 
             $status = isset($data[8 + $offset]) ? (int) $data[8 + $offset] : null;
-            if ($status !== 3) {
+            if ($status !== 3 && $status !== 10) {
                 fclose($handle);
                 continue;
             }
@@ -834,6 +1072,7 @@ class FieldQualityController extends Controller
                 'iid'                => $iid,
                 'uid'                => $uid,
                 'panel'              => $panelUsed,
+                'status'             => $status,
                 'loiSec'             => $loiSec,
                 'questionsAnswered'  => $questionsAnswered,
                 'pathSignature'      => $pathSignature,

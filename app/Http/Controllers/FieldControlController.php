@@ -219,7 +219,7 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
     | DATASET UNICO (NUOVA LOGICA)
     |--------------------------------------------------------------------------
     */
-    $interviews = $sreService->buildInterviewDataset($files, $prj, $sid);
+    $interviews = $sreService->buildInterviewDataset($files, $prj, $sid, true);
 
     $panelExportConfig = $this->getPanelExportConfig($panelName);
     $configVariables = $sreService->getConfigRedirectVariables(
@@ -271,8 +271,6 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
             if ($interview['panel'] !== $panelName) {
                 continue;
             }
-
-            $raw = $interview['raw'];
 
             $statusMap = $sreService->getDownloadStatusMap();
             $statusLabel = $statusMap[$interview['status_code']] ?? 'unknown';
