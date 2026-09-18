@@ -25,7 +25,7 @@
 
         <button type="button" class="btn btn-primary" id="btnOpenCampaignModal">
             <i class="bi bi-plus-circle me-1"></i>
-            Nuova Campagna
+            Gestione Campagne
         </button>
     </div>
 </div>
@@ -299,7 +299,7 @@
                         <label class="form-label fw-semibold">Fasce CPI</label>
                         <div id="segmentsContainer"></div>
                         <button type="button" id="btnAddSegment" class="btn btn-sm btn-outline-secondary mt-2">+ Aggiungi fascia d'età</button>
-                        <div id="segmentsWarning" class="form-text text-warning d-none mt-1">Aggiungi una fascia senza età max come fallback per gli utenti oltre la soglia.</div>
+                        <div id="segmentsWarning" class="form-text text-warning d-none mt-1">Nessuna fascia copre tutti gli utenti: aggiungi una riga senza età min/max come fallback.</div>
                     </div>
 
                     <div class="mt-3">
@@ -454,17 +454,21 @@ const reportError = document.getElementById('reportError');
 function renderSegments(segments) {
     var container = document.getElementById('segmentsContainer');
     container.innerHTML = '';
-    segments.forEach(function(seg, i) {
+    segments.forEach(function(seg) {
         var row = document.createElement('div');
         row.className = 'segment-row d-flex gap-2 align-items-end mb-2';
         row.innerHTML =
-            '<div style="width:110px">'
+            '<div style="width:100px">'
             + '<label class="form-label mb-1 small">CPI (€)</label>'
             + '<input type="number" step="0.0001" min="0" class="form-control form-control-sm segment-cpi" value="' + (seg.cpi !== null && seg.cpi !== undefined ? seg.cpi : '') + '" required>'
             + '</div>'
-            + '<div style="width:150px">'
-            + '<label class="form-label mb-1 small">Età max <span class="text-muted">(vuoto=tutti)</span></label>'
-            + '<input type="number" min="1" max="120" class="form-control form-control-sm segment-age-max" value="' + (seg.age_max !== null && seg.age_max !== undefined ? seg.age_max : '') + '">'
+            + '<div style="width:90px">'
+            + '<label class="form-label mb-1 small">Età min</label>'
+            + '<input type="number" min="1" max="119" placeholder="nessun min" class="form-control form-control-sm segment-age-min" value="' + (seg.age_min !== null && seg.age_min !== undefined ? seg.age_min : '') + '">'
+            + '</div>'
+            + '<div style="width:90px">'
+            + '<label class="form-label mb-1 small">Età max</label>'
+            + '<input type="number" min="1" max="120" placeholder="nessun max" class="form-control form-control-sm segment-age-max" value="' + (seg.age_max !== null && seg.age_max !== undefined ? seg.age_max : '') + '">'
             + '</div>'
             + '<button type="button" class="btn btn-sm btn-outline-danger remove-segment mb-1">×</button>';
         container.appendChild(row);
@@ -476,6 +480,7 @@ function renderSegments(segments) {
                 updateSegmentsWarning();
             }
         });
+        row.querySelector('.segment-age-min').addEventListener('input', updateSegmentsWarning);
         row.querySelector('.segment-age-max').addEventListener('input', updateSegmentsWarning);
     });
     updateRemoveButtons();
@@ -491,24 +496,25 @@ function updateRemoveButtons() {
 
 function updateSegmentsWarning() {
     var warning = document.getElementById('segmentsWarning');
-    var ageMaxInputs = document.querySelectorAll('#segmentsContainer .segment-age-max');
-    var allHaveAgeMax = Array.prototype.every.call(ageMaxInputs, function(inp) { return inp.value.trim() !== ''; });
-    if (allHaveAgeMax && ageMaxInputs.length > 0) {
-        warning.classList.remove('d-none');
-    } else {
-        warning.classList.add('d-none');
-    }
+    var allRows = document.querySelectorAll('#segmentsContainer .segment-row');
+    if (allRows.length <= 1) { warning.classList.add('d-none'); return; }
+    var hasFallback = Array.prototype.some.call(allRows, function(r) {
+        return r.querySelector('.segment-age-min').value.trim() === ''
+            && r.querySelector('.segment-age-max').value.trim() === '';
+    });
+    warning.classList.toggle('d-none', hasFallback);
 }
 
 document.getElementById('btnAddSegment').addEventListener('click', function() {
     var allRows = document.querySelectorAll('#segmentsContainer .segment-row');
     var currentSegments = Array.prototype.map.call(allRows, function(row) {
         return {
-            cpi: row.querySelector('.segment-cpi').value,
+            cpi:     row.querySelector('.segment-cpi').value,
+            age_min: row.querySelector('.segment-age-min').value || null,
             age_max: row.querySelector('.segment-age-max').value || null
         };
     });
-    currentSegments.push({ cpi: '', age_max: '' });
+    currentSegments.push({ cpi: '', age_min: '', age_max: '' });
     renderSegments(currentSegments);
 });
 
@@ -548,7 +554,11 @@ function showCampaignForm(mode, period, referralInfo) {
         campaignStart.value = period.start_date;
         campaignEnd.value   = period.end_date || '';
         renderSegments(period.segments.map(function(s) {
-            return { cpi: s.cpi, age_max: s.age_max !== null ? s.age_max : '' };
+            return {
+                cpi:     s.cpi,
+                age_min: s.age_min !== null && s.age_min !== undefined ? s.age_min : '',
+                age_max: s.age_max !== null && s.age_max !== undefined ? s.age_max : ''
+            };
         }));
         campaignActive.checked = period.is_active === 1;
     } else {
@@ -565,7 +575,7 @@ function showCampaignForm(mode, period, referralInfo) {
         newReferralIcon.value        = '';
         campaignStart.value = '';
         campaignEnd.value   = '';
-        renderSegments([{ cpi: '', age_max: '' }]);
+        renderSegments([{ cpi: '', age_min: '', age_max: '' }]);
         campaignActive.checked = true;
     }
 
@@ -597,54 +607,109 @@ function loadAllCampaigns() {
     });
 }
 
+function segmentAgeLabel(s) {
+    var min = (s.age_min !== null && s.age_min !== undefined) ? parseInt(s.age_min) : null;
+    var max = (s.age_max !== null && s.age_max !== undefined) ? parseInt(s.age_max) : null;
+    if (min !== null && max !== null) return min + '-' + max + 'a';
+    if (min !== null) return '≥' + min + 'a';
+    if (max !== null) return '≤' + max + 'a';
+    return 'tutti';
+}
+
+function campaignPeriodBadge(p, today) {
+    if (p.end_date && p.end_date < today) {
+        return '<span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Scaduta</span>';
+    }
+    if (p.start_date > today) {
+        return '<span class="badge bg-info-subtle text-info-emphasis ms-1">Futura</span>';
+    }
+    return p.is_active
+        ? '<span class="badge bg-success-subtle text-success-emphasis ms-1">Attiva</span>'
+        : '<span class="badge bg-warning-subtle text-warning-emphasis ms-1">Inattiva</span>';
+}
+
+function buildCampaignTableRow(gidx, pidx, p, today, editable) {
+    var periodo = formatCampaignDate(p.start_date) + ' → '
+        + (p.end_date ? formatCampaignDate(p.end_date) : '<span class="text-muted">aperta</span>');
+    var fasce = p.segments.map(function(s) {
+        var lbl = segmentAgeLabel(s);
+        var cpiStr = '€' + (s.cpi % 1 === 0 ? s.cpi.toFixed(0) : s.cpi);
+        return lbl !== 'tutti'
+            ? cpiStr + ' <span class="text-muted">(' + lbl + ')</span>'
+            : cpiStr;
+    }).join('&ensp;');
+    var badge = campaignPeriodBadge(p, today);
+    var actionCell = editable
+        ? '<button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 btn-edit-campaign"'
+          + ' data-gidx="' + gidx + '" data-pidx="' + pidx + '">Modifica</button>'
+        : '';
+    return '<tr>'
+        + '<td class="small ps-0" style="width:38%">' + periodo + badge + '</td>'
+        + '<td class="small">' + fasce + '</td>'
+        + '<td class="text-end pe-0">' + actionCell + '</td></tr>';
+}
+
 function renderAllCampaigns(groups) {
     var container = document.getElementById('allCampaignsList');
+    var today = new Date().toISOString().substring(0, 10);
+
+    container._groups = groups;
 
     if (groups.length === 0) {
         container.innerHTML = '<div class="text-muted small fst-italic py-3">Nessuna campagna configurata.</div>';
-        container._groups = [];
         return;
     }
 
-    var html = '';
+    // Separa periodi attivi/futuri da scaduti
+    var activeHtml = '';
+    var expiredRows = '';
+    var expiredCount = 0;
+
     groups.forEach(function(group, gidx) {
-        html += '<div class="mb-3">'
-            + '<div class="d-flex align-items-center gap-2 mb-1">';
-        if (group.referral_icon) {
-            html += '<i class="' + escapeHtml(group.referral_icon) + ' text-muted small"></i>';
-        }
-        html += '<span class="fw-semibold small">' + escapeHtml(group.referral_title) + '</span>'
-            + '<span class="text-muted small">(' + escapeHtml(group.referral_code) + ')</span>'
-            + '</div>'
-            + '<table class="table table-sm table-borderless align-middle mb-0"><tbody>';
+        var groupActiveRows = '';
+        var groupExpiredRows = '';
 
         group.periods.forEach(function(p, pidx) {
-            var periodo = formatCampaignDate(p.start_date) + ' → '
-                + (p.end_date ? formatCampaignDate(p.end_date) : '<span class="text-muted">aperta</span>');
-            var fasce = p.segments.map(function(s) {
-                var lbl = s.age_max !== null
-                    ? ' <span class="text-muted">(≤' + s.age_max + 'a)</span>'
-                    : ' <span class="text-muted">(tutti)</span>';
-                return '€' + (s.cpi % 1 === 0 ? s.cpi.toFixed(0) : s.cpi) + lbl;
-            }).join('&ensp;');
-            var badge = p.is_active
-                ? '<span class="badge bg-success-subtle text-success-emphasis ms-1">Attiva</span>'
-                : '<span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Inattiva</span>';
-
-            html += '<tr>'
-                + '<td class="small ps-0" style="width:38%">' + periodo + badge + '</td>'
-                + '<td class="small">' + fasce + '</td>'
-                + '<td class="text-end pe-0">'
-                + '<button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 btn-edit-campaign"'
-                + ' data-gidx="' + gidx + '" data-pidx="' + pidx + '">Modifica</button>'
-                + '</td></tr>';
+            var expired = p.end_date && p.end_date < today;
+            if (expired) {
+                groupExpiredRows += buildCampaignTableRow(gidx, pidx, p, today, true);
+                expiredCount++;
+            } else {
+                groupActiveRows += buildCampaignTableRow(gidx, pidx, p, today, true);
+            }
         });
 
-        html += '</tbody></table></div>';
+        var referralHeader = '<div class="d-flex align-items-center gap-2 mb-1">'
+            + (group.referral_icon ? '<i class="' + escapeHtml(group.referral_icon) + ' text-muted small"></i>' : '')
+            + '<span class="fw-semibold small">' + escapeHtml(group.referral_title) + '</span>'
+            + '<span class="text-muted small">(' + escapeHtml(group.referral_code) + ')</span>'
+            + '</div>';
+
+        if (groupActiveRows) {
+            activeHtml += '<div class="mb-3">' + referralHeader
+                + '<table class="table table-sm table-borderless align-middle mb-0"><tbody>'
+                + groupActiveRows + '</tbody></table></div>';
+        }
+
+        if (groupExpiredRows) {
+            expiredRows += '<div class="mb-2">' + referralHeader
+                + '<table class="table table-sm table-borderless align-middle mb-0"><tbody>'
+                + groupExpiredRows + '</tbody></table></div>';
+        }
     });
 
+    var html = activeHtml || '<div class="text-muted small fst-italic py-2">Nessuna campagna attiva o futura.</div>';
+
+    if (expiredCount > 0) {
+        html += '<div class="mt-2 border-top pt-2">'
+            + '<button type="button" id="btnToggleStorico" class="btn btn-link btn-sm p-0 text-muted text-decoration-none">'
+            + 'Mostra storico (' + expiredCount + ' scadut' + (expiredCount === 1 ? 'a' : 'e') + ')'
+            + '</button>'
+            + '<div id="storicoSection" class="d-none mt-2">' + expiredRows + '</div>'
+            + '</div>';
+    }
+
     container.innerHTML = html;
-    container._groups = groups;
 
     container.querySelectorAll('.btn-edit-campaign').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -653,6 +718,18 @@ function renderAllCampaigns(groups) {
             showCampaignForm('edit', p, { id: g.referral_id, title: g.referral_title, code: g.referral_code });
         });
     });
+
+    var btnStorico = document.getElementById('btnToggleStorico');
+    if (btnStorico) {
+        btnStorico.addEventListener('click', function() {
+            var sec = document.getElementById('storicoSection');
+            var open = !sec.classList.contains('d-none');
+            sec.classList.toggle('d-none', open);
+            this.textContent = open
+                ? 'Mostra storico (' + expiredCount + ' scadut' + (expiredCount === 1 ? 'a' : 'e') + ')'
+                : 'Nascondi storico';
+        });
+    }
 }
 
 btnCancelEdit.addEventListener('click', hideCampaignForm);
@@ -688,6 +765,7 @@ document.getElementById('btnSaveCampaign').addEventListener('click', function ()
     var segments = Array.prototype.map.call(document.querySelectorAll('#segmentsContainer .segment-row'), function(row) {
         return {
             cpi:     parseFloat(row.querySelector('.segment-cpi').value) || 0,
+            age_min: row.querySelector('.segment-age-min').value || null,
             age_max: row.querySelector('.segment-age-max').value || null
         };
     });
@@ -890,100 +968,119 @@ function renderDailyBox(data) {
         });
     }
 
-   function renderCostsBox(data) {
+function buildCostCard(item) {
+    const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)}"></i>` : '';
+    const sourcesText = item.sources && item.sources.length ? item.sources.join(', ') : '-';
+    const sourceCount = item.sources ? item.sources.length : 0;
+
+    let breakdownHtml = '';
+    if (item.breakdown && item.breakdown.length > 0) {
+        breakdownHtml = '<table class="costs-breakdown-table"><tbody>';
+        item.breakdown.forEach(function(seg) {
+            const lbl = segmentAgeLabel(seg);
+            breakdownHtml += `<tr>
+                <td><span class="costs-breakdown-seg">${escapeHtml(lbl)}</span></td>
+                <td class="costs-breakdown-count">${formatNumber(seg.count)} reg.</td>
+                <td class="costs-breakdown-cost">${formatCurrency(seg.cost)}</td>
+            </tr>`;
+        });
+        breakdownHtml += '</tbody></table>';
+    }
+
+    return `<div class="costs-referral-card">
+        <div class="costs-referral-card-main">
+            <div class="costs-referral-card-left">
+                <div class="daily-referral-label-wrap">
+                    <span class="daily-referral-icon">${iconHtml}</span>
+                    <span class="daily-referral-label">${escapeHtml(item.label)}</span>
+                </div>
+                <div class="daily-referral-meta">
+                    <span class="daily-referral-meta-pill">${sourceCount} source${sourceCount === 1 ? '' : 's'}</span>
+                    <span class="daily-referral-meta-pill daily-referral-meta-pill-hover" title="${escapeHtml(sourcesText)}">codici referral</span>
+                </div>
+            </div>
+            <div class="costs-referral-side">
+                <div class="costs-referral-main-number-label">Costo</div>
+                <div class="costs-referral-main-number">${formatCurrency(item.cost)}</div>
+                <div class="costs-referral-registered">${formatNumber(item.registered)} reg.</div>
+            </div>
+        </div>
+        <div class="costs-referral-kpi">
+            <div class="costs-referral-kpi-item">
+                <span class="costs-referral-kpi-label">Attivi</span>
+                <strong>${formatNumber(item.active)}</strong>
+            </div>
+            <div class="costs-referral-kpi-item">
+                <span class="costs-referral-kpi-label">Attivi %</span>
+                <strong>${formatDecimal(item.active_rate, 1)}%</strong>
+            </div>
+            <div class="costs-referral-kpi-item">
+                <span class="costs-referral-kpi-label">CPI</span>
+                <strong>${formatDecimal(item.cpi, 4)}</strong>
+            </div>
+            <div class="costs-referral-kpi-item">
+                <span class="costs-referral-kpi-label">CPA</span>
+                <strong>${formatCurrency(item.cpa)}</strong>
+            </div>
+        </div>
+        ${breakdownHtml}
+    </div>`;
+}
+
+function renderCostsBox(data) {
     if (!data.success) {
-        costsBox.innerHTML = `
-            <div class="daily-empty">
-                Errore nel caricamento dei costi
-            </div>
-        `;
+        costsBox.innerHTML = '<div class="daily-empty">Errore nel caricamento dei costi</div>';
         return;
     }
-
     if (!data.rows || data.rows.length === 0) {
-        costsBox.innerHTML = `
-            <div class="daily-empty">
-                Nessun referral disponibile per l'anno selezionato
-            </div>
-        `;
+        costsBox.innerHTML = '<div class="daily-empty">Nessun referral disponibile per l\'anno selezionato</div>';
         return;
     }
 
-    let html = `
-        <div class="costs-referral-grid">
-    `;
+    const activeRows  = data.rows.filter(function(r) { return r.has_current_campaign; });
+    const passiveRows = data.rows.filter(function(r) { return !r.has_current_campaign; });
 
-    data.rows.forEach(function(item) {
-        const iconHtml = item.icon
-            ? `<i class="${escapeHtml(item.icon)}"></i>`
-            : '';
+    let html = '';
 
-        const sourcesText = item.sources && item.sources.length
-            ? item.sources.join(', ')
-            : '-';
+    if (activeRows.length > 0) {
+        html += '<div class="costs-referral-grid">';
+        activeRows.forEach(function(item) { html += buildCostCard(item); });
+        html += '</div>';
+    } else {
+        html += '<div class="daily-empty">Nessuna campagna attiva per l\'anno selezionato</div>';
+    }
 
-        const sourceCount = item.sources && item.sources.length
-            ? item.sources.length
-            : 0;
-
-        html += `
-            <div class="costs-referral-card">
-                <div class="costs-referral-card-main">
-                    <div class="costs-referral-card-left">
-                        <div class="daily-referral-label-wrap">
-                            <span class="daily-referral-icon">${iconHtml}</span>
-                            <span class="daily-referral-label">${escapeHtml(item.label)}</span>
-                        </div>
-
-                        <div class="daily-referral-meta">
-                            <span class="daily-referral-meta-pill">${sourceCount} source${sourceCount === 1 ? '' : 's'}</span>
-                            <span class="daily-referral-meta-pill daily-referral-meta-pill-hover" title="${escapeHtml(sourcesText)}">
-                                codici referral
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="costs-referral-side">
-                        <div class="costs-referral-main-number-label">Costo</div>
-                        <div class="costs-referral-main-number">${formatCurrency(item.cost)}</div>
-                    </div>
-                </div>
-
-                <div class="costs-referral-stats costs-referral-stats-top">
-                    <div class="costs-referral-stat">
-                        <span class="costs-referral-stat-label">Registrati</span>
-                        <strong class="costs-referral-stat-value">${formatNumber(item.registered)}</strong>
-                    </div>
-
-                    <div class="costs-referral-stat">
-                        <span class="costs-referral-stat-label">Attivi</span>
-                        <strong class="costs-referral-stat-value">${formatNumber(item.active)}</strong>
-                    </div>
-
-                    <div class="costs-referral-stat">
-                        <span class="costs-referral-stat-label">Attivi %</span>
-                        <strong class="costs-referral-stat-value">${formatDecimal(item.active_rate, 2)}%</strong>
-                    </div>
-                </div>
-
-                <div class="costs-referral-stats costs-referral-stats-bottom">
-                    <div class="costs-referral-stat">
-                        <span class="costs-referral-stat-label">CPI</span>
-                        <strong class="costs-referral-stat-value">${formatDecimal(item.cpi, 4)}</strong>
-                    </div>
-
-                    <div class="costs-referral-stat">
-                        <span class="costs-referral-stat-label">CPA</span>
-                        <strong class="costs-referral-stat-value">${formatCurrency(item.cpa)}</strong>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-
-    html += `</div>`;
+    if (passiveRows.length > 0) {
+        html += '<div class="costs-passive-section' + (activeRows.length > 0 ? ' mt-3 pt-3 border-top' : '') + '">';
+        html += '<p class="costs-passive-title">Referral senza campagna attiva</p>';
+        html += '<table class="table table-sm align-middle mb-0"><thead><tr>';
+        html += '<th class="small text-muted fw-normal">Referral</th>';
+        html += '<th class="small text-muted fw-normal text-end">Registrati</th>';
+        html += '<th class="small text-muted fw-normal text-end">Attivi</th>';
+        html += '<th class="small text-muted fw-normal text-end">Attivi %</th>';
+        html += '<th class="small text-muted fw-normal text-end">Costo</th>';
+        html += '<th class="small text-muted fw-normal text-end">CPI</th>';
+        html += '</tr></thead><tbody>';
+        passiveRows.forEach(function(item) {
+            const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)} me-1 text-muted"></i>` : '';
+            html += `<tr>
+                <td class="small">${iconHtml}${escapeHtml(item.label)}</td>
+                <td class="small text-end">${formatNumber(item.registered)}</td>
+                <td class="small text-end">${formatNumber(item.active)}</td>
+                <td class="small text-end">${formatDecimal(item.active_rate, 1)}%</td>
+                <td class="small text-end">${formatCurrency(item.cost)}</td>
+                <td class="small text-end">${formatDecimal(item.cpi, 4)}</td>
+            </tr>`;
+        });
+        html += '</tbody></table></div>';
+    }
 
     costsBox.innerHTML = html;
+    costsBox.style.display = 'block';
+    costsBox.style.padding = '0';
+    costsBox.style.border = 'none';
+    costsBox.style.minHeight = 'auto';
+    costsBox.style.textAlign = 'left';
 }
 
     function loadCostsBox() {

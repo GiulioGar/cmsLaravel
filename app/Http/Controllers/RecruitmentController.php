@@ -173,7 +173,7 @@ public function costs(Request $request)
     $referrals = $this->getActiveReferrals();
 
     $cpiRows = DB::table('t_recruitment_referral_costs')
-        ->select('referral_id', 'start_date', 'end_date', 'cpi', 'age_max')
+        ->select('referral_id', 'start_date', 'end_date', 'cpi', 'age_min', 'age_max')
         ->where('is_active', 1)
         ->whereDate('start_date', '<=', $year . '-12-31')
         ->where(function ($query) use ($year) {
@@ -194,6 +194,7 @@ public function costs(Request $request)
             'start_date' => $row->start_date,
             'end_date'   => $row->end_date,
             'cpi'        => (float) $row->cpi,
+            'age_min'    => $row->age_min !== null ? (int) $row->age_min : null,
             'age_max'    => $row->age_max !== null ? (int) $row->age_max : null,
         ];
     }
@@ -201,8 +202,17 @@ public function costs(Request $request)
     $ageBreakpoints = [];
     foreach ($cpiByReferral as $_periods) {
         foreach ($_periods as $_period) {
-            if ($_period['age_max'] !== null && !in_array($_period['age_max'], $ageBreakpoints, true)) {
-                $ageBreakpoints[] = $_period['age_max'];
+            if ($_period['age_max'] !== null) {
+                $bp = (int) $_period['age_max'];
+                if (!in_array($bp, $ageBreakpoints, true)) {
+                    $ageBreakpoints[] = $bp;
+                }
+            }
+            if ($_period['age_min'] !== null) {
+                $bp = (int) $_period['age_min'] - 1;
+                if ($bp >= 0 && !in_array($bp, $ageBreakpoints, true)) {
+                    $ageBreakpoints[] = $bp;
+                }
             }
         }
     }
@@ -213,6 +223,7 @@ public function costs(Request $request)
         'provenienza',
         DB::raw('COUNT(*) as registered'),
         DB::raw('SUM(CASE WHEN COALESCE(actions, 0) > 0 THEN 1 ELSE 0 END) as active'),
+        DB::raw("SUM(CASE WHEN birth_date IS NOT NULL AND birth_date <> '0000-00-00' THEN 1 ELSE 0 END) as has_birth_date"),
     ];
 
     foreach ($ageBreakpoints as $bp) {
@@ -243,8 +254,9 @@ public function costs(Request $request)
         }
 
         $entry = [
-            'registered' => (int) $row->registered,
-            'active'     => (int) $row->active,
+            'registered'     => (int) $row->registered,
+            'active'         => (int) $row->active,
+            'has_birth_date' => isset($row->has_birth_date) ? (int) $row->has_birth_date : 0,
         ];
 
         foreach ($ageBreakpoints as $bp) {
@@ -258,6 +270,7 @@ public function costs(Request $request)
     $mappedSources = [];
     $fallbackReferral = null;
     $tableRows = [];
+    $today = now()->format('Y-m-d');
 
     foreach ($referrals as $referral) {
         if ($referral->group_type === 'fallback') {
@@ -289,6 +302,7 @@ public function costs(Request $request)
                 $monthRegistered += $sourceStatsByMonth[$month][$source]['registered'];
                 $monthActive += $sourceStatsByMonth[$month][$source]['active'];
 
+                $monthAgeData['has_birth_date'] = ($monthAgeData['has_birth_date'] ?? 0) + ($sourceStatsByMonth[$month][$source]['has_birth_date'] ?? 0);
                 foreach ($ageBreakpoints as $bp) {
                     $key = 'age_under_' . $bp;
                     $monthAgeData[$key] = ($monthAgeData[$key] ?? 0) + ($sourceStatsByMonth[$month][$source][$key] ?? 0);
@@ -320,6 +334,45 @@ public function costs(Request $request)
         $avgCpi = $registered > 0 ? round($cost / $registered, 4) : 0;
         $cpa = $active > 0 ? round($cost / $active, 2) : 0;
 
+        $hasCurrentCampaign = false;
+        if (isset($cpiByReferral[$referral->id])) {
+            foreach ($cpiByReferral[$referral->id] as $_cp) {
+                $_pEnd = $_cp['end_date'] !== null ? substr($_cp['end_date'], 0, 10) : null;
+                if (substr($_cp['start_date'], 0, 10) <= $today && ($_pEnd === null || $_pEnd >= $today)) {
+                    $hasCurrentCampaign = true;
+                    break;
+                }
+            }
+        }
+
+        $_bAcc = [];
+        for ($_m = 1; $_m <= 12; $_m++) {
+            $_mReg = 0;
+            $_mAgeData = ['has_birth_date' => 0];
+            foreach ($sources as $_src) {
+                if (!isset($sourceStatsByMonth[$_m][$_src])) continue;
+                $_mReg += $sourceStatsByMonth[$_m][$_src]['registered'];
+                $_mAgeData['has_birth_date'] += ($sourceStatsByMonth[$_m][$_src]['has_birth_date'] ?? 0);
+                foreach ($ageBreakpoints as $_bp) {
+                    $_k = 'age_under_' . $_bp;
+                    $_mAgeData[$_k] = ($_mAgeData[$_k] ?? 0) + ($sourceStatsByMonth[$_m][$_src][$_k] ?? 0);
+                }
+            }
+            if ($_mReg <= 0) continue;
+            $_ref = sprintf('%04d-%02d-01', $year, $_m);
+            foreach ($this->computeMonthSegmentBreakdown($referral->id, $_ref, array_merge(['registered' => $_mReg], $_mAgeData), $cpiByReferral) as $_seg) {
+                $_bk = ($_seg['age_min'] ?? '') . '_' . ($_seg['age_max'] ?? '');
+                if (!isset($_bAcc[$_bk])) {
+                    $_bAcc[$_bk] = ['age_min' => $_seg['age_min'], 'age_max' => $_seg['age_max'], 'count' => 0, 'cost' => 0.0];
+                }
+                $_bAcc[$_bk]['count'] += $_seg['count'];
+                $_bAcc[$_bk]['cost']  += $_seg['cost'];
+            }
+        }
+        $breakdown = count($_bAcc) > 1
+            ? array_map(function ($b) { $b['cost'] = round($b['cost'], 2); return $b; }, array_values($_bAcc))
+            : [];
+
         $tableRows[] = [
             'code' => $referral->code,
             'label' => $referral->title,
@@ -332,6 +385,8 @@ public function costs(Request $request)
             'cpa' => $cpa,
             'sources' => $matchedSources,
             'sort_order' => (int) $referral->sort_order,
+            'has_current_campaign' => $hasCurrentCampaign,
+            'breakdown' => $breakdown,
         ];
     }
 
@@ -355,6 +410,7 @@ public function costs(Request $request)
                     $monthRegistered += $stats['registered'];
                     $monthActive += $stats['active'];
 
+                    $monthAgeData['has_birth_date'] = ($monthAgeData['has_birth_date'] ?? 0) + ($stats['has_birth_date'] ?? 0);
                     foreach ($ageBreakpoints as $bp) {
                         $key = 'age_under_' . $bp;
                         $monthAgeData[$key] = ($monthAgeData[$key] ?? 0) + ($stats[$key] ?? 0);
@@ -384,6 +440,47 @@ public function costs(Request $request)
             $avgCpi = $registered > 0 ? round($cost / $registered, 4) : 0;
             $cpa = $active > 0 ? round($cost / $active, 2) : 0;
 
+            $hasCurrentCampaign = false;
+            if (isset($cpiByReferral[$fallbackReferral->id])) {
+                foreach ($cpiByReferral[$fallbackReferral->id] as $_cp) {
+                    $_pEnd = $_cp['end_date'] !== null ? substr($_cp['end_date'], 0, 10) : null;
+                    if (substr($_cp['start_date'], 0, 10) <= $today && ($_pEnd === null || $_pEnd >= $today)) {
+                        $hasCurrentCampaign = true;
+                        break;
+                    }
+                }
+            }
+
+            $_bAcc = [];
+            for ($_m = 1; $_m <= 12; $_m++) {
+                $_mReg = 0;
+                $_mAgeData = ['has_birth_date' => 0];
+                if (isset($sourceStatsByMonth[$_m])) {
+                    foreach ($sourceStatsByMonth[$_m] as $_src => $_stats) {
+                        if (isset($mappedSources[$_src])) continue;
+                        $_mReg += $_stats['registered'];
+                        $_mAgeData['has_birth_date'] += ($_stats['has_birth_date'] ?? 0);
+                        foreach ($ageBreakpoints as $_bp) {
+                            $_k = 'age_under_' . $_bp;
+                            $_mAgeData[$_k] = ($_mAgeData[$_k] ?? 0) + ($_stats[$_k] ?? 0);
+                        }
+                    }
+                }
+                if ($_mReg <= 0) continue;
+                $_ref = sprintf('%04d-%02d-01', $year, $_m);
+                foreach ($this->computeMonthSegmentBreakdown($fallbackReferral->id, $_ref, array_merge(['registered' => $_mReg], $_mAgeData), $cpiByReferral) as $_seg) {
+                    $_bk = ($_seg['age_min'] ?? '') . '_' . ($_seg['age_max'] ?? '');
+                    if (!isset($_bAcc[$_bk])) {
+                        $_bAcc[$_bk] = ['age_min' => $_seg['age_min'], 'age_max' => $_seg['age_max'], 'count' => 0, 'cost' => 0.0];
+                    }
+                    $_bAcc[$_bk]['count'] += $_seg['count'];
+                    $_bAcc[$_bk]['cost']  += $_seg['cost'];
+                }
+            }
+            $breakdown = count($_bAcc) > 1
+                ? array_map(function ($b) { $b['cost'] = round($b['cost'], 2); return $b; }, array_values($_bAcc))
+                : [];
+
             $tableRows[] = [
                 'code' => $fallbackReferral->code,
                 'label' => $fallbackReferral->title,
@@ -396,6 +493,8 @@ public function costs(Request $request)
                 'cpa' => $cpa,
                 'sources' => $fallbackSources,
                 'sort_order' => (int) $fallbackReferral->sort_order,
+                'has_current_campaign' => $hasCurrentCampaign,
+                'breakdown' => $breakdown,
             ];
         }
     }
@@ -909,6 +1008,57 @@ public function stats(Request $request)
     return 0;
 }
 
+private function computeMonthSegmentBreakdown(
+    $referralId,
+    string $referenceDate,
+    array $monthSourceData,
+    array $cpiByReferral
+): array {
+    if (!isset($cpiByReferral[$referralId])) {
+        return [];
+    }
+
+    $validPeriods = array_values(array_filter($cpiByReferral[$referralId], function ($p) use ($referenceDate) {
+        $start = substr($p['start_date'], 0, 10);
+        $end   = $p['end_date'] !== null ? substr($p['end_date'], 0, 10) : null;
+        return $referenceDate >= $start && ($end === null || $referenceDate <= $end);
+    }));
+
+    if (empty($validPeriods)) {
+        return [];
+    }
+
+    $totalRegistered = (int) ($monthSourceData['registered'] ?? 0);
+    $hasBirthDate    = (int) ($monthSourceData['has_birth_date'] ?? 0);
+    $result = [];
+
+    foreach ($validPeriods as $segment) {
+        $ageMin = $segment['age_min'];
+        $ageMax = $segment['age_max'];
+
+        if ($ageMin === null && $ageMax === null) {
+            $count = $totalRegistered;
+        } else {
+            $upperCount = $ageMax !== null
+                ? (int) ($monthSourceData['age_under_' . $ageMax] ?? 0)
+                : $hasBirthDate;
+            $lowerCount = $ageMin !== null
+                ? (int) ($monthSourceData['age_under_' . ($ageMin - 1)] ?? 0)
+                : 0;
+            $count = max(0, $upperCount - $lowerCount);
+        }
+
+        $result[] = [
+            'age_min' => $ageMin,
+            'age_max' => $ageMax,
+            'count'   => $count,
+            'cost'    => $count * $segment['cpi'],
+        ];
+    }
+
+    return $result;
+}
+
 private function computeSegmentedCost(
     $referralId,
     string $referenceDate,
@@ -930,29 +1080,31 @@ private function computeSegmentedCost(
         return 0.0;
     }
 
-    // Sort segments by age_max ASC, null last (null = fallback, applies to everyone remaining)
-    usort($validPeriods, function ($a, $b) {
-        if ($a['age_max'] === null && $b['age_max'] === null) return 0;
-        if ($a['age_max'] === null) return 1;
-        if ($b['age_max'] === null) return -1;
-        return $a['age_max'] - $b['age_max'];
-    });
-
     $totalRegistered = (int) ($monthSourceData['registered'] ?? 0);
+    $hasBirthDate    = (int) ($monthSourceData['has_birth_date'] ?? 0);
     $cost = 0.0;
-    $countUsed = 0;
 
     foreach ($validPeriods as $segment) {
-        if ($segment['age_max'] !== null) {
-            $cumulative = (int) ($monthSourceData['age_under_' . $segment['age_max']] ?? 0);
-            $inSegment  = max(0, $cumulative - $countUsed);
-            $cost      += $inSegment * $segment['cpi'];
-            $countUsed  = max($countUsed, $cumulative);
-        } else {
-            // Fallback segment: all remaining registrations (incl. unknown birth_date)
-            $remaining = max(0, $totalRegistered - $countUsed);
-            $cost     += $remaining * $segment['cpi'];
+        $ageMin = $segment['age_min'];
+        $ageMax = $segment['age_max'];
+
+        if ($ageMin === null && $ageMax === null) {
+            // No age filter: applies to all registered users (including unknown birth_date)
+            $cost += $totalRegistered * $segment['cpi'];
+            continue;
         }
+
+        // Upper bound: age_under_{age_max}, or all users with known birth_date if no upper limit
+        $upperCount = $ageMax !== null
+            ? (int) ($monthSourceData['age_under_' . $ageMax] ?? 0)
+            : $hasBirthDate;
+
+        // Lower bound: count of users strictly below age_min = age_under_{age_min - 1}
+        $lowerCount = $ageMin !== null
+            ? (int) ($monthSourceData['age_under_' . ($ageMin - 1)] ?? 0)
+            : 0;
+
+        $cost += max(0, $upperCount - $lowerCount) * $segment['cpi'];
     }
 
     return $cost;
@@ -1058,7 +1210,7 @@ public function summaryYear(Request $request)
     $referrals = $this->getActiveReferrals();
 
     $cpiRows = DB::table('t_recruitment_referral_costs')
-        ->select('referral_id', 'start_date', 'end_date', 'cpi', 'age_max')
+        ->select('referral_id', 'start_date', 'end_date', 'cpi', 'age_min', 'age_max')
         ->where('is_active', 1)
         ->whereDate('start_date', '<=', $year . '-12-31')
         ->where(function ($query) use ($year) {
@@ -1079,6 +1231,7 @@ public function summaryYear(Request $request)
             'start_date' => $row->start_date,
             'end_date'   => $row->end_date,
             'cpi'        => (float) $row->cpi,
+            'age_min'    => $row->age_min !== null ? (int) $row->age_min : null,
             'age_max'    => $row->age_max !== null ? (int) $row->age_max : null,
         ];
     }
@@ -1086,8 +1239,17 @@ public function summaryYear(Request $request)
     $ageBreakpoints = [];
     foreach ($cpiByReferral as $_periods) {
         foreach ($_periods as $_period) {
-            if ($_period['age_max'] !== null && !in_array($_period['age_max'], $ageBreakpoints, true)) {
-                $ageBreakpoints[] = $_period['age_max'];
+            if ($_period['age_max'] !== null) {
+                $bp = (int) $_period['age_max'];
+                if (!in_array($bp, $ageBreakpoints, true)) {
+                    $ageBreakpoints[] = $bp;
+                }
+            }
+            if ($_period['age_min'] !== null) {
+                $bp = (int) $_period['age_min'] - 1;
+                if ($bp >= 0 && !in_array($bp, $ageBreakpoints, true)) {
+                    $ageBreakpoints[] = $bp;
+                }
             }
         }
     }
@@ -1098,6 +1260,7 @@ public function summaryYear(Request $request)
         'provenienza',
         DB::raw('COUNT(*) as registered'),
         DB::raw('SUM(CASE WHEN COALESCE(actions, 0) > 0 THEN 1 ELSE 0 END) as active'),
+        DB::raw("SUM(CASE WHEN birth_date IS NOT NULL AND birth_date <> '0000-00-00' THEN 1 ELSE 0 END) as has_birth_date"),
     ];
 
     foreach ($ageBreakpoints as $bp) {
@@ -1128,8 +1291,9 @@ public function summaryYear(Request $request)
         }
 
         $entry = [
-            'registered' => (int) $row->registered,
-            'active'     => (int) $row->active,
+            'registered'     => (int) $row->registered,
+            'active'         => (int) $row->active,
+            'has_birth_date' => isset($row->has_birth_date) ? (int) $row->has_birth_date : 0,
         ];
 
         foreach ($ageBreakpoints as $bp) {
@@ -1174,6 +1338,7 @@ public function summaryYear(Request $request)
                 $monthRegistered += $sourceStatsByMonth[$month][$source]['registered'];
                 $monthActive += $sourceStatsByMonth[$month][$source]['active'];
 
+                $monthAgeData['has_birth_date'] = ($monthAgeData['has_birth_date'] ?? 0) + ($sourceStatsByMonth[$month][$source]['has_birth_date'] ?? 0);
                 foreach ($ageBreakpoints as $bp) {
                     $key = 'age_under_' . $bp;
                     $monthAgeData[$key] = ($monthAgeData[$key] ?? 0) + ($sourceStatsByMonth[$month][$source][$key] ?? 0);
@@ -1240,6 +1405,7 @@ public function summaryYear(Request $request)
                     $monthRegistered += $stats['registered'];
                     $monthActive += $stats['active'];
 
+                    $monthAgeData['has_birth_date'] = ($monthAgeData['has_birth_date'] ?? 0) + ($stats['has_birth_date'] ?? 0);
                     foreach ($ageBreakpoints as $bp) {
                         $key = 'age_under_' . $bp;
                         $monthAgeData[$key] = ($monthAgeData[$key] ?? 0) + ($stats[$key] ?? 0);
@@ -1358,6 +1524,7 @@ public function storeCampaign(Request $request)
         'end_date'            => 'nullable|date|after_or_equal:start_date',
         'segments'            => 'required|array|min:1|max:10',
         'segments.*.cpi'      => 'required|numeric|min:0',
+        'segments.*.age_min'  => 'nullable|integer|min:1|max:119',
         'segments.*.age_max'  => 'nullable|integer|min:1|max:120',
         'is_active'           => 'nullable|boolean',
     ]);
@@ -1434,18 +1601,32 @@ public function storeCampaign(Request $request)
 
         foreach ($validated['segments'] as $segment) {
             $segmentCpi    = (float) $segment['cpi'];
+            $segmentAgeMin = isset($segment['age_min']) && $segment['age_min'] !== '' && $segment['age_min'] !== null
+                ? (int) $segment['age_min']
+                : null;
             $segmentAgeMax = isset($segment['age_max']) && $segment['age_max'] !== '' && $segment['age_max'] !== null
                 ? (int) $segment['age_max']
                 : null;
 
+            if ($segmentAgeMin !== null && $segmentAgeMax !== null && $segmentAgeMin >= $segmentAgeMax) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => "Eta' min deve essere inferiore a eta' max."], 422);
+            }
+
             $overlapQuery = DB::table('t_recruitment_referral_costs')
                 ->where('referral_id', $referralId)
                 ->where('is_active', 1)
-                ->where(function ($q) use ($segmentAgeMax) {
-                    if ($segmentAgeMax === null) {
-                        $q->whereNull('age_max');
-                    } else {
-                        $q->where('age_max', $segmentAgeMax);
+                ->where(function ($q) use ($segmentAgeMin, $segmentAgeMax) {
+                    // Ranges overlap if: existMin <= newMax AND newMin <= existMax
+                    if ($segmentAgeMax !== null) {
+                        $q->where(function ($sub) use ($segmentAgeMax) {
+                            $sub->whereNull('age_min')->orWhere('age_min', '<=', $segmentAgeMax);
+                        });
+                    }
+                    if ($segmentAgeMin !== null) {
+                        $q->where(function ($sub) use ($segmentAgeMin) {
+                            $sub->whereNull('age_max')->orWhere('age_max', '>=', $segmentAgeMin);
+                        });
                     }
                 })
                 ->where(function ($query) use ($startDate, $endDate) {
@@ -1465,11 +1646,18 @@ public function storeCampaign(Request $request)
 
             if ($overlapQuery->exists()) {
                 DB::rollBack();
-                $label = $segmentAgeMax !== null ? " (età max {$segmentAgeMax})" : ' (fascia default)';
-
+                if ($segmentAgeMin !== null && $segmentAgeMax !== null) {
+                    $label = " (eta' {$segmentAgeMin}-{$segmentAgeMax})";
+                } elseif ($segmentAgeMin !== null) {
+                    $label = " (eta' >={$segmentAgeMin})";
+                } elseif ($segmentAgeMax !== null) {
+                    $label = " (eta' <={$segmentAgeMax})";
+                } else {
+                    $label = ' (fascia default)';
+                }
                 return response()->json([
                     'success' => false,
-                    'message' => 'Esiste già una campagna attiva o sovrapposta per questo referral nel periodo selezionato' . $label . '.'
+                    'message' => 'Esiste gia\' una campagna attiva o sovrapposta per questo referral nel periodo selezionato' . $label . '.'
                 ], 422);
             }
 
@@ -1478,6 +1666,7 @@ public function storeCampaign(Request $request)
                 'start_date'  => $startDate,
                 'end_date'    => $endDate,
                 'cpi'         => $segmentCpi,
+                'age_min'     => $segmentAgeMin,
                 'age_max'     => $segmentAgeMax,
                 'is_active'   => $isActive,
                 'created_at'  => now(),
@@ -1519,6 +1708,8 @@ public function campaignsList(Request $request)
         ->where('r.group_type', '<>', 'fallback')
         ->orderBy('r.sort_order')
         ->orderByRaw("SUBSTR(c.start_date, 1, 10) DESC")
+        ->orderByRaw('c.age_min IS NULL DESC')
+        ->orderBy('c.age_min')
         ->orderByRaw('c.age_max IS NULL ASC')
         ->orderBy('c.age_max')
         ->select([
@@ -1530,6 +1721,7 @@ public function campaignsList(Request $request)
             'c.start_date',
             'c.end_date',
             'c.cpi',
+            'c.age_min',
             'c.age_max',
             'c.is_active',
         ]);
@@ -1569,6 +1761,7 @@ public function campaignsList(Request $request)
         $groups[$rid]['periods'][$pkey]['segments'][] = [
             'id'      => $row->cost_id,
             'cpi'     => (float) $row->cpi,
+            'age_min' => $row->age_min !== null ? (int) $row->age_min : null,
             'age_max' => $row->age_max !== null ? (int) $row->age_max : null,
         ];
     }
@@ -1594,6 +1787,7 @@ public function updateCampaign(Request $request)
         'end_date'             => 'nullable|date|after_or_equal:start_date',
         'segments'             => 'required|array|min:1|max:10',
         'segments.*.cpi'       => 'required|numeric|min:0',
+        'segments.*.age_min'   => 'nullable|integer|min:1|max:119',
         'segments.*.age_max'   => 'nullable|integer|min:1|max:120',
         'is_active'            => 'nullable|boolean',
     ]);
@@ -1634,18 +1828,31 @@ public function updateCampaign(Request $request)
         // Inserisce i nuovi segmenti (con overlap check sugli altri periodi)
         foreach ($validated['segments'] as $segment) {
             $segmentCpi    = (float) $segment['cpi'];
+            $segmentAgeMin = isset($segment['age_min']) && $segment['age_min'] !== '' && $segment['age_min'] !== null
+                ? (int) $segment['age_min']
+                : null;
             $segmentAgeMax = isset($segment['age_max']) && $segment['age_max'] !== '' && $segment['age_max'] !== null
                 ? (int) $segment['age_max']
                 : null;
 
+            if ($segmentAgeMin !== null && $segmentAgeMax !== null && $segmentAgeMin >= $segmentAgeMax) {
+                DB::rollBack();
+                return response()->json(['success' => false, 'message' => "Eta' min deve essere inferiore a eta' max."], 422);
+            }
+
             $overlapQuery = DB::table('t_recruitment_referral_costs')
                 ->where('referral_id', $referralId)
                 ->where('is_active', 1)
-                ->where(function ($q) use ($segmentAgeMax) {
-                    if ($segmentAgeMax === null) {
-                        $q->whereNull('age_max');
-                    } else {
-                        $q->where('age_max', $segmentAgeMax);
+                ->where(function ($q) use ($segmentAgeMin, $segmentAgeMax) {
+                    if ($segmentAgeMax !== null) {
+                        $q->where(function ($sub) use ($segmentAgeMax) {
+                            $sub->whereNull('age_min')->orWhere('age_min', '<=', $segmentAgeMax);
+                        });
+                    }
+                    if ($segmentAgeMin !== null) {
+                        $q->where(function ($sub) use ($segmentAgeMin) {
+                            $sub->whereNull('age_max')->orWhere('age_max', '>=', $segmentAgeMin);
+                        });
                     }
                 })
                 ->where(function ($query) use ($startDate, $endDate) {
@@ -1665,10 +1872,18 @@ public function updateCampaign(Request $request)
 
             if ($overlapQuery->exists()) {
                 DB::rollBack();
-                $label = $segmentAgeMax !== null ? " (età max {$segmentAgeMax})" : ' (fascia default)';
+                if ($segmentAgeMin !== null && $segmentAgeMax !== null) {
+                    $label = " (eta' {$segmentAgeMin}-{$segmentAgeMax})";
+                } elseif ($segmentAgeMin !== null) {
+                    $label = " (eta' >={$segmentAgeMin})";
+                } elseif ($segmentAgeMax !== null) {
+                    $label = " (eta' <={$segmentAgeMax})";
+                } else {
+                    $label = ' (fascia default)';
+                }
                 return response()->json([
                     'success' => false,
-                    'message' => 'Esiste già un periodo sovrapposto per questo referral' . $label . '.'
+                    'message' => 'Esiste gia\' un periodo sovrapposto per questo referral' . $label . '.'
                 ], 422);
             }
 
@@ -1677,6 +1892,7 @@ public function updateCampaign(Request $request)
                 'start_date'  => $startDate,
                 'end_date'    => $endDate,
                 'cpi'         => $segmentCpi,
+                'age_min'     => $segmentAgeMin,
                 'age_max'     => $segmentAgeMax,
                 'is_active'   => $isActive,
                 'created_at'  => now(),
