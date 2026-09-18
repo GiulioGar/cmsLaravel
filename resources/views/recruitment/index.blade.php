@@ -284,10 +284,13 @@
                         <input type="date" class="form-control" id="campaignEnd">
                     </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label">CPI</label>
-                        <input type="number" step="0.0001" min="0" class="form-control" id="campaignCpi">
-                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-label fw-semibold">Fasce CPI</label>
+                    <div id="segmentsContainer"></div>
+                    <button type="button" id="btnAddSegment" class="btn btn-sm btn-outline-secondary mt-2">+ Aggiungi fascia d'età</button>
+                    <div id="segmentsWarning" class="form-text text-warning d-none mt-1">Aggiungi una fascia senza età max come fallback per gli utenti oltre la soglia.</div>
                 </div>
 
                 <div class="mt-3">
@@ -417,7 +420,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const newReferralIcon = document.getElementById('newReferralIcon');
     const campaignStart = document.getElementById('campaignStart');
     const campaignEnd = document.getElementById('campaignEnd');
-    const campaignCpi = document.getElementById('campaignCpi');
     const campaignActive = document.getElementById('campaignActive');
 
     const campaignError = document.getElementById('campaignError');
@@ -433,6 +435,67 @@ const reportMonth = document.getElementById('reportMonth');
 const reportYear = document.getElementById('reportYear');
 const reportReferral = document.getElementById('reportReferral');
 const reportError = document.getElementById('reportError');
+
+function renderSegments(segments) {
+    var container = document.getElementById('segmentsContainer');
+    container.innerHTML = '';
+    segments.forEach(function(seg, i) {
+        var row = document.createElement('div');
+        row.className = 'segment-row d-flex gap-2 align-items-end mb-2';
+        row.innerHTML =
+            '<div style="width:110px">'
+            + '<label class="form-label mb-1 small">CPI (€)</label>'
+            + '<input type="number" step="0.0001" min="0" class="form-control form-control-sm segment-cpi" value="' + (seg.cpi !== null && seg.cpi !== undefined ? seg.cpi : '') + '" required>'
+            + '</div>'
+            + '<div style="width:150px">'
+            + '<label class="form-label mb-1 small">Età max <span class="text-muted">(vuoto=tutti)</span></label>'
+            + '<input type="number" min="1" max="120" class="form-control form-control-sm segment-age-max" value="' + (seg.age_max !== null && seg.age_max !== undefined ? seg.age_max : '') + '">'
+            + '</div>'
+            + '<button type="button" class="btn btn-sm btn-outline-danger remove-segment mb-1">×</button>';
+        container.appendChild(row);
+        row.querySelector('.remove-segment').addEventListener('click', function() {
+            var allRows = document.querySelectorAll('#segmentsContainer .segment-row');
+            if (allRows.length > 1) {
+                row.remove();
+                updateRemoveButtons();
+                updateSegmentsWarning();
+            }
+        });
+        row.querySelector('.segment-age-max').addEventListener('input', updateSegmentsWarning);
+    });
+    updateRemoveButtons();
+    updateSegmentsWarning();
+}
+
+function updateRemoveButtons() {
+    var allRows = document.querySelectorAll('#segmentsContainer .segment-row');
+    allRows.forEach(function(r) {
+        r.querySelector('.remove-segment').style.visibility = allRows.length > 1 ? 'visible' : 'hidden';
+    });
+}
+
+function updateSegmentsWarning() {
+    var warning = document.getElementById('segmentsWarning');
+    var ageMaxInputs = document.querySelectorAll('#segmentsContainer .segment-age-max');
+    var allHaveAgeMax = Array.prototype.every.call(ageMaxInputs, function(inp) { return inp.value.trim() !== ''; });
+    if (allHaveAgeMax && ageMaxInputs.length > 0) {
+        warning.classList.remove('d-none');
+    } else {
+        warning.classList.add('d-none');
+    }
+}
+
+document.getElementById('btnAddSegment').addEventListener('click', function() {
+    var allRows = document.querySelectorAll('#segmentsContainer .segment-row');
+    var currentSegments = Array.prototype.map.call(allRows, function(row) {
+        return {
+            cpi: row.querySelector('.segment-cpi').value,
+            age_max: row.querySelector('.segment-age-max').value || null
+        };
+    });
+    currentSegments.push({ cpi: '', age_max: '' });
+    renderSegments(currentSegments);
+});
 
 btnOpenCampaignModal.addEventListener('click', function () {
     resetCampaignForm();
@@ -466,7 +529,12 @@ btnSaveCampaign.addEventListener('click', function () {
         new_referral_icon: newReferralIcon.value.trim(),
         start_date: campaignStart.value,
         end_date: campaignEnd.value,
-        cpi: campaignCpi.value,
+        segments: Array.prototype.map.call(document.querySelectorAll('#segmentsContainer .segment-row'), function(row) {
+            return {
+                cpi: parseFloat(row.querySelector('.segment-cpi').value) || 0,
+                age_max: row.querySelector('.segment-age-max').value || null
+            };
+        }),
         is_active: campaignActive.checked ? 1 : 0
     };
 
@@ -1358,7 +1426,7 @@ function resetCampaignForm() {
     newReferralIcon.value = '';
     campaignStart.value = '';
     campaignEnd.value = '';
-    campaignCpi.value = '';
+    renderSegments([{ cpi: '', age_max: '' }]);
     campaignActive.checked = true;
 
     campaignError.classList.add('d-none');

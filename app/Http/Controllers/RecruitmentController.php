@@ -172,38 +172,8 @@ public function costs(Request $request)
 
     $referrals = $this->getActiveReferrals();
 
-    $rows = DB::table('t_user_info')
-        ->select(
-            DB::raw('MONTH(reg_date) as month_num'),
-            'provenienza',
-            DB::raw('COUNT(*) as registered'),
-            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) > 0 THEN 1 ELSE 0 END) as active')
-        )
-        ->whereYear('reg_date', $year)
-        ->where('email', 'not like', '%.top')
-        ->whereNotNull('provenienza')
-        ->where('provenienza', '<>', '')
-        ->groupBy(DB::raw('MONTH(reg_date)'), 'provenienza')
-        ->get();
-
-    $sourceStatsByMonth = [];
-
-    foreach ($rows as $row) {
-        $monthNum = (int) $row->month_num;
-        $source = $row->provenienza;
-
-        if (!isset($sourceStatsByMonth[$monthNum])) {
-            $sourceStatsByMonth[$monthNum] = [];
-        }
-
-        $sourceStatsByMonth[$monthNum][$source] = [
-            'registered' => (int) $row->registered,
-            'active' => (int) $row->active,
-        ];
-    }
-
     $cpiRows = DB::table('t_recruitment_referral_costs')
-        ->select('referral_id', 'start_date', 'end_date', 'cpi')
+        ->select('referral_id', 'start_date', 'end_date', 'cpi', 'age_max')
         ->where('is_active', 1)
         ->whereDate('start_date', '<=', $year . '-12-31')
         ->where(function ($query) use ($year) {
@@ -222,9 +192,67 @@ public function costs(Request $request)
 
         $cpiByReferral[$row->referral_id][] = [
             'start_date' => $row->start_date,
-            'end_date' => $row->end_date,
-            'cpi' => (float) $row->cpi,
+            'end_date'   => $row->end_date,
+            'cpi'        => (float) $row->cpi,
+            'age_max'    => $row->age_max !== null ? (int) $row->age_max : null,
         ];
+    }
+
+    $ageBreakpoints = [];
+    foreach ($cpiByReferral as $_periods) {
+        foreach ($_periods as $_period) {
+            if ($_period['age_max'] !== null && !in_array($_period['age_max'], $ageBreakpoints, true)) {
+                $ageBreakpoints[] = $_period['age_max'];
+            }
+        }
+    }
+    sort($ageBreakpoints);
+
+    $selectClauses = [
+        DB::raw('MONTH(reg_date) as month_num'),
+        'provenienza',
+        DB::raw('COUNT(*) as registered'),
+        DB::raw('SUM(CASE WHEN COALESCE(actions, 0) > 0 THEN 1 ELSE 0 END) as active'),
+    ];
+
+    foreach ($ageBreakpoints as $bp) {
+        $selectClauses[] = DB::raw(
+            "SUM(CASE WHEN birth_date IS NOT NULL AND birth_date <> '0000-00-00'"
+            . " AND TIMESTAMPDIFF(YEAR, birth_date, reg_date) <= {$bp}"
+            . " THEN 1 ELSE 0 END) as age_under_{$bp}"
+        );
+    }
+
+    $rows = DB::table('t_user_info')
+        ->select($selectClauses)
+        ->whereYear('reg_date', $year)
+        ->where('email', 'not like', '%.top')
+        ->whereNotNull('provenienza')
+        ->where('provenienza', '<>', '')
+        ->groupBy(DB::raw('MONTH(reg_date)'), 'provenienza')
+        ->get();
+
+    $sourceStatsByMonth = [];
+
+    foreach ($rows as $row) {
+        $monthNum = (int) $row->month_num;
+        $source = $row->provenienza;
+
+        if (!isset($sourceStatsByMonth[$monthNum])) {
+            $sourceStatsByMonth[$monthNum] = [];
+        }
+
+        $entry = [
+            'registered' => (int) $row->registered,
+            'active'     => (int) $row->active,
+        ];
+
+        foreach ($ageBreakpoints as $bp) {
+            $key = 'age_under_' . $bp;
+            $entry[$key] = isset($row->$key) ? (int) $row->$key : 0;
+        }
+
+        $sourceStatsByMonth[$monthNum][$source] = $entry;
     }
 
     $mappedSources = [];
@@ -251,6 +279,7 @@ public function costs(Request $request)
         for ($month = 1; $month <= 12; $month++) {
             $monthRegistered = 0;
             $monthActive = 0;
+            $monthAgeData = [];
 
             foreach ($sources as $source) {
                 if (!isset($sourceStatsByMonth[$month][$source])) {
@@ -259,6 +288,11 @@ public function costs(Request $request)
 
                 $monthRegistered += $sourceStatsByMonth[$month][$source]['registered'];
                 $monthActive += $sourceStatsByMonth[$month][$source]['active'];
+
+                foreach ($ageBreakpoints as $bp) {
+                    $key = 'age_under_' . $bp;
+                    $monthAgeData[$key] = ($monthAgeData[$key] ?? 0) + ($sourceStatsByMonth[$month][$source][$key] ?? 0);
+                }
 
                 if (!in_array($source, $matchedSources, true)) {
                     $matchedSources[] = $source;
@@ -273,9 +307,8 @@ public function costs(Request $request)
             $active += $monthActive;
 
             $referenceDate = sprintf('%04d-%02d-01', $year, $month);
-            $monthCpi = $this->resolveReferralCpiForDate($referral->id, $referenceDate, $cpiByReferral);
-
-            $cost += ($monthRegistered * $monthCpi);
+            $monthSourceData = array_merge(['registered' => $monthRegistered], $monthAgeData);
+            $cost += $this->computeSegmentedCost($referral->id, $referenceDate, $monthSourceData, $cpiByReferral, $ageBreakpoints);
         }
 
         if ($registered <= 0) {
@@ -311,6 +344,7 @@ public function costs(Request $request)
         for ($month = 1; $month <= 12; $month++) {
             $monthRegistered = 0;
             $monthActive = 0;
+            $monthAgeData = [];
 
             if (isset($sourceStatsByMonth[$month])) {
                 foreach ($sourceStatsByMonth[$month] as $source => $stats) {
@@ -320,6 +354,11 @@ public function costs(Request $request)
 
                     $monthRegistered += $stats['registered'];
                     $monthActive += $stats['active'];
+
+                    foreach ($ageBreakpoints as $bp) {
+                        $key = 'age_under_' . $bp;
+                        $monthAgeData[$key] = ($monthAgeData[$key] ?? 0) + ($stats[$key] ?? 0);
+                    }
 
                     if (!in_array($source, $fallbackSources, true)) {
                         $fallbackSources[] = $source;
@@ -335,9 +374,8 @@ public function costs(Request $request)
             $active += $monthActive;
 
             $referenceDate = sprintf('%04d-%02d-01', $year, $month);
-            $monthCpi = $this->resolveReferralCpiForDate($fallbackReferral->id, $referenceDate, $cpiByReferral);
-
-            $cost += ($monthRegistered * $monthCpi);
+            $monthSourceData = array_merge(['registered' => $monthRegistered], $monthAgeData);
+            $cost += $this->computeSegmentedCost($fallbackReferral->id, $referenceDate, $monthSourceData, $cpiByReferral, $ageBreakpoints);
         }
 
         if ($registered > 0) {
@@ -871,6 +909,55 @@ public function stats(Request $request)
     return 0;
 }
 
+private function computeSegmentedCost(
+    $referralId,
+    string $referenceDate,
+    array $monthSourceData,
+    array $cpiByReferral,
+    array $ageBreakpoints
+): float {
+    if (!isset($cpiByReferral[$referralId])) {
+        return 0.0;
+    }
+
+    $validPeriods = array_values(array_filter($cpiByReferral[$referralId], function ($p) use ($referenceDate) {
+        $start = substr($p['start_date'], 0, 10);
+        $end   = $p['end_date'] !== null ? substr($p['end_date'], 0, 10) : null;
+        return $referenceDate >= $start && ($end === null || $referenceDate <= $end);
+    }));
+
+    if (empty($validPeriods)) {
+        return 0.0;
+    }
+
+    // Sort segments by age_max ASC, null last (null = fallback, applies to everyone remaining)
+    usort($validPeriods, function ($a, $b) {
+        if ($a['age_max'] === null && $b['age_max'] === null) return 0;
+        if ($a['age_max'] === null) return 1;
+        if ($b['age_max'] === null) return -1;
+        return $a['age_max'] - $b['age_max'];
+    });
+
+    $totalRegistered = (int) ($monthSourceData['registered'] ?? 0);
+    $cost = 0.0;
+    $countUsed = 0;
+
+    foreach ($validPeriods as $segment) {
+        if ($segment['age_max'] !== null) {
+            $cumulative = (int) ($monthSourceData['age_under_' . $segment['age_max']] ?? 0);
+            $inSegment  = max(0, $cumulative - $countUsed);
+            $cost      += $inSegment * $segment['cpi'];
+            $countUsed  = max($countUsed, $cumulative);
+        } else {
+            // Fallback segment: all remaining registrations (incl. unknown birth_date)
+            $remaining = max(0, $totalRegistered - $countUsed);
+            $cost     += $remaining * $segment['cpi'];
+        }
+    }
+
+    return $cost;
+}
+
 public function latestRegistrations()
 {
     $referrals = $this->getActiveReferrals();
@@ -970,38 +1057,8 @@ public function summaryYear(Request $request)
 
     $referrals = $this->getActiveReferrals();
 
-    $rows = DB::table('t_user_info')
-        ->select(
-            DB::raw('MONTH(reg_date) as month_num'),
-            'provenienza',
-            DB::raw('COUNT(*) as registered'),
-            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) > 0 THEN 1 ELSE 0 END) as active')
-        )
-        ->whereYear('reg_date', $year)
-        ->where('email', 'not like', '%.top')
-        ->whereNotNull('provenienza')
-        ->where('provenienza', '<>', '')
-        ->groupBy(DB::raw('MONTH(reg_date)'), 'provenienza')
-        ->get();
-
-    $sourceStatsByMonth = [];
-
-    foreach ($rows as $row) {
-        $monthNum = (int) $row->month_num;
-        $source = $row->provenienza;
-
-        if (!isset($sourceStatsByMonth[$monthNum])) {
-            $sourceStatsByMonth[$monthNum] = [];
-        }
-
-        $sourceStatsByMonth[$monthNum][$source] = [
-            'registered' => (int) $row->registered,
-            'active' => (int) $row->active,
-        ];
-    }
-
     $cpiRows = DB::table('t_recruitment_referral_costs')
-        ->select('referral_id', 'start_date', 'end_date', 'cpi')
+        ->select('referral_id', 'start_date', 'end_date', 'cpi', 'age_max')
         ->where('is_active', 1)
         ->whereDate('start_date', '<=', $year . '-12-31')
         ->where(function ($query) use ($year) {
@@ -1020,9 +1077,67 @@ public function summaryYear(Request $request)
 
         $cpiByReferral[$row->referral_id][] = [
             'start_date' => $row->start_date,
-            'end_date' => $row->end_date,
-            'cpi' => (float) $row->cpi,
+            'end_date'   => $row->end_date,
+            'cpi'        => (float) $row->cpi,
+            'age_max'    => $row->age_max !== null ? (int) $row->age_max : null,
         ];
+    }
+
+    $ageBreakpoints = [];
+    foreach ($cpiByReferral as $_periods) {
+        foreach ($_periods as $_period) {
+            if ($_period['age_max'] !== null && !in_array($_period['age_max'], $ageBreakpoints, true)) {
+                $ageBreakpoints[] = $_period['age_max'];
+            }
+        }
+    }
+    sort($ageBreakpoints);
+
+    $selectClauses = [
+        DB::raw('MONTH(reg_date) as month_num'),
+        'provenienza',
+        DB::raw('COUNT(*) as registered'),
+        DB::raw('SUM(CASE WHEN COALESCE(actions, 0) > 0 THEN 1 ELSE 0 END) as active'),
+    ];
+
+    foreach ($ageBreakpoints as $bp) {
+        $selectClauses[] = DB::raw(
+            "SUM(CASE WHEN birth_date IS NOT NULL AND birth_date <> '0000-00-00'"
+            . " AND TIMESTAMPDIFF(YEAR, birth_date, reg_date) <= {$bp}"
+            . " THEN 1 ELSE 0 END) as age_under_{$bp}"
+        );
+    }
+
+    $rows = DB::table('t_user_info')
+        ->select($selectClauses)
+        ->whereYear('reg_date', $year)
+        ->where('email', 'not like', '%.top')
+        ->whereNotNull('provenienza')
+        ->where('provenienza', '<>', '')
+        ->groupBy(DB::raw('MONTH(reg_date)'), 'provenienza')
+        ->get();
+
+    $sourceStatsByMonth = [];
+
+    foreach ($rows as $row) {
+        $monthNum = (int) $row->month_num;
+        $source = $row->provenienza;
+
+        if (!isset($sourceStatsByMonth[$monthNum])) {
+            $sourceStatsByMonth[$monthNum] = [];
+        }
+
+        $entry = [
+            'registered' => (int) $row->registered,
+            'active'     => (int) $row->active,
+        ];
+
+        foreach ($ageBreakpoints as $bp) {
+            $key = 'age_under_' . $bp;
+            $entry[$key] = isset($row->$key) ? (int) $row->$key : 0;
+        }
+
+        $sourceStatsByMonth[$monthNum][$source] = $entry;
     }
 
     $mappedSources = [];
@@ -1049,6 +1164,7 @@ public function summaryYear(Request $request)
         for ($month = 1; $month <= 12; $month++) {
             $monthRegistered = 0;
             $monthActive = 0;
+            $monthAgeData = [];
 
             foreach ($sources as $source) {
                 if (!isset($sourceStatsByMonth[$month][$source])) {
@@ -1057,6 +1173,11 @@ public function summaryYear(Request $request)
 
                 $monthRegistered += $sourceStatsByMonth[$month][$source]['registered'];
                 $monthActive += $sourceStatsByMonth[$month][$source]['active'];
+
+                foreach ($ageBreakpoints as $bp) {
+                    $key = 'age_under_' . $bp;
+                    $monthAgeData[$key] = ($monthAgeData[$key] ?? 0) + ($sourceStatsByMonth[$month][$source][$key] ?? 0);
+                }
 
                 if (!in_array($source, $matchedSources, true)) {
                     $matchedSources[] = $source;
@@ -1071,9 +1192,8 @@ public function summaryYear(Request $request)
             $active += $monthActive;
 
             $referenceDate = sprintf('%04d-%02d-01', $year, $month);
-            $monthCpi = $this->resolveReferralCpiForDate($referral->id, $referenceDate, $cpiByReferral);
-
-            $cost += ($monthRegistered * $monthCpi);
+            $monthSourceData = array_merge(['registered' => $monthRegistered], $monthAgeData);
+            $cost += $this->computeSegmentedCost($referral->id, $referenceDate, $monthSourceData, $cpiByReferral, $ageBreakpoints);
         }
 
         if ($registered <= 0) {
@@ -1109,6 +1229,7 @@ public function summaryYear(Request $request)
         for ($month = 1; $month <= 12; $month++) {
             $monthRegistered = 0;
             $monthActive = 0;
+            $monthAgeData = [];
 
             if (isset($sourceStatsByMonth[$month])) {
                 foreach ($sourceStatsByMonth[$month] as $source => $stats) {
@@ -1118,6 +1239,11 @@ public function summaryYear(Request $request)
 
                     $monthRegistered += $stats['registered'];
                     $monthActive += $stats['active'];
+
+                    foreach ($ageBreakpoints as $bp) {
+                        $key = 'age_under_' . $bp;
+                        $monthAgeData[$key] = ($monthAgeData[$key] ?? 0) + ($stats[$key] ?? 0);
+                    }
 
                     if (!in_array($source, $fallbackSources, true)) {
                         $fallbackSources[] = $source;
@@ -1133,9 +1259,8 @@ public function summaryYear(Request $request)
             $active += $monthActive;
 
             $referenceDate = sprintf('%04d-%02d-01', $year, $month);
-            $monthCpi = $this->resolveReferralCpiForDate($fallbackReferral->id, $referenceDate, $cpiByReferral);
-
-            $cost += ($monthRegistered * $monthCpi);
+            $monthSourceData = array_merge(['registered' => $monthRegistered], $monthAgeData);
+            $cost += $this->computeSegmentedCost($fallbackReferral->id, $referenceDate, $monthSourceData, $cpiByReferral, $ageBreakpoints);
         }
 
         if ($registered > 0) {
@@ -1229,10 +1354,12 @@ public function storeCampaign(Request $request)
         'new_referral_title' => 'nullable|required_if:referral_mode,new|string|max:255',
         'new_referral_icon' => 'nullable|string|max:150',
 
-        'start_date' => 'required|date',
-        'end_date' => 'nullable|date|after_or_equal:start_date',
-        'cpi' => 'required|numeric|min:0',
-        'is_active' => 'nullable|boolean',
+        'start_date'          => 'required|date',
+        'end_date'            => 'nullable|date|after_or_equal:start_date',
+        'segments'            => 'required|array|min:1|max:10',
+        'segments.*.cpi'      => 'required|numeric|min:0',
+        'segments.*.age_max'  => 'nullable|integer|min:1|max:120',
+        'is_active'           => 'nullable|boolean',
     ]);
 
     DB::beginTransaction();
@@ -1305,42 +1432,58 @@ public function storeCampaign(Request $request)
         $endDate = !empty($validated['end_date']) ? $validated['end_date'] : null;
         $isActive = isset($validated['is_active']) ? (int) $validated['is_active'] : 1;
 
-        $overlapQuery = DB::table('t_recruitment_referral_costs')
-            ->where('referral_id', $referralId)
-            ->where('is_active', 1)
-            ->where(function ($query) use ($startDate, $endDate) {
-                if ($endDate) {
-                    $query->whereDate('start_date', '<=', $endDate)
-                        ->where(function ($sub) use ($startDate) {
+        foreach ($validated['segments'] as $segment) {
+            $segmentCpi    = (float) $segment['cpi'];
+            $segmentAgeMax = isset($segment['age_max']) && $segment['age_max'] !== '' && $segment['age_max'] !== null
+                ? (int) $segment['age_max']
+                : null;
+
+            $overlapQuery = DB::table('t_recruitment_referral_costs')
+                ->where('referral_id', $referralId)
+                ->where('is_active', 1)
+                ->where(function ($q) use ($segmentAgeMax) {
+                    if ($segmentAgeMax === null) {
+                        $q->whereNull('age_max');
+                    } else {
+                        $q->where('age_max', $segmentAgeMax);
+                    }
+                })
+                ->where(function ($query) use ($startDate, $endDate) {
+                    if ($endDate) {
+                        $query->whereDate('start_date', '<=', $endDate)
+                            ->where(function ($sub) use ($startDate) {
+                                $sub->whereNull('end_date')
+                                    ->orWhereDate('end_date', '>=', $startDate);
+                            });
+                    } else {
+                        $query->where(function ($sub) use ($startDate) {
                             $sub->whereNull('end_date')
                                 ->orWhereDate('end_date', '>=', $startDate);
                         });
-                } else {
-                    $query->where(function ($sub) use ($startDate) {
-                        $sub->whereNull('end_date')
-                            ->orWhereDate('end_date', '>=', $startDate);
-                    });
-                }
-            });
+                    }
+                });
 
-        if ($overlapQuery->exists()) {
-            DB::rollBack();
+            if ($overlapQuery->exists()) {
+                DB::rollBack();
+                $label = $segmentAgeMax !== null ? " (età max {$segmentAgeMax})" : ' (fascia default)';
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Esiste già una campagna attiva o sovrapposta per questo referral nel periodo selezionato.'
-            ], 422);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Esiste già una campagna attiva o sovrapposta per questo referral nel periodo selezionato' . $label . '.'
+                ], 422);
+            }
+
+            DB::table('t_recruitment_referral_costs')->insert([
+                'referral_id' => $referralId,
+                'start_date'  => $startDate,
+                'end_date'    => $endDate,
+                'cpi'         => $segmentCpi,
+                'age_max'     => $segmentAgeMax,
+                'is_active'   => $isActive,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ]);
         }
-
-        DB::table('t_recruitment_referral_costs')->insert([
-            'referral_id' => $referralId,
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'cpi' => $validated['cpi'],
-            'is_active' => $isActive,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
 
         DB::commit();
 
