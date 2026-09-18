@@ -60,14 +60,14 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     $denominator = $counts['contatti'] - $counts['sospese'] - $counts['bloccate'] - $counts['over_quota'];
 
     $redemption = ($denominator > 0)
-        ? round(($counts['complete'] / $denominator) * 100, 2)
+        ? round((($counts['complete'] + $counts['bad_quality']) / $denominator) * 100, 2)
         : 0;
 
     foreach ($panelCounts as $panelName => &$panel) {
         $panelDenominator = $panel['contatti'] - $panel['sospese'] - $panel['bloccate'] - $panel['over_quota'];
 
         $panel['redemption'] = ($panelDenominator > 0)
-            ? round(($panel['complete'] / $panelDenominator) * 100, 2)
+            ? round((($panel['complete'] + $panel['bad_quality']) / $panelDenominator) * 100, 2)
             : 0;
     }
     unset($panel);
