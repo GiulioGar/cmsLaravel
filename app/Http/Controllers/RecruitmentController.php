@@ -1509,6 +1509,172 @@ public function storeCampaign(Request $request)
     }
 }
 
+public function campaignsList(Request $request)
+{
+    $referralId = (int) $request->get('referral_id');
+
+    if ($referralId <= 0) {
+        return response()->json(['success' => false, 'message' => 'Referral non valido.'], 422);
+    }
+
+    $referral = DB::table('t_recruitment_referrals')
+        ->where('id', $referralId)
+        ->where('is_active', 1)
+        ->first();
+
+    if (!$referral) {
+        return response()->json(['success' => false, 'message' => 'Referral non trovato.'], 404);
+    }
+
+    $rows = DB::table('t_recruitment_referral_costs')
+        ->where('referral_id', $referralId)
+        ->orderBy('start_date', 'desc')
+        ->orderByRaw('age_max IS NULL ASC')
+        ->orderBy('age_max')
+        ->get(['id', 'start_date', 'end_date', 'cpi', 'age_max', 'is_active']);
+
+    // Raggruppa per (start_date, end_date) → ogni chiave = un periodo
+    $periods = [];
+    foreach ($rows as $row) {
+        $key = substr($row->start_date, 0, 10) . '|' . ($row->end_date !== null ? substr($row->end_date, 0, 10) : '');
+        if (!isset($periods[$key])) {
+            $periods[$key] = [
+                'start_date' => substr($row->start_date, 0, 10),
+                'end_date'   => $row->end_date !== null ? substr($row->end_date, 0, 10) : null,
+                'is_active'  => (int) $row->is_active,
+                'segments'   => [],
+            ];
+        }
+        $periods[$key]['segments'][] = [
+            'id'      => $row->id,
+            'cpi'     => (float) $row->cpi,
+            'age_max' => $row->age_max !== null ? (int) $row->age_max : null,
+        ];
+    }
+
+    return response()->json([
+        'success'   => true,
+        'campaigns' => array_values($periods),
+    ]);
+}
+
+public function updateCampaign(Request $request)
+{
+    $validated = $request->validate([
+        'referral_id'          => 'required|integer',
+        'original_start_date'  => 'required|date',
+        'original_end_date'    => 'nullable|date',
+        'start_date'           => 'required|date',
+        'end_date'             => 'nullable|date|after_or_equal:start_date',
+        'segments'             => 'required|array|min:1|max:10',
+        'segments.*.cpi'       => 'required|numeric|min:0',
+        'segments.*.age_max'   => 'nullable|integer|min:1|max:120',
+        'is_active'            => 'nullable|boolean',
+    ]);
+
+    $referralId    = (int) $validated['referral_id'];
+    $originalStart = substr($validated['original_start_date'], 0, 10);
+    $originalEnd   = !empty($validated['original_end_date']) ? substr($validated['original_end_date'], 0, 10) : null;
+    $startDate     = $validated['start_date'];
+    $endDate       = !empty($validated['end_date']) ? $validated['end_date'] : null;
+    $isActive      = isset($validated['is_active']) ? (int) $validated['is_active'] : 1;
+
+    DB::beginTransaction();
+
+    try {
+        $referral = DB::table('t_recruitment_referrals')
+            ->where('id', $referralId)
+            ->where('is_active', 1)
+            ->first();
+
+        if (!$referral) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Referral non valido.'], 422);
+        }
+
+        // Elimina tutti i segmenti del periodo originale
+        $deleteQuery = DB::table('t_recruitment_referral_costs')
+            ->where('referral_id', $referralId)
+            ->whereDate('start_date', $originalStart);
+
+        if ($originalEnd === null) {
+            $deleteQuery->whereNull('end_date');
+        } else {
+            $deleteQuery->whereDate('end_date', $originalEnd);
+        }
+
+        $deleteQuery->delete();
+
+        // Inserisce i nuovi segmenti (con overlap check sugli altri periodi)
+        foreach ($validated['segments'] as $segment) {
+            $segmentCpi    = (float) $segment['cpi'];
+            $segmentAgeMax = isset($segment['age_max']) && $segment['age_max'] !== '' && $segment['age_max'] !== null
+                ? (int) $segment['age_max']
+                : null;
+
+            $overlapQuery = DB::table('t_recruitment_referral_costs')
+                ->where('referral_id', $referralId)
+                ->where('is_active', 1)
+                ->where(function ($q) use ($segmentAgeMax) {
+                    if ($segmentAgeMax === null) {
+                        $q->whereNull('age_max');
+                    } else {
+                        $q->where('age_max', $segmentAgeMax);
+                    }
+                })
+                ->where(function ($query) use ($startDate, $endDate) {
+                    if ($endDate) {
+                        $query->whereDate('start_date', '<=', $endDate)
+                            ->where(function ($sub) use ($startDate) {
+                                $sub->whereNull('end_date')
+                                    ->orWhereDate('end_date', '>=', $startDate);
+                            });
+                    } else {
+                        $query->where(function ($sub) use ($startDate) {
+                            $sub->whereNull('end_date')
+                                ->orWhereDate('end_date', '>=', $startDate);
+                        });
+                    }
+                });
+
+            if ($overlapQuery->exists()) {
+                DB::rollBack();
+                $label = $segmentAgeMax !== null ? " (età max {$segmentAgeMax})" : ' (fascia default)';
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Esiste già un periodo sovrapposto per questo referral' . $label . '.'
+                ], 422);
+            }
+
+            DB::table('t_recruitment_referral_costs')->insert([
+                'referral_id' => $referralId,
+                'start_date'  => $startDate,
+                'end_date'    => $endDate,
+                'cpi'         => $segmentCpi,
+                'age_max'     => $segmentAgeMax,
+                'is_active'   => $isActive,
+                'created_at'  => now(),
+                'updated_at'  => now(),
+            ]);
+        }
+
+        DB::commit();
+
+        return response()->json(['success' => true, 'message' => 'Campagna aggiornata correttamente.']);
+    } catch (\Throwable $e) {
+        DB::rollBack();
+
+        Log::error('[updateCampaign] Errore: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Errore durante il salvataggio della campagna.'
+        ], 500);
+    }
+}
+
 public function exportReport(Request $request)
 {
     $year = (int) $request->get('year');

@@ -206,8 +206,12 @@ Route::middleware(['auth.custom'])->group(function () {
     ->name('recruitment.latestRegistrations');
     Route::get('/recruitment/summary-year', [RecruitmentController::class, 'summaryYear'])
     ->name('recruitment.summaryYear');
+    Route::get('/recruitment/campaigns/list', [RecruitmentController::class, 'campaignsList'])
+    ->name('recruitment.campaigns.list');
     Route::post('/recruitment/campaigns/store', [RecruitmentController::class, 'storeCampaign'])
     ->name('recruitment.campaigns.store');
+    Route::post('/recruitment/campaigns/update', [RecruitmentController::class, 'updateCampaign'])
+    ->name('recruitment.campaigns.update');
     Route::get('/recruitment/report/export', [RecruitmentController::class, 'exportReport'])
     ->name('recruitment.report.export');
 
