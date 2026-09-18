@@ -403,10 +403,10 @@ public function activity(Request $request)
             'provenienza',
             DB::raw('COUNT(*) as total_registered'),
             DB::raw('SUM(CASE WHEN COALESCE(actions, 0) = 0 THEN 1 ELSE 0 END) as act_0'),
-            DB::raw('SUM(CASE WHEN actions BETWEEN 1 AND 2 THEN 1 ELSE 0 END) as act_1_2'),
-            DB::raw('SUM(CASE WHEN actions BETWEEN 3 AND 5 THEN 1 ELSE 0 END) as act_3_5'),
-            DB::raw('SUM(CASE WHEN actions BETWEEN 6 AND 9 THEN 1 ELSE 0 END) as act_6_9'),
-            DB::raw('SUM(CASE WHEN actions >= 10 THEN 1 ELSE 0 END) as act_10_plus')
+            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) BETWEEN 1 AND 2 THEN 1 ELSE 0 END) as act_1_2'),
+            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) BETWEEN 3 AND 5 THEN 1 ELSE 0 END) as act_3_5'),
+            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) BETWEEN 6 AND 9 THEN 1 ELSE 0 END) as act_6_9'),
+            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) >= 10 THEN 1 ELSE 0 END) as act_10_plus')
         )
         ->whereYear('reg_date', $year)
         ->where('email', 'not like', '%.top')
@@ -873,6 +873,19 @@ public function latestRegistrations()
 {
     $referrals = $this->getActiveReferrals();
 
+    // Pre-costruisce mappa source_code → referral per evitare O(n×m) nel loop
+    $sourceMap = [];
+    $fallbackReferral = null;
+    foreach ($referrals as $referral) {
+        if ($referral->group_type === 'fallback') {
+            $fallbackReferral = $referral;
+            continue;
+        }
+        foreach ($this->parseSourceCodes($referral->source_codes) as $code) {
+            $sourceMap[$code] = $referral;
+        }
+    }
+
     $rows = DB::table('t_user_info')
         ->select('reg_date', 'email', 'provenienza')
         ->where('email', 'not like', '%.top')
@@ -886,17 +899,18 @@ public function latestRegistrations()
     $mappedRows = [];
 
     foreach ($rows as $row) {
-        $mappedReferral = $this->mapSourceToReferral($row->provenienza, $referrals);
+        $source = $row->provenienza ?: '';
+        $referral = $sourceMap[$source] ?? $fallbackReferral;
 
         $mappedRows[] = [
             'reg_date' => $row->reg_date
                 ? Carbon::parse($row->reg_date)->format('d/m/Y H:i')
                 : '-',
             'email' => $row->email ?: '-',
-            'source' => $row->provenienza ?: '-',
-            'referral_code' => $mappedReferral['code'],
-            'referral_label' => $mappedReferral['label'],
-            'referral_icon' => $mappedReferral['icon'],
+            'source' => $source ?: '-',
+            'referral_code' => $referral->code ?? '-',
+            'referral_label' => $referral->title ?? ($source ?: '-'),
+            'referral_icon' => $referral->icon ?? null,
         ];
     }
 
@@ -950,7 +964,7 @@ public function summaryYear(Request $request)
         $year = (int) now()->year;
     }
 
-    $budget = 15000;
+    $budget = (int) config('recruitment.annual_budget.' . $year, config('recruitment.annual_budget.default', 15000));
 
     $referrals = $this->getActiveReferrals();
 
@@ -1256,34 +1270,33 @@ public function storeCampaign(Request $request)
                 ? trim($validated['new_referral_icon'])
                 : null;
 
-            $codeExists = DB::table('t_recruitment_referrals')
-                ->where('code', $newCode)
-                ->exists();
-
-            if ($codeExists) {
-                DB::rollBack();
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Il codice referral esiste già.'
-                ], 422);
-            }
-
             $maxSortOrder = DB::table('t_recruitment_referrals')->max('sort_order');
             $nextSortOrder = ((int) $maxSortOrder) + 1;
 
-            $referralId = DB::table('t_recruitment_referrals')->insertGetId([
-                'legacy_id' => null,
-                'code' => $newCode,
-                'title' => $newTitle,
-                'icon' => $newIcon,
-                'source_codes' => $newCode,
-                'group_type' => 'standard',
-                'sort_order' => $nextSortOrder,
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            try {
+                $referralId = DB::table('t_recruitment_referrals')->insertGetId([
+                    'legacy_id' => null,
+                    'code' => $newCode,
+                    'title' => $newTitle,
+                    'icon' => $newIcon,
+                    'source_codes' => $newCode,
+                    'group_type' => 'standard',
+                    'sort_order' => $nextSortOrder,
+                    'is_active' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                DB::rollBack();
+                // Duplicate entry (codice già esistente, anche in caso di race condition)
+                if ($e->errorInfo[1] === 1062) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Il codice referral esiste già.'
+                    ], 422);
+                }
+                throw $e;
+            }
         }
 
         $startDate = $validated['start_date'];
@@ -1431,7 +1444,7 @@ if (!empty($referralIds)) {
 }
     $rows = $query
         ->orderBy('reg_date', 'desc')
-        ->get();
+        ->lazy();
 
     $fileName = 'recruitment_report_' . $year . '_' . str_pad($month, 2, '0', STR_PAD_LEFT) . '_' . $fileLabel . '.csv';
 
