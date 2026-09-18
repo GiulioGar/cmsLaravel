@@ -222,79 +222,73 @@
             </div>
 
             <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold d-block">Tipo Referral</label>
 
-                    <div class="d-flex flex-wrap gap-3">
-                        <label class="form-check-label">
-                            <input class="form-check-input me-1" type="radio" name="referral_mode" value="existing" checked>
-                            Esistente
-                        </label>
-
-                        <label class="form-check-label">
-                            <input class="form-check-input me-1" type="radio" name="referral_mode" value="new">
-                            Nuovo
-                        </label>
-                    </div>
-                </div>
-
-                <div id="existingReferralBox" class="mb-3">
-                    <label class="form-label">Seleziona Referral</label>
-                    <select class="form-select" id="existingReferralSelect">
-                        <option value="">-- seleziona --</option>
-                        @foreach($referrals as $ref)
-                            @if($ref->group_type !== 'fallback')
-                                <option value="{{ $ref->id }}">
-                                    {{ $ref->title }} ({{ $ref->code }})
-                                </option>
-                            @endif
-                        @endforeach
-                    </select>
-                </div>
-
-                <div id="newReferralBox" class="mb-3 d-none">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Codice</label>
-                            <input type="text" class="form-control" id="newReferralCode" maxlength="50">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Titolo</label>
-                            <input type="text" class="form-control" id="newReferralTitle" maxlength="255">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Icona</label>
-                            <input type="text" class="form-control" id="newReferralIcon" maxlength="150" placeholder="es. fa-regular fa-thumbs-up">
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Periodi esistenti --}}
-                <div id="existingCampaignsBox" class="d-none">
-                    <hr>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-semibold small">Periodi campagna</span>
-                        <button type="button" id="btnNewCampaignPeriod" class="btn btn-sm btn-outline-primary">+ Nuovo periodo</button>
-                    </div>
-                    <div id="existingCampaignsList"></div>
+                {{-- Lista tutte le campagne --}}
+                <div id="allCampaignsList">
+                    <div class="text-center py-3 text-muted small">Caricamento...</div>
                 </div>
 
                 {{-- Form crea/modifica periodo --}}
                 <div id="campaignFormBox" class="d-none">
-                    <hr>
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span id="campaignFormTitle" class="fw-semibold">Nuovo periodo</span>
-                        <button type="button" id="btnCancelEdit" class="btn btn-sm btn-outline-secondary d-none">× Annulla</button>
+                        <span id="campaignFormTitle" class="fw-semibold">Nuova campagna</span>
+                        <button type="button" id="btnCancelEdit" class="btn btn-sm btn-link text-secondary text-decoration-none p-0">← Torna alla lista</button>
                     </div>
+
+                    {{-- Referral: selettore (solo modalità nuova) --}}
+                    <div id="campaignReferralBox" class="mb-3">
+                        <label class="form-label fw-bold d-block">Referral</label>
+                        <div class="d-flex gap-3 mb-2">
+                            <label class="form-check-label">
+                                <input class="form-check-input me-1" type="radio" name="referral_mode" value="existing" checked>
+                                Esistente
+                            </label>
+                            <label class="form-check-label">
+                                <input class="form-check-input me-1" type="radio" name="referral_mode" value="new">
+                                Nuovo
+                            </label>
+                        </div>
+                        <div id="existingReferralBox">
+                            <select class="form-select" id="existingReferralSelect">
+                                <option value="">-- seleziona --</option>
+                                @foreach($referrals as $ref)
+                                    @if($ref->group_type !== 'fallback')
+                                        <option value="{{ $ref->id }}">{{ $ref->title }} ({{ $ref->code }})</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                        <div id="newReferralBox" class="d-none">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Codice</label>
+                                    <input type="text" class="form-control" id="newReferralCode" maxlength="50">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Titolo</label>
+                                    <input type="text" class="form-control" id="newReferralTitle" maxlength="255">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Icona</label>
+                                    <input type="text" class="form-control" id="newReferralIcon" maxlength="150" placeholder="es. fa-regular fa-thumbs-up">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Referral: label statica (solo modalità modifica) --}}
+                    <div id="campaignReferralLabel" class="mb-3 d-none">
+                        <span class="form-label mb-1 d-block">Referral</span>
+                        <span id="campaignReferralName" class="fw-semibold"></span>
+                    </div>
+
+                    <hr class="my-3">
 
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Data inizio</label>
                             <input type="date" class="form-control" id="campaignStart">
                         </div>
-
                         <div class="col-md-4">
                             <label class="form-label">Data fine</label>
                             <input type="date" class="form-control" id="campaignEnd">
@@ -321,10 +315,9 @@
             </div>
 
             <div class="modal-footer">
+                <button type="button" id="btnNewCampaign" class="btn btn-outline-primary me-auto">+ Nuova campagna</button>
                 <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Chiudi</button>
-                <button class="btn btn-primary d-none" type="button" id="btnSaveCampaign">
-                    Salva
-                </button>
+                <button class="btn btn-primary d-none" type="button" id="btnSaveCampaign">Salva</button>
             </div>
         </div>
     </div>
@@ -441,12 +434,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const campaignError = document.getElementById('campaignError');
     const campaignSuccess = document.getElementById('campaignSuccess');
 
-    const existingCampaignsBox = document.getElementById('existingCampaignsBox');
-    const existingCampaignsList = document.getElementById('existingCampaignsList');
     const campaignFormBox = document.getElementById('campaignFormBox');
     const campaignFormTitle = document.getElementById('campaignFormTitle');
     const btnCancelEdit = document.getElementById('btnCancelEdit');
-    const btnNewCampaignPeriod = document.getElementById('btnNewCampaignPeriod');
 
     var editState = null;
 
@@ -535,124 +525,140 @@ function hideCampaignAlerts() {
     campaignSuccess.innerText = '';
 }
 
-function showCampaignForm(mode, campaign) {
-    editState = mode === 'edit' ? {
-        originalStart: campaign.start_date,
-        originalEnd: campaign.end_date
-    } : null;
+function hideCampaignForm() {
+    editState = null;
+    campaignFormBox.classList.add('d-none');
+    document.getElementById('allCampaignsList').classList.remove('d-none');
+    document.getElementById('btnNewCampaign').classList.remove('d-none');
+    document.getElementById('btnSaveCampaign').classList.add('d-none');
+    hideCampaignAlerts();
+}
 
-    campaignFormTitle.textContent = mode === 'edit' ? 'Modifica periodo' : 'Nuovo periodo';
-
+function showCampaignForm(mode, period, referralInfo) {
     if (mode === 'edit') {
-        btnCancelEdit.classList.remove('d-none');
-        campaignStart.value = campaign.start_date;
-        campaignEnd.value = campaign.end_date || '';
-        renderSegments(campaign.segments.map(function(s) {
+        editState = {
+            referralId:    referralInfo.id,
+            originalStart: period.start_date,
+            originalEnd:   period.end_date
+        };
+        campaignFormTitle.textContent = 'Modifica periodo';
+        document.getElementById('campaignReferralBox').classList.add('d-none');
+        document.getElementById('campaignReferralLabel').classList.remove('d-none');
+        document.getElementById('campaignReferralName').textContent = referralInfo.title + ' (' + referralInfo.code + ')';
+        campaignStart.value = period.start_date;
+        campaignEnd.value   = period.end_date || '';
+        renderSegments(period.segments.map(function(s) {
             return { cpi: s.cpi, age_max: s.age_max !== null ? s.age_max : '' };
         }));
-        campaignActive.checked = campaign.is_active === 1;
+        campaignActive.checked = period.is_active === 1;
     } else {
-        btnCancelEdit.classList.add('d-none');
+        editState = null;
+        campaignFormTitle.textContent = 'Nuova campagna';
+        document.getElementById('campaignReferralBox').classList.remove('d-none');
+        document.getElementById('campaignReferralLabel').classList.add('d-none');
+        document.querySelector('input[name="referral_mode"][value="existing"]').checked = true;
+        existingReferralBox.classList.remove('d-none');
+        newReferralBox.classList.add('d-none');
+        existingReferralSelect.value = '';
+        newReferralCode.value        = '';
+        newReferralTitle.value       = '';
+        newReferralIcon.value        = '';
         campaignStart.value = '';
-        campaignEnd.value = '';
+        campaignEnd.value   = '';
         renderSegments([{ cpi: '', age_max: '' }]);
         campaignActive.checked = true;
     }
 
     hideCampaignAlerts();
+    document.getElementById('allCampaignsList').classList.add('d-none');
     campaignFormBox.classList.remove('d-none');
+    document.getElementById('btnNewCampaign').classList.add('d-none');
     document.getElementById('btnSaveCampaign').classList.remove('d-none');
-    campaignFormBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function loadExistingCampaigns(referralId) {
-    if (!referralId) {
-        existingCampaignsBox.classList.add('d-none');
-        campaignFormBox.classList.add('d-none');
-        document.getElementById('btnSaveCampaign').classList.add('d-none');
-        return;
-    }
+function loadAllCampaigns() {
+    var container = document.getElementById('allCampaignsList');
+    container.innerHTML = '<div class="text-center py-3 text-muted small">Caricamento...</div>';
+    container._groups = null;
 
-    existingCampaignsBox.classList.remove('d-none');
-    existingCampaignsList.innerHTML = '<div class="text-muted small py-2">Caricamento...</div>';
-    campaignFormBox.classList.add('d-none');
-    document.getElementById('btnSaveCampaign').classList.add('d-none');
-    editState = null;
-
-    fetch('{{ route("recruitment.campaigns.list") }}?referral_id=' + referralId, {
+    fetch('{{ route("recruitment.campaigns.list") }}', {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (!data.success) {
-            existingCampaignsList.innerHTML = '<div class="text-danger small py-2">Errore nel caricamento.</div>';
+            container.innerHTML = '<div class="text-danger small py-2">Errore nel caricamento.</div>';
             return;
         }
-        renderCampaignsList(data.campaigns);
-        if (data.campaigns.length === 0) {
-            showCampaignForm('new', null);
-        }
+        renderAllCampaigns(data.groups);
     })
     .catch(function() {
-        existingCampaignsList.innerHTML = '<div class="text-danger small py-2">Errore di connessione.</div>';
+        container.innerHTML = '<div class="text-danger small py-2">Errore di connessione.</div>';
     });
 }
 
-function renderCampaignsList(campaigns) {
-    if (campaigns.length === 0) {
-        existingCampaignsList.innerHTML = '<div class="text-muted small fst-italic py-2">Nessun periodo presente.</div>';
+function renderAllCampaigns(groups) {
+    var container = document.getElementById('allCampaignsList');
+
+    if (groups.length === 0) {
+        container.innerHTML = '<div class="text-muted small fst-italic py-3">Nessuna campagna configurata.</div>';
+        container._groups = [];
         return;
     }
 
-    var html = '<table class="table table-sm table-borderless align-middle mb-1">'
-        + '<thead><tr>'
-        + '<th class="small text-muted fw-normal ps-0">Periodo</th>'
-        + '<th class="small text-muted fw-normal">Fasce CPI</th>'
-        + '<th></th>'
-        + '</tr></thead><tbody>';
+    var html = '';
+    groups.forEach(function(group, gidx) {
+        html += '<div class="mb-3">'
+            + '<div class="d-flex align-items-center gap-2 mb-1">';
+        if (group.referral_icon) {
+            html += '<i class="' + escapeHtml(group.referral_icon) + ' text-muted small"></i>';
+        }
+        html += '<span class="fw-semibold small">' + escapeHtml(group.referral_title) + '</span>'
+            + '<span class="text-muted small">(' + escapeHtml(group.referral_code) + ')</span>'
+            + '</div>'
+            + '<table class="table table-sm table-borderless align-middle mb-0"><tbody>';
 
-    campaigns.forEach(function(c, i) {
-        var periodo = formatCampaignDate(c.start_date) + ' → ' + (c.end_date ? formatCampaignDate(c.end_date) : '<span class="text-muted">aperta</span>');
-        var fasce = c.segments.map(function(s) {
-            var label = s.age_max !== null ? ' <span class="text-muted">(≤' + s.age_max + 'a)</span>' : ' <span class="text-muted">(tutti)</span>';
-            return '€' + (s.cpi % 1 === 0 ? s.cpi.toFixed(0) : s.cpi) + label;
-        }).join('&nbsp;&nbsp;');
-        var badge = c.is_active
-            ? '<span class="badge bg-success-subtle text-success-emphasis ms-1">Attiva</span>'
-            : '<span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Inattiva</span>';
+        group.periods.forEach(function(p, pidx) {
+            var periodo = formatCampaignDate(p.start_date) + ' → '
+                + (p.end_date ? formatCampaignDate(p.end_date) : '<span class="text-muted">aperta</span>');
+            var fasce = p.segments.map(function(s) {
+                var lbl = s.age_max !== null
+                    ? ' <span class="text-muted">(≤' + s.age_max + 'a)</span>'
+                    : ' <span class="text-muted">(tutti)</span>';
+                return '€' + (s.cpi % 1 === 0 ? s.cpi.toFixed(0) : s.cpi) + lbl;
+            }).join('&ensp;');
+            var badge = p.is_active
+                ? '<span class="badge bg-success-subtle text-success-emphasis ms-1">Attiva</span>'
+                : '<span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">Inattiva</span>';
 
-        html += '<tr>'
-            + '<td class="small ps-0">' + periodo + badge + '</td>'
-            + '<td class="small">' + fasce + '</td>'
-            + '<td class="text-end pe-0"><button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 btn-edit-campaign" data-idx="' + i + '">Modifica</button></td>'
-            + '</tr>';
+            html += '<tr>'
+                + '<td class="small ps-0" style="width:38%">' + periodo + badge + '</td>'
+                + '<td class="small">' + fasce + '</td>'
+                + '<td class="text-end pe-0">'
+                + '<button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 btn-edit-campaign"'
+                + ' data-gidx="' + gidx + '" data-pidx="' + pidx + '">Modifica</button>'
+                + '</td></tr>';
+        });
+
+        html += '</tbody></table></div>';
     });
 
-    html += '</tbody></table>';
-    existingCampaignsList.innerHTML = html;
-    existingCampaignsList._campaigns = campaigns;
+    container.innerHTML = html;
+    container._groups = groups;
 
-    existingCampaignsList.querySelectorAll('.btn-edit-campaign').forEach(function(btn) {
+    container.querySelectorAll('.btn-edit-campaign').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            var idx = parseInt(this.getAttribute('data-idx'));
-            showCampaignForm('edit', existingCampaignsList._campaigns[idx]);
+            var g = container._groups[parseInt(this.getAttribute('data-gidx'))];
+            var p = g.periods[parseInt(this.getAttribute('data-pidx'))];
+            showCampaignForm('edit', p, { id: g.referral_id, title: g.referral_title, code: g.referral_code });
         });
     });
 }
 
-btnNewCampaignPeriod.addEventListener('click', function() {
-    showCampaignForm('new', null);
-});
+btnCancelEdit.addEventListener('click', hideCampaignForm);
 
-btnCancelEdit.addEventListener('click', function() {
-    editState = null;
-    campaignFormBox.classList.add('d-none');
-    document.getElementById('btnSaveCampaign').classList.add('d-none');
-    hideCampaignAlerts();
-});
-
-existingReferralSelect.addEventListener('change', function() {
-    loadExistingCampaigns(this.value);
+document.getElementById('btnNewCampaign').addEventListener('click', function() {
+    showCampaignForm('new', null, null);
 });
 
 btnOpenCampaignModal.addEventListener('click', function () {
@@ -660,20 +666,19 @@ btnOpenCampaignModal.addEventListener('click', function () {
     campaignModal.show();
 });
 
-document.querySelectorAll('input[name="referral_mode"]').forEach(function (el) {
-    el.addEventListener('change', function () {
+document.querySelectorAll('input[name="referral_mode"]').forEach(function(el) {
+    el.addEventListener('change', function() {
         if (this.value === 'existing') {
             existingReferralBox.classList.remove('d-none');
             newReferralBox.classList.add('d-none');
-            loadExistingCampaigns(existingReferralSelect.value);
         } else {
             existingReferralBox.classList.add('d-none');
             newReferralBox.classList.remove('d-none');
-            existingCampaignsBox.classList.add('d-none');
-            showCampaignForm('new', null);
         }
     });
 });
+
+campaignModalElement.addEventListener('shown.bs.modal', loadAllCampaigns);
 
 campaignModalElement.addEventListener('hidden.bs.modal', function () {
     resetCampaignForm();
@@ -682,7 +687,7 @@ campaignModalElement.addEventListener('hidden.bs.modal', function () {
 document.getElementById('btnSaveCampaign').addEventListener('click', function () {
     var segments = Array.prototype.map.call(document.querySelectorAll('#segmentsContainer .segment-row'), function(row) {
         return {
-            cpi: parseFloat(row.querySelector('.segment-cpi').value) || 0,
+            cpi:     parseFloat(row.querySelector('.segment-cpi').value) || 0,
             age_max: row.querySelector('.segment-age-max').value || null
         };
     });
@@ -692,7 +697,7 @@ document.getElementById('btnSaveCampaign').addEventListener('click', function ()
     if (editState !== null) {
         url = '{{ route("recruitment.campaigns.update") }}';
         payload = {
-            referral_id:         parseInt(existingReferralSelect.value),
+            referral_id:         editState.referralId,
             original_start_date: editState.originalStart,
             original_end_date:   editState.originalEnd,
             start_date:          campaignStart.value,
@@ -704,15 +709,15 @@ document.getElementById('btnSaveCampaign').addEventListener('click', function ()
         var referralMode = document.querySelector('input[name="referral_mode"]:checked').value;
         url = '{{ route("recruitment.campaigns.store") }}';
         payload = {
-            referral_mode:       referralMode,
+            referral_mode:        referralMode,
             existing_referral_id: existingReferralSelect.value,
-            new_referral_code:   newReferralCode.value.trim(),
-            new_referral_title:  newReferralTitle.value.trim(),
-            new_referral_icon:   newReferralIcon.value.trim(),
-            start_date:          campaignStart.value,
-            end_date:            campaignEnd.value,
-            segments:            segments,
-            is_active:           campaignActive.checked ? 1 : 0
+            new_referral_code:    newReferralCode.value.trim(),
+            new_referral_title:   newReferralTitle.value.trim(),
+            new_referral_icon:    newReferralIcon.value.trim(),
+            start_date:           campaignStart.value,
+            end_date:             campaignEnd.value,
+            segments:             segments,
+            is_active:            campaignActive.checked ? 1 : 0
         };
     }
 
@@ -732,12 +737,12 @@ document.getElementById('btnSaveCampaign').addEventListener('click', function ()
         },
         body: JSON.stringify(payload)
     })
-    .then(function (response) {
-        return response.json().then(function (data) {
+    .then(function(response) {
+        return response.json().then(function(data) {
             return { ok: response.ok, data: data };
         });
     })
-    .then(function (result) {
+    .then(function(result) {
         btn.disabled = false;
         btn.innerHTML = 'Salva';
 
@@ -746,16 +751,15 @@ document.getElementById('btnSaveCampaign').addEventListener('click', function ()
             return;
         }
 
+        // Ricarica lista e torna alla vista campagne
+        hideCampaignForm();
         showCampaignSuccess(result.data.message);
-        campaignModal.hide();
+        loadAllCampaigns();
 
-        loadDailyBox();
         loadCostsBox();
-        loadActivityBox();
-        loadStatsBox();
         loadSummaryYearBox();
     })
-    .catch(function (error) {
+    .catch(function(error) {
         console.error(error);
         showCampaignError('Errore di connessione.');
         btn.disabled = false;
@@ -1588,32 +1592,32 @@ function loadSummaryYearBox() {
 }
 
 function resetCampaignForm() {
-    document.querySelector('input[name="referral_mode"][value="existing"]').checked = true;
-
-    existingReferralBox.classList.remove('d-none');
-    newReferralBox.classList.add('d-none');
-    existingCampaignsBox.classList.add('d-none');
-    campaignFormBox.classList.add('d-none');
-    existingCampaignsList.innerHTML = '';
     editState = null;
 
-    existingReferralSelect.value = '';
-    newReferralCode.value = '';
-    newReferralTitle.value = '';
-    newReferralIcon.value = '';
-    campaignStart.value = '';
-    campaignEnd.value = '';
-    renderSegments([{ cpi: '', age_max: '' }]);
-    campaignActive.checked = true;
-    btnCancelEdit.classList.add('d-none');
-    campaignFormTitle.textContent = 'Nuovo periodo';
-
-    hideCampaignAlerts();
-
+    // Torna alla vista lista
+    campaignFormBox.classList.add('d-none');
+    document.getElementById('allCampaignsList').classList.remove('d-none');
+    document.getElementById('btnNewCampaign').classList.remove('d-none');
     var btnSave = document.getElementById('btnSaveCampaign');
     btnSave.disabled = false;
     btnSave.innerHTML = 'Salva';
     btnSave.classList.add('d-none');
+
+    // Reset campi form
+    existingReferralSelect.value = '';
+    newReferralCode.value        = '';
+    newReferralTitle.value       = '';
+    newReferralIcon.value        = '';
+    campaignStart.value = '';
+    campaignEnd.value   = '';
+    renderSegments([{ cpi: '', age_max: '' }]);
+    campaignActive.checked = true;
+    campaignFormTitle.textContent = 'Nuova campagna';
+
+    // Reset lista a "Caricamento..." (verrà ricaricata da shown.bs.modal al prossimo open)
+    document.getElementById('allCampaignsList').innerHTML = '<div class="text-center py-3 text-muted small">Caricamento...</div>';
+
+    hideCampaignAlerts();
 }
 
 function showCampaignError(message) {

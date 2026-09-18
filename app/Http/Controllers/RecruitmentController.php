@@ -1511,50 +1511,76 @@ public function storeCampaign(Request $request)
 
 public function campaignsList(Request $request)
 {
-    $referralId = (int) $request->get('referral_id');
+    $referralId = (int) $request->get('referral_id', 0);
 
-    if ($referralId <= 0) {
-        return response()->json(['success' => false, 'message' => 'Referral non valido.'], 422);
+    $query = DB::table('t_recruitment_referral_costs as c')
+        ->join('t_recruitment_referrals as r', 'r.id', '=', 'c.referral_id')
+        ->where('r.is_active', 1)
+        ->where('r.group_type', '<>', 'fallback')
+        ->orderBy('r.sort_order')
+        ->orderByRaw("SUBSTR(c.start_date, 1, 10) DESC")
+        ->orderByRaw('c.age_max IS NULL ASC')
+        ->orderBy('c.age_max')
+        ->select([
+            'r.id as referral_id',
+            'r.code as referral_code',
+            'r.title as referral_title',
+            'r.icon as referral_icon',
+            'c.id as cost_id',
+            'c.start_date',
+            'c.end_date',
+            'c.cpi',
+            'c.age_max',
+            'c.is_active',
+        ]);
+
+    if ($referralId > 0) {
+        $query->where('c.referral_id', $referralId);
     }
 
-    $referral = DB::table('t_recruitment_referrals')
-        ->where('id', $referralId)
-        ->where('is_active', 1)
-        ->first();
+    $rows = $query->get();
 
-    if (!$referral) {
-        return response()->json(['success' => false, 'message' => 'Referral non trovato.'], 404);
-    }
+    $groups = [];
 
-    $rows = DB::table('t_recruitment_referral_costs')
-        ->where('referral_id', $referralId)
-        ->orderBy('start_date', 'desc')
-        ->orderByRaw('age_max IS NULL ASC')
-        ->orderBy('age_max')
-        ->get(['id', 'start_date', 'end_date', 'cpi', 'age_max', 'is_active']);
-
-    // Raggruppa per (start_date, end_date) → ogni chiave = un periodo
-    $periods = [];
     foreach ($rows as $row) {
-        $key = substr($row->start_date, 0, 10) . '|' . ($row->end_date !== null ? substr($row->end_date, 0, 10) : '');
-        if (!isset($periods[$key])) {
-            $periods[$key] = [
+        $rid = $row->referral_id;
+
+        if (!isset($groups[$rid])) {
+            $groups[$rid] = [
+                'referral_id'    => $rid,
+                'referral_code'  => $row->referral_code,
+                'referral_title' => $row->referral_title,
+                'referral_icon'  => $row->referral_icon,
+                'periods'        => [],
+            ];
+        }
+
+        $pkey = substr($row->start_date, 0, 10) . '|' . ($row->end_date !== null ? substr($row->end_date, 0, 10) : '');
+
+        if (!isset($groups[$rid]['periods'][$pkey])) {
+            $groups[$rid]['periods'][$pkey] = [
                 'start_date' => substr($row->start_date, 0, 10),
                 'end_date'   => $row->end_date !== null ? substr($row->end_date, 0, 10) : null,
                 'is_active'  => (int) $row->is_active,
                 'segments'   => [],
             ];
         }
-        $periods[$key]['segments'][] = [
-            'id'      => $row->id,
+
+        $groups[$rid]['periods'][$pkey]['segments'][] = [
+            'id'      => $row->cost_id,
             'cpi'     => (float) $row->cpi,
             'age_max' => $row->age_max !== null ? (int) $row->age_max : null,
         ];
     }
 
+    foreach ($groups as &$group) {
+        $group['periods'] = array_values($group['periods']);
+    }
+    unset($group);
+
     return response()->json([
-        'success'   => true,
-        'campaigns' => array_values($periods),
+        'success' => true,
+        'groups'  => array_values($groups),
     ]);
 }
 
