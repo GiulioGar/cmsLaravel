@@ -853,15 +853,6 @@ class FieldQualityController extends Controller
                 $now = now()->format('Y-m-d H:i:s');
                 $who = session('user_name');
 
-                // t_respint è una tabella separata dal file .sre, letta da CampionamentoController
-                // (targeting follow-up) e da UserProfileController (log t_respint) — deve restare
-                // sincronizzata con lo stato scritto nel file, altrimenti quei punti del portale
-                // continuano a vedere lo stato vecchio (es. 3) anche dopo il flag/unflag.
-                DB::table('t_respint')
-                    ->where('sid', $sid)
-                    ->where('iid', $iid)
-                    ->update(['status' => $toStatus]);
-
                 if ($toStatus === 10) {
                     // ---- FLAG: decurta punti = bytes ricerca, floor a 0, snapshot del delta reale ----
                     $panelData = DB::table('t_panel_control')->where('sur_id', $sid)->first();

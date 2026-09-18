@@ -624,12 +624,18 @@ public function respintLogDetail($user_id)
             ->leftJoinSub($panelEndFieldQuery, 'pc', function ($join) {
                 $join->on('pc.sur_id', '=', 'r.sid');
             })
+            ->leftJoin('t_interview_quality_flag as qf', function ($join) {
+                $join->on('qf.sid', '=', 'r.sid')
+                     ->on('qf.iid', '=', 'r.iid')
+                     ->where('qf.is_active', 1);
+            })
             ->select([
                 'r.sid',
                 'r.prj_name',
                 'r.status',
                 'r.iid',
                 'pc.end_field',
+                DB::raw('IF(qf.id IS NOT NULL, 1, 0) AS is_bad_quality'),
             ])
             ->where('r.uid', $user_id)
             ->orderByRaw("
@@ -648,16 +654,43 @@ public function respintLogDetail($user_id)
             ->orderByDesc('r.iid')
             ->get();
 
+        // Flag attivi senza riga corrispondente in t_respint (es. interviste mai
+        // inserite in t_respint ma flaggate manualmente da FieldQuality)
+        $orphanFlags = DB::table('t_interview_quality_flag as qf')
+            ->leftJoin('t_respint as r', function ($join) use ($user_id) {
+                $join->on('r.sid', '=', 'qf.sid')
+                     ->on('r.iid', '=', 'qf.iid')
+                     ->where('r.uid', $user_id);
+            })
+            ->whereNull('r.uid')
+            ->where('qf.uid', $user_id)
+            ->where('qf.is_active', 1)
+            ->select([
+                'qf.sid',
+                'qf.prj as prj_name',
+                DB::raw('NULL as status'),
+                'qf.iid',
+                DB::raw('NULL as end_field'),
+                DB::raw('1 AS is_bad_quality'),
+            ])
+            ->get();
+
+        $allRows = $rawRows->concat($orphanFlags);
+
         $statusCounts = [];
         foreach ($rawRows as $row) {
             $key = is_null($row->status) ? 'unknown' : (string) (int) $row->status;
             $statusCounts[$key] = ($statusCounts[$key] ?? 0) + 1;
         }
+        foreach ($orphanFlags as $row) {
+            $statusCounts['10'] = ($statusCounts['10'] ?? 0) + 1;
+        }
 
         $report = $this->formatRespintStatusReport($statusCounts);
 
-        $rows = $rawRows->map(function ($row) {
-            $meta = $this->getRespintStatusMeta($row->status);
+        $rows = $allRows->map(function ($row) {
+            $effectiveStatus = $row->is_bad_quality ? 10 : $row->status;
+            $meta = $this->getRespintStatusMeta($effectiveStatus);
 
             return [
                 'sid' => $row->sid ?? '-',
