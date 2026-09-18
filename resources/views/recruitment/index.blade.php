@@ -506,16 +506,13 @@ btnSaveCampaign.addEventListener('click', function () {
         }
 
         showCampaignSuccess(result.data.message || 'Campagna inserita correttamente.');
+        campaignModal.hide();
 
         loadDailyBox();
         loadCostsBox();
         loadActivityBox();
         loadStatsBox();
         loadSummaryYearBox();
-
-        setTimeout(function () {
-            campaignModal.hide();
-        }, 700);
     })
     .catch(function (error) {
         console.error(error);
@@ -1445,13 +1442,36 @@ btnDownloadReport.addEventListener('click', function () {
         params.append('referral_ids[]', id);
     });
 
-    window.location.href = `{{ route('recruitment.report.export') }}?${params.toString()}`;
-
-    setTimeout(function () {
-        btnDownloadReport.disabled = false;
-        btnDownloadReport.innerHTML = 'Scarica CSV';
-        reportModal.hide();
-    }, 800);
+    fetch(`{{ route('recruitment.report.export') }}?${params.toString()}`)
+        .then(function (response) {
+            if (!response.ok) {
+                return response.json().then(function (data) {
+                    throw new Error(data.message || 'Errore durante la generazione del report.');
+                });
+            }
+            const disposition = response.headers.get('Content-Disposition') || '';
+            const match = disposition.match(/filename="?([^"]+)"?/);
+            const fileName = match ? match[1] : 'recruitment_report.csv';
+            return response.blob().then(function (blob) {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                reportModal.hide();
+            });
+        })
+        .catch(function (error) {
+            reportError.innerText = error.message || 'Errore durante il download.';
+            reportError.classList.remove('d-none');
+        })
+        .finally(function () {
+            btnDownloadReport.disabled = false;
+            btnDownloadReport.innerHTML = 'Scarica CSV';
+        });
 });
 
 });

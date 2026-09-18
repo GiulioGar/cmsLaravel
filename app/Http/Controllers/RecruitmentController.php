@@ -852,8 +852,10 @@ public function stats(Request $request)
     usort($periods, fn($a, $b) => strcmp($b['start_date'], $a['start_date']));
 
     foreach ($periods as $period) {
-        $startDate = $period['start_date'];
-        $endDate = $period['end_date'];
+        // Normalizza a YYYY-MM-DD: il DB può restituire 'YYYY-MM-DD HH:MM:SS'
+        // e il confronto PHP su stringhe di lunghezza diversa dà risultati errati
+        $startDate = substr($period['start_date'], 0, 10);
+        $endDate = $period['end_date'] !== null ? substr($period['end_date'], 0, 10) : null;
 
         if ($referenceDate < $startDate) {
             continue;
@@ -1342,9 +1344,13 @@ public function storeCampaign(Request $request)
 
         DB::commit();
 
+        $successMessage = $isActive
+            ? 'Campagna inserita correttamente.'
+            : 'Campagna inserita come inattiva: non verrà mostrata nei report finché non viene attivata.';
+
         return response()->json([
             'success' => true,
-            'message' => 'Campagna inserita correttamente.'
+            'message' => $successMessage
         ]);
     } catch (\Throwable $e) {
         DB::rollBack();
