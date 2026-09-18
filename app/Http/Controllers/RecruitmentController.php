@@ -68,10 +68,8 @@ class RecruitmentController extends Controller
                 'provenienza',
                 DB::raw('COUNT(*) as total')
             )
-            ->whereBetween('reg_date', [
-                $startDate->format('Y-m-d 00:00:00'),
-                $endDate->format('Y-m-d 23:59:59'),
-            ])
+            ->where('reg_date', '>=', $startDate->format('Y-m-d'))
+            ->where('reg_date', '<', $startDate->copy()->addMonth()->format('Y-m-d'))
             ->where('email', 'not like', '%.top')
             ->whereNotNull('provenienza')
             ->where('provenienza', '<>', '')
@@ -562,43 +560,43 @@ public function stats(Request $request)
             DB::raw("SUM(CASE
                 WHEN birth_date IS NOT NULL
                      AND birth_date <> '0000-00-00'
-                     AND TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 18
+                     AND TIMESTAMPDIFF(YEAR, birth_date, '{$year}-12-31') < 18
                 THEN 1 ELSE 0 END) as age_under_18"),
 
             DB::raw("SUM(CASE
                 WHEN birth_date IS NOT NULL
                      AND birth_date <> '0000-00-00'
-                     AND TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 18 AND 24
+                     AND TIMESTAMPDIFF(YEAR, birth_date, '{$year}-12-31') BETWEEN 18 AND 24
                 THEN 1 ELSE 0 END) as age_18_24"),
 
             DB::raw("SUM(CASE
                 WHEN birth_date IS NOT NULL
                      AND birth_date <> '0000-00-00'
-                     AND TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 25 AND 34
+                     AND TIMESTAMPDIFF(YEAR, birth_date, '{$year}-12-31') BETWEEN 25 AND 34
                 THEN 1 ELSE 0 END) as age_25_34"),
 
             DB::raw("SUM(CASE
                 WHEN birth_date IS NOT NULL
                      AND birth_date <> '0000-00-00'
-                     AND TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 35 AND 44
+                     AND TIMESTAMPDIFF(YEAR, birth_date, '{$year}-12-31') BETWEEN 35 AND 44
                 THEN 1 ELSE 0 END) as age_35_44"),
 
             DB::raw("SUM(CASE
                 WHEN birth_date IS NOT NULL
                      AND birth_date <> '0000-00-00'
-                     AND TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 45 AND 54
+                     AND TIMESTAMPDIFF(YEAR, birth_date, '{$year}-12-31') BETWEEN 45 AND 54
                 THEN 1 ELSE 0 END) as age_45_54"),
 
             DB::raw("SUM(CASE
                 WHEN birth_date IS NOT NULL
                      AND birth_date <> '0000-00-00'
-                     AND TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) BETWEEN 55 AND 64
+                     AND TIMESTAMPDIFF(YEAR, birth_date, '{$year}-12-31') BETWEEN 55 AND 64
                 THEN 1 ELSE 0 END) as age_55_64"),
 
             DB::raw("SUM(CASE
                 WHEN birth_date IS NOT NULL
                      AND birth_date <> '0000-00-00'
-                     AND TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) >= 65
+                     AND TIMESTAMPDIFF(YEAR, birth_date, '{$year}-12-31') >= 65
                 THEN 1 ELSE 0 END) as age_65_plus"),
 
             DB::raw("SUM(CASE
@@ -849,7 +847,11 @@ public function stats(Request $request)
         return 0;
     }
 
-    foreach ($cpiByReferral[$referralId] as $period) {
+    // Ordine per start_date DESC: in caso di periodi sovrapposti vince il più recente
+    $periods = $cpiByReferral[$referralId];
+    usort($periods, fn($a, $b) => strcmp($b['start_date'], $a['start_date']));
+
+    foreach ($periods as $period) {
         $startDate = $period['start_date'];
         $endDate = $period['end_date'];
 
@@ -1377,10 +1379,8 @@ $query = DB::table('t_user_info as u')
         'u.actions',
         DB::raw('COALESCE(ui.invites, 0) as invites')
     )
-    ->whereBetween('u.reg_date', [
-        $startDate->format('Y-m-d 00:00:00'),
-        $endDate->format('Y-m-d 23:59:59'),
-    ])
+    ->where('u.reg_date', '>=', $startDate->format('Y-m-d'))
+    ->where('u.reg_date', '<', $startDate->copy()->addMonth()->format('Y-m-d'))
     ->where('u.email', 'not like', '%.top')
     ->whereNotNull('u.email')
     ->where('u.email', '<>', '');
