@@ -244,6 +244,22 @@
     padding-top: 10px;
 }
 
+.activity-passive-section {}
+.activity-passive-section .table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    border-bottom-color: #e5e7eb;
+    padding-bottom: 6px;
+}
+.activity-passive-section .table td {
+    border-color: #f3f4f6;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
 @media (max-width: 991.98px) {
     .activity-card-grid {
         grid-template-columns: 1fr;
@@ -921,11 +937,19 @@
 }
 
 .daily-month-top {
-    display: grid;
-    grid-template-columns: minmax(0, 1.8fr) minmax(220px, 0.7fr);
+    display: flex;
     gap: 14px;
     align-items: stretch;
     width: 100%;
+}
+
+.daily-month-top > * {
+    flex: 1;
+    min-width: 160px;
+}
+
+.daily-month-top .daily-month-badge {
+    flex: 0 0 180px;
 }
 
 .daily-month-summary,
@@ -997,6 +1021,68 @@
     line-height: 1;
     font-weight: 800;
     color: #111827;
+}
+
+.daily-month-invoice-summary {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+    border-color: #bfdbfe;
+}
+
+.daily-month-invoice-summary .daily-month-summary-value {
+    color: #1d4ed8;
+}
+
+.daily-referral-invoice {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.daily-referral-invoice-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.daily-referral-invoice-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.daily-referral-invoice-value {
+    color: #374151;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.daily-referral-invoice-total {
+    margin-top: 2px;
+    padding-top: 4px;
+    border-top: 1px dashed #e5e7eb;
+}
+
+.daily-referral-invoice-total .daily-referral-invoice-label {
+    color: #111827;
+    font-weight: 700;
+}
+
+.daily-referral-invoice-total .daily-referral-invoice-value {
+    color: #1d4ed8;
+    font-weight: 800;
+    font-size: 13px;
+}
+
+.daily-referral-invoice-vat {
+    font-size: 11px;
+    font-weight: 500;
+    color: #6b7280;
 }
 
 .daily-referral-grid {
@@ -1481,7 +1567,7 @@
 .demographic-layout-left {
     display: grid;
     grid-template-rows: auto auto;
-    gap: 14px;
+    gap: 20px;
 }
 
 .demographic-layout-right {
@@ -1506,7 +1592,9 @@
     font-size: 13px;
     font-weight: 700;
     color: #111827;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .demographic-section-icon {
@@ -1521,11 +1609,11 @@
 }
 
 .demographic-list-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 56px 1fr 42px;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-        padding: 6px 0;
+    gap: 8px;
+    padding: 7px 0;
     border-bottom: 1px solid #edf2f7;
 }
 
@@ -1535,17 +1623,31 @@
 }
 
 .demographic-list-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #6b7280;
     font-weight: 600;
+    white-space: nowrap;
+}
+
+.demographic-list-bar-wrap {
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.demographic-list-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease;
 }
 
 .demographic-list-value {
-    font-size: 14px;
-    color: #111827;
-    font-weight: 800;
-    line-height: 1.1;
+    font-size: 12px;
+    color: #374151;
+    font-weight: 700;
     text-align: right;
+    white-space: nowrap;
 }
 
 .demographic-card-footer {
@@ -1554,6 +1656,31 @@
     border-top: 1px solid #f1f5f9;
     display: flex;
     justify-content: center;
+}
+
+.demographic-passive-section {}
+.demographic-passive-section .table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9ca3af;
+    border-bottom-color: #e5e7eb;
+    padding-bottom: 6px;
+}
+.demographic-passive-section .table td {
+    border-color: #f3f4f6;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.demographic-age-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    background: #f1f5f9;
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: #374151;
 }
 
 @media (max-width: 767.98px) {

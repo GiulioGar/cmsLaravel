@@ -872,6 +872,9 @@ function renderDailyBox(data) {
         return;
     }
 
+    const VAT = 0.22;
+    const totalGross = data.total_cost > 0 ? data.total_cost * (1 + VAT) : 0;
+
     let html = `
         <div class="daily-month-shell">
             <div class="daily-month-top">
@@ -880,6 +883,13 @@ function renderDailyBox(data) {
                     <div class="daily-month-summary-value">${formatNumber(data.total_registered)}</div>
                     <div class="daily-month-summary-subtitle">${escapeHtml(data.month_label)}</div>
                 </div>
+
+                ${data.total_cost > 0 ? `
+                <div class="daily-month-invoice-summary">
+                    <div class="daily-month-summary-label">Fattura prevista</div>
+                    <div class="daily-month-summary-value">${formatCurrency(data.total_cost)}</div>
+                    <div class="daily-month-summary-subtitle">Totale ${formatCurrency(totalGross)} (+ ${formatCurrency(data.total_cost * VAT)} IVA)</div>
+                </div>` : ''}
 
                 <div class="daily-month-badge">
                     <span class="daily-month-badge-label">Referral attivi</span>
@@ -906,6 +916,7 @@ function renderDailyBox(data) {
         const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)}"></i>` : '';
         const sourceCount = item.sources && item.sources.length ? item.sources.length : 0;
 
+        const itemCostGross = item.cost > 0 ? item.cost * (1 + VAT) : 0;
         html += `
             <div class="daily-referral-card">
                 <div class="daily-referral-card-main">
@@ -928,6 +939,18 @@ function renderDailyBox(data) {
                         <div class="daily-referral-total">${formatNumber(item.total)}</div>
                     </div>
                 </div>
+
+                ${item.cost > 0 ? `
+                <div class="daily-referral-invoice">
+                    <div class="daily-referral-invoice-row">
+                        <span class="daily-referral-invoice-label">Imponibile</span>
+                        <span class="daily-referral-invoice-value">${formatCurrency(item.cost)}</span>
+                    </div>
+                    <div class="daily-referral-invoice-row daily-referral-invoice-total">
+                        <span class="daily-referral-invoice-label">Totale</span>
+                        <span class="daily-referral-invoice-value">${formatCurrency(itemCostGross)} <span class="daily-referral-invoice-vat">(+ ${formatCurrency(item.cost * VAT)} IVA)</span></span>
+                    </div>
+                </div>` : ''}
             </div>
         `;
     });
@@ -1110,89 +1133,119 @@ function renderCostsBox(data) {
         });
     }
 
+function buildActivityCard(item) {
+    const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)}"></i>` : '';
+    const sources = item.sources || [];
+    const sourcesText = sources.join(', ');
+    const sourcesCount = sources.length;
+    return `
+        <div class="activity-card">
+            <div class="activity-card-header">
+                <div>
+                    <div class="activity-card-title">
+                        <span class="daily-referral-icon me-1">${iconHtml}</span>
+                        ${escapeHtml(item.label)}
+                    </div>
+                    <div class="activity-card-subtitle">
+                        Totale registrati: <strong>${formatNumber(item.total_registered)}</strong>
+                    </div>
+                </div>
+            </div>
+            <div class="activity-stats-table">
+                <div class="activity-row activity-row-red">
+                    <div class="activity-label">Nessuna (0)</div>
+                    <div class="activity-value">${formatNumber(item.act_0)}</div>
+                    <div class="activity-percent">${formatDecimal(item.perc_0, 1)}%</div>
+                </div>
+                <div class="activity-row activity-row-orange">
+                    <div class="activity-label">Bassa (1-2)</div>
+                    <div class="activity-value">${formatNumber(item.act_1_2)}</div>
+                    <div class="activity-percent">${formatDecimal(item.perc_1_2, 1)}%</div>
+                </div>
+                <div class="activity-row activity-row-yellow">
+                    <div class="activity-label">Media (3-5)</div>
+                    <div class="activity-value">${formatNumber(item.act_3_5)}</div>
+                    <div class="activity-percent">${formatDecimal(item.perc_3_5, 1)}%</div>
+                </div>
+                <div class="activity-row activity-row-lime">
+                    <div class="activity-label">Buona (6-9)</div>
+                    <div class="activity-value">${formatNumber(item.act_6_9)}</div>
+                    <div class="activity-percent">${formatDecimal(item.perc_6_9, 1)}%</div>
+                </div>
+                <div class="activity-row activity-row-green">
+                    <div class="activity-label">Ottima (10+)</div>
+                    <div class="activity-value">${formatNumber(item.act_10_plus)}</div>
+                    <div class="activity-percent">${formatDecimal(item.perc_10_plus, 1)}%</div>
+                </div>
+            </div>
+            <div class="activity-sources">
+                <span class="activity-sources-pill" title="${escapeHtml(sourcesText)}">
+                    ${sourcesCount} source${sourcesCount === 1 ? '' : 's'}
+                </span>
+            </div>
+        </div>
+    `;
+}
+
 function renderActivityBox(data) {
     if (!data.success) {
-        activityBox.innerHTML = `
-            <div class="daily-empty">
-                Errore nel caricamento del dettaglio attività
-            </div>
-        `;
+        activityBox.innerHTML = '<div class="daily-empty">Errore nel caricamento del dettaglio attività</div>';
         return;
     }
-
     if (!data.rows || data.rows.length === 0) {
-        activityBox.innerHTML = `
-            <div class="daily-empty">
-                Nessun dato disponibile per l'anno selezionato
-            </div>
-        `;
+        activityBox.innerHTML = '<div class="daily-empty">Nessun dato disponibile per l\'anno selezionato</div>';
         return;
     }
 
-    let html = `<div class="activity-card-grid">`;
+    const activeRows  = data.rows.filter(function(r) { return r.has_current_campaign; });
+    const passiveRows = data.rows.filter(function(r) { return !r.has_current_campaign; });
 
-    data.rows.forEach(function(item) {
-        const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)}"></i>` : '';
-        const sources = item.sources || [];
-        const sourcesText = sources.join(', ');
-        const sourcesCount = sources.length;
+    let html = '';
 
-        html += `
-            <div class="activity-card">
-                <div class="activity-card-header">
-                    <div>
-                        <div class="activity-card-title">
-                            <span class="daily-referral-icon me-1">${iconHtml}</span>
-                            ${escapeHtml(item.label)}
-                        </div>
-                        <div class="activity-card-subtitle">
-                            Totale registrati: <strong>${formatNumber(item.total_registered)}</strong>
-                        </div>
-                    </div>
-                </div>
+    if (activeRows.length > 0) {
+        html += '<div class="activity-card-grid">';
+        activeRows.forEach(function(item) { html += buildActivityCard(item); });
+        html += '</div>';
+    }
 
-                <div class="activity-stats-table">
-                    <div class="activity-row activity-row-red">
-                        <div class="activity-label">Nessuna (0)</div>
-                        <div class="activity-value">${formatNumber(item.act_0)}</div>
-                        <div class="activity-percent">${formatDecimal(item.perc_0, 2)}%</div>
-                    </div>
+    if (passiveRows.length > 0) {
+        html += '<div class="activity-passive-section' + (activeRows.length > 0 ? ' mt-3 pt-3 border-top' : '') + '">';
+        if (activeRows.length > 0) {
+            html += '<div class="costs-passive-title">Altri referral</div>';
+        }
+        html += `<table class="table table-sm mb-0" style="font-size:13px">
+            <thead>
+                <tr>
+                    <th class="ps-0">Referral</th>
+                    <th class="text-end">Reg.</th>
+                    <th class="text-end" style="color:#ef4444">0</th>
+                    <th class="text-end" style="color:#f97316">1-2</th>
+                    <th class="text-end" style="color:#ca8a04">3-5</th>
+                    <th class="text-end" style="color:#65a30d">6-9</th>
+                    <th class="text-end" style="color:#16a34a">10+</th>
+                </tr>
+            </thead>
+            <tbody>`;
+        passiveRows.forEach(function(item) {
+            const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)} me-1"></i>` : '';
+            html += `<tr>
+                <td class="ps-0">${iconHtml}${escapeHtml(item.label)}</td>
+                <td class="text-end">${formatNumber(item.total_registered)}</td>
+                <td class="text-end" style="color:#ef4444;font-weight:600">${formatDecimal(item.perc_0, 1)}%</td>
+                <td class="text-end" style="color:#f97316;font-weight:600">${formatDecimal(item.perc_1_2, 1)}%</td>
+                <td class="text-end" style="color:#ca8a04;font-weight:600">${formatDecimal(item.perc_3_5, 1)}%</td>
+                <td class="text-end" style="color:#65a30d;font-weight:600">${formatDecimal(item.perc_6_9, 1)}%</td>
+                <td class="text-end" style="color:#16a34a;font-weight:600">${formatDecimal(item.perc_10_plus, 1)}%</td>
+            </tr>`;
+        });
+        html += '</tbody></table></div>';
+    }
 
-                    <div class="activity-row activity-row-orange">
-                        <div class="activity-label">Bassa (1-2)</div>
-                        <div class="activity-value">${formatNumber(item.act_1_2)}</div>
-                        <div class="activity-percent">${formatDecimal(item.perc_1_2, 2)}%</div>
-                    </div>
-
-                    <div class="activity-row activity-row-yellow">
-                        <div class="activity-label">Media (3-5)</div>
-                        <div class="activity-value">${formatNumber(item.act_3_5)}</div>
-                        <div class="activity-percent">${formatDecimal(item.perc_3_5, 2)}%</div>
-                    </div>
-
-                    <div class="activity-row activity-row-lime">
-                        <div class="activity-label">Buona (6-9)</div>
-                        <div class="activity-value">${formatNumber(item.act_6_9)}</div>
-                        <div class="activity-percent">${formatDecimal(item.perc_6_9, 2)}%</div>
-                    </div>
-
-                    <div class="activity-row activity-row-green">
-                        <div class="activity-label">Ottima (10+)</div>
-                        <div class="activity-value">${formatNumber(item.act_10_plus)}</div>
-                        <div class="activity-percent">${formatDecimal(item.perc_10_plus, 2)}%</div>
-                    </div>
-                </div>
-
-                <div class="activity-sources">
-                    <span class="activity-sources-pill" title="${escapeHtml(sourcesText)}">
-                        ${sourcesCount} source${sourcesCount === 1 ? '' : 's'}
-                    </span>
-                </div>
-            </div>
-        `;
-    });
-
-    html += `</div>`;
+    activityBox.style.display = 'block';
+    activityBox.style.padding = '0';
+    activityBox.style.border = 'none';
+    activityBox.style.minHeight = 'auto';
+    activityBox.style.textAlign = 'left';
     activityBox.innerHTML = html;
 }
 
@@ -1231,160 +1284,175 @@ function renderActivityBox(data) {
         });
     }
 
-  function renderStatsBox(data) {
+function demoBar(count, total, color) {
+    var pct = total > 0 ? Math.round(count / total * 100) : 0;
+    return `<div class="demographic-list-bar-wrap"><div class="demographic-list-bar-fill" style="width:${pct}%;background:${color}"></div></div>`;
+}
+
+function demoRow(label, count, total, color) {
+    var pct = total > 0 ? Math.round(count / total * 100) : 0;
+    return `<div class="demographic-list-row">
+        <span class="demographic-list-label">${label}</span>
+        ${demoBar(count, total, color)}
+        <span class="demographic-list-value">${pct}%</span>
+    </div>`;
+}
+
+function buildDemographicCard(item) {
+    const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)}"></i>` : '';
+    const sources = item.sources || [];
+    const sourcesText = sources.length ? sources.join(', ') : '-';
+    const sourcesCount = sources.length;
+    const tot = item.total_registered;
+    const knownAge = tot - item.age_unknown;
+
+    return `
+        <div class="demographic-card">
+            <div class="demographic-card-header">
+                <div class="demographic-card-title-wrap">
+                    <span class="demographic-card-icon">${iconHtml}</span>
+                    <div>
+                        <div class="demographic-card-title">${escapeHtml(item.label)}</div>
+                        <div class="demographic-card-subtitle">
+                            <strong>${formatNumber(tot)}</strong> registrati
+                            &nbsp;·&nbsp; N.D. età: ${tot > 0 ? Math.round(item.age_unknown / tot * 100) : 0}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demographic-layout">
+                <div class="demographic-layout-left">
+                    <div class="demographic-section">
+                        <div class="demographic-section-title">
+                            <i class="bi bi-gender-ambiguous demographic-section-icon"></i>
+                            <span>Genere</span>
+                        </div>
+                        <div class="demographic-list">
+                            ${demoRow('Uomini',  item.gender_male,    tot, '#3b82f6')}
+                            ${demoRow('Donne',   item.gender_female,  tot, '#ec4899')}
+                            ${demoRow('N.D.',    item.gender_unknown, tot, '#d1d5db')}
+                        </div>
+                    </div>
+
+                    <div class="demographic-section">
+                        <div class="demographic-section-title">
+                            <i class="bi bi-geo-alt demographic-section-icon"></i>
+                            <span>Area</span>
+                        </div>
+                        <div class="demographic-list">
+                            ${demoRow('Nord O.', item.area_nord_ovest, tot, '#6366f1')}
+                            ${demoRow('Nord E.', item.area_nord_est,   tot, '#8b5cf6')}
+                            ${demoRow('Centro',  item.area_centro,     tot, '#f59e0b')}
+                            ${demoRow('Sud',     item.area_sud,        tot, '#ef4444')}
+                            ${demoRow('N.D.',    item.area_unknown,    tot, '#d1d5db')}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="demographic-layout-right">
+                    <div class="demographic-section demographic-section-age">
+                        <div class="demographic-section-title">
+                            <i class="bi bi-calendar3 demographic-section-icon"></i>
+                            <span>Età <small class="text-muted fw-normal">(su noti)</small></span>
+                        </div>
+                        <div class="demographic-list">
+                            ${demoRow('&lt;18',  item.age_under_18, knownAge, '#a78bfa')}
+                            ${demoRow('18-24',   item.age_18_24,    knownAge, '#60a5fa')}
+                            ${demoRow('25-34',   item.age_25_34,    knownAge, '#34d399')}
+                            ${demoRow('35-44',   item.age_35_44,    knownAge, '#fbbf24')}
+                            ${demoRow('45-54',   item.age_45_54,    knownAge, '#f97316')}
+                            ${demoRow('55-64',   item.age_55_64,    knownAge, '#ef4444')}
+                            ${demoRow('65+',     item.age_65_plus,  knownAge, '#6b7280')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demographic-card-footer">
+                <span class="activity-sources-pill" title="${escapeHtml(sourcesText)}">
+                    ${sourcesCount} source${sourcesCount === 1 ? '' : 's'}
+                </span>
+            </div>
+        </div>
+    `;
+}
+
+function topAgeBand(item) {
+    var bands = [
+        {label:'<18',   v: item.age_under_18},
+        {label:'18-24', v: item.age_18_24},
+        {label:'25-34', v: item.age_25_34},
+        {label:'35-44', v: item.age_35_44},
+        {label:'45-54', v: item.age_45_54},
+        {label:'55-64', v: item.age_55_64},
+        {label:'65+',   v: item.age_65_plus},
+    ];
+    var top = bands.reduce(function(a, b) { return b.v > a.v ? b : a; }, bands[0]);
+    return top.v > 0 ? top.label : '-';
+}
+
+function renderStatsBox(data) {
     if (!data.success) {
-        statsBox.innerHTML = `
-            <div class="daily-empty">
-                Errore nel caricamento delle statistiche
-            </div>
-        `;
+        statsBox.innerHTML = '<div class="daily-empty">Errore nel caricamento delle statistiche</div>';
         return;
     }
-
     if (!data.rows || data.rows.length === 0) {
-        statsBox.innerHTML = `
-            <div class="daily-empty">
-                Nessun dato disponibile per l'anno selezionato
-            </div>
-        `;
+        statsBox.innerHTML = '<div class="daily-empty">Nessun dato disponibile per l\'anno selezionato</div>';
         return;
     }
 
-    let html = `<div class="demographic-card-grid">`;
+    const activeRows  = data.rows.filter(function(r) { return r.has_current_campaign; });
+    const passiveRows = data.rows.filter(function(r) { return !r.has_current_campaign; });
 
-    data.rows.forEach(function(item) {
-        const iconHtml = item.icon
-            ? `<i class="${escapeHtml(item.icon)}"></i>`
-            : '';
+    let html = '';
 
-        const sources = item.sources || [];
-        const sourcesText = sources.length ? sources.join(', ') : '-';
-        const sourcesCount = sources.length;
+    if (activeRows.length > 0) {
+        html += '<div class="demographic-card-grid">';
+        activeRows.forEach(function(item) { html += buildDemographicCard(item); });
+        html += '</div>';
+    }
 
-        html += `
-            <div class="demographic-card">
-                <div class="demographic-card-header">
-                    <div class="demographic-card-title-wrap">
-                        <span class="demographic-card-icon">${iconHtml}</span>
-                        <div>
-                            <div class="demographic-card-title">${escapeHtml(item.label)}</div>
-                            <div class="demographic-card-subtitle">
-                                Totale registrati: <strong>${formatNumber(item.total_registered)}</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    if (passiveRows.length > 0) {
+        html += '<div class="demographic-passive-section' + (activeRows.length > 0 ? ' mt-3 pt-3 border-top' : '') + '">';
+        if (activeRows.length > 0) {
+            html += '<div class="costs-passive-title">Altri referral</div>';
+        }
+        html += `<table class="table table-sm mb-0" style="font-size:13px">
+            <thead>
+                <tr>
+                    <th class="ps-0">Referral</th>
+                    <th class="text-end">Reg.</th>
+                    <th class="text-end" style="color:#3b82f6">M%</th>
+                    <th class="text-end" style="color:#ec4899">F%</th>
+                    <th class="text-end">N.D. età</th>
+                    <th class="text-end">Fascia top</th>
+                </tr>
+            </thead>
+            <tbody>`;
+        passiveRows.forEach(function(item) {
+            const tot = item.total_registered;
+            const pMale   = tot > 0 ? Math.round(item.gender_male   / tot * 100) : 0;
+            const pFemale = tot > 0 ? Math.round(item.gender_female  / tot * 100) : 0;
+            const pAgeNd  = tot > 0 ? Math.round(item.age_unknown    / tot * 100) : 0;
+            const iconHtml = item.icon ? `<i class="${escapeHtml(item.icon)} me-1"></i>` : '';
+            html += `<tr>
+                <td class="ps-0">${iconHtml}${escapeHtml(item.label)}</td>
+                <td class="text-end">${formatNumber(tot)}</td>
+                <td class="text-end" style="color:#3b82f6;font-weight:600">${pMale}%</td>
+                <td class="text-end" style="color:#ec4899;font-weight:600">${pFemale}%</td>
+                <td class="text-end text-muted">${pAgeNd}%</td>
+                <td class="text-end"><span class="demographic-age-badge">${topAgeBand(item)}</span></td>
+            </tr>`;
+        });
+        html += '</tbody></table></div>';
+    }
 
-                <div class="demographic-layout">
-                    <div class="demographic-layout-left">
-                        <div class="demographic-section">
-                            <div class="demographic-section-title">
-                                <i class="bi bi-gender-ambiguous demographic-section-icon"></i>
-                                <span>Genere</span>
-                            </div>
-
-                            <div class="demographic-list">
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">Uomini</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.gender_male)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">Donne</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.gender_female)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">N.D.</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.gender_unknown)}</strong>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="demographic-section">
-                            <div class="demographic-section-title">
-                                <i class="bi bi-geo-alt demographic-section-icon"></i>
-                                <span>Area</span>
-                            </div>
-
-                            <div class="demographic-list">
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">Nord Ovest</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.area_nord_ovest)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">Nord Est</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.area_nord_est)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">Centro</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.area_centro)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">Sud</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.area_sud)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">N.D.</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.area_unknown)}</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="demographic-layout-right">
-                        <div class="demographic-section demographic-section-age">
-                            <div class="demographic-section-title">
-                                <i class="bi bi-calendar3 demographic-section-icon"></i>
-                                <span>Età</span>
-                            </div>
-
-                            <div class="demographic-list">
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">&lt;18</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.age_under_18)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">18-24</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.age_18_24)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">25-34</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.age_25_34)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">35-44</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.age_35_44)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">45-54</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.age_45_54)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">55-64</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.age_55_64)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">65+</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.age_65_plus)}</strong>
-                                </div>
-                                <div class="demographic-list-row">
-                                    <span class="demographic-list-label">N.D.</span>
-                                    <strong class="demographic-list-value">${formatNumber(item.age_unknown)}</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="demographic-card-footer">
-                    <span class="activity-sources-pill" title="${escapeHtml(sourcesText)}">
-                        ${sourcesCount} source${sourcesCount === 1 ? '' : 's'}
-                    </span>
-                </div>
-            </div>
-        `;
-    });
-
-    html += `</div>`;
+    statsBox.style.display = 'block';
+    statsBox.style.padding = '0';
+    statsBox.style.border = 'none';
+    statsBox.style.minHeight = 'auto';
+    statsBox.style.textAlign = 'left';
     statsBox.innerHTML = html;
 }
 

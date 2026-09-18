@@ -60,14 +60,62 @@ class RecruitmentController extends Controller
 
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
+        $referenceDate = $startDate->format('Y-m-d');
 
         $referrals = $this->getActiveReferrals();
 
+        // CPI per il mese selezionato
+        $cpiRows = DB::table('t_recruitment_referral_costs')
+            ->select('referral_id', 'start_date', 'end_date', 'cpi', 'age_min', 'age_max')
+            ->where('is_active', 1)
+            ->whereDate('start_date', '<=', $endDate->format('Y-m-d'))
+            ->where(function ($q) use ($referenceDate) {
+                $q->whereNull('end_date')->orWhereDate('end_date', '>=', $referenceDate);
+            })
+            ->orderBy('start_date')
+            ->get();
+
+        $cpiByReferral = [];
+        foreach ($cpiRows as $row) {
+            $cpiByReferral[$row->referral_id][] = [
+                'start_date' => $row->start_date,
+                'end_date'   => $row->end_date,
+                'cpi'        => (float) $row->cpi,
+                'age_min'    => $row->age_min !== null ? (int) $row->age_min : null,
+                'age_max'    => $row->age_max !== null ? (int) $row->age_max : null,
+            ];
+        }
+
+        $ageBreakpoints = [];
+        foreach ($cpiByReferral as $_periods) {
+            foreach ($_periods as $_p) {
+                if ($_p['age_max'] !== null) {
+                    $bp = (int) $_p['age_max'];
+                    if (!in_array($bp, $ageBreakpoints, true)) $ageBreakpoints[] = $bp;
+                }
+                if ($_p['age_min'] !== null) {
+                    $bp = (int) $_p['age_min'] - 1;
+                    if ($bp >= 0 && !in_array($bp, $ageBreakpoints, true)) $ageBreakpoints[] = $bp;
+                }
+            }
+        }
+        sort($ageBreakpoints);
+
+        $selectClauses = [
+            'provenienza',
+            DB::raw('COUNT(*) as registered'),
+            DB::raw("SUM(CASE WHEN birth_date IS NOT NULL AND birth_date <> '0000-00-00' THEN 1 ELSE 0 END) as has_birth_date"),
+        ];
+        foreach ($ageBreakpoints as $bp) {
+            $selectClauses[] = DB::raw(
+                "SUM(CASE WHEN birth_date IS NOT NULL AND birth_date <> '0000-00-00'"
+                . " AND TIMESTAMPDIFF(YEAR, birth_date, reg_date) <= {$bp}"
+                . " THEN 1 ELSE 0 END) as age_under_{$bp}"
+            );
+        }
+
         $rows = DB::table('t_user_info')
-            ->select(
-                'provenienza',
-                DB::raw('COUNT(*) as total')
-            )
+            ->select($selectClauses)
             ->where('reg_date', '>=', $startDate->format('Y-m-d'))
             ->where('reg_date', '<', $startDate->copy()->addMonth()->format('Y-m-d'))
             ->where('email', 'not like', '%.top')
@@ -78,7 +126,15 @@ class RecruitmentController extends Controller
 
         $sourceStats = [];
         foreach ($rows as $row) {
-            $sourceStats[$row->provenienza] = (int) $row->total;
+            $entry = [
+                'registered'     => (int) $row->registered,
+                'has_birth_date' => isset($row->has_birth_date) ? (int) $row->has_birth_date : 0,
+            ];
+            foreach ($ageBreakpoints as $bp) {
+                $key = 'age_under_' . $bp;
+                $entry[$key] = isset($row->$key) ? (int) $row->$key : 0;
+            }
+            $sourceStats[$row->provenienza] = $entry;
         }
 
         $mappedSources = [];
@@ -92,49 +148,60 @@ class RecruitmentController extends Controller
             }
 
             $sources = $this->parseSourceCodes($referral->source_codes);
-            $total = 0;
+            $monthSourceData = ['registered' => 0, 'has_birth_date' => 0];
+            foreach ($ageBreakpoints as $bp) $monthSourceData['age_under_' . $bp] = 0;
             $matchedSources = [];
 
             foreach ($sources as $source) {
                 $mappedSources[$source] = true;
-
-                if (isset($sourceStats[$source])) {
-                    $total += $sourceStats[$source];
-                    $matchedSources[] = $source;
+                if (!isset($sourceStats[$source])) continue;
+                $s = $sourceStats[$source];
+                $monthSourceData['registered']     += $s['registered'];
+                $monthSourceData['has_birth_date'] += $s['has_birth_date'] ?? 0;
+                foreach ($ageBreakpoints as $bp) {
+                    $monthSourceData['age_under_' . $bp] += $s['age_under_' . $bp] ?? 0;
                 }
+                $matchedSources[] = $source;
             }
 
-            if ($total > 0) {
-                $groupedReferrals[] = [
-                    'code' => $referral->code,
-                    'label' => $referral->title,
-                    'icon' => $referral->icon,
-                    'total' => $total,
-                    'sources' => $matchedSources,
-                    'sort_order' => (int) $referral->sort_order,
-                ];
-            }
+            if ($monthSourceData['registered'] <= 0) continue;
+
+            $cost = round($this->computeSegmentedCost($referral->id, $referenceDate, $monthSourceData, $cpiByReferral, $ageBreakpoints), 2);
+
+            $groupedReferrals[] = [
+                'code'    => $referral->code,
+                'label'   => $referral->title,
+                'icon'    => $referral->icon,
+                'total'   => $monthSourceData['registered'],
+                'cost'    => $cost,
+                'sources' => $matchedSources,
+                'sort_order' => (int) $referral->sort_order,
+            ];
         }
 
         if ($fallbackReferral) {
-            $fallbackTotal = 0;
+            $monthSourceData = ['registered' => 0, 'has_birth_date' => 0];
+            foreach ($ageBreakpoints as $bp) $monthSourceData['age_under_' . $bp] = 0;
             $fallbackSources = [];
 
-            foreach ($sourceStats as $source => $count) {
-                if (isset($mappedSources[$source])) {
-                    continue;
+            foreach ($sourceStats as $source => $s) {
+                if (isset($mappedSources[$source])) continue;
+                $monthSourceData['registered']     += $s['registered'];
+                $monthSourceData['has_birth_date'] += $s['has_birth_date'] ?? 0;
+                foreach ($ageBreakpoints as $bp) {
+                    $monthSourceData['age_under_' . $bp] += $s['age_under_' . $bp] ?? 0;
                 }
-
-                $fallbackTotal += $count;
                 $fallbackSources[] = $source;
             }
 
-            if ($fallbackTotal > 0) {
+            if ($monthSourceData['registered'] > 0) {
+                $cost = round($this->computeSegmentedCost($fallbackReferral->id, $referenceDate, $monthSourceData, $cpiByReferral, $ageBreakpoints), 2);
                 $groupedReferrals[] = [
-                    'code' => $fallbackReferral->code,
-                    'label' => $fallbackReferral->title,
-                    'icon' => $fallbackReferral->icon,
-                    'total' => $fallbackTotal,
+                    'code'    => $fallbackReferral->code,
+                    'label'   => $fallbackReferral->title,
+                    'icon'    => $fallbackReferral->icon,
+                    'total'   => $monthSourceData['registered'],
+                    'cost'    => $cost,
                     'sources' => $fallbackSources,
                     'sort_order' => (int) $fallbackReferral->sort_order,
                 ];
@@ -146,16 +213,18 @@ class RecruitmentController extends Controller
         });
 
         $totalRegistered = array_sum(array_column($groupedReferrals, 'total'));
+        $totalCost = round(array_sum(array_column($groupedReferrals, 'cost')), 2);
 
         $monthLabel = ucfirst($startDate->locale('it')->translatedFormat('F Y'));
 
         return response()->json([
-            'success' => true,
-            'month' => str_pad($month, 2, '0', STR_PAD_LEFT),
-            'year' => $year,
-            'month_label' => $monthLabel,
+            'success'          => true,
+            'month'            => str_pad($month, 2, '0', STR_PAD_LEFT),
+            'year'             => $year,
+            'month_label'      => $monthLabel,
             'total_registered' => $totalRegistered,
-            'referrals' => array_map(function ($item) {
+            'total_cost'       => $totalCost,
+            'referrals'        => array_map(function ($item) {
                 unset($item['sort_order']);
                 return $item;
             }, $groupedReferrals),
@@ -535,21 +604,40 @@ public function activity(Request $request)
 
     $referrals = $this->getActiveReferrals();
 
-    $rows = DB::table('t_user_info')
+    $today = now()->format('Y-m-d');
+    $activeCampaignReferralIds = DB::table('t_recruitment_referral_costs')
+        ->where('start_date', '<=', $today)
+        ->where(function ($q) use ($today) {
+            $q->whereNull('end_date')->orWhere('end_date', '>=', $today);
+        })
+        ->pluck('referral_id')
+        ->unique()
+        ->flip()
+        ->toArray();
+
+    $systemEvents = ['BAN', 'MALUS QUALITA', 'Malus', 'PREMIO REVOCATO', 'PREMIO RIPRISTINATO', 'livelli_rimossi'];
+
+    $historySub = DB::table('t_user_history')
+        ->select('user_id', DB::raw('COUNT(*) as event_count'))
+        ->whereNotIn('event_type', $systemEvents)
+        ->groupBy('user_id');
+
+    $rows = DB::table('t_user_info as u')
         ->select(
-            'provenienza',
+            'u.provenienza',
             DB::raw('COUNT(*) as total_registered'),
-            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) = 0 THEN 1 ELSE 0 END) as act_0'),
-            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) BETWEEN 1 AND 2 THEN 1 ELSE 0 END) as act_1_2'),
-            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) BETWEEN 3 AND 5 THEN 1 ELSE 0 END) as act_3_5'),
-            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) BETWEEN 6 AND 9 THEN 1 ELSE 0 END) as act_6_9'),
-            DB::raw('SUM(CASE WHEN COALESCE(actions, 0) >= 10 THEN 1 ELSE 0 END) as act_10_plus')
+            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) = 0 THEN 1 ELSE 0 END) as act_0'),
+            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) BETWEEN 1 AND 2 THEN 1 ELSE 0 END) as act_1_2'),
+            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) BETWEEN 3 AND 5 THEN 1 ELSE 0 END) as act_3_5'),
+            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) BETWEEN 6 AND 9 THEN 1 ELSE 0 END) as act_6_9'),
+            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) >= 10 THEN 1 ELSE 0 END) as act_10_plus')
         )
-        ->whereYear('reg_date', $year)
-        ->where('email', 'not like', '%.top')
-        ->whereNotNull('provenienza')
-        ->where('provenienza', '<>', '')
-        ->groupBy('provenienza')
+        ->leftJoinSub($historySub, 'h', 'h.user_id', '=', 'u.user_id')
+        ->whereYear('u.reg_date', $year)
+        ->where('u.email', 'not like', '%.top')
+        ->whereNotNull('u.provenienza')
+        ->where('u.provenienza', '<>', '')
+        ->groupBy('u.provenienza')
         ->get();
 
     $sourceStats = [];
@@ -616,6 +704,7 @@ public function activity(Request $request)
         $item['perc_3_5'] = round(($item['act_3_5'] / $item['total_registered']) * 100, 2);
         $item['perc_6_9'] = round(($item['act_6_9'] / $item['total_registered']) * 100, 2);
         $item['perc_10_plus'] = round(($item['act_10_plus'] / $item['total_registered']) * 100, 2);
+        $item['has_current_campaign'] = isset($activeCampaignReferralIds[$referral->id]);
 
         $result[] = $item;
     }
@@ -655,6 +744,7 @@ public function activity(Request $request)
             $item['perc_3_5'] = round(($item['act_3_5'] / $item['total_registered']) * 100, 2);
             $item['perc_6_9'] = round(($item['act_6_9'] / $item['total_registered']) * 100, 2);
             $item['perc_10_plus'] = round(($item['act_10_plus'] / $item['total_registered']) * 100, 2);
+            $item['has_current_campaign'] = isset($activeCampaignReferralIds[$fallbackReferral->id]);
 
             $result[] = $item;
         }
@@ -684,6 +774,17 @@ public function stats(Request $request)
 
     $referrals = $this->getActiveReferrals();
     $currentYear = (int) now()->year;
+
+    $todayStats = now()->format('Y-m-d');
+    $activeCampaignReferralIdsStats = DB::table('t_recruitment_referral_costs')
+        ->where('start_date', '<=', $todayStats)
+        ->where(function ($q) use ($todayStats) {
+            $q->whereNull('end_date')->orWhere('end_date', '>=', $todayStats);
+        })
+        ->pluck('referral_id')
+        ->unique()
+        ->flip()
+        ->toArray();
 
     $rows = DB::table('t_user_info')
         ->select(
@@ -858,6 +959,7 @@ public function stats(Request $request)
         }
 
         if ($item['total_registered'] > 0) {
+            $item['has_current_campaign'] = isset($activeCampaignReferralIdsStats[$referral->id]);
             $result[] = $item;
         }
     }
@@ -921,6 +1023,7 @@ public function stats(Request $request)
         }
 
         if ($item['total_registered'] > 0) {
+            $item['has_current_campaign'] = isset($activeCampaignReferralIdsStats[$fallbackReferral->id]);
             $result[] = $item;
         }
     }
