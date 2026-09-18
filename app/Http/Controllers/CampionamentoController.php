@@ -409,6 +409,13 @@ private function buildSampleQuery(
                 ->where('ut.target_id', $targetId)
                 ->whereNotNull('ut.uid')
                 ->whereNull('r.uid')
+                ->whereNotExists(function ($sub) use ($surId) {
+                    $sub->select(DB::raw(1))
+                        ->from('t_interview_quality_flag as qf')
+                        ->whereColumn('qf.uid', 'u.user_id')
+                        ->where('qf.sid', $surId)
+                        ->where('qf.is_active', 1);
+                })
                 ->select('u.user_id')
                 ->distinct();
         }
@@ -429,6 +436,13 @@ private function buildSampleQuery(
                     ->from('t_respint as r')
                     ->whereColumn('r.uid', "u.$userKey")
                     ->where('r.sid', $surId);
+            });
+            $q->whereNotExists(function ($sub) use ($surId, $userKey) {
+                $sub->select(DB::raw(1))
+                    ->from('t_interview_quality_flag as qf')
+                    ->whereColumn('qf.uid', "u.$userKey")
+                    ->where('qf.sid', $surId)
+                    ->where('qf.is_active', 1);
             });
         }
     }
