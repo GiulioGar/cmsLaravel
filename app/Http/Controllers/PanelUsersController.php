@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Yajra\DataTables\Facades\DataTables;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Carbon\Carbon;
@@ -26,6 +27,137 @@ class PanelUsersController extends Controller
                 'anniDisponibili'
             ));
         }
+
+/**
+ * Sincronizza t_user_info.actions con le nuove righe di t_user_history
+ * accumulate dall'ultimo click. Esclude eventi di sistema/registrazione
+ * (coerente con l'esclusione usata in getInactiveSummary() e nel modulo
+ * Recruitment). Scrittura a blocchi con LOW_PRIORITY per non bloccare
+ * a lungo le altre pagine che leggono t_user_info/t_user_history (MyISAM,
+ * lock a livello di tabella).
+ */
+public function syncActions(Request $request)
+{
+    $lock = Cache::lock('panelusers_actions_sync', 120);
+
+    if (!$lock->get()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Una sincronizzazione è già in corso, riprova in un minuto.',
+        ], 409);
+    }
+
+    try {
+        $startedAt = microtime(true);
+
+        $excludedEvents = [
+            'BAN', 'MALUS QUALITA', 'Malus', 'PREMIO REVOCATO', 'PREMIO RIPRISTINATO', 'livelli_rimossi',
+            'subscribe', 'unsubscribe',
+        ];
+
+        $state = DB::table('t_recruitment_actions_sync')->first();
+        $currentMaxId = (int) (DB::table('t_user_history')->max('id') ?? 0);
+
+        if (!$state) {
+            DB::table('t_recruitment_actions_sync')->insert([
+                'last_history_id' => $currentMaxId,
+                'last_run_at' => now(),
+                'last_run_rows' => 0,
+                'last_run_users' => 0,
+                'last_run_duration_ms' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'initialized' => true,
+                'partial' => false,
+                'message' => 'Sincronizzazione inizializzata. Il conteggio storico è già aggiornato (caricamento manuale appena effettuato); da ora le nuove attività verranno sincronizzate ad ogni click.',
+                'rows_read' => 0,
+                'users_updated' => 0,
+                'duration_ms' => round((microtime(true) - $startedAt) * 1000),
+            ]);
+        }
+
+        $lastId = (int) $state->last_history_id;
+
+        if ($currentMaxId <= $lastId) {
+            return response()->json([
+                'success' => true,
+                'initialized' => false,
+                'partial' => false,
+                'message' => 'Nessuna nuova attività da sincronizzare: tutto è già aggiornato.',
+                'rows_read' => 0,
+                'users_updated' => 0,
+                'duration_ms' => round((microtime(true) - $startedAt) * 1000),
+            ]);
+        }
+
+        $chunkSize = 5000;
+        $maxRowsPerRun = 300000; // tetto di sicurezza per non far scadere la richiesta HTTP
+        $placeholders = implode(',', array_fill(0, count($excludedEvents), '?'));
+
+        $cursor = $lastId;
+        $processedRows = 0;
+
+        while ($cursor < $currentMaxId && $processedRows < $maxRowsPerRun) {
+            $chunkEnd = min($cursor + $chunkSize, $currentMaxId);
+
+            DB::statement("
+                UPDATE LOW_PRIORITY t_user_info u
+                INNER JOIN (
+                    SELECT user_id, COUNT(*) as cnt
+                    FROM t_user_history
+                    WHERE id > ? AND id <= ?
+                      AND event_type NOT IN ($placeholders)
+                    GROUP BY user_id
+                ) h ON h.user_id = u.user_id
+                SET u.actions = u.actions + h.cnt
+            ", array_merge([$cursor, $chunkEnd], $excludedEvents));
+
+            $processedRows += ($chunkEnd - $cursor);
+            $cursor = $chunkEnd;
+
+            // avanzamento salvato ad ogni blocco: se qualcosa si interrompe, si riparte da qui
+            DB::table('t_recruitment_actions_sync')->update([
+                'last_history_id' => $cursor,
+                'updated_at' => now(),
+            ]);
+        }
+
+        $summary = DB::table('t_user_history')
+            ->where('id', '>', $lastId)
+            ->where('id', '<=', $cursor)
+            ->whereNotIn('event_type', $excludedEvents)
+            ->selectRaw('COUNT(*) as rows_count, COUNT(DISTINCT user_id) as users_count')
+            ->first();
+
+        $durationMs = round((microtime(true) - $startedAt) * 1000);
+        $partial = $cursor < $currentMaxId;
+
+        DB::table('t_recruitment_actions_sync')->update([
+            'last_run_at' => now(),
+            'last_run_rows' => (int) $summary->rows_count,
+            'last_run_users' => (int) $summary->users_count,
+            'last_run_duration_ms' => $durationMs,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'initialized' => false,
+            'partial' => $partial,
+            'message' => $partial
+                ? "Sincronizzazione parziale: elaborate {$summary->rows_count} righe di attività, {$summary->users_count} utenti aggiornati. Clicca di nuovo per continuare con il resto."
+                : "Sincronizzazione completata: {$summary->rows_count} righe di attività elaborate, {$summary->users_count} utenti aggiornati.",
+            'rows_read' => (int) $summary->rows_count,
+            'users_updated' => (int) $summary->users_count,
+            'duration_ms' => $durationMs,
+        ]);
+    } finally {
+        $lock->release();
+    }
+}
 
 public function getPanelStats(Request $request)
 {

@@ -146,6 +146,7 @@ Route::middleware(['auth.custom'])->group(function () {
         Route::get('/panelUsers/inactive-download', [PanelUsersController::class, 'downloadInactiveList'])->name('panelUsers.downloadInactiveList');
         Route::post('/panelUsers/inactive-disable', [PanelUsersController::class, 'disableInactiveUsers'])->name('panelUsers.disableInactiveUsers');
         Route::get('/panelUsers/active-summary', [PanelUsersController::class, 'getActiveSummary'])->name('panelUsers.activeSummary');
+        Route::post('/panelUsers/sync-actions', [PanelUsersController::class, 'syncActions'])->name('panelUsers.syncActions');
 
     // ============================================
     // USER actions

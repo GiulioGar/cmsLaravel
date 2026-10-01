@@ -18,6 +18,11 @@
                         <h4 class="mb-0">Utenti Panel</h4>
                         <small class="text-muted">Consultazione utenti, inviti e dati di iscrizione</small>
                     </div>
+
+                    <button type="button" id="btnSyncActions" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrow-repeat me-1"></i>
+                        Aggiorna Attività
+                    </button>
                 </div>
 
                     <div class="card-body">
@@ -443,6 +448,51 @@
                     </button>
                 </div>
 
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="syncActionsModal" tabindex="-1" aria-labelledby="syncActionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="syncActionsModalLabel">Aggiornamento Attività</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="syncActionsLoader" class="text-center py-4">
+                    <div class="spinner-border text-primary mb-2" style="width:1.8rem;height:1.8rem;"></div>
+                    <div class="text-muted small">Sincronizzazione in corso...</div>
+                </div>
+
+                <div id="syncActionsResult" class="d-none">
+                    <div id="syncActionsMessage" class="alert mb-3"></div>
+
+                    <div class="row text-center g-2">
+                        <div class="col-6">
+                            <div class="fw-bold fs-4" id="syncActionsRows">0</div>
+                            <div class="small text-muted">Righe attività elaborate</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="fw-bold fs-4" id="syncActionsUsers">0</div>
+                            <div class="small text-muted">Utenti aggiornati</div>
+                        </div>
+                    </div>
+
+                    <div class="text-muted small text-center mt-3">
+                        Durata: <span id="syncActionsDuration">0</span> ms
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
             </div>
 
@@ -983,6 +1033,65 @@ $(document).ready(function () {
         });
     });
 
+});
+</script>
+
+<script>
+$(document).ready(function () {
+    const btnSyncActions = document.getElementById('btnSyncActions');
+    const syncActionsModalElement = document.getElementById('syncActionsModal');
+    const syncActionsModal = new bootstrap.Modal(syncActionsModalElement);
+
+    const syncActionsLoader = document.getElementById('syncActionsLoader');
+    const syncActionsResult = document.getElementById('syncActionsResult');
+    const syncActionsMessage = document.getElementById('syncActionsMessage');
+    const syncActionsRows = document.getElementById('syncActionsRows');
+    const syncActionsUsers = document.getElementById('syncActionsUsers');
+    const syncActionsDuration = document.getElementById('syncActionsDuration');
+
+    btnSyncActions.addEventListener('click', function () {
+        btnSyncActions.disabled = true;
+        btnSyncActions.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sincronizzazione...';
+
+        syncActionsLoader.classList.remove('d-none');
+        syncActionsResult.classList.add('d-none');
+        syncActionsModal.show();
+
+        $.ajax({
+            url: '{{ route("panelUsers.syncActions") }}',
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}' },
+            success: function (response) {
+                syncActionsLoader.classList.add('d-none');
+                syncActionsResult.classList.remove('d-none');
+
+                syncActionsMessage.className = 'alert mb-3 ' + (response.success ? 'alert-success' : 'alert-danger');
+                syncActionsMessage.innerText = response.message || 'Operazione completata.';
+
+                syncActionsRows.innerText = response.rows_read ?? 0;
+                syncActionsUsers.innerText = response.users_updated ?? 0;
+                syncActionsDuration.innerText = response.duration_ms ?? 0;
+            },
+            error: function (xhr) {
+                syncActionsLoader.classList.add('d-none');
+                syncActionsResult.classList.remove('d-none');
+
+                const msg = xhr.responseJSON && xhr.responseJSON.message
+                    ? xhr.responseJSON.message
+                    : 'Errore durante la sincronizzazione.';
+
+                syncActionsMessage.className = 'alert alert-danger mb-3';
+                syncActionsMessage.innerText = msg;
+                syncActionsRows.innerText = '-';
+                syncActionsUsers.innerText = '-';
+                syncActionsDuration.innerText = '-';
+            },
+            complete: function () {
+                btnSyncActions.disabled = false;
+                btnSyncActions.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Aggiorna Attività';
+            }
+        });
+    });
 });
 </script>
 
