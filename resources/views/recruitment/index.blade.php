@@ -20,7 +20,7 @@
     <div class="d-flex gap-2 flex-wrap">
         <button type="button" class="btn btn-outline-primary" id="btnOpenReportModal">
             <i class="bi bi-download me-1"></i>
-            Genera Report CSV
+            Genera Report
         </button>
 
         <button type="button" class="btn btn-primary" id="btnOpenCampaignModal">
@@ -329,15 +329,15 @@
     <div class="modal-dialog">
         <div class="modal-content recruitment-modal">
             <div class="modal-header">
-                <h5 class="modal-title">Genera Report CSV</h5>
+                <h5 class="modal-title">Genera Report</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
 
             <div class="modal-body">
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Mese</label>
-                        <select class="form-select" id="reportMonth">
+                    <div class="col-md-4">
+                        <label class="form-label">Da mese</label>
+                        <select class="form-select" id="reportMonthFrom">
                             @foreach($months as $monthNumber => $monthLabel)
                                 <option value="{{ $monthNumber }}" {{ $monthNumber == $currentMonth ? 'selected' : '' }}>
                                     {{ $monthLabel }}
@@ -346,7 +346,18 @@
                         </select>
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <label class="form-label">A mese</label>
+                        <select class="form-select" id="reportMonthTo">
+                            @foreach($months as $monthNumber => $monthLabel)
+                                <option value="{{ $monthNumber }}" {{ $monthNumber == $currentMonth ? 'selected' : '' }}>
+                                    {{ $monthLabel }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
                         <label class="form-label">Anno</label>
                         <select class="form-select" id="reportYear">
                             @foreach($years as $year)
@@ -357,6 +368,9 @@
                         </select>
                     </div>
                 </div>
+                <small class="text-muted d-block mt-1">
+                    L'intervallo deve essere nello stesso anno (es. "Da Gennaio a Marzo").
+                </small>
 
                 <div class="mt-3">
 <label class="form-label">Provenienza / Referral</label>
@@ -381,7 +395,7 @@
             <div class="modal-footer">
                 <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Chiudi</button>
                 <button class="btn btn-primary" type="button" id="btnDownloadReport">
-                    Scarica CSV
+                    Scarica Excel
                 </button>
             </div>
         </div>
@@ -446,7 +460,8 @@ const btnDownloadReport = document.getElementById('btnDownloadReport');
 const reportModalElement = document.getElementById('reportModal');
 const reportModal = new bootstrap.Modal(reportModalElement);
 
-const reportMonth = document.getElementById('reportMonth');
+const reportMonthFrom = document.getElementById('reportMonthFrom');
+const reportMonthTo = document.getElementById('reportMonthTo');
 const reportYear = document.getElementById('reportYear');
 const reportReferral = document.getElementById('reportReferral');
 const reportError = document.getElementById('reportError');
@@ -1815,14 +1830,49 @@ function showCampaignSuccess(message) {
     loadLatestRegistrationsBox();
     loadSummaryYearBox();
 
+function loadReportReferrals(year) {
+    const previouslySelected = Array.from(reportReferral.selectedOptions).map(function (opt) {
+        return opt.value;
+    });
+
+    reportReferral.innerHTML = '<option disabled>Caricamento...</option>';
+
+    fetch(`{{ route('recruitment.report.referrals') }}?year=${year}`)
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            reportReferral.innerHTML = '';
+
+            if (!data.success || !data.referrals || data.referrals.length === 0) {
+                reportReferral.innerHTML = '<option disabled>Nessuna campagna attiva per questo anno</option>';
+                return;
+            }
+
+            data.referrals.forEach(function (ref) {
+                const option = document.createElement('option');
+                option.value = ref.id;
+                option.textContent = `${ref.title} (${ref.code})`;
+                if (previouslySelected.includes(String(ref.id))) {
+                    option.selected = true;
+                }
+                reportReferral.appendChild(option);
+            });
+        })
+        .catch(function () {
+            reportReferral.innerHTML = '<option disabled>Errore nel caricamento delle campagne</option>';
+        });
+}
+
 function resetReportForm() {
-    reportMonth.value = '{{ $currentMonth }}';
+    reportMonthFrom.value = '{{ $currentMonth }}';
+    reportMonthTo.value = '{{ $currentMonth }}';
     reportYear.value = '{{ $currentYear }}';
-    reportReferral.value = '';
     reportError.classList.add('d-none');
     reportError.innerText = '';
     btnDownloadReport.disabled = false;
-    btnDownloadReport.innerHTML = 'Scarica CSV';
+    btnDownloadReport.innerHTML = 'Scarica Excel';
+    loadReportReferrals(reportYear.value);
 }
 
 btnOpenReportModal.addEventListener('click', function () {
@@ -1834,22 +1884,34 @@ reportModalElement.addEventListener('hidden.bs.modal', function () {
     resetReportForm();
 });
 
+reportYear.addEventListener('change', function () {
+    loadReportReferrals(reportYear.value);
+});
+
 btnDownloadReport.addEventListener('click', function () {
-    const month = reportMonth.value;
+    const monthFrom = parseInt(reportMonthFrom.value, 10);
+    const monthTo = parseInt(reportMonthTo.value, 10);
     const year = reportYear.value;
+
+    reportError.classList.add('d-none');
+    reportError.innerText = '';
+
+    if (monthTo < monthFrom) {
+        reportError.innerText = 'Il mese "A" non può essere precedente al mese "Da".';
+        reportError.classList.remove('d-none');
+        return;
+    }
 
     const selectedReferralIds = Array.from(reportReferral.selectedOptions).map(function(option) {
         return option.value;
     });
 
-    reportError.classList.add('d-none');
-    reportError.innerText = '';
-
     btnDownloadReport.disabled = true;
     btnDownloadReport.innerHTML = 'Preparazione...';
 
     const params = new URLSearchParams();
-    params.append('month', month);
+    params.append('month_from', monthFrom);
+    params.append('month_to', monthTo);
     params.append('year', year);
 
     selectedReferralIds.forEach(function(id) {
@@ -1865,7 +1927,7 @@ btnDownloadReport.addEventListener('click', function () {
             }
             const disposition = response.headers.get('Content-Disposition') || '';
             const match = disposition.match(/filename="?([^"]+)"?/);
-            const fileName = match ? match[1] : 'recruitment_report.csv';
+            const fileName = match ? match[1] : 'recruitment_report.xlsx';
             return response.blob().then(function (blob) {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1884,7 +1946,7 @@ btnDownloadReport.addEventListener('click', function () {
         })
         .finally(function () {
             btnDownloadReport.disabled = false;
-            btnDownloadReport.innerHTML = 'Scarica CSV';
+            btnDownloadReport.innerHTML = 'Scarica Excel';
         });
 });
 

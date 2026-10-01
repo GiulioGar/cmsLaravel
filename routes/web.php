@@ -214,6 +214,8 @@ Route::middleware(['auth.custom'])->group(function () {
     ->name('recruitment.campaigns.update');
     Route::get('/recruitment/report/export', [RecruitmentController::class, 'exportReport'])
     ->name('recruitment.report.export');
+    Route::get('/recruitment/report/referrals', [RecruitmentController::class, 'reportReferrals'])
+    ->name('recruitment.report.referrals');
 
     // ============================================
     // TICKETS

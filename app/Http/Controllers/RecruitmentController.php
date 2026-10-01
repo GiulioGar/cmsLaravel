@@ -6,6 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class RecruitmentController extends Controller
 {
@@ -2020,10 +2026,42 @@ public function updateCampaign(Request $request)
     }
 }
 
+public function reportReferrals(Request $request)
+{
+    $year = (int) $request->get('year', now()->year);
+
+    if ($year < 2021 || $year > ((int) now()->year + 1)) {
+        $year = (int) now()->year;
+    }
+
+    $activeReferralIds = DB::table('t_recruitment_referral_costs')
+        ->where('is_active', 1)
+        ->whereDate('start_date', '<=', $year . '-12-31')
+        ->where(function ($q) use ($year) {
+            $q->whereNull('end_date')->orWhereDate('end_date', '>=', $year . '-01-01');
+        })
+        ->pluck('referral_id')
+        ->unique()
+        ->values();
+
+    $referrals = DB::table('t_recruitment_referrals')
+        ->select('id', 'code', 'title')
+        ->where('is_active', 1)
+        ->whereIn('id', $activeReferralIds)
+        ->orderBy('sort_order')
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'referrals' => $referrals,
+    ]);
+}
+
 public function exportReport(Request $request)
 {
     $year = (int) $request->get('year');
-    $month = (int) $request->get('month');
+    $monthFrom = (int) $request->get('month_from');
+    $monthTo = (int) $request->get('month_to');
     $referralIds = $request->get('referral_ids', []);
     if (!is_array($referralIds)) {
         $referralIds = [];
@@ -2034,121 +2072,620 @@ public function exportReport(Request $request)
         $year = (int) now()->year;
     }
 
-    if ($month < 1 || $month > 12) {
-        $month = (int) now()->month;
+    if ($monthFrom < 1 || $monthFrom > 12) {
+        $monthFrom = (int) now()->month;
     }
 
-    $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-    $endDate = $startDate->copy()->endOfMonth();
-
-$query = DB::table('t_user_info as u')
-    ->leftJoin('t_user_invites as ui', 'ui.user_id', '=', 'u.user_id')
-    ->select(
-        'u.user_id',
-        'u.email',
-        'u.gender',
-        'u.birth_date',
-        'u.provenienza',
-        'u.actions',
-        DB::raw('COALESCE(ui.invites, 0) as invites')
-    )
-    ->where('u.reg_date', '>=', $startDate->format('Y-m-d'))
-    ->where('u.reg_date', '<', $startDate->copy()->addMonth()->format('Y-m-d'))
-    ->where('u.email', 'not like', '%.top')
-    ->whereNotNull('u.email')
-    ->where('u.email', '<>', '');
-
-if (!empty($referralIds)) {
-    $referrals = DB::table('t_recruitment_referrals')
-        ->select('id', 'source_codes', 'title')
-        ->whereIn('id', $referralIds)
-        ->where('is_active', 1)
-        ->get();
-
-    if ($referrals->isEmpty()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Nessun referral valido selezionato.'
-        ], 422);
+    if ($monthTo < 1 || $monthTo > 12) {
+        $monthTo = $monthFrom;
     }
 
-    $allSources = [];
-    $titles = [];
+    if ($monthTo < $monthFrom) {
+        $monthTo = $monthFrom;
+    }
 
-    foreach ($referrals as $referral) {
-        $sources = $this->parseSourceCodes($referral->source_codes);
+    $startDate = Carbon::createFromDate($year, $monthFrom, 1)->startOfMonth();
+    $endDate = Carbon::createFromDate($year, $monthTo, 1)->endOfMonth();
 
-        if (!empty($sources)) {
-            $allSources = array_merge($allSources, $sources);
+    $query = DB::table('t_user_info as u')
+        ->leftJoin('t_user_invites as ui', 'ui.user_id', '=', 'u.user_id')
+        ->select(
+            'u.user_id',
+            'u.email',
+            'u.gender',
+            'u.birth_date',
+            'u.reg_date',
+            'u.provenienza',
+            DB::raw('COALESCE(ui.invites, 0) as invites')
+        )
+        ->where('u.reg_date', '>=', $startDate->format('Y-m-d'))
+        ->where('u.reg_date', '<', $endDate->copy()->addDay()->format('Y-m-d'))
+        ->where('u.email', 'not like', '%.top')
+        ->whereNotNull('u.email')
+        ->where('u.email', '<>', '');
+
+    $fileLabel = 'tutte';
+
+    if (!empty($referralIds)) {
+        $referrals = DB::table('t_recruitment_referrals')
+            ->select('id', 'source_codes', 'title')
+            ->whereIn('id', $referralIds)
+            ->where('is_active', 1)
+            ->get();
+
+        if ($referrals->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nessun referral valido selezionato.'
+            ], 422);
         }
 
-        $titles[] = $referral->title;
+        $allSources = [];
+        $titles = [];
+
+        foreach ($referrals as $referral) {
+            $sources = $this->parseSourceCodes($referral->source_codes);
+
+            if (!empty($sources)) {
+                $allSources = array_merge($allSources, $sources);
+            }
+
+            $titles[] = $referral->title;
+        }
+
+        $allSources = array_values(array_unique($allSources));
+
+        if (empty($allSources)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'I referral selezionati non hanno source_codes configurati.'
+            ], 422);
+        }
+
+        $query->whereIn('u.provenienza', $allSources);
+
+        $fileLabel = count($titles) === 1
+            ? preg_replace('/[^A-Za-z0-9_-]/', '_', $titles[0])
+            : 'multi_referral';
     }
 
-    $allSources = array_values(array_unique($allSources));
+    $rows = $query->orderBy('u.reg_date', 'desc')->get();
 
-    if (empty($allSources)) {
-        return response()->json([
-            'success' => false,
-            'message' => 'I referral selezionati non hanno source_codes configurati.'
-        ], 422);
+    $userIds = $rows->pluck('user_id')->filter()->values()->all();
+
+    $systemEvents = ['BAN', 'MALUS QUALITA', 'Malus', 'PREMIO REVOCATO', 'PREMIO RIPRISTINATO', 'livelli_rimossi'];
+
+    $historyCounts = [];
+    if (!empty($userIds)) {
+        $historyCounts = DB::table('t_user_history')
+            ->select('user_id', DB::raw('COUNT(*) as event_count'))
+            ->whereIn('user_id', $userIds)
+            ->whereNotIn('event_type', $systemEvents)
+            ->groupBy('user_id')
+            ->pluck('event_count', 'user_id')
+            ->toArray();
     }
 
-    $query->whereIn('u.provenienza', $allSources);
+    $records = [];
+    foreach ($rows as $row) {
+        $age = $this->calculateAge($row->birth_date, $row->reg_date);
+        $historyEvents = (int) ($historyCounts[$row->user_id] ?? 0);
+        $invites = (int) ($row->invites ?? 0);
 
-    $fileLabel = count($titles) === 1
-        ? preg_replace('/[^A-Za-z0-9_-]/', '_', $titles[0])
-        : 'multi_referral';
-} else {
-    $fileLabel = 'tutte';
-}
-    $rows = $query
-        ->orderBy('reg_date', 'desc')
-        ->lazy();
+        $records[] = [
+            'user_id' => $row->user_id,
+            'email' => $row->email,
+            'gender' => $this->mapGenderLabel($row->gender),
+            'age' => $age,
+            'age_bucket' => $this->mapAge45Bucket($age),
+            'provenienza' => $row->provenienza,
+            'reg_date' => $row->reg_date,
+            'invites' => $invites,
+            'history_events' => $historyEvents,
+            'active' => $historyEvents > 0 ? 'Attivo' : 'Inattivo',
+        ];
+    }
 
-    $fileName = 'recruitment_report_' . $year . '_' . str_pad($month, 2, '0', STR_PAD_LEFT) . '_' . $fileLabel . '.csv';
+    $periodLabel = $monthFrom === $monthTo
+        ? $this->monthLabel($monthFrom) . ' ' . $year
+        : $this->monthLabel($monthFrom) . ' - ' . $this->monthLabel($monthTo) . ' ' . $year;
+
+    $spreadsheet = $this->buildReportSpreadsheet($records, $periodLabel, $startDate, $endDate);
+
+    $fileName = 'recruitment_report_' . $year . '_' . str_pad($monthFrom, 2, '0', STR_PAD_LEFT)
+        . '-' . str_pad($monthTo, 2, '0', STR_PAD_LEFT) . '_' . $fileLabel . '.xlsx';
 
     $headers = [
-        'Content-Type' => 'text/csv; charset=UTF-8',
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
     ];
 
-    $callback = function () use ($rows) {
-        $handle = fopen('php://output', 'w');
+    return response()->streamDownload(function () use ($spreadsheet) {
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
+    }, $fileName, $headers);
+}
 
-        // BOM UTF-8 per Excel
-        fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+private function buildReportSpreadsheet(array $records, string $periodLabel, Carbon $startDate, Carbon $endDate): Spreadsheet
+{
+    $spreadsheet = new Spreadsheet();
 
-fputcsv($handle, [
-    'user_id',
-    'email',
-    'sesso',
-    'eta',
-    'eta_45',
-    'provenienza',
-    'actions',
-    'invites'
-], ';');
+    $this->buildReportDataSheet($spreadsheet, $records, $periodLabel);
+    $this->buildReportStatsSheet($spreadsheet, $records, $periodLabel);
+    $this->buildReportCostsSheet($spreadsheet, $records, $periodLabel, $startDate, $endDate);
 
-    foreach ($rows as $row) {
-        $age = $this->calculateAgeForCsv($row->birth_date);
+    $spreadsheet->setActiveSheetIndex(0);
 
-        fputcsv($handle, [
-            $row->user_id,
-            $row->email,
-            $this->mapGenderLabel($row->gender),
-            $age,
-            $this->mapAge45Bucket($age),
-            $row->provenienza,
-            (int) ($row->actions ?? 0),
-            (int) ($row->invites ?? 0),
-        ], ';');
+    return $spreadsheet;
+}
+
+private function buildReportDataSheet(Spreadsheet $spreadsheet, array $records, string $periodLabel): void
+{
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Dati');
+
+    $sheet->setCellValue('A1', 'Report Recruitment - ' . $periodLabel);
+    $sheet->mergeCells('A1:I1');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1F4E78');
+    $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setVertical(Alignment::VERTICAL_CENTER);
+    $sheet->getRowDimension(1)->setRowHeight(28);
+
+    $headerRow = 3;
+    $headers = ['User ID', 'Email', 'Sesso', 'Età', 'Fascia Età', 'Provenienza', 'Inviti', 'Eventi Attività', 'Stato'];
+    $col = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($col . $headerRow, $header);
+        $col++;
     }
 
-        fclose($handle);
+    $headerRange = 'A' . $headerRow . ':I' . $headerRow;
+    $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('2E75B6');
+    $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    $sheet->getStyle($headerRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+    $rowIndex = $headerRow + 1;
+    foreach ($records as $record) {
+        $sheet->setCellValue('A' . $rowIndex, $record['user_id']);
+        $sheet->setCellValue('B' . $rowIndex, $record['email']);
+        $sheet->setCellValue('C' . $rowIndex, $record['gender']);
+        $sheet->setCellValueExplicit('D' . $rowIndex, $record['age'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValue('E' . $rowIndex, $record['age_bucket']);
+        $sheet->setCellValue('F' . $rowIndex, $record['provenienza']);
+        $sheet->setCellValue('G' . $rowIndex, $record['invites']);
+        $sheet->setCellValue('H' . $rowIndex, $record['history_events']);
+        $sheet->setCellValue('I' . $rowIndex, $record['active']);
+
+        if ($rowIndex % 2 === 0) {
+            $sheet->getStyle('A' . $rowIndex . ':I' . $rowIndex)->getFill()
+                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F2F6FA');
+        }
+
+        $statusCell = 'I' . $rowIndex;
+        $sheet->getStyle($statusCell)->getFont()->setBold(true);
+        $sheet->getStyle($statusCell)->getFont()->getColor()->setRGB(
+            $record['active'] === 'Attivo' ? '2E7D32' : 'C62828'
+        );
+
+        $rowIndex++;
+    }
+
+    $lastRow = max($rowIndex - 1, $headerRow);
+    $sheet->getStyle('A' . $headerRow . ':I' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+    $sheet->getStyle('A' . $headerRow . ':I' . $lastRow)->getBorders()->getAllBorders()->getColor()->setRGB('D9E2EC');
+
+    foreach (range('A', 'I') as $colLetter) {
+        $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+    }
+
+    $sheet->freezePane('A' . ($headerRow + 1));
+    $sheet->setAutoFilter('A' . $headerRow . ':I' . $lastRow);
+}
+
+private function buildReportStatsSheet(Spreadsheet $spreadsheet, array $records, string $periodLabel): void
+{
+    $sheet = $spreadsheet->createSheet();
+    $sheet->setTitle('Statistiche');
+
+    $total = count($records);
+
+    $under45 = 0;
+    $over45 = 0;
+    $ageUnknown = 0;
+    $male = 0;
+    $female = 0;
+    $genderUnknown = 0;
+    $active = 0;
+    $inactive = 0;
+    $invitesActive = 0;
+    $invitesInactive = 0;
+    $totalInvites = 0;
+    $totalHistoryEvents = 0;
+
+    foreach ($records as $record) {
+        if ($record['age_bucket'] === 'under') {
+            $under45++;
+        } elseif ($record['age_bucket'] === 'over') {
+            $over45++;
+        } else {
+            $ageUnknown++;
+        }
+
+        if ($record['gender'] === 'M') {
+            $male++;
+        } elseif ($record['gender'] === 'F') {
+            $female++;
+        } else {
+            $genderUnknown++;
+        }
+
+        $totalInvites += $record['invites'];
+        $totalHistoryEvents += $record['history_events'];
+
+        if ($record['active'] === 'Attivo') {
+            $active++;
+            $invitesActive += $record['invites'];
+        } else {
+            $inactive++;
+            $invitesInactive += $record['invites'];
+        }
+    }
+
+    $pct = function ($value, $total) {
+        return $total > 0 ? round(($value / $total) * 100, 1) : 0.0;
     };
 
-    return response()->streamDownload($callback, $fileName, $headers);
+    $sheet->setCellValue('A1', 'Statistiche Recruitment - ' . $periodLabel);
+    $sheet->mergeCells('A1:D1');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1F4E78');
+    $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+    $sheet->getRowDimension(1)->setRowHeight(28);
+
+    $sheet->setCellValue('A2', 'Totale utenti: ' . $total . '   •   Totale inviti: ' . $totalInvites . '   •   Totale eventi attività: ' . $totalHistoryEvents);
+    $sheet->mergeCells('A2:D2');
+    $sheet->getStyle('A2')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF555555'));
+
+    $row = 4;
+    $row = $this->writeStatsSection($sheet, $row, 'Fascia Età', [
+        ['Under 45', $under45, $pct($under45, $total)],
+        ['Over 45', $over45, $pct($over45, $total)],
+        ['Non disponibile', $ageUnknown, $pct($ageUnknown, $total)],
+    ]);
+
+    $row = $this->writeStatsSection($sheet, $row + 1, 'Genere', [
+        ['Uomo', $male, $pct($male, $total)],
+        ['Donna', $female, $pct($female, $total)],
+        ['Non disponibile', $genderUnknown, $pct($genderUnknown, $total)],
+    ]);
+
+    $row = $this->writeStatsSection($sheet, $row + 1, 'Attivi / Inattivi (basato su t_user_history)', [
+        ['Attivi', $active, $pct($active, $total)],
+        ['Inattivi', $inactive, $pct($inactive, $total)],
+    ]);
+
+    $sheet->setCellValue('A' . $row, 'Inviti ricevuti dagli Attivi');
+    $sheet->setCellValue('B' . $row, $invitesActive);
+    $sheet->setCellValue('A' . ($row + 1), 'Inviti ricevuti dagli Inattivi');
+    $sheet->setCellValue('B' . ($row + 1), $invitesInactive);
+    $sheet->setCellValue('A' . ($row + 2), 'Eventi attività per invito (media globale)');
+    $sheet->setCellValue('B' . ($row + 2), $totalInvites > 0 ? round($totalHistoryEvents / $totalInvites, 2) : 0);
+    $sheet->getStyle('A' . $row . ':A' . ($row + 2))->getFont()->setItalic(true);
+
+    foreach (range('A', 'D') as $colLetter) {
+        $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+    }
+}
+
+private function writeStatsSection($sheet, int $startRow, string $title, array $rowsData): int
+{
+    $sheet->setCellValue('A' . $startRow, $title);
+    $sheet->mergeCells('A' . $startRow . ':D' . $startRow);
+    $sheet->getStyle('A' . $startRow)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle('A' . $startRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('2E75B6');
+
+    $headerRow = $startRow + 1;
+    $sheet->setCellValue('A' . $headerRow, 'Categoria');
+    $sheet->setCellValue('B' . $headerRow, 'Totale');
+    $sheet->setCellValue('C' . $headerRow, '%');
+    $sheet->getStyle('A' . $headerRow . ':C' . $headerRow)->getFont()->setBold(true);
+    $sheet->getStyle('A' . $headerRow . ':C' . $headerRow)->getFill()
+        ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCE6F1');
+
+    $row = $headerRow + 1;
+    foreach ($rowsData as $data) {
+        $sheet->setCellValue('A' . $row, $data[0]);
+        $sheet->setCellValue('B' . $row, $data[1]);
+        $sheet->setCellValue('C' . $row, $data[2] / 100);
+        $sheet->getStyle('C' . $row)->getNumberFormat()->setFormatCode('0.0%');
+        $row++;
+    }
+
+    $sheet->getStyle('A' . $startRow . ':C' . ($row - 1))->getBorders()->getAllBorders()
+        ->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D9E2EC');
+
+    return $row;
+}
+
+private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records, string $periodLabel, Carbon $startDate, Carbon $endDate): void
+{
+    $sheet = $spreadsheet->createSheet();
+    $sheet->setTitle('Costi');
+
+    $referrals = $this->getActiveReferrals();
+
+    $sourceMap = [];
+    $fallbackReferral = null;
+    foreach ($referrals as $referral) {
+        if ($referral->group_type === 'fallback') {
+            $fallbackReferral = $referral;
+            continue;
+        }
+        foreach ($this->parseSourceCodes($referral->source_codes) as $code) {
+            $sourceMap[$code] = $referral;
+        }
+    }
+
+    $cpiRows = DB::table('t_recruitment_referral_costs')
+        ->select('referral_id', 'start_date', 'end_date', 'cpi', 'age_min', 'age_max')
+        ->where('is_active', 1)
+        ->whereDate('start_date', '<=', $endDate->format('Y-m-d'))
+        ->where(function ($q) use ($startDate) {
+            $q->whereNull('end_date')->orWhereDate('end_date', '>=', $startDate->format('Y-m-d'));
+        })
+        ->orderBy('start_date')
+        ->get();
+
+    $cpiByReferral = [];
+    foreach ($cpiRows as $row) {
+        $cpiByReferral[$row->referral_id][] = [
+            'start_date' => $row->start_date,
+            'end_date'   => $row->end_date,
+            'cpi'        => (float) $row->cpi,
+            'age_min'    => $row->age_min !== null ? (int) $row->age_min : null,
+            'age_max'    => $row->age_max !== null ? (int) $row->age_max : null,
+        ];
+    }
+
+    $groups = [];
+    foreach ($records as $record) {
+        $source = $record['provenienza'];
+        $referral = $sourceMap[$source] ?? $fallbackReferral;
+        $key = $referral->id ?? 0;
+
+        if (!isset($groups[$key])) {
+            $groups[$key] = [
+                'label' => $referral->title ?? ($source ?: 'Sconosciuta'),
+                'registered' => 0,
+                'active' => 0,
+                'inactive' => 0,
+                'cost_total' => 0.0,
+                'cost_active' => 0.0,
+                'cost_inactive' => 0.0,
+                'segments' => [],
+            ];
+        }
+
+        $segment = $referral ? $this->findUserSegment($referral->id, $record['reg_date'], $record['age'], $cpiByReferral) : null;
+        $cost = $segment ? (float) $segment['cpi'] : 0.0;
+        $segmentLabel = $segment
+            ? $this->segmentAgeLabel($segment['age_min'], $segment['age_max'])
+            : 'Nessuna campagna';
+
+        if (!isset($groups[$key]['segments'][$segmentLabel])) {
+            $groups[$key]['segments'][$segmentLabel] = [
+                'registered' => 0,
+                'active' => 0,
+                'inactive' => 0,
+                'cost_total' => 0.0,
+                'cost_active' => 0.0,
+            ];
+        }
+
+        $groups[$key]['registered']++;
+        $groups[$key]['cost_total'] += $cost;
+        $groups[$key]['segments'][$segmentLabel]['registered']++;
+        $groups[$key]['segments'][$segmentLabel]['cost_total'] += $cost;
+
+        if ($record['active'] === 'Attivo') {
+            $groups[$key]['active']++;
+            $groups[$key]['cost_active'] += $cost;
+            $groups[$key]['segments'][$segmentLabel]['active']++;
+            $groups[$key]['segments'][$segmentLabel]['cost_active'] += $cost;
+        } else {
+            $groups[$key]['inactive']++;
+            $groups[$key]['cost_inactive'] += $cost;
+            $groups[$key]['segments'][$segmentLabel]['inactive']++;
+        }
+    }
+
+    uasort($groups, function ($a, $b) {
+        return $b['cost_total'] <=> $a['cost_total'];
+    });
+
+    $sheet->setCellValue('A1', 'Costi Recruitment - ' . $periodLabel);
+    $sheet->mergeCells('A1:H1');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1F4E78');
+    $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+    $sheet->getRowDimension(1)->setRowHeight(28);
+
+    $sheet->setCellValue('A2', 'Costo calcolato su base CPI per fascia età/periodo campagna, allocato su utenti Attivi/Inattivi (criterio t_user_history).');
+    $sheet->mergeCells('A2:H2');
+    $sheet->getStyle('A2')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF555555'));
+
+    $headerRow = 4;
+    $headers = ['Referral', 'Registrati', 'Attivi', 'Inattivi', '% Attivi', 'Costo Totale', 'Costo su Attivi', 'CPA (Costo/Attivo)'];
+    $col = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($col . $headerRow, $header);
+        $col++;
+    }
+
+    $headerRange = 'A' . $headerRow . ':H' . $headerRow;
+    $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('2E75B6');
+    $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+    $rowIndex = $headerRow + 1;
+    $totals = ['registered' => 0, 'active' => 0, 'inactive' => 0, 'cost_total' => 0.0, 'cost_active' => 0.0];
+
+    foreach ($groups as $group) {
+        $activeRate = $group['registered'] > 0 ? $group['active'] / $group['registered'] : 0;
+        $cpa = $group['active'] > 0 ? $group['cost_total'] / $group['active'] : 0;
+
+        $sheet->setCellValue('A' . $rowIndex, $group['label']);
+        $sheet->setCellValue('B' . $rowIndex, $group['registered']);
+        $sheet->setCellValue('C' . $rowIndex, $group['active']);
+        $sheet->setCellValue('D' . $rowIndex, $group['inactive']);
+        $sheet->setCellValue('E' . $rowIndex, $activeRate);
+        $sheet->getStyle('E' . $rowIndex)->getNumberFormat()->setFormatCode('0.0%');
+        $sheet->setCellValue('F' . $rowIndex, round($group['cost_total'], 2));
+        $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+        $sheet->setCellValue('G' . $rowIndex, round($group['cost_active'], 2));
+        $sheet->getStyle('G' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+        $sheet->setCellValue('H' . $rowIndex, round($cpa, 2));
+        $sheet->getStyle('H' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+
+        if ($rowIndex % 2 === 0) {
+            $sheet->getStyle('A' . $rowIndex . ':H' . $rowIndex)->getFill()
+                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F2F6FA');
+        }
+
+        $totals['registered'] += $group['registered'];
+        $totals['active'] += $group['active'];
+        $totals['inactive'] += $group['inactive'];
+        $totals['cost_total'] += $group['cost_total'];
+        $totals['cost_active'] += $group['cost_active'];
+
+        $rowIndex++;
+
+        // Breakdown per fascia età (solo se la campagna ha più di 1 segmento), come in Spese Referral
+        if (count($group['segments']) > 1) {
+            foreach ($group['segments'] as $segmentLabel => $segmentData) {
+                $segActiveRate = $segmentData['registered'] > 0 ? $segmentData['active'] / $segmentData['registered'] : 0;
+                $segCpa = $segmentData['active'] > 0 ? $segmentData['cost_total'] / $segmentData['active'] : 0;
+
+                $sheet->setCellValue('A' . $rowIndex, '    ↳ ' . $segmentLabel);
+                $sheet->setCellValue('B' . $rowIndex, $segmentData['registered']);
+                $sheet->setCellValue('C' . $rowIndex, $segmentData['active']);
+                $sheet->setCellValue('D' . $rowIndex, $segmentData['inactive']);
+                $sheet->setCellValue('E' . $rowIndex, $segActiveRate);
+                $sheet->getStyle('E' . $rowIndex)->getNumberFormat()->setFormatCode('0.0%');
+                $sheet->setCellValue('F' . $rowIndex, round($segmentData['cost_total'], 2));
+                $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+                $sheet->setCellValue('G' . $rowIndex, round($segmentData['cost_active'], 2));
+                $sheet->getStyle('G' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+                $sheet->setCellValue('H' . $rowIndex, round($segCpa, 2));
+                $sheet->getStyle('H' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+
+                $sheet->getStyle('A' . $rowIndex . ':H' . $rowIndex)->getFont()->setItalic(true)->setSize(9)->getColor()->setRGB('666666');
+
+                $rowIndex++;
+            }
+        }
+    }
+
+    $lastDataRow = $rowIndex - 1;
+
+    $sheet->setCellValue('A' . $rowIndex, 'TOTALE');
+    $sheet->setCellValue('B' . $rowIndex, $totals['registered']);
+    $sheet->setCellValue('C' . $rowIndex, $totals['active']);
+    $sheet->setCellValue('D' . $rowIndex, $totals['inactive']);
+    $sheet->setCellValue('E' . $rowIndex, $totals['registered'] > 0 ? $totals['active'] / $totals['registered'] : 0);
+    $sheet->getStyle('E' . $rowIndex)->getNumberFormat()->setFormatCode('0.0%');
+    $sheet->setCellValue('F' . $rowIndex, round($totals['cost_total'], 2));
+    $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+    $sheet->setCellValue('G' . $rowIndex, round($totals['cost_active'], 2));
+    $sheet->getStyle('G' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+    $sheet->setCellValue('H' . $rowIndex, round($totals['active'] > 0 ? $totals['cost_total'] / $totals['active'] : 0, 2));
+    $sheet->getStyle('H' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+
+    $totalRange = 'A' . $rowIndex . ':H' . $rowIndex;
+    $sheet->getStyle($totalRange)->getFont()->setBold(true);
+    $sheet->getStyle($totalRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCE6F1');
+
+    $sheet->getStyle('A' . $headerRow . ':H' . $rowIndex)->getBorders()->getAllBorders()
+        ->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D9E2EC');
+
+    foreach (range('A', 'H') as $colLetter) {
+        $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+    }
+
+    $sheet->freezePane('A' . ($headerRow + 1));
+}
+
+private function findUserSegment($referralId, $regDate, $age, array $cpiByReferral): ?array
+{
+    if (!isset($cpiByReferral[$referralId]) || empty($regDate)) {
+        return null;
+    }
+
+    $regDateStr = substr((string) $regDate, 0, 10);
+
+    $validPeriods = array_values(array_filter($cpiByReferral[$referralId], function ($p) use ($regDateStr) {
+        $start = substr($p['start_date'], 0, 10);
+        $end   = $p['end_date'] !== null ? substr($p['end_date'], 0, 10) : null;
+        return $regDateStr >= $start && ($end === null || $regDateStr <= $end);
+    }));
+
+    if (empty($validPeriods)) {
+        return null;
+    }
+
+    foreach ($validPeriods as $segment) {
+        $ageMin = $segment['age_min'];
+        $ageMax = $segment['age_max'];
+
+        if ($ageMin === null && $ageMax === null) {
+            return $segment;
+        }
+
+        if ($age === '' || $age === null) {
+            continue;
+        }
+
+        if ($ageMin !== null && $age < $ageMin) {
+            continue;
+        }
+
+        if ($ageMax !== null && $age > $ageMax) {
+            continue;
+        }
+
+        return $segment;
+    }
+
+    return null;
+}
+
+private function segmentAgeLabel($ageMin, $ageMax): string
+{
+    if ($ageMin !== null && $ageMax !== null) {
+        return $ageMin . '-' . $ageMax . 'a';
+    }
+
+    if ($ageMin !== null) {
+        return '≥' . $ageMin . 'a';
+    }
+
+    if ($ageMax !== null) {
+        return '≤' . $ageMax . 'a';
+    }
+
+    return 'tutti';
+}
+
+private function monthLabel(int $month): string
+{
+    $labels = [
+        1 => 'Gennaio', 2 => 'Febbraio', 3 => 'Marzo', 4 => 'Aprile',
+        5 => 'Maggio', 6 => 'Giugno', 7 => 'Luglio', 8 => 'Agosto',
+        9 => 'Settembre', 10 => 'Ottobre', 11 => 'Novembre', 12 => 'Dicembre',
+    ];
+
+    return $labels[$month] ?? (string) $month;
 }
 
 private function mapGenderLabel($gender)
@@ -2164,14 +2701,17 @@ private function mapGenderLabel($gender)
     return 'N.D.';
 }
 
-private function calculateAgeForCsv($birthDate)
+private function calculateAge($birthDate, $referenceDate = null)
 {
     if (empty($birthDate) || $birthDate === '0000-00-00') {
         return '';
     }
 
     try {
-        return Carbon::parse($birthDate)->age;
+        $birth = Carbon::parse($birthDate);
+        $reference = $referenceDate ? Carbon::parse($referenceDate) : now();
+
+        return $birth->diffInYears($reference);
     } catch (\Throwable $e) {
         return '';
     }
