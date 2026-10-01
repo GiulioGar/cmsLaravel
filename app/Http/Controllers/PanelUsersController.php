@@ -784,22 +784,13 @@ public function getInactiveSummary(Request $request)
     $cutoffDate = now()->subYears($years);
 
     /*
-     * Subquery aggregata history:
-     * - actions_count escludendo subscribe/unsubscribe
-     * - ultima azione
+     * Subquery aggregata history: solo ultima azione (serve una data, quindi
+     * resta su t_user_history). Il conteggio azioni (Inattivo 0 vs Abandoner >0,
+     * nessun arco temporale) viene letto direttamente da u.actions.
      */
     $historyStats = DB::table('t_user_history')
         ->select(
             'user_id',
-            DB::raw("
-                SUM(
-                    CASE
-                        WHEN event_type NOT IN ('subscribe', 'unsubscribe')
-                        THEN 1
-                        ELSE 0
-                    END
-                ) as actions_count
-            "),
             DB::raw('MAX(event_date) as last_event_date')
         )
         ->groupBy('user_id');
@@ -818,7 +809,7 @@ public function getInactiveSummary(Request $request)
         ->where('u.confirm', 1)
         ->select([
             'u.reg_date',
-            DB::raw('COALESCE(h.actions_count, 0) as actions_count'),
+            DB::raw('COALESCE(u.actions, 0) as actions_count'),
             'h.last_event_date',
         ])
         ->get()
@@ -907,18 +898,11 @@ private function buildInactiveUsersCollection(int $years, string $type)
 
     $cutoffDate = now()->subYears($years);
 
+    // Serve solo l'ultima data di azione (arco temporale per la soglia di inattivita'):
+    // il conteggio azioni per Inattivo/Abandoner viene letto da u.actions, nessuna data.
     $historyStats = DB::table('t_user_history')
         ->select(
             'user_id',
-            DB::raw("
-                SUM(
-                    CASE
-                        WHEN event_type NOT IN ('subscribe', 'unsubscribe')
-                        THEN 1
-                        ELSE 0
-                    END
-                ) as actions_count
-            "),
             DB::raw('MAX(event_date) as last_event_date')
         )
         ->groupBy('user_id');
@@ -947,7 +931,7 @@ private function buildInactiveUsersCollection(int $years, string $type)
                 'u.actions',
                 'u.points',
                 'u.provenienza',
-                DB::raw('COALESCE(h.actions_count, 0) as actions_count'),
+                DB::raw('COALESCE(u.actions, 0) as actions_count'),
                 'h.last_event_date',
             ])
         ->get();

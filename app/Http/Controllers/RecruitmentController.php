@@ -621,24 +621,19 @@ public function activity(Request $request)
         ->flip()
         ->toArray();
 
-    $systemEvents = ['BAN', 'MALUS QUALITA', 'Malus', 'PREMIO REVOCATO', 'PREMIO RIPRISTINATO', 'livelli_rimossi'];
-
-    $historySub = DB::table('t_user_history')
-        ->select('user_id', DB::raw('COUNT(*) as event_count'))
-        ->whereNotIn('event_type', $systemEvents)
-        ->groupBy('user_id');
-
+    // Bucket di attivita' basati direttamente su u.actions (sincronizzato da t_user_history
+    // tramite il bottone "Aggiorna Attivita'" in PanelUsers): nessun arco temporale qui,
+    // quindi non serve piu' interrogare t_user_history (733K righe senza indice su user_id).
     $rows = DB::table('t_user_info as u')
         ->select(
             'u.provenienza',
             DB::raw('COUNT(*) as total_registered'),
-            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) = 0 THEN 1 ELSE 0 END) as act_0'),
-            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) BETWEEN 1 AND 2 THEN 1 ELSE 0 END) as act_1_2'),
-            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) BETWEEN 3 AND 5 THEN 1 ELSE 0 END) as act_3_5'),
-            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) BETWEEN 6 AND 9 THEN 1 ELSE 0 END) as act_6_9'),
-            DB::raw('SUM(CASE WHEN COALESCE(h.event_count, 0) >= 10 THEN 1 ELSE 0 END) as act_10_plus')
+            DB::raw('SUM(CASE WHEN COALESCE(u.actions, 0) = 0 THEN 1 ELSE 0 END) as act_0'),
+            DB::raw('SUM(CASE WHEN COALESCE(u.actions, 0) BETWEEN 1 AND 2 THEN 1 ELSE 0 END) as act_1_2'),
+            DB::raw('SUM(CASE WHEN COALESCE(u.actions, 0) BETWEEN 3 AND 5 THEN 1 ELSE 0 END) as act_3_5'),
+            DB::raw('SUM(CASE WHEN COALESCE(u.actions, 0) BETWEEN 6 AND 9 THEN 1 ELSE 0 END) as act_6_9'),
+            DB::raw('SUM(CASE WHEN COALESCE(u.actions, 0) >= 10 THEN 1 ELSE 0 END) as act_10_plus')
         )
-        ->leftJoinSub($historySub, 'h', 'h.user_id', '=', 'u.user_id')
         ->whereYear('u.reg_date', $year)
         ->where('u.email', 'not like', '%.top')
         ->whereNotNull('u.provenienza')
@@ -2096,6 +2091,7 @@ public function exportReport(Request $request)
             'u.birth_date',
             'u.reg_date',
             'u.provenienza',
+            'u.actions',
             DB::raw('COALESCE(ui.invites, 0) as invites')
         )
         ->where('u.reg_date', '>=', $startDate->format('Y-m-d'))
@@ -2151,25 +2147,13 @@ public function exportReport(Request $request)
 
     $rows = $query->orderBy('u.reg_date', 'desc')->get();
 
-    $userIds = $rows->pluck('user_id')->filter()->values()->all();
-
-    $systemEvents = ['BAN', 'MALUS QUALITA', 'Malus', 'PREMIO REVOCATO', 'PREMIO RIPRISTINATO', 'livelli_rimossi'];
-
-    $historyCounts = [];
-    if (!empty($userIds)) {
-        $historyCounts = DB::table('t_user_history')
-            ->select('user_id', DB::raw('COUNT(*) as event_count'))
-            ->whereIn('user_id', $userIds)
-            ->whereNotIn('event_type', $systemEvents)
-            ->groupBy('user_id')
-            ->pluck('event_count', 'user_id')
-            ->toArray();
-    }
-
+    // Attivo/Inattivo basato direttamente su u.actions (sincronizzato da t_user_history
+    // tramite il bottone "Aggiorna Attivita'" in PanelUsers): nessun arco temporale qui,
+    // quindi non serve piu' interrogare t_user_history per ogni export.
     $records = [];
     foreach ($rows as $row) {
         $age = $this->calculateAge($row->birth_date, $row->reg_date);
-        $historyEvents = (int) ($historyCounts[$row->user_id] ?? 0);
+        $actions = (int) ($row->actions ?? 0);
         $invites = (int) ($row->invites ?? 0);
 
         $records[] = [
@@ -2181,8 +2165,8 @@ public function exportReport(Request $request)
             'provenienza' => $row->provenienza,
             'reg_date' => $row->reg_date,
             'invites' => $invites,
-            'history_events' => $historyEvents,
-            'active' => $historyEvents > 0 ? 'Attivo' : 'Inattivo',
+            'actions' => $actions,
+            'active' => $actions > 0 ? 'Attivo' : 'Inattivo',
         ];
     }
 
@@ -2232,7 +2216,7 @@ private function buildReportDataSheet(Spreadsheet $spreadsheet, array $records, 
     $sheet->getRowDimension(1)->setRowHeight(28);
 
     $headerRow = 3;
-    $headers = ['User ID', 'Email', 'Sesso', 'Età', 'Fascia Età', 'Provenienza', 'Inviti', 'Eventi Attività', 'Stato'];
+    $headers = ['User ID', 'Email', 'Sesso', 'Età', 'Fascia Età', 'Provenienza', 'Inviti', 'Azioni', 'Stato'];
     $col = 'A';
     foreach ($headers as $header) {
         $sheet->setCellValue($col . $headerRow, $header);
@@ -2254,7 +2238,7 @@ private function buildReportDataSheet(Spreadsheet $spreadsheet, array $records, 
         $sheet->setCellValue('E' . $rowIndex, $record['age_bucket']);
         $sheet->setCellValue('F' . $rowIndex, $record['provenienza']);
         $sheet->setCellValue('G' . $rowIndex, $record['invites']);
-        $sheet->setCellValue('H' . $rowIndex, $record['history_events']);
+        $sheet->setCellValue('H' . $rowIndex, $record['actions']);
         $sheet->setCellValue('I' . $rowIndex, $record['active']);
 
         if ($rowIndex % 2 === 0) {
@@ -2301,7 +2285,7 @@ private function buildReportStatsSheet(Spreadsheet $spreadsheet, array $records,
     $invitesActive = 0;
     $invitesInactive = 0;
     $totalInvites = 0;
-    $totalHistoryEvents = 0;
+    $totalActions = 0;
 
     foreach ($records as $record) {
         if ($record['age_bucket'] === 'under') {
@@ -2321,7 +2305,7 @@ private function buildReportStatsSheet(Spreadsheet $spreadsheet, array $records,
         }
 
         $totalInvites += $record['invites'];
-        $totalHistoryEvents += $record['history_events'];
+        $totalActions += $record['actions'];
 
         if ($record['active'] === 'Attivo') {
             $active++;
@@ -2343,7 +2327,7 @@ private function buildReportStatsSheet(Spreadsheet $spreadsheet, array $records,
     $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
     $sheet->getRowDimension(1)->setRowHeight(28);
 
-    $sheet->setCellValue('A2', 'Totale utenti: ' . $total . '   •   Totale inviti: ' . $totalInvites . '   •   Totale eventi attività: ' . $totalHistoryEvents);
+    $sheet->setCellValue('A2', 'Totale utenti: ' . $total . '   •   Totale inviti: ' . $totalInvites . '   •   Totale azioni (actions): ' . $totalActions);
     $sheet->mergeCells('A2:D2');
     $sheet->getStyle('A2')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF555555'));
 
@@ -2360,7 +2344,7 @@ private function buildReportStatsSheet(Spreadsheet $spreadsheet, array $records,
         ['Non disponibile', $genderUnknown, $pct($genderUnknown, $total)],
     ]);
 
-    $row = $this->writeStatsSection($sheet, $row + 1, 'Attivi / Inattivi (basato su t_user_history)', [
+    $row = $this->writeStatsSection($sheet, $row + 1, 'Attivi / Inattivi (basato su u.actions)', [
         ['Attivi', $active, $pct($active, $total)],
         ['Inattivi', $inactive, $pct($inactive, $total)],
     ]);
@@ -2369,8 +2353,8 @@ private function buildReportStatsSheet(Spreadsheet $spreadsheet, array $records,
     $sheet->setCellValue('B' . $row, $invitesActive);
     $sheet->setCellValue('A' . ($row + 1), 'Inviti ricevuti dagli Inattivi');
     $sheet->setCellValue('B' . ($row + 1), $invitesInactive);
-    $sheet->setCellValue('A' . ($row + 2), 'Eventi attività per invito (media globale)');
-    $sheet->setCellValue('B' . ($row + 2), $totalInvites > 0 ? round($totalHistoryEvents / $totalInvites, 2) : 0);
+    $sheet->setCellValue('A' . ($row + 2), 'Azioni per invito (media globale)');
+    $sheet->setCellValue('B' . ($row + 2), $totalInvites > 0 ? round($totalActions / $totalInvites, 2) : 0);
     $sheet->getStyle('A' . $row . ':A' . ($row + 2))->getFont()->setItalic(true);
 
     foreach (range('A', 'D') as $colLetter) {
@@ -2511,7 +2495,7 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
     $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
     $sheet->getRowDimension(1)->setRowHeight(28);
 
-    $sheet->setCellValue('A2', 'Costo calcolato su base CPI per fascia età/periodo campagna, allocato su utenti Attivi/Inattivi (criterio t_user_history).');
+    $sheet->setCellValue('A2', 'Costo calcolato su base CPI per fascia età/periodo campagna, allocato su utenti Attivi/Inattivi (criterio u.actions).');
     $sheet->mergeCells('A2:H2');
     $sheet->getStyle('A2')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF555555'));
 
