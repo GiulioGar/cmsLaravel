@@ -6,6 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class RecruitmentController extends Controller
 {
@@ -2168,56 +2174,104 @@ public function exportReport(Request $request)
         ? $this->monthLabel($monthFrom) . ' ' . $year
         : $this->monthLabel($monthFrom) . ' - ' . $this->monthLabel($monthTo) . ' ' . $year;
 
+    $spreadsheet = $this->buildReportSpreadsheet($records, $periodLabel, $startDate, $endDate);
+
     $fileName = 'recruitment_report_' . $year . '_' . str_pad($monthFrom, 2, '0', STR_PAD_LEFT)
-        . '-' . str_pad($monthTo, 2, '0', STR_PAD_LEFT) . '_' . $fileLabel . '.csv';
+        . '-' . str_pad($monthTo, 2, '0', STR_PAD_LEFT) . '_' . $fileLabel . '.xlsx';
 
     $headers = [
-        'Content-Type' => 'text/csv; charset=UTF-8',
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
     ];
 
-    return response()->streamDownload(function () use ($records, $periodLabel, $startDate, $endDate) {
-        $handle = fopen('php://output', 'w');
-
-        // BOM UTF-8 per Excel
-        fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
-
-        $this->writeReportDataCsv($handle, $records, $periodLabel);
-        fputcsv($handle, [], ';');
-        fputcsv($handle, [], ';');
-
-        $this->writeReportStatsCsv($handle, $records, $periodLabel);
-        fputcsv($handle, [], ';');
-        fputcsv($handle, [], ';');
-
-        $this->writeReportCostsCsv($handle, $records, $periodLabel, $startDate, $endDate);
-
-        fclose($handle);
+    return response()->streamDownload(function () use ($spreadsheet) {
+        $writer = new Xlsx($spreadsheet);
+        $writer->save('php://output');
     }, $fileName, $headers);
 }
 
-private function writeReportDataCsv($handle, array $records, string $periodLabel): void
+private function buildReportSpreadsheet(array $records, string $periodLabel, Carbon $startDate, Carbon $endDate): Spreadsheet
 {
-    fputcsv($handle, ['Dati - ' . $periodLabel], ';');
-    fputcsv($handle, ['User ID', 'Email', 'Sesso', 'Età', 'Fascia Età', 'Provenienza', 'Inviti', 'Azioni', 'Stato'], ';');
+    $spreadsheet = new Spreadsheet();
 
-    foreach ($records as $record) {
-        fputcsv($handle, [
-            $record['user_id'],
-            $record['email'],
-            $record['gender'],
-            $record['age'],
-            $record['age_bucket'],
-            $record['provenienza'],
-            $record['invites'],
-            $record['actions'],
-            $record['active'],
-        ], ';');
-    }
+    $this->buildReportDataSheet($spreadsheet, $records, $periodLabel);
+    $this->buildReportStatsSheet($spreadsheet, $records, $periodLabel);
+    $this->buildReportCostsSheet($spreadsheet, $records, $periodLabel, $startDate, $endDate);
+
+    $spreadsheet->setActiveSheetIndex(0);
+
+    return $spreadsheet;
 }
 
-private function writeReportStatsCsv($handle, array $records, string $periodLabel): void
+private function buildReportDataSheet(Spreadsheet $spreadsheet, array $records, string $periodLabel): void
 {
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle('Dati');
+
+    $sheet->setCellValue('A1', 'Report Recruitment - ' . $periodLabel);
+    $sheet->mergeCells('A1:I1');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1F4E78');
+    $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT)->setVertical(Alignment::VERTICAL_CENTER);
+    $sheet->getRowDimension(1)->setRowHeight(28);
+
+    $headerRow = 3;
+    $headers = ['User ID', 'Email', 'Sesso', 'Età', 'Fascia Età', 'Provenienza', 'Inviti', 'Azioni', 'Stato'];
+    $col = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($col . $headerRow, $header);
+        $col++;
+    }
+
+    $headerRange = 'A' . $headerRow . ':I' . $headerRow;
+    $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('2E75B6');
+    $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    $sheet->getStyle($headerRange)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+
+    $rowIndex = $headerRow + 1;
+    foreach ($records as $record) {
+        $sheet->setCellValue('A' . $rowIndex, $record['user_id']);
+        $sheet->setCellValue('B' . $rowIndex, $record['email']);
+        $sheet->setCellValue('C' . $rowIndex, $record['gender']);
+        $sheet->setCellValueExplicit('D' . $rowIndex, $record['age'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $sheet->setCellValue('E' . $rowIndex, $record['age_bucket']);
+        $sheet->setCellValue('F' . $rowIndex, $record['provenienza']);
+        $sheet->setCellValue('G' . $rowIndex, $record['invites']);
+        $sheet->setCellValue('H' . $rowIndex, $record['actions']);
+        $sheet->setCellValue('I' . $rowIndex, $record['active']);
+
+        if ($rowIndex % 2 === 0) {
+            $sheet->getStyle('A' . $rowIndex . ':I' . $rowIndex)->getFill()
+                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F2F6FA');
+        }
+
+        $statusCell = 'I' . $rowIndex;
+        $sheet->getStyle($statusCell)->getFont()->setBold(true);
+        $sheet->getStyle($statusCell)->getFont()->getColor()->setRGB(
+            $record['active'] === 'Attivo' ? '2E7D32' : 'C62828'
+        );
+
+        $rowIndex++;
+    }
+
+    $lastRow = max($rowIndex - 1, $headerRow);
+    $sheet->getStyle('A' . $headerRow . ':I' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+    $sheet->getStyle('A' . $headerRow . ':I' . $lastRow)->getBorders()->getAllBorders()->getColor()->setRGB('D9E2EC');
+
+    foreach (range('A', 'I') as $colLetter) {
+        $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+    }
+
+    $sheet->freezePane('A' . ($headerRow + 1));
+    $sheet->setAutoFilter('A' . $headerRow . ':I' . $lastRow);
+}
+
+private function buildReportStatsSheet(Spreadsheet $spreadsheet, array $records, string $periodLabel): void
+{
+    $sheet = $spreadsheet->createSheet();
+    $sheet->setTitle('Statistiche');
+
     $total = count($records);
 
     $under45 = 0;
@@ -2266,47 +2320,83 @@ private function writeReportStatsCsv($handle, array $records, string $periodLabe
         return $total > 0 ? round(($value / $total) * 100, 1) : 0.0;
     };
 
-    fputcsv($handle, ['Statistiche - ' . $periodLabel], ';');
-    fputcsv($handle, ['Totale utenti: ' . $total . ' | Totale inviti: ' . $totalInvites . ' | Totale azioni (actions): ' . $totalActions], ';');
-    fputcsv($handle, [], ';');
+    $sheet->setCellValue('A1', 'Statistiche Recruitment - ' . $periodLabel);
+    $sheet->mergeCells('A1:D1');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1F4E78');
+    $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+    $sheet->getRowDimension(1)->setRowHeight(28);
 
-    $this->writeStatsSectionCsv($handle, 'Fascia Età', [
+    $sheet->setCellValue('A2', 'Totale utenti: ' . $total . '   •   Totale inviti: ' . $totalInvites . '   •   Totale azioni (actions): ' . $totalActions);
+    $sheet->mergeCells('A2:D2');
+    $sheet->getStyle('A2')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF555555'));
+
+    $row = 4;
+    $row = $this->writeStatsSection($sheet, $row, 'Fascia Età', [
         ['Under 45', $under45, $pct($under45, $total)],
         ['Over 45', $over45, $pct($over45, $total)],
         ['Non disponibile', $ageUnknown, $pct($ageUnknown, $total)],
     ]);
-    fputcsv($handle, [], ';');
 
-    $this->writeStatsSectionCsv($handle, 'Genere', [
+    $row = $this->writeStatsSection($sheet, $row + 1, 'Genere', [
         ['Uomo', $male, $pct($male, $total)],
         ['Donna', $female, $pct($female, $total)],
         ['Non disponibile', $genderUnknown, $pct($genderUnknown, $total)],
     ]);
-    fputcsv($handle, [], ';');
 
-    $this->writeStatsSectionCsv($handle, 'Attivi / Inattivi (basato su u.actions)', [
+    $row = $this->writeStatsSection($sheet, $row + 1, 'Attivi / Inattivi (basato su u.actions)', [
         ['Attivi', $active, $pct($active, $total)],
         ['Inattivi', $inactive, $pct($inactive, $total)],
     ]);
-    fputcsv($handle, [], ';');
 
-    fputcsv($handle, ['Inviti ricevuti dagli Attivi', $invitesActive], ';');
-    fputcsv($handle, ['Inviti ricevuti dagli Inattivi', $invitesInactive], ';');
-    fputcsv($handle, ['Azioni per invito (media globale)', $totalInvites > 0 ? round($totalActions / $totalInvites, 2) : 0], ';');
-}
+    $sheet->setCellValue('A' . $row, 'Inviti ricevuti dagli Attivi');
+    $sheet->setCellValue('B' . $row, $invitesActive);
+    $sheet->setCellValue('A' . ($row + 1), 'Inviti ricevuti dagli Inattivi');
+    $sheet->setCellValue('B' . ($row + 1), $invitesInactive);
+    $sheet->setCellValue('A' . ($row + 2), 'Azioni per invito (media globale)');
+    $sheet->setCellValue('B' . ($row + 2), $totalInvites > 0 ? round($totalActions / $totalInvites, 2) : 0);
+    $sheet->getStyle('A' . $row . ':A' . ($row + 2))->getFont()->setItalic(true);
 
-private function writeStatsSectionCsv($handle, string $title, array $rowsData): void
-{
-    fputcsv($handle, [$title], ';');
-    fputcsv($handle, ['Categoria', 'Totale', '%'], ';');
-
-    foreach ($rowsData as $data) {
-        fputcsv($handle, [$data[0], $data[1], $data[2] . '%'], ';');
+    foreach (range('A', 'D') as $colLetter) {
+        $sheet->getColumnDimension($colLetter)->setAutoSize(true);
     }
 }
 
-private function writeReportCostsCsv($handle, array $records, string $periodLabel, Carbon $startDate, Carbon $endDate): void
+private function writeStatsSection($sheet, int $startRow, string $title, array $rowsData): int
 {
+    $sheet->setCellValue('A' . $startRow, $title);
+    $sheet->mergeCells('A' . $startRow . ':D' . $startRow);
+    $sheet->getStyle('A' . $startRow)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle('A' . $startRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('2E75B6');
+
+    $headerRow = $startRow + 1;
+    $sheet->setCellValue('A' . $headerRow, 'Categoria');
+    $sheet->setCellValue('B' . $headerRow, 'Totale');
+    $sheet->setCellValue('C' . $headerRow, '%');
+    $sheet->getStyle('A' . $headerRow . ':C' . $headerRow)->getFont()->setBold(true);
+    $sheet->getStyle('A' . $headerRow . ':C' . $headerRow)->getFill()
+        ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCE6F1');
+
+    $row = $headerRow + 1;
+    foreach ($rowsData as $data) {
+        $sheet->setCellValue('A' . $row, $data[0]);
+        $sheet->setCellValue('B' . $row, $data[1]);
+        $sheet->setCellValue('C' . $row, $data[2] / 100);
+        $sheet->getStyle('C' . $row)->getNumberFormat()->setFormatCode('0.0%');
+        $row++;
+    }
+
+    $sheet->getStyle('A' . $startRow . ':C' . ($row - 1))->getBorders()->getAllBorders()
+        ->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D9E2EC');
+
+    return $row;
+}
+
+private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records, string $periodLabel, Carbon $startDate, Carbon $endDate): void
+{
+    $sheet = $spreadsheet->createSheet();
+    $sheet->setTitle('Costi');
+
     $referrals = $this->getActiveReferrals();
 
     $sourceMap = [];
@@ -2398,27 +2488,54 @@ private function writeReportCostsCsv($handle, array $records, string $periodLabe
         return $b['cost_total'] <=> $a['cost_total'];
     });
 
-    fputcsv($handle, ['Costi - ' . $periodLabel], ';');
-    fputcsv($handle, ['Costo calcolato su base CPI per fascia età/periodo campagna, allocato su utenti Attivi/Inattivi (criterio u.actions).'], ';');
-    fputcsv($handle, [], ';');
-    fputcsv($handle, ['Referral', 'Registrati', 'Attivi', 'Inattivi', '% Attivi', 'Costo Totale', 'Costo su Attivi', 'CPA (Costo/Attivo)'], ';');
+    $sheet->setCellValue('A1', 'Costi Recruitment - ' . $periodLabel);
+    $sheet->mergeCells('A1:H1');
+    $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1F4E78');
+    $sheet->getStyle('A1')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+    $sheet->getRowDimension(1)->setRowHeight(28);
 
+    $sheet->setCellValue('A2', 'Costo calcolato su base CPI per fascia età/periodo campagna, allocato su utenti Attivi/Inattivi (criterio u.actions).');
+    $sheet->mergeCells('A2:H2');
+    $sheet->getStyle('A2')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF555555'));
+
+    $headerRow = 4;
+    $headers = ['Referral', 'Registrati', 'Attivi', 'Inattivi', '% Attivi', 'Costo Totale', 'Costo su Attivi', 'CPA (Costo/Attivo)'];
+    $col = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($col . $headerRow, $header);
+        $col++;
+    }
+
+    $headerRange = 'A' . $headerRow . ':H' . $headerRow;
+    $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('2E75B6');
+    $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+    $rowIndex = $headerRow + 1;
     $totals = ['registered' => 0, 'active' => 0, 'inactive' => 0, 'cost_total' => 0.0, 'cost_active' => 0.0];
 
     foreach ($groups as $group) {
-        $activeRate = $group['registered'] > 0 ? round($group['active'] / $group['registered'] * 100, 1) : 0;
+        $activeRate = $group['registered'] > 0 ? $group['active'] / $group['registered'] : 0;
         $cpa = $group['active'] > 0 ? $group['cost_total'] / $group['active'] : 0;
 
-        fputcsv($handle, [
-            $group['label'],
-            $group['registered'],
-            $group['active'],
-            $group['inactive'],
-            $activeRate . '%',
-            round($group['cost_total'], 2),
-            round($group['cost_active'], 2),
-            round($cpa, 2),
-        ], ';');
+        $sheet->setCellValue('A' . $rowIndex, $group['label']);
+        $sheet->setCellValue('B' . $rowIndex, $group['registered']);
+        $sheet->setCellValue('C' . $rowIndex, $group['active']);
+        $sheet->setCellValue('D' . $rowIndex, $group['inactive']);
+        $sheet->setCellValue('E' . $rowIndex, $activeRate);
+        $sheet->getStyle('E' . $rowIndex)->getNumberFormat()->setFormatCode('0.0%');
+        $sheet->setCellValue('F' . $rowIndex, round($group['cost_total'], 2));
+        $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+        $sheet->setCellValue('G' . $rowIndex, round($group['cost_active'], 2));
+        $sheet->getStyle('G' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+        $sheet->setCellValue('H' . $rowIndex, round($cpa, 2));
+        $sheet->getStyle('H' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+
+        if ($rowIndex % 2 === 0) {
+            $sheet->getStyle('A' . $rowIndex . ':H' . $rowIndex)->getFill()
+                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F2F6FA');
+        }
 
         $totals['registered'] += $group['registered'];
         $totals['active'] += $group['active'];
@@ -2426,36 +2543,61 @@ private function writeReportCostsCsv($handle, array $records, string $periodLabe
         $totals['cost_total'] += $group['cost_total'];
         $totals['cost_active'] += $group['cost_active'];
 
+        $rowIndex++;
+
         // Breakdown per fascia età (solo se la campagna ha più di 1 segmento), come in Spese Referral
         if (count($group['segments']) > 1) {
             foreach ($group['segments'] as $segmentLabel => $segmentData) {
-                $segActiveRate = $segmentData['registered'] > 0 ? round($segmentData['active'] / $segmentData['registered'] * 100, 1) : 0;
+                $segActiveRate = $segmentData['registered'] > 0 ? $segmentData['active'] / $segmentData['registered'] : 0;
                 $segCpa = $segmentData['active'] > 0 ? $segmentData['cost_total'] / $segmentData['active'] : 0;
 
-                fputcsv($handle, [
-                    '    ↳ ' . $segmentLabel,
-                    $segmentData['registered'],
-                    $segmentData['active'],
-                    $segmentData['inactive'],
-                    $segActiveRate . '%',
-                    round($segmentData['cost_total'], 2),
-                    round($segmentData['cost_active'], 2),
-                    round($segCpa, 2),
-                ], ';');
+                $sheet->setCellValue('A' . $rowIndex, '    ↳ ' . $segmentLabel);
+                $sheet->setCellValue('B' . $rowIndex, $segmentData['registered']);
+                $sheet->setCellValue('C' . $rowIndex, $segmentData['active']);
+                $sheet->setCellValue('D' . $rowIndex, $segmentData['inactive']);
+                $sheet->setCellValue('E' . $rowIndex, $segActiveRate);
+                $sheet->getStyle('E' . $rowIndex)->getNumberFormat()->setFormatCode('0.0%');
+                $sheet->setCellValue('F' . $rowIndex, round($segmentData['cost_total'], 2));
+                $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+                $sheet->setCellValue('G' . $rowIndex, round($segmentData['cost_active'], 2));
+                $sheet->getStyle('G' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+                $sheet->setCellValue('H' . $rowIndex, round($segCpa, 2));
+                $sheet->getStyle('H' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+
+                $sheet->getStyle('A' . $rowIndex . ':H' . $rowIndex)->getFont()->setItalic(true)->setSize(9)->getColor()->setRGB('666666');
+
+                $rowIndex++;
             }
         }
     }
 
-    fputcsv($handle, [
-        'TOTALE',
-        $totals['registered'],
-        $totals['active'],
-        $totals['inactive'],
-        ($totals['registered'] > 0 ? round($totals['active'] / $totals['registered'] * 100, 1) : 0) . '%',
-        round($totals['cost_total'], 2),
-        round($totals['cost_active'], 2),
-        round($totals['active'] > 0 ? $totals['cost_total'] / $totals['active'] : 0, 2),
-    ], ';');
+    $lastDataRow = $rowIndex - 1;
+
+    $sheet->setCellValue('A' . $rowIndex, 'TOTALE');
+    $sheet->setCellValue('B' . $rowIndex, $totals['registered']);
+    $sheet->setCellValue('C' . $rowIndex, $totals['active']);
+    $sheet->setCellValue('D' . $rowIndex, $totals['inactive']);
+    $sheet->setCellValue('E' . $rowIndex, $totals['registered'] > 0 ? $totals['active'] / $totals['registered'] : 0);
+    $sheet->getStyle('E' . $rowIndex)->getNumberFormat()->setFormatCode('0.0%');
+    $sheet->setCellValue('F' . $rowIndex, round($totals['cost_total'], 2));
+    $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+    $sheet->setCellValue('G' . $rowIndex, round($totals['cost_active'], 2));
+    $sheet->getStyle('G' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+    $sheet->setCellValue('H' . $rowIndex, round($totals['active'] > 0 ? $totals['cost_total'] / $totals['active'] : 0, 2));
+    $sheet->getStyle('H' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+
+    $totalRange = 'A' . $rowIndex . ':H' . $rowIndex;
+    $sheet->getStyle($totalRange)->getFont()->setBold(true);
+    $sheet->getStyle($totalRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCE6F1');
+
+    $sheet->getStyle('A' . $headerRow . ':H' . $rowIndex)->getBorders()->getAllBorders()
+        ->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D9E2EC');
+
+    foreach (range('A', 'H') as $colLetter) {
+        $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+    }
+
+    $sheet->freezePane('A' . ($headerRow + 1));
 }
 
 private function findUserSegment($referralId, $regDate, $age, array $cpiByReferral): ?array
