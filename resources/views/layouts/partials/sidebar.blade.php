@@ -43,7 +43,7 @@
                         </a>
                     </li>
                     <li class="sidebar-item">
-                        <a class="sidebar-link" href="http://mailer.interactive-mr.com/admin/compila_mail_gest.php" target="_blank">
+                        <a class="sidebar-link" href="http://mailer.interactive-mr.com/admin/mailer.php" target="_blank">
                             <i class="align-middle" data-feather="coffee"></i> <span class="align-middle">MAILER</span>
                         </a>
                     </li>
