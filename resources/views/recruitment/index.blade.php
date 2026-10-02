@@ -395,7 +395,7 @@
             <div class="modal-footer">
                 <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Chiudi</button>
                 <button class="btn btn-primary" type="button" id="btnDownloadReport">
-                    Scarica Excel
+                    Scarica CSV
                 </button>
             </div>
         </div>
@@ -1871,7 +1871,7 @@ function resetReportForm() {
     reportError.classList.add('d-none');
     reportError.innerText = '';
     btnDownloadReport.disabled = false;
-    btnDownloadReport.innerHTML = 'Scarica Excel';
+    btnDownloadReport.innerHTML = 'Scarica CSV';
     loadReportReferrals(reportYear.value);
 }
 
@@ -1927,7 +1927,7 @@ btnDownloadReport.addEventListener('click', function () {
             }
             const disposition = response.headers.get('Content-Disposition') || '';
             const match = disposition.match(/filename="?([^"]+)"?/);
-            const fileName = match ? match[1] : 'recruitment_report.xlsx';
+            const fileName = match ? match[1] : 'recruitment_report.csv';
             return response.blob().then(function (blob) {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1946,7 +1946,7 @@ btnDownloadReport.addEventListener('click', function () {
         })
         .finally(function () {
             btnDownloadReport.disabled = false;
-            btnDownloadReport.innerHTML = 'Scarica Excel';
+            btnDownloadReport.innerHTML = 'Scarica CSV';
         });
 });
 
