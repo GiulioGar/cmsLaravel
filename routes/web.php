@@ -131,6 +131,12 @@ Route::middleware(['auth.custom'])->group(function () {
         Route::get('/panelQuality', [PanelQualityController::class, 'index'])->name('panelQuality.index');
         Route::get('/panelQuality/export-panelisti', [PanelQualityController::class, 'exportPanelisti'])->name('panelQuality.exportPanelisti');
         Route::get('/panelQuality/export-gruppi', [PanelQualityController::class, 'exportGruppi'])->name('panelQuality.exportGruppi');
+        // Contenuto delle tab 2-4 caricato via AJAX al primo click (lazy load, vedi memoria panelquality_monitor)
+        Route::get('/panelQuality/tab/ricerche', [PanelQualityController::class, 'tabRicerche'])->name('panelQuality.tabRicerche');
+        Route::get('/panelQuality/tab/panel-esterni', [PanelQualityController::class, 'tabPanelEsterni'])->name('panelQuality.tabPanelEsterni');
+        Route::get('/panelQuality/tab/duplicati', [PanelQualityController::class, 'tabDuplicati'])->name('panelQuality.tabDuplicati');
+        // Tab Panelisti: la pagina mostra subito le prime 30 righe, questa route porta il resto in background
+        Route::get('/panelQuality/tab/panelisti-full', [PanelQualityController::class, 'tabPanelistiFull'])->name('panelQuality.tabPanelistiFull');
 
     // ============================================
     // PANEL - Gestione Utenti

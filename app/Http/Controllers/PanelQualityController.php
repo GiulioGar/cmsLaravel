@@ -9,7 +9,95 @@ class PanelQualityController extends Controller
 {
     public function index()
     {
-        // ── Tab Panelisti ─────────────────────────────────────────────────────
+        $pd = $this->panelistiData();
+
+        // Tab Panelisti: 958 righe renderizzate tutte insieme pesavano ~2.5MB da sole
+        // (il grosso del peso dell'intera pagina, più di tab 2-4 messe insieme) ed è
+        // l'unica tab visibile da subito — quindi qui si manda solo la prima pagina
+        // (30 righe, stesso pageSize della paginazione client-side), il resto arriva
+        // in background via tabPanelistiFull() e sostituisce il tbody (vedi JS).
+        $panelistiPreview = $pd['panelistiTable']->take(30)->values();
+
+        // Tab 2-4: il contenuto completo (righe tabella) si carica via AJAX al primo
+        // click (vedi tabRicerche/tabPanelEsterni/tabDuplicati + lazy load in JS).
+        // Qui servono solo i conteggi per i badge in cima — query già leggere dopo
+        // il fix di collation (vedi panelControlLookup), quindi va bene ricalcolarle
+        // sia qui (per il numero) sia nell'endpoint lazy (per il rendering).
+        $countRicercheConDati  = $this->ricercheConDatiData()->count();
+        $annoSenzaDati         = (int) request('anno_senza_dati', now()->year);
+        $countRicerceSenzaDati = $this->ricerceSenzaDatiData($annoSenzaDati)->count();
+        $countPanelEsterni     = $this->panelEsterniRollupData()->count();
+
+        // Duplicati: il blocco "Analisi gruppi" è mostrato subito (nascosto via CSS
+        // finché non si apre la tab), quindi resta eager — è comunque economico
+        // (~35ms) dopo il fix di buildDuplicatiData(). Solo la tabella dettaglio
+        // per-UID (tab-duplicati) è deferita via lazy load.
+        $dupData            = $this->buildDuplicatiData();
+        $nUidDuplicati      = $dupData['nUidDuplicati'];
+        $nRicercheDuplicati = $dupData['nRicercheDuplicati'];
+        $gruppiSospetti     = $dupData['gruppiSospetti'];
+        $nGruppi            = count($gruppiSospetti);
+        $nAltoRischio       = count(array_filter($gruppiSospetti, fn ($g) => $g['risk'] === 'alto'));
+
+        return view('panelQuality', [
+            'globalStats'           => $pd['globalStats'],
+            'pctAnomali'            => $pd['pctAnomali'],
+            'panelisti'             => $pd['panelisti'],
+            'panelistiTable'        => $panelistiPreview,
+            'countRicercheConDati'  => $countRicercheConDati,
+            'countRicerceSenzaDati' => $countRicerceSenzaDati,
+            'countPanelEsterni'     => $countPanelEsterni,
+            'nUidDuplicati'         => $nUidDuplicati,
+            'nRicercheDuplicati'    => $nRicercheDuplicati,
+            'gruppiSospetti'        => $gruppiSospetti,
+            'nGruppi'               => $nGruppi,
+            'nAltoRischio'          => $nAltoRischio,
+        ]);
+    }
+
+    public function tabRicerche(Request $request)
+    {
+        $ricercheConDati  = $this->ricercheConDatiData();
+        $annoSenzaDati    = (int) $request->get('anno_senza_dati', now()->year);
+        $ricerceSenzaDati = $this->ricerceSenzaDatiData($annoSenzaDati);
+        $anniDisponibili  = $this->anniDisponibiliRicerche();
+
+        return view('panelQuality.tabs.ricerche', compact(
+            'ricercheConDati', 'ricerceSenzaDati', 'annoSenzaDati', 'anniDisponibili'
+        ));
+    }
+
+    public function tabPanelEsterni()
+    {
+        $panelEsterniRollup     = $this->panelEsterniRollupData();
+        $panelEsterniPerRicerca = $this->panelEsterniPerRicercaData();
+
+        return view('panelQuality.tabs.panel-esterni', compact(
+            'panelEsterniRollup', 'panelEsterniPerRicerca'
+        ));
+    }
+
+    public function tabPanelistiFull()
+    {
+        $pd = $this->panelistiData();
+
+        return view('panelQuality.tabs.panelisti-rows', ['panelistiTable' => $pd['panelistiTable']]);
+    }
+
+    public function tabDuplicati()
+    {
+        $dupData = $this->buildDuplicatiData();
+
+        return view('panelQuality.tabs.duplicati', [
+            'duplicati'          => $dupData['duplicati'],
+            'nUidDuplicati'      => $dupData['nUidDuplicati'],
+            'nRicercheDuplicati' => $dupData['nRicercheDuplicati'],
+        ]);
+    }
+
+    // ── Tab Panelisti ─────────────────────────────────────────────────────────
+    private function panelistiData(): array
+    {
         // Niente JOIN diretto con t_user_info in fase di aggregazione: la collation di
         // t_user_quality.uid (utf8mb4_unicode_ci) non combacia con t_user_info.user_id
         // (latin1_swedish_ci), quindi MySQL non può usare la PK e fa uno scan incrociato
@@ -81,23 +169,48 @@ class PanelQualityController extends Controller
             ? round($anomaleTotali / $intervisteTotali * 100, 1)
             : 0;
 
-        // ── Tab Ricerche — con dati qualità ──────────────────────────────────
-        $ricercheConDati = DB::table('t_user_quality as uq')
-            ->leftJoin('t_panel_control as pc', function ($join) {
-                $join->on('uq.sid', '=', 'pc.sur_id')
-                     ->on('uq.prj', '=', 'pc.prj');
-            })
+        return [
+            'panelisti'      => $panelisti,
+            'panelistiTable' => $panelistiTable,
+            'globalStats'    => $globalStats,
+            'pctAnomali'     => $pctAnomali,
+        ];
+    }
+
+    // ── Lookup condiviso t_panel_control/t_fornitoripanel ───────────────────────
+    // Niente JOIN diretto con t_user_quality: t_panel_control è latin1_swedish_ci
+    // (vs utf8mb4_unicode_ci di uq) e non ha indici secondari oltre alla PK — un
+    // JOIN forzerebbe uno scan incrociato ALL×ALL (misurato ~1.6s anche con poche
+    // migliaia di righe, e peggiora come N×M al crescere dei dati). Si passano qui
+    // solo i (prj,sid) già noti (da un'aggregazione fatta su uq da sola) e si
+    // recupera il resto con un whereIn mirato.
+    private function panelControlLookup(\Illuminate\Support\Collection $prjSidPairs): \Illuminate\Support\Collection
+    {
+        $prjSidPairs = $prjSidPairs->unique(fn ($p) => $p[0] . '|' . $p[1])->values();
+        if ($prjSidPairs->isEmpty()) {
+            return collect();
+        }
+
+        $placeholders = implode(',', array_fill(0, $prjSidPairs->count(), '(?, ?)'));
+        $bindings = $prjSidPairs->flatMap(fn ($p) => $p)->all();
+
+        return DB::table('t_panel_control as pc')
             ->leftJoin('t_fornitoripanel as fp', 'pc.panel', '=', 'fp.panel_code')
+            ->select('pc.prj', 'pc.sur_id', 'pc.description', 'pc.stato', 'pc.panel_interno', 'pc.panel_esterno', 'fp.name as panel_nome_esterno')
+            ->whereRaw("(pc.prj, pc.sur_id) IN ({$placeholders})", $bindings)
+            ->get()
+            ->keyBy(fn ($pc) => $pc->prj . '|' . $pc->sur_id);
+    }
+
+    // ── Tab Ricerche — con dati qualità ──────────────────────────────────────────
+    private function ricercheConDatiData(): \Illuminate\Support\Collection
+    {
+        $agg = DB::table('t_user_quality as uq')
             ->selectRaw("
                 uq.prj,
                 uq.sid,
-                pc.description,
-                pc.stato,
-                pc.panel_interno,
-                pc.panel_esterno,
-                fp.name                                                           AS panel_nome_esterno,
                 COUNT(*)                                                         AS interviste_valutate,
-                ROUND(AVG(uq.quality_score), 1)                                  AS score_medio,
+                AVG(uq.quality_score)                                            AS score_medio_raw,
                 SUM(CASE WHEN uq.quality_tier = 'regolare' THEN 1 ELSE 0 END)   AS regolari,
                 SUM(CASE WHEN uq.quality_tier = 'incerta'  THEN 1 ELSE 0 END)   AS incerte,
                 SUM(CASE WHEN uq.quality_tier = 'anomala'  THEN 1 ELSE 0 END)   AS anomale,
@@ -105,25 +218,42 @@ class PanelQualityController extends Controller
             ")
             ->whereNotNull('uq.quality_score')
             ->where('uq.panel', 'Interactive')
-            ->groupBy('uq.prj', 'uq.sid', 'pc.description', 'pc.stato', 'pc.panel_interno', 'pc.panel_esterno', 'fp.name')
-            ->orderByRaw('AVG(uq.quality_score) ASC')
+            ->groupBy('uq.prj', 'uq.sid')
             ->get();
 
-        // ── Tab Ricerche — senza dati qualità (filtrate per anno) ────────────
-        // panel_interno è numerico: > 0 indica ricerche con panel Interactive abilitato.
-        // Anti-join LEFT JOIN + WHERE NULL ottimizzato da MySQL.
-        $annoSenzaDati = (int) request('anno_senza_dati', now()->year);
+        $pcByPrjSid = $this->panelControlLookup($agg->map(fn ($r) => [$r->prj, $r->sid]));
 
-        $anniDisponibili = DB::table('t_panel_control')
+        return $agg->map(function ($r) use ($pcByPrjSid) {
+            $pc = $pcByPrjSid->get($r->prj . '|' . $r->sid);
+            $r->description       = $pc->description ?? null;
+            $r->stato              = $pc->stato ?? null;
+            $r->panel_interno      = $pc->panel_interno ?? null;
+            $r->panel_esterno      = $pc->panel_esterno ?? null;
+            $r->panel_nome_esterno = $pc->panel_nome_esterno ?? null;
+            // number_format (non round) per mantenere lo stesso formato a 1 decimale
+            // fisso di ROUND() lato SQL (es. "100.0", non "100").
+            $r->score_medio        = number_format((float) $r->score_medio_raw, 1);
+            return $r;
+        })->sortBy('score_medio_raw')->values();
+    }
+
+    // ── Tab Ricerche — senza dati qualità (filtrate per anno) ───────────────────
+    private function anniDisponibiliRicerche(): \Illuminate\Support\Collection
+    {
+        return DB::table('t_panel_control')
             ->selectRaw('DISTINCT YEAR(sur_date) as anno')
             ->whereNotNull('sur_date')
             ->where('complete', '>', 0)
             ->orderByDesc('anno')
             ->pluck('anno');
+    }
 
-        // Tutte le ricerche con completamenti ma senza dati qualità (Interactive + Esterno unificati).
+    private function ricerceSenzaDatiData(int $annoSenzaDati): \Illuminate\Support\Collection
+    {
+        // panel_interno è numerico: > 0 indica ricerche con panel Interactive abilitato.
+        // Anti-join LEFT JOIN + WHERE NULL ottimizzato da MySQL.
         // complete_int/complete_ext vengono passati alla blade per data-int/data-ext — filtro lato client.
-        $ricerceSenzaDati = DB::table('t_panel_control as pc')
+        return DB::table('t_panel_control as pc')
             ->leftJoin('t_user_quality as uq', function ($join) {
                 $join->on('pc.sur_id', '=', 'uq.sid')
                      ->on('pc.prj', '=', 'uq.prj');
@@ -135,9 +265,12 @@ class PanelQualityController extends Controller
             ->whereRaw('YEAR(pc.sur_date) = ?', [$annoSenzaDati])
             ->orderByDesc('pc.sur_date')
             ->get();
+    }
 
-        // ── Tab Panel Esterni — media per panel + dettaglio per ricerca ──────
-        $panelEsterniRollup = DB::table('t_user_quality as uq')
+    // ── Tab Panel Esterni — media per panel + dettaglio per ricerca ─────────────
+    private function panelEsterniRollupData(): \Illuminate\Support\Collection
+    {
+        return DB::table('t_user_quality as uq')
             ->selectRaw("
                 uq.panel,
                 COUNT(DISTINCT CONCAT(uq.prj, '|', uq.sid))                      AS ricerche,
@@ -153,20 +286,18 @@ class PanelQualityController extends Controller
             ->groupBy('uq.panel')
             ->orderByRaw('AVG(uq.quality_score) ASC')
             ->get();
+    }
 
-        $panelEsterniPerRicerca = DB::table('t_user_quality as uq')
-            ->leftJoin('t_panel_control as pc', function ($join) {
-                $join->on('uq.sid', '=', 'pc.sur_id')
-                     ->on('uq.prj', '=', 'pc.prj');
-            })
+    private function panelEsterniPerRicercaData(): \Illuminate\Support\Collection
+    {
+        // Stesso fix di ricercheConDatiData(): aggrega uq da sola (gruppo include anche uq.panel).
+        $agg = DB::table('t_user_quality as uq')
             ->selectRaw("
                 uq.prj,
                 uq.sid,
                 uq.panel,
-                pc.description,
-                pc.stato,
                 COUNT(*)                                                         AS interviste_valutate,
-                ROUND(AVG(uq.quality_score), 1)                                  AS score_medio,
+                AVG(uq.quality_score)                                            AS score_medio_raw,
                 SUM(CASE WHEN uq.quality_tier = 'regolare' THEN 1 ELSE 0 END)   AS regolari,
                 SUM(CASE WHEN uq.quality_tier = 'incerta'  THEN 1 ELSE 0 END)   AS incerte,
                 SUM(CASE WHEN uq.quality_tier = 'anomala'  THEN 1 ELSE 0 END)   AS anomale,
@@ -174,37 +305,18 @@ class PanelQualityController extends Controller
             ")
             ->whereNotNull('uq.quality_score')
             ->where('uq.panel', '!=', 'Interactive')
-            ->groupBy('uq.prj', 'uq.sid', 'uq.panel', 'pc.description', 'pc.stato')
-            ->orderByRaw('AVG(uq.quality_score) ASC')
+            ->groupBy('uq.prj', 'uq.sid', 'uq.panel')
             ->get();
 
-        // ── Tab Duplicati ─────────────────────────────────────────────────────
-        $dupData            = $this->buildDuplicatiData();
-        $duplicati          = $dupData['duplicati'];
-        $nUidDuplicati      = $dupData['nUidDuplicati'];
-        $nRicercheDuplicati = $dupData['nRicercheDuplicati'];
-        $gruppiSospetti     = $dupData['gruppiSospetti'];
-        $nGruppi            = count($gruppiSospetti);
-        $nAltoRischio       = count(array_filter($gruppiSospetti, fn ($g) => $g['risk'] === 'alto'));
+        $pcByPrjSid = $this->panelControlLookup($agg->map(fn ($r) => [$r->prj, $r->sid]));
 
-        return view('panelQuality', compact(
-            'globalStats',
-            'pctAnomali',
-            'panelisti',
-            'panelistiTable',
-            'ricercheConDati',
-            'ricerceSenzaDati',
-            'annoSenzaDati',
-            'anniDisponibili',
-            'panelEsterniRollup',
-            'panelEsterniPerRicerca',
-            'duplicati',
-            'nUidDuplicati',
-            'nRicercheDuplicati',
-            'gruppiSospetti',
-            'nGruppi',
-            'nAltoRischio'
-        ));
+        return $agg->map(function ($r) use ($pcByPrjSid) {
+            $pc = $pcByPrjSid->get($r->prj . '|' . $r->sid);
+            $r->description = $pc->description ?? null;
+            $r->stato        = $pc->stato ?? null;
+            $r->score_medio  = number_format((float) $r->score_medio_raw, 1);
+            return $r;
+        })->sortBy('score_medio_raw')->values();
     }
 
     public function exportPanelisti(Request $request)
@@ -253,14 +365,31 @@ class PanelQualityController extends Controller
 
     private function buildDuplicatiData(): array
     {
+        // Niente JOIN diretto con t_panel_control: stesso mismatch di collation già
+        // visto in index() (t_panel_similar è utf8mb4_unicode_ci, t_panel_control è
+        // latin1_swedish_ci e senza indice su prj/sur_id) — oggi costa poco perché
+        // t_panel_similar ha poche righe, ma cresce come N×M con le segnalazioni.
+        // Si recupera ps da sola, poi le description mirate sui soli (prj,sid) trovati.
         $duplicatiRaw = DB::table('t_panel_similar as ps')
-            ->leftJoin('t_panel_control as pc', function ($join) {
-                $join->on('ps.sid', '=', 'pc.sur_id')
-                     ->on('ps.prj', '=', 'pc.prj');
-            })
-            ->select('ps.uid', 'ps.prj', 'ps.sid', 'ps.similar_to', 'ps.flagged_at', 'pc.description')
+            ->select('ps.uid', 'ps.prj', 'ps.sid', 'ps.similar_to', 'ps.flagged_at')
             ->orderByDesc('ps.flagged_at')
             ->get();
+
+        $prjSidPairs = $duplicatiRaw->map(fn ($d) => [$d->prj, $d->sid])
+            ->unique(fn ($p) => $p[0] . '|' . $p[1])
+            ->values();
+
+        $descByPrjSid = collect();
+        if ($prjSidPairs->isNotEmpty()) {
+            $placeholders = implode(',', array_fill(0, $prjSidPairs->count(), '(?, ?)'));
+            $bindings = $prjSidPairs->flatMap(fn ($p) => $p)->all();
+
+            $descByPrjSid = DB::table('t_panel_control')
+                ->select('prj', 'sur_id', 'description')
+                ->whereRaw("(prj, sur_id) IN ({$placeholders})", $bindings)
+                ->get()
+                ->keyBy(fn ($pc) => $pc->prj . '|' . $pc->sur_id);
+        }
 
         // Aggrega per uid: segnalazioni count, ricerche coinvolte, conteggio simile_a
         $byUid = [];
@@ -280,7 +409,7 @@ class PanelQualityController extends Controller
             }
             $byUid[$uid]['segnalazioni']++;
             $rKey = $d->prj . '/' . $d->sid;
-            $byUid[$uid]['ricerche'][$rKey] = $d->description ?? $rKey;
+            $byUid[$uid]['ricerche'][$rKey] = optional($descByPrjSid->get($d->prj . '|' . $d->sid))->description ?? $rKey;
             foreach (array_filter(array_map('trim', explode(';', $d->similar_to))) as $other) {
                 $byUid[$uid]['simile_a'][$other] = ($byUid[$uid]['simile_a'][$other] ?? 0) + 1;
             }
