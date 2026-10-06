@@ -2445,8 +2445,6 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
                 'active' => 0,
                 'inactive' => 0,
                 'cost_total' => 0.0,
-                'cost_active' => 0.0,
-                'cost_inactive' => 0.0,
                 'segments' => [],
             ];
         }
@@ -2463,7 +2461,9 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
                 'active' => 0,
                 'inactive' => 0,
                 'cost_total' => 0.0,
-                'cost_active' => 0.0,
+                // CPI pattuito di questo segmento: univoco per costruzione (stesso label ==
+                // stessa fascia età), preso dal primo record incontrato.
+                'cpi' => $segment['cpi'] ?? null,
             ];
         }
 
@@ -2474,12 +2474,9 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
 
         if ($record['active'] === 'Attivo') {
             $groups[$key]['active']++;
-            $groups[$key]['cost_active'] += $cost;
             $groups[$key]['segments'][$segmentLabel]['active']++;
-            $groups[$key]['segments'][$segmentLabel]['cost_active'] += $cost;
         } else {
             $groups[$key]['inactive']++;
-            $groups[$key]['cost_inactive'] += $cost;
             $groups[$key]['segments'][$segmentLabel]['inactive']++;
         }
     }
@@ -2500,7 +2497,7 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
     $sheet->getStyle('A2')->getFont()->setItalic(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF555555'));
 
     $headerRow = 4;
-    $headers = ['Referral', 'Registrati', 'Attivi', 'Inattivi', '% Attivi', 'Costo Totale', 'Costo su Attivi', 'CPA (Costo/Attivo)'];
+    $headers = ['Referral', 'Registrati', 'Attivi', 'Inattivi', '% Attivi', 'CPI pattuito', 'Costo Totale', 'CPA (Costo/Attivo)'];
     $col = 'A';
     foreach ($headers as $header) {
         $sheet->setCellValue($col . $headerRow, $header);
@@ -2513,11 +2510,21 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
     $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
     $rowIndex = $headerRow + 1;
-    $totals = ['registered' => 0, 'active' => 0, 'inactive' => 0, 'cost_total' => 0.0, 'cost_active' => 0.0];
+    $totals = ['registered' => 0, 'active' => 0, 'inactive' => 0, 'cost_total' => 0.0];
+    // CPA per referral (riga TOTALE incluso), raccolto qui per riusarlo nella tabella di
+    // proiezione sotto, invece di ricalcolarlo una seconda volta.
+    $cpaByGroup = [];
 
-    foreach ($groups as $group) {
+    foreach ($groups as $groupKey => $group) {
         $activeRate = $group['registered'] > 0 ? $group['active'] / $group['registered'] : 0;
         $cpa = $group['active'] > 0 ? $group['cost_total'] / $group['active'] : 0;
+        $cpaByGroup[$groupKey] = ['label' => $group['label'], 'cpa' => $cpa];
+
+        // CPI pattuito sulla riga aggregata: ha senso solo se la campagna ha un'unica
+        // fascia età (un solo CPI); con più fasce i record sotto hanno CPI diversi,
+        // quindi si lascia vuoto qui e si mostra il dettaglio per fascia più sotto.
+        $singleSegment = count($group['segments']) === 1 ? reset($group['segments']) : null;
+        $groupCpi = $singleSegment['cpi'] ?? null;
 
         $sheet->setCellValue('A' . $rowIndex, $group['label']);
         $sheet->setCellValue('B' . $rowIndex, $group['registered']);
@@ -2525,9 +2532,14 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
         $sheet->setCellValue('D' . $rowIndex, $group['inactive']);
         $sheet->setCellValue('E' . $rowIndex, $activeRate);
         $sheet->getStyle('E' . $rowIndex)->getNumberFormat()->setFormatCode('0.0%');
-        $sheet->setCellValue('F' . $rowIndex, round($group['cost_total'], 2));
-        $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
-        $sheet->setCellValue('G' . $rowIndex, round($group['cost_active'], 2));
+        if ($groupCpi !== null) {
+            $sheet->setCellValue('F' . $rowIndex, round((float) $groupCpi, 2));
+            $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+        } else {
+            $sheet->setCellValue('F' . $rowIndex, '—');
+            $sheet->getStyle('F' . $rowIndex)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        }
+        $sheet->setCellValue('G' . $rowIndex, round($group['cost_total'], 2));
         $sheet->getStyle('G' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
         $sheet->setCellValue('H' . $rowIndex, round($cpa, 2));
         $sheet->getStyle('H' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
@@ -2541,7 +2553,6 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
         $totals['active'] += $group['active'];
         $totals['inactive'] += $group['inactive'];
         $totals['cost_total'] += $group['cost_total'];
-        $totals['cost_active'] += $group['cost_active'];
 
         $rowIndex++;
 
@@ -2557,9 +2568,14 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
                 $sheet->setCellValue('D' . $rowIndex, $segmentData['inactive']);
                 $sheet->setCellValue('E' . $rowIndex, $segActiveRate);
                 $sheet->getStyle('E' . $rowIndex)->getNumberFormat()->setFormatCode('0.0%');
-                $sheet->setCellValue('F' . $rowIndex, round($segmentData['cost_total'], 2));
-                $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
-                $sheet->setCellValue('G' . $rowIndex, round($segmentData['cost_active'], 2));
+                if ($segmentData['cpi'] !== null) {
+                    $sheet->setCellValue('F' . $rowIndex, round((float) $segmentData['cpi'], 2));
+                    $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+                } else {
+                    $sheet->setCellValue('F' . $rowIndex, '—');
+                    $sheet->getStyle('F' . $rowIndex)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                }
+                $sheet->setCellValue('G' . $rowIndex, round($segmentData['cost_total'], 2));
                 $sheet->getStyle('G' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
                 $sheet->setCellValue('H' . $rowIndex, round($segCpa, 2));
                 $sheet->getStyle('H' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
@@ -2571,7 +2587,8 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
         }
     }
 
-    $lastDataRow = $rowIndex - 1;
+    $totalsCpa = $totals['active'] > 0 ? $totals['cost_total'] / $totals['active'] : 0;
+    $cpaByGroup['__totale__'] = ['label' => 'TOTALE', 'cpa' => $totalsCpa];
 
     $sheet->setCellValue('A' . $rowIndex, 'TOTALE');
     $sheet->setCellValue('B' . $rowIndex, $totals['registered']);
@@ -2579,11 +2596,11 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
     $sheet->setCellValue('D' . $rowIndex, $totals['inactive']);
     $sheet->setCellValue('E' . $rowIndex, $totals['registered'] > 0 ? $totals['active'] / $totals['registered'] : 0);
     $sheet->getStyle('E' . $rowIndex)->getNumberFormat()->setFormatCode('0.0%');
-    $sheet->setCellValue('F' . $rowIndex, round($totals['cost_total'], 2));
-    $sheet->getStyle('F' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
-    $sheet->setCellValue('G' . $rowIndex, round($totals['cost_active'], 2));
+    $sheet->setCellValue('F' . $rowIndex, '—');
+    $sheet->getStyle('F' . $rowIndex)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+    $sheet->setCellValue('G' . $rowIndex, round($totals['cost_total'], 2));
     $sheet->getStyle('G' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
-    $sheet->setCellValue('H' . $rowIndex, round($totals['active'] > 0 ? $totals['cost_total'] / $totals['active'] : 0, 2));
+    $sheet->setCellValue('H' . $rowIndex, round($totalsCpa, 2));
     $sheet->getStyle('H' . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
 
     $totalRange = 'A' . $rowIndex . ':H' . $rowIndex;
@@ -2593,11 +2610,75 @@ private function buildReportCostsSheet(Spreadsheet $spreadsheet, array $records,
     $sheet->getStyle('A' . $headerRow . ':H' . $rowIndex)->getBorders()->getAllBorders()
         ->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D9E2EC');
 
+    $rowIndex += 3;
+    $this->buildCpaProjectionTable($sheet, $rowIndex, $cpaByGroup);
+
     foreach (range('A', 'H') as $colLetter) {
         $sheet->getColumnDimension($colLetter)->setAutoSize(true);
     }
 
     $sheet->freezePane('A' . ($headerRow + 1));
+}
+
+/**
+ * Tabella "quanto dovremmo spendere" per raggiungere N nuovi attivi, per referral,
+ * usando il CPA (costo totale / attivi) già calcolato nella tabella Costi sopra.
+ * Puramente indicativa: assume che il CPA storico resti costante.
+ */
+private function buildCpaProjectionTable($sheet, int $startRow, array $cpaByGroup): void
+{
+    $targets = [500, 750, 1000, 1250, 1500];
+
+    $sheet->setCellValue('A' . $startRow, 'Proiezione spesa stimata per nuovi attivi (a parità di CPA storico)');
+    $sheet->mergeCells('A' . $startRow . ':' . 'F' . $startRow);
+    $sheet->getStyle('A' . $startRow)->getFont()->setBold(true)->setSize(12)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle('A' . $startRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1F4E78');
+
+    $headerRow = $startRow + 1;
+    $headers = array_merge(['Referral'], array_map(fn ($t) => $t . ' attivi', $targets));
+    $col = 'A';
+    foreach ($headers as $header) {
+        $sheet->setCellValue($col . $headerRow, $header);
+        $col++;
+    }
+    $lastCol = chr(ord('A') + count($headers) - 1);
+    $headerRange = 'A' . $headerRow . ':' . $lastCol . $headerRow;
+    $sheet->getStyle($headerRange)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FFFFFFFF'));
+    $sheet->getStyle($headerRange)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('2E75B6');
+    $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+    $rowIndex = $headerRow + 1;
+    foreach ($cpaByGroup as $groupKey => $group) {
+        $isTotalRow = $groupKey === '__totale__';
+
+        $sheet->setCellValue('A' . $rowIndex, $group['label']);
+        $col = 'B';
+        foreach ($targets as $target) {
+            if ($group['cpa'] > 0) {
+                $sheet->setCellValue($col . $rowIndex, round($group['cpa'] * $target, 2));
+                $sheet->getStyle($col . $rowIndex)->getNumberFormat()->setFormatCode('#,##0.00 €');
+            } else {
+                // Nessun attivo storico su cui basare una stima: il CPA non è definito.
+                $sheet->setCellValue($col . $rowIndex, '—');
+                $sheet->getStyle($col . $rowIndex)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            }
+            $col++;
+        }
+
+        if ($isTotalRow) {
+            $sheet->getStyle('A' . $rowIndex . ':' . $lastCol . $rowIndex)->getFont()->setBold(true);
+            $sheet->getStyle('A' . $rowIndex . ':' . $lastCol . $rowIndex)->getFill()
+                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('DCE6F1');
+        } elseif ($rowIndex % 2 === 0) {
+            $sheet->getStyle('A' . $rowIndex . ':' . $lastCol . $rowIndex)->getFill()
+                ->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F2F6FA');
+        }
+
+        $rowIndex++;
+    }
+
+    $sheet->getStyle('A' . $headerRow . ':' . $lastCol . ($rowIndex - 1))->getBorders()->getAllBorders()
+        ->setBorderStyle(Border::BORDER_THIN)->getColor()->setRGB('D9E2EC');
 }
 
 private function findUserSegment($referralId, $regDate, $age, array $cpiByReferral): ?array
