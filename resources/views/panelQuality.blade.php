@@ -201,23 +201,9 @@
                             </span>
                         </td>
                         <td style="padding:10px 16px;">
-                            @php
-                                $grpPopLines = array_map(function ($m) {
-                                    $mInactive = $m['active'] !== null && (int) $m['active'] !== 1;
-                                    $mColor = $mInactive ? '#dc2626' : '#1a6fc4';
-                                    $label = e($m['uid']) . ($m['name'] ? ' — ' . e($m['name']) : '');
-                                    return '<a href="' . url('user/' . $m['uid']) . '" target="_blank"'
-                                          . ' style="font-family:monospace;font-size:11px;color:' . $mColor . ';text-decoration:none;' . ($mInactive ? 'font-weight:700;' : '') . '">'
-                                          . $label . '</a>';
-                                }, $g['membri']);
-                                $grpPopContent = implode('<br>', $grpPopLines);
-                            @endphp
-                            <span class="dup-sim-trigger" tabindex="0"
-                                  data-bs-toggle="popover"
-                                  data-bs-trigger="click"
-                                  data-bs-html="true"
-                                  data-bs-placement="right"
-                                  data-bs-content="{{ $grpPopContent }}"
+                            <span class="dup-group-trigger" tabindex="0"
+                                  data-group-idx="{{ $gi + 1 }}"
+                                  data-group-risk="{{ $riskLbl }}"
                                   style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:3px 8px;background:oklch(95% 0.03 250);border:1px solid oklch(85% 0.05 250);border-radius:5px;font-size:12px;color:oklch(35% 0.10 255);white-space:nowrap;">
                                 <i class="bi bi-people-fill" style="font-size:11px;opacity:.7;"></i>
                                 {{ $g['size'] }}&nbsp;{{ $g['size'] === 1 ? 'utente' : 'utenti' }}
@@ -242,6 +228,30 @@
         </div>
     </div>
     @endif
+
+    {{-- ═══ MODALE "Utenti del gruppo" — analisi segnali condivisi ═══════════ --}}
+    <div class="modal fade" id="pqGroupModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-people-fill me-2"></i>Analisi gruppo <span id="pqGroupModalRisk"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+                <div class="modal-body" id="pqGroupModalBody">
+                    <div class="pq-tab-skeleton">
+                        <div class="spinner-border text-secondary" role="status"></div>
+                        <div class="pq-tab-skeleton-text">Caricamento analisi…</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" target="_blank" id="pqGroupModalExport" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-download me-1"></i>Esporta questo gruppo
+                    </a>
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="tab-content">
 
@@ -508,6 +518,47 @@ document.addEventListener('click', function () {
     });
     elCG.addEventListener('show.bs.collapse', function () {
         document.getElementById('icnGruppi').style.transform = 'rotate(0deg)';
+    });
+})();
+
+/* ── Modale "Utenti del gruppo" — analisi segnali condivisi (IP, nascita,
+       città, giorno registrazione). Fetch on-demand ad ogni click, nessuna
+       cache: i dati sono derivati da query leggere ma è bene restino aggiornati
+       se nel frattempo si segnalano/bannano utenti. ───────────────────────── */
+(function () {
+    var modalEl = document.getElementById('pqGroupModal');
+    if (!modalEl) return;
+    var modal     = new bootstrap.Modal(modalEl);
+    var bodyEl    = document.getElementById('pqGroupModalBody');
+    var riskEl    = document.getElementById('pqGroupModalRisk');
+    var exportEl  = document.getElementById('pqGroupModalExport');
+    var baseUrl   = "{{ route('panelQuality.groupDetail') }}";
+    var exportBase = "{{ route('panelQuality.exportGruppi') }}";
+
+    document.querySelectorAll('.dup-group-trigger').forEach(function (el) {
+        el.addEventListener('click', function () {
+            var idx  = el.getAttribute('data-group-idx');
+            var risk = el.getAttribute('data-group-risk');
+
+            riskEl.textContent = '#' + idx + ' — rischio ' + risk;
+            exportEl.setAttribute('href', exportBase + '?gruppo=' + idx);
+            bodyEl.innerHTML = '<div class="pq-tab-skeleton">'
+                + '<div class="spinner-border text-secondary" role="status"></div>'
+                + '<div class="pq-tab-skeleton-text">Caricamento analisi…</div></div>';
+            modal.show();
+
+            fetch(baseUrl + '?gruppo=' + idx, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (resp) {
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    return resp.text();
+                })
+                .then(function (html) {
+                    bodyEl.innerHTML = html;
+                })
+                .catch(function () {
+                    bodyEl.innerHTML = '<div class="pq-empty">Errore nel caricamento dell\'analisi. Riprova.</div>';
+                });
+        });
     });
 })();
 

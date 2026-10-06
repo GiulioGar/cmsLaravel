@@ -137,6 +137,8 @@ Route::middleware(['auth.custom'])->group(function () {
         Route::get('/panelQuality/tab/duplicati', [PanelQualityController::class, 'tabDuplicati'])->name('panelQuality.tabDuplicati');
         // Tab Panelisti: la pagina mostra subito le prime 30 righe, questa route porta il resto in background
         Route::get('/panelQuality/tab/panelisti-full', [PanelQualityController::class, 'tabPanelistiFull'])->name('panelQuality.tabPanelistiFull');
+        // Modale "Utenti del gruppo" — dettaglio per analizzare se un gruppo sospetto è davvero la stessa persona
+        Route::get('/panelQuality/group-detail', [PanelQualityController::class, 'groupDetail'])->name('panelQuality.groupDetail');
 
     // ============================================
     // PANEL - Gestione Utenti

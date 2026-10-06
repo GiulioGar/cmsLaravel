@@ -95,6 +95,130 @@ class PanelQualityController extends Controller
         ]);
     }
 
+    /**
+     * Dettaglio analisi di un gruppo sospetto (modale "Utenti del gruppo"): per ogni
+     * membro raccoglie i segnali che aiutano a capire se è davvero la stessa persona
+     * (IP di prelievo condivisi, stessa data di nascita, stessa città, registrazioni
+     * ravvicinate) — stesso indice 1-based di exportGruppi().
+     */
+    public function groupDetail(Request $request)
+    {
+        $gruppoParam = $request->query('gruppo');
+        if (!is_numeric($gruppoParam)) {
+            return response()->json(['error' => 'Parametro gruppo mancante.'], 422);
+        }
+
+        $gruppiSospetti = $this->buildDuplicatiData()['gruppiSospetti'];
+        $idx = ((int) $gruppoParam) - 1;
+        if (!isset($gruppiSospetti[$idx])) {
+            return response()->json(['error' => 'Gruppo non trovato.'], 404);
+        }
+
+        $group = $gruppiSospetti[$idx];
+        $uids = array_column($group['membri'], 'uid');
+
+        // IP di prelievo (t_user_history.ip è popolato solo sugli eventi 'withdraw';
+        // niente indice su user_id ma il costo è irrilevante per un gruppo di poche
+        // decine di uid, ed è una query on-demand al click, non a carico pagina).
+        $ipRows = DB::table('t_user_history')
+            ->whereIn('user_id', $uids)
+            ->whereNotNull('ip')
+            ->where('ip', '!=', '')
+            ->orderBy('event_date')
+            ->get(['user_id', 'ip', 'event_date']);
+
+        // Raggruppa per uid+ip (un utente può prelevare più volte dallo stesso IP:
+        // conta come un solo "IP distinto", con prima/ultima data e occorrenze).
+        $ipOccurrencesByUid = [];
+        $uidsByIp = [];
+        foreach ($ipRows as $r) {
+            $ipOccurrencesByUid[$r->user_id][$r->ip][] = $r->event_date;
+            $uidsByIp[$r->ip][$r->user_id] = true;
+        }
+
+        // IP condivisi da 2+ membri del gruppo: un colore fisso per IP (ciclico sulla
+        // stessa palette usata per gli avatar in tab Panelisti), così lo stesso colore
+        // nelle righe di membri diversi salta all'occhio come "stesso IP".
+        $palette = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#f97316'];
+        $ipColor = [];
+        $sharedIpUids = [];
+        $colorIdx = 0;
+        foreach ($uidsByIp as $ip => $uidsForIp) {
+            if (count($uidsForIp) < 2) {
+                continue;
+            }
+            $ipColor[$ip] = $palette[$colorIdx % count($palette)];
+            $colorIdx++;
+            foreach ($uidsForIp as $u => $_) {
+                $sharedIpUids[$u] = true;
+            }
+        }
+
+        $nameByUid = array_column($group['membri'], 'name', 'uid');
+
+        // Un badge per IP distinto (non uno per ogni prelievo): etichetta "N volte"
+        // se riutilizzato più volte dallo stesso utente, colorato+tooltip "con chi"
+        // se condiviso con altri membri del gruppo, grigio neutro altrimenti.
+        $ipsByUid = [];
+        foreach ($ipOccurrencesByUid as $uid => $ipsForUid) {
+            foreach ($ipsForUid as $ip => $dates) {
+                $partners = array_values(array_diff(array_keys($uidsByIp[$ip] ?? []), [$uid]));
+                $ipsByUid[$uid][] = [
+                    'ip'       => $ip,
+                    'count'    => count($dates),
+                    'first'    => min($dates),
+                    'last'     => max($dates),
+                    'shared'   => isset($ipColor[$ip]),
+                    'color'    => $ipColor[$ip] ?? null,
+                    'partners' => array_map(fn ($p) => $p . ($nameByUid[$p] ?? null ? ' (' . $nameByUid[$p] . ')' : ''), $partners),
+                ];
+            }
+            // IP più recente per primo.
+            usort($ipsByUid[$uid], fn ($a, $b) => $b['last'] <=> $a['last']);
+        }
+
+        $groupBy = function (array $members, callable $keyFn) {
+            $buckets = [];
+            foreach ($members as $m) {
+                $key = $keyFn($m);
+                if ($key === null || $key === '') {
+                    continue;
+                }
+                $buckets[$key][] = $m['uid'];
+            }
+            return array_filter($buckets, fn ($uids) => count($uids) >= 2);
+        };
+
+        $uidToFlag = function (array $buckets) {
+            $map = [];
+            foreach ($buckets as $uids) {
+                foreach ($uids as $u) {
+                    $map[$u] = true;
+                }
+            }
+            return $map;
+        };
+
+        $sharedBirthUids  = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['birth_date']));
+        $sharedCityUids   = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['city'] ? trim(mb_strtolower($m['city'])) : null));
+        $sharedRegDayUids = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['reg_date'] ? substr($m['reg_date'], 0, 10) : null));
+
+        $members = array_map(function ($m) use ($ipsByUid, $sharedIpUids, $sharedBirthUids, $sharedCityUids, $sharedRegDayUids) {
+            $m['ips']          = $ipsByUid[$m['uid']] ?? [];
+            $m['flag_ip']      = isset($sharedIpUids[$m['uid']]);
+            $m['flag_birth']   = isset($sharedBirthUids[$m['uid']]);
+            $m['flag_city']    = isset($sharedCityUids[$m['uid']]);
+            $m['flag_reg_day'] = isset($sharedRegDayUids[$m['uid']]);
+            return $m;
+        }, $group['membri']);
+
+        return view('panelQuality.tabs.group-detail', [
+            'members'  => $members,
+            'risk'     => $group['risk'],
+            'gruppoIdx' => (int) $gruppoParam,
+        ]);
+    }
+
     // ── Tab Panelisti ─────────────────────────────────────────────────────────
     private function panelistiData(): array
     {
@@ -420,15 +544,18 @@ class PanelQualityController extends Controller
 
         $nomiDuplicati = DB::table('t_user_info')
             ->whereIn('user_id', array_keys($byUid))
-            ->select('user_id', 'first_name', 'second_name', 'email', 'active')
+            ->select('user_id', 'first_name', 'second_name', 'email', 'active', 'city', 'birth_date', 'reg_date')
             ->get()
             ->keyBy('user_id');
 
         foreach ($byUid as $uid => &$row) {
             $ui = $nomiDuplicati->get($uid);
-            $row['full_name'] = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null;
-            $row['email']     = $ui ? ($ui->email ?? null) : null;
-            $row['active']    = $ui ? (int) $ui->active : null;
+            $row['full_name']  = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null;
+            $row['email']      = $ui ? ($ui->email ?? null) : null;
+            $row['active']     = $ui ? (int) $ui->active : null;
+            $row['city']       = $ui ? ($ui->city ?? null) : null;
+            $row['birth_date'] = $ui ? ($ui->birth_date ?? null) : null;
+            $row['reg_date']   = $ui ? ($ui->reg_date ?? null) : null;
             arsort($row['simile_a']); // ordina per occorrenze desc
         }
         unset($row);
@@ -471,7 +598,15 @@ class PanelQualityController extends Controller
                 $segnTotali += $row['segnalazioni'];
                 foreach ($row['ricerche'] as $k => $v) { $ricercheGruppo[$k] = $v; }
                 foreach ($row['simile_a'] as $cnt) { if ($cnt > $maxRipetizioni) $maxRipetizioni = $cnt; }
-                $membriDettaglio[] = ['uid' => $uid, 'name' => $row['full_name'], 'email' => $row['email'], 'active' => $row['active']];
+                $membriDettaglio[] = [
+                    'uid'        => $uid,
+                    'name'       => $row['full_name'],
+                    'email'      => $row['email'],
+                    'active'     => $row['active'],
+                    'city'       => $row['city'],
+                    'birth_date' => $row['birth_date'],
+                    'reg_date'   => $row['reg_date'],
+                ];
             }
 
             $gruppiSospetti[] = [
