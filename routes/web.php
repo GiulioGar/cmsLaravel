@@ -139,6 +139,8 @@ Route::middleware(['auth.custom'])->group(function () {
         Route::get('/panelQuality/tab/panelisti-full', [PanelQualityController::class, 'tabPanelistiFull'])->name('panelQuality.tabPanelistiFull');
         // Modale "Utenti del gruppo" — dettaglio per analizzare se un gruppo sospetto è davvero la stessa persona
         Route::get('/panelQuality/group-detail', [PanelQualityController::class, 'groupDetail'])->name('panelQuality.groupDetail');
+        // Ammonisce i membri attivi (non bannati) di un gruppo sospetto — traccia l'evento su t_user_history
+        Route::post('/panelQuality/group-warn', [PanelQualityController::class, 'groupWarn'])->name('panelQuality.groupWarn');
 
     // ============================================
     // PANEL - Gestione Utenti

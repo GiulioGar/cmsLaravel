@@ -201,12 +201,19 @@
                             </span>
                         </td>
                         <td style="padding:10px 16px;">
+                            @php $gHasBreakdown = $g['bannati'] > 0 || $g['ammoniti'] > 0; @endphp
                             <span class="dup-group-trigger" tabindex="0"
                                   data-group-idx="{{ $gi + 1 }}"
                                   data-group-risk="{{ $riskLbl }}"
-                                  style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:3px 8px;background:oklch(95% 0.03 250);border:1px solid oklch(85% 0.05 250);border-radius:5px;font-size:12px;color:oklch(35% 0.10 255);white-space:nowrap;">
+                                  title="{{ $gHasBreakdown ? ($g['bannati'] . ' bannati · ' . $g['ammoniti'] . ' ammoniti · ' . ($g['attivi'] - $g['ammoniti']) . ' attivi liberi') : '' }}"
+                                  style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:3px 9px;background:oklch(95% 0.03 250);border:1px solid oklch(85% 0.05 250);border-radius:5px;font-size:12px;color:oklch(35% 0.10 255);white-space:nowrap;">
                                 <i class="bi bi-people-fill" style="font-size:11px;opacity:.7;"></i>
                                 {{ $g['size'] }}&nbsp;{{ $g['size'] === 1 ? 'utente' : 'utenti' }}
+                                @if($gHasBreakdown)
+                                    <span style="width:1px;height:12px;background:oklch(85% 0.02 250);"></span>
+                                    @if($g['bannati'] > 0)<span style="color:#dc2626;font-weight:700;">{{ $g['bannati'] }} ban.</span>@endif
+                                    @if($g['ammoniti'] > 0)<span style="color:#c2410c;font-weight:700;">{{ $g['ammoniti'] }} amm.</span>@endif
+                                @endif
                             </span>
                         </td>
                         <td style="padding:10px 16px;text-align:center;font-weight:800;font-size:15px;color:{{ $riskClr }};">
@@ -244,6 +251,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <span id="pqGroupModalWarnMsg" class="me-auto small text-muted"></span>
+                    <button type="button" id="pqGroupModalWarnBtn" class="btn btn-sm btn-outline-secondary" style="color:#c2410c;border-color:#fdba8c;">
+                        <i class="bi bi-megaphone me-1"></i>Ammonisci utenti attivi del gruppo
+                    </button>
                     <a href="#" target="_blank" id="pqGroupModalExport" class="btn btn-sm btn-outline-secondary">
                         <i class="bi bi-download me-1"></i>Esporta questo gruppo
                     </a>
@@ -532,33 +543,77 @@ document.addEventListener('click', function () {
     var bodyEl    = document.getElementById('pqGroupModalBody');
     var riskEl    = document.getElementById('pqGroupModalRisk');
     var exportEl  = document.getElementById('pqGroupModalExport');
+    var warnBtn   = document.getElementById('pqGroupModalWarnBtn');
+    var warnMsgEl = document.getElementById('pqGroupModalWarnMsg');
     var baseUrl   = "{{ route('panelQuality.groupDetail') }}";
     var exportBase = "{{ route('panelQuality.exportGruppi') }}";
+    var warnUrl   = "{{ route('panelQuality.groupWarn') }}";
+    var csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    var currentIdx = null;
+
+    function loadGroup(idx, risk, preserveMsg) {
+        currentIdx = idx;
+        if (!preserveMsg) warnMsgEl.textContent = '';
+        riskEl.textContent = '#' + idx + ' — rischio ' + risk;
+        exportEl.setAttribute('href', exportBase + '?gruppo=' + idx);
+        bodyEl.innerHTML = '<div class="pq-tab-skeleton">'
+            + '<div class="spinner-border text-secondary" role="status"></div>'
+            + '<div class="pq-tab-skeleton-text">Caricamento analisi…</div></div>';
+
+        return fetch(baseUrl + '?gruppo=' + idx, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (resp) {
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                return resp.text();
+            })
+            .then(function (html) {
+                bodyEl.innerHTML = html;
+            })
+            .catch(function () {
+                bodyEl.innerHTML = '<div class="pq-empty">Errore nel caricamento dell\'analisi. Riprova.</div>';
+            });
+    }
 
     document.querySelectorAll('.dup-group-trigger').forEach(function (el) {
         el.addEventListener('click', function () {
             var idx  = el.getAttribute('data-group-idx');
             var risk = el.getAttribute('data-group-risk');
-
-            riskEl.textContent = '#' + idx + ' — rischio ' + risk;
-            exportEl.setAttribute('href', exportBase + '?gruppo=' + idx);
-            bodyEl.innerHTML = '<div class="pq-tab-skeleton">'
-                + '<div class="spinner-border text-secondary" role="status"></div>'
-                + '<div class="pq-tab-skeleton-text">Caricamento analisi…</div></div>';
             modal.show();
-
-            fetch(baseUrl + '?gruppo=' + idx, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(function (resp) {
-                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                    return resp.text();
-                })
-                .then(function (html) {
-                    bodyEl.innerHTML = html;
-                })
-                .catch(function () {
-                    bodyEl.innerHTML = '<div class="pq-empty">Errore nel caricamento dell\'analisi. Riprova.</div>';
-                });
+            loadGroup(idx, risk);
         });
+    });
+
+    warnBtn.addEventListener('click', function () {
+        if (!currentIdx) return;
+        warnBtn.disabled = true;
+        warnMsgEl.textContent = 'Invio in corso…';
+
+        fetch(warnUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ gruppo: currentIdx }),
+        })
+            .then(function (resp) {
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                return resp.json();
+            })
+            .then(function (data) {
+                var parts = [];
+                if (data.warned && data.warned.length) parts.push(data.warned.length + ' nuovi ammoniti');
+                if (data.already && data.already.length) parts.push(data.already.length + ' già ammoniti in precedenza');
+                if (data.excluded) parts.push(data.excluded + ' esclusi (bannati/non attivi)');
+                warnMsgEl.textContent = parts.length ? parts.join(' · ') : 'Nessun utente attivo da ammonire in questo gruppo.';
+                return loadGroup(currentIdx, riskEl.textContent.replace(/^#\d+\s*—\s*rischio\s*/, ''), true);
+            })
+            .catch(function () {
+                warnMsgEl.textContent = 'Errore durante l\'invio. Riprova.';
+            })
+            .finally(function () {
+                warnBtn.disabled = false;
+            });
     });
 })();
 

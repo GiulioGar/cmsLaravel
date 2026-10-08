@@ -330,28 +330,15 @@
                         <table class="table table-sm align-middle mb-0">
                             <tbody>
                                 @foreach($duplicatiSospetti as $ds)
-                                @php
-                                    $dsPopLines = array_map(function ($m) {
-                                        $label = e($m['uid']) . ($m['name'] ? ' — ' . e($m['name']) : '');
-                                        return '<a href="' . url('user/' . $m['uid']) . '" target="_blank"'
-                                              . ' style="font-family:monospace;font-size:11px;color:#1a6fc4;text-decoration:none;">'
-                                              . $label . '</a>';
-                                    }, $ds['membri']);
-                                    $dsPopContent = implode('<br>', $dsPopLines);
-                                @endphp
                                 <tr>
                                     <td class="fw-semibold">
                                         <a href="{{ url('fieldControl') }}?prj={{ urlencode($ds['prj']) }}&sid={{ urlencode($ds['sid']) }}"
                                            target="_blank" rel="noopener" class="text-decoration-none text-primary small">{{ $ds['sid'] }}</a>
                                     </td>
                                     <td>
-                                        <span class="up-dup-sim-trigger" tabindex="0"
-                                              data-bs-toggle="popover"
-                                              data-bs-trigger="click"
-                                              data-bs-html="true"
-                                              data-bs-placement="left"
-                                              data-bs-content="{{ $dsPopContent }}"
-                                              style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:2px 8px;background:oklch(95% 0.03 250);border:1px solid oklch(85% 0.05 250);border-radius:5px;font-size:11px;color:oklch(35% 0.10 255);white-space:nowrap;">
+                                        <span tabindex="0"
+                                              @if(count($crossUtenti) > 0) data-bs-toggle="modal" data-bs-target="#modalCrossUsers" @endif
+                                              style="display:inline-flex;align-items:center;gap:5px;{{ count($crossUtenti) > 0 ? 'cursor:pointer;' : '' }}padding:2px 8px;background:oklch(95% 0.03 250);border:1px solid oklch(85% 0.05 250);border-radius:5px;font-size:11px;color:oklch(35% 0.10 255);white-space:nowrap;">
                                             <i class="bi bi-people-fill" style="font-size:10px;opacity:.7;"></i>
                                             {{ count($ds['membri']) }}&nbsp;{{ count($ds['membri']) === 1 ? 'utente' : 'utenti' }}
                                         </span>
@@ -830,6 +817,106 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{{-- Modale Analisi incroci duplicati/sospetti --}}
+<div class="modal fade" id="modalCrossUsers" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h6 class="modal-title mb-0"><i class="bi bi-diagram-3 me-1"></i> Analisi incroci — {{ $user->full_name }} ({{ $user->user_id }})</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        @php
+            $ucActiveLabel = function ($active) {
+                switch ((int) $active) {
+                    case 1: return 'Attivo';
+                    case 8: return 'Bannato/Sospeso';
+                    case 9: return 'Cancellato';
+                    default: return 'Non attivo';
+                }
+            };
+            $ucAmber = 'background:oklch(93% 0.08 70);color:oklch(38% 0.12 55);font-weight:700;';
+        @endphp
+        <div style="font-size:12px;color:oklch(45% 0.02 250);margin-bottom:12px;">
+            Per ciascun utente incrociato con <strong>{{ $user->user_id }}</strong>: quante volte sono stati segnalati insieme (in quante ricerche distinte) e quali dati coincidono. Città/Nascita/Registrazione/Provenienza in <strong style="color:#b45309;">ambra</strong> = uguali a quelli di {{ $user->user_id }}. Negli IP, badge colorato = IP di prelievo condiviso con {{ $user->user_id }} — grigio = IP visto solo per questo utente.
+        </div>
+        <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead>
+                <tr style="border-bottom:2px solid oklch(92% 0.006 250);background:oklch(98% 0.004 250);">
+                    <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">UID</th>
+                    <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Nome</th>
+                    <th style="padding:8px 12px;text-align:center;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Incroci</th>
+                    <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Città</th>
+                    <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Nascita</th>
+                    <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Registrazione</th>
+                    <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Provenienza</th>
+                    <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">IP prelievi</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach($crossUtenti as $i => $cu)
+            @php
+                $ucIsInactive = $cu['active'] !== null && (int) $cu['active'] !== 1;
+                $ucRowBg = $i % 2 === 0 ? '#fff' : 'oklch(98.5% 0.003 250)';
+                $ucUidColor = $ucIsInactive ? 'color:#dc2626;font-weight:700;' : 'color:#1a6fc4;';
+                $ucRicercheTooltip = implode(', ', $cu['ricerche']);
+            @endphp
+            <tr style="background:{{ $ucRowBg }};border-bottom:1px solid oklch(93% 0.004 250);">
+                <td style="padding:8px 12px;white-space:nowrap;">
+                    <a href="{{ url('user/' . $cu['uid']) }}" target="_blank" style="text-decoration:none;font-family:monospace;font-size:11px;{{ $ucUidColor }}">{{ $cu['uid'] }}</a>
+                    @if($ucIsInactive)
+                        <div style="font-size:10px;color:#dc2626;">{{ $ucActiveLabel($cu['active']) }}</div>
+                    @endif
+                </td>
+                <td style="padding:8px 12px;">{{ $cu['name'] ?: '—' }}</td>
+                <td style="padding:8px 12px;text-align:center;" title="{{ $ucRicercheTooltip }}">
+                    <span class="badge" style="background:oklch(93% 0.08 255);color:oklch(40% 0.14 255);font-weight:700;cursor:help;">{{ $cu['incroci'] }}</span>
+                </td>
+                <td style="padding:8px 12px;{{ $cu['flag_city'] ? $ucAmber : '' }}">{{ $cu['city'] ?: '—' }}</td>
+                <td style="padding:8px 12px;white-space:nowrap;{{ $cu['flag_birth'] ? $ucAmber : '' }}">
+                    {{ $cu['birth_date'] ? \Carbon\Carbon::parse($cu['birth_date'])->format('d/m/Y') : '—' }}
+                </td>
+                <td style="padding:8px 12px;white-space:nowrap;{{ $cu['flag_reg_day'] ? $ucAmber : '' }}">
+                    {{ $cu['reg_date'] ? \Carbon\Carbon::parse($cu['reg_date'])->format('d/m/Y H:i') : '—' }}
+                </td>
+                <td style="padding:8px 12px;{{ $cu['flag_provenienza'] ? $ucAmber : '' }}">{{ $cu['provenienza'] ?: '—' }}</td>
+                <td style="padding:8px 12px;">
+                    @if(count($cu['ips']) > 0)
+                        <div style="display:flex;flex-wrap:wrap;gap:3px;max-width:220px;">
+                        @foreach($cu['ips'] as $ipEntry)
+                            @php
+                                $ucBadgeStyle = $ipEntry['shared']
+                                    ? 'background:#3b82f6;color:#fff;font-weight:700;'
+                                    : 'background:oklch(94% 0.01 250);color:oklch(45% 0.02 250);';
+                                $ucTooltip = \Carbon\Carbon::parse($ipEntry['first'])->format('d/m/Y H:i');
+                                if ($ipEntry['last'] !== $ipEntry['first']) {
+                                    $ucTooltip .= ' → ' . \Carbon\Carbon::parse($ipEntry['last'])->format('d/m/Y H:i');
+                                }
+                                if ($ipEntry['count'] > 1) {
+                                    $ucTooltip .= ' (' . $ipEntry['count'] . ' prelievi)';
+                                }
+                                if ($ipEntry['shared']) {
+                                    $ucTooltip .= "\nCondiviso con {$user->user_id}";
+                                }
+                            @endphp
+                            <span title="{{ $ucTooltip }}" style="display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-family:monospace;white-space:nowrap;{{ $ucBadgeStyle }}">{{ $ipEntry['ip'] }}</span>
+                        @endforeach
+                        </div>
+                    @else
+                        <span style="color:oklch(60% 0.02 250);">—</span>
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+            </tbody>
+        </table>
         </div>
       </div>
     </div>
@@ -1649,25 +1736,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showToast('Errore durante il caricamento del log.', 'error');
-        });
-    });
-
-    // ===========================
-    // POPOVER SEGNALAZIONI DUPLICATI
-    // ===========================
-    document.querySelectorAll('.up-dup-sim-trigger').forEach(function (el) {
-        var pop = new bootstrap.Popover(el, { trigger: 'manual', html: true });
-        el.addEventListener('click', function (e) {
-            e.stopPropagation();
-            document.querySelectorAll('.up-dup-sim-trigger').forEach(function (other) {
-                if (other !== el) bootstrap.Popover.getInstance(other)?.hide();
-            });
-            pop.toggle();
-        });
-    });
-    document.addEventListener('click', function () {
-        document.querySelectorAll('.up-dup-sim-trigger').forEach(function (el) {
-            bootstrap.Popover.getInstance(el)?.hide();
         });
     });
 

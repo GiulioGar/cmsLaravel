@@ -199,16 +199,18 @@ class PanelQualityController extends Controller
             return $map;
         };
 
-        $sharedBirthUids  = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['birth_date']));
-        $sharedCityUids   = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['city'] ? trim(mb_strtolower($m['city'])) : null));
-        $sharedRegDayUids = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['reg_date'] ? substr($m['reg_date'], 0, 10) : null));
+        $sharedBirthUids       = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['birth_date']));
+        $sharedCityUids        = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['city'] ? trim(mb_strtolower($m['city'])) : null));
+        $sharedRegDayUids      = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['reg_date'] ? substr($m['reg_date'], 0, 10) : null));
+        $sharedProvenienzaUids = $uidToFlag($groupBy($group['membri'], fn ($m) => $m['provenienza'] ? trim(mb_strtolower($m['provenienza'])) : null));
 
-        $members = array_map(function ($m) use ($ipsByUid, $sharedIpUids, $sharedBirthUids, $sharedCityUids, $sharedRegDayUids) {
-            $m['ips']          = $ipsByUid[$m['uid']] ?? [];
-            $m['flag_ip']      = isset($sharedIpUids[$m['uid']]);
-            $m['flag_birth']   = isset($sharedBirthUids[$m['uid']]);
-            $m['flag_city']    = isset($sharedCityUids[$m['uid']]);
-            $m['flag_reg_day'] = isset($sharedRegDayUids[$m['uid']]);
+        $members = array_map(function ($m) use ($ipsByUid, $sharedIpUids, $sharedBirthUids, $sharedCityUids, $sharedRegDayUids, $sharedProvenienzaUids) {
+            $m['ips']              = $ipsByUid[$m['uid']] ?? [];
+            $m['flag_ip']          = isset($sharedIpUids[$m['uid']]);
+            $m['flag_birth']       = isset($sharedBirthUids[$m['uid']]);
+            $m['flag_city']        = isset($sharedCityUids[$m['uid']]);
+            $m['flag_reg_day']     = isset($sharedRegDayUids[$m['uid']]);
+            $m['flag_provenienza'] = isset($sharedProvenienzaUids[$m['uid']]);
             return $m;
         }, $group['membri']);
 
@@ -216,6 +218,75 @@ class PanelQualityController extends Controller
             'members'  => $members,
             'risk'     => $group['risk'],
             'gruppoIdx' => (int) $gruppoParam,
+        ]);
+    }
+
+    // Ammonisce i membri attivi (active=1) di un gruppo sospetto. Chi è già bannato viene
+    // escluso (non c'è nulla da ammonire), chi è già stato ammonito in precedenza viene
+    // saltato (idempotente per singolo utente, non per l'intero gruppo — se il gruppo cresce
+    // con nuovi membri in futuro, un nuovo click colpisce solo i nuovi).
+    public function groupWarn(Request $request)
+    {
+        $gruppoParam = $request->input('gruppo');
+        if (!is_numeric($gruppoParam)) {
+            return response()->json(['error' => 'Parametro gruppo mancante.'], 422);
+        }
+
+        $gruppiSospetti = $this->buildDuplicatiData()['gruppiSospetti'];
+        $idx = ((int) $gruppoParam) - 1;
+        if (!isset($gruppiSospetti[$idx])) {
+            return response()->json(['error' => 'Gruppo non trovato.'], 404);
+        }
+
+        $group = $gruppiSospetti[$idx];
+
+        $eligibleUids = [];
+        foreach ($group['membri'] as $m) {
+            if ((int) $m['active'] === 1) {
+                $eligibleUids[] = $m['uid'];
+            }
+        }
+
+        if (empty($eligibleUids)) {
+            return response()->json(['warned' => [], 'already' => [], 'excluded' => count($group['membri'])]);
+        }
+
+        $alreadyWarned = DB::table('t_user_history')
+            ->whereIn('user_id', $eligibleUids)
+            ->where('event_type', 'AMMONITO DUPLICATI')
+            ->pluck('user_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        $toWarn = array_values(array_diff($eligibleUids, $alreadyWarned));
+
+        if (!empty($toWarn)) {
+            $now      = now();
+            $operator = session('user_name') ?? 'staff';
+            $info     = "Gruppo sospetto duplicati ({$group['size']} utenti, rischio {$group['risk']}) — ammonito da {$operator}";
+
+            $pointsByUid = DB::table('t_user_info')->whereIn('user_id', $toWarn)->pluck('points', 'user_id');
+
+            $rows = array_map(function ($uid) use ($now, $info, $pointsByUid) {
+                $points = (int) ($pointsByUid[$uid] ?? 0);
+                return [
+                    'user_id'    => $uid,
+                    'event_date' => $now,
+                    'event_type' => 'AMMONITO DUPLICATI',
+                    'event_info' => $info,
+                    'prev_level' => $points,
+                    'new_level'  => $points,
+                ];
+            }, $toWarn);
+
+            DB::table('t_user_history')->insert($rows);
+        }
+
+        return response()->json([
+            'warned'   => $toWarn,
+            'already'  => array_values(array_intersect($eligibleUids, $alreadyWarned)),
+            'excluded' => count($group['membri']) - count($eligibleUids),
         ]);
     }
 
@@ -544,18 +615,19 @@ class PanelQualityController extends Controller
 
         $nomiDuplicati = DB::table('t_user_info')
             ->whereIn('user_id', array_keys($byUid))
-            ->select('user_id', 'first_name', 'second_name', 'email', 'active', 'city', 'birth_date', 'reg_date')
+            ->select('user_id', 'first_name', 'second_name', 'email', 'active', 'city', 'birth_date', 'reg_date', 'provenienza')
             ->get()
             ->keyBy('user_id');
 
         foreach ($byUid as $uid => &$row) {
             $ui = $nomiDuplicati->get($uid);
-            $row['full_name']  = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null;
-            $row['email']      = $ui ? ($ui->email ?? null) : null;
-            $row['active']     = $ui ? (int) $ui->active : null;
-            $row['city']       = $ui ? ($ui->city ?? null) : null;
-            $row['birth_date'] = $ui ? ($ui->birth_date ?? null) : null;
-            $row['reg_date']   = $ui ? ($ui->reg_date ?? null) : null;
+            $row['full_name']   = $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null;
+            $row['email']       = $ui ? ($ui->email ?? null) : null;
+            $row['active']      = $ui ? (int) $ui->active : null;
+            $row['city']        = $ui ? ($ui->city ?? null) : null;
+            $row['birth_date']  = $ui ? ($ui->birth_date ?? null) : null;
+            $row['reg_date']    = $ui ? ($ui->reg_date ?? null) : null;
+            $row['provenienza'] = $ui ? ($ui->provenienza ?? null) : null;
             arsort($row['simile_a']); // ordina per occorrenze desc
         }
         unset($row);
@@ -569,6 +641,16 @@ class PanelQualityController extends Controller
         // ── Componenti connesse (BFS) — gruppi "probabilmente stessa persona" ──
         // Il grafo è già simmetrico (record speculari in t_panel_similar).
         $byUidMap = array_column(iterator_to_array($duplicati), null, 'uid');
+
+        // Ultima "ammonizione" (event_type AMMONITO DUPLICATI su t_user_history) per uid,
+        // se presente — query mirata sui soli uid coinvolti in segnalazioni, non su tutta la tabella.
+        $ammonitiAt = DB::table('t_user_history')
+            ->whereIn('user_id', array_keys($byUidMap))
+            ->where('event_type', 'AMMONITO DUPLICATI')
+            ->selectRaw('user_id, MAX(event_date) as ultima')
+            ->groupBy('user_id')
+            ->pluck('ultima', 'user_id');
+
         $visitati = [];
         $gruppiSospetti = [];
 
@@ -599,15 +681,36 @@ class PanelQualityController extends Controller
                 foreach ($row['ricerche'] as $k => $v) { $ricercheGruppo[$k] = $v; }
                 foreach ($row['simile_a'] as $cnt) { if ($cnt > $maxRipetizioni) $maxRipetizioni = $cnt; }
                 $membriDettaglio[] = [
-                    'uid'        => $uid,
-                    'name'       => $row['full_name'],
-                    'email'      => $row['email'],
-                    'active'     => $row['active'],
-                    'city'       => $row['city'],
-                    'birth_date' => $row['birth_date'],
-                    'reg_date'   => $row['reg_date'],
+                    'uid'         => $uid,
+                    'name'        => $row['full_name'],
+                    'email'       => $row['email'],
+                    'active'      => $row['active'],
+                    'city'        => $row['city'],
+                    'birth_date'  => $row['birth_date'],
+                    'reg_date'    => $row['reg_date'],
+                    'provenienza' => $row['provenienza'],
+                    'ammonito_at' => $ammonitiAt[$uid] ?? null,
                 ];
             }
+
+            // Bannati/non attivi = qualsiasi active diverso da 1 (sospesi, cancellati, ecc.
+            // — per questo conteggio non interessa distinguere il motivo, solo che non sono
+            // più un problema "aperto"). Ammoniti = sottoinsieme degli attivi già avvisati.
+            $nAttivi = 0; $nBannati = 0; $nAmmoniti = 0;
+            foreach ($membriDettaglio as $m) {
+                if ((int) $m['active'] === 1) {
+                    $nAttivi++;
+                    if ($m['ammonito_at']) $nAmmoniti++;
+                } else {
+                    $nBannati++;
+                }
+            }
+
+            // Un gruppo con meno di 2 utenti ancora attivi non è più un "duplicato azionabile":
+            // o è già stato risolto (tutti bannati) o è rimasta una sola persona, che non fa
+            // più gruppo con nessuno — resta comunque visibile come storico nel profilo utente
+            // (sezione Segnalazioni duplicati/sospetti), solo non più qui.
+            if ($nAttivi < 2) continue;
 
             $gruppiSospetti[] = [
                 'membri'         => $membriDettaglio,
@@ -616,6 +719,9 @@ class PanelQualityController extends Controller
                 'segnalazioni'   => $segnTotali,
                 'max_rip'        => $maxRipetizioni,
                 'risk'           => $maxRipetizioni >= 2 ? 'alto' : 'medio',
+                'attivi'         => $nAttivi,
+                'bannati'        => $nBannati,
+                'ammoniti'       => $nAmmoniti,
             ];
         }
 

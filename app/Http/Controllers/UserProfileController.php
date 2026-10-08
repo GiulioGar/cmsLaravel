@@ -169,6 +169,93 @@ class UserProfileController extends Controller
         ];
     })->values();
 
+    // ── Analisi incroci: aggrega le segnalazioni per "altro utente" B (non per
+    // SID) per capire con chi A si incrocia più spesso e con quali dati in comune.
+    $incroci = [];
+    foreach ($similarRaw as $s) {
+        $rKey = $s->prj . '/' . $s->sid;
+        foreach (array_filter(array_map('trim', explode(';', $s->similar_to))) as $other) {
+            if (!isset($incroci[$other])) {
+                $incroci[$other] = ['count' => 0, 'ricerche' => [], 'ultima' => $s->flagged_at];
+            }
+            $incroci[$other]['count']++;
+            $incroci[$other]['ricerche'][$rKey] = $s->description ?? $rKey;
+            if ($s->flagged_at > $incroci[$other]['ultima']) {
+                $incroci[$other]['ultima'] = $s->flagged_at;
+            }
+        }
+    }
+
+    $crossUtenti = [];
+    if (!empty($incroci)) {
+        $otherUids = array_keys($incroci);
+
+        $otherInfo = DB::table('t_user_info')
+            ->whereIn('user_id', $otherUids)
+            ->select('user_id', 'first_name', 'second_name', 'email', 'active', 'city', 'birth_date', 'reg_date', 'provenienza')
+            ->get()
+            ->keyBy('user_id');
+
+        // IP di A: riuso $premi già caricato sopra (event_type='withdraw'), niente query aggiuntiva.
+        $aIps = $premi->pluck('ip')->filter()->unique()->values()->all();
+
+        // IP degli altri utenti B — query dedicata, ma mirata ai soli uid coinvolti.
+        $ipRowsOthers = DB::table('t_user_history')
+            ->whereIn('user_id', $otherUids)
+            ->whereNotNull('ip')
+            ->where('ip', '!=', '')
+            ->orderBy('event_date')
+            ->get(['user_id', 'ip', 'event_date']);
+
+        $ipsByOther = [];
+        foreach ($ipRowsOthers as $r) {
+            $ipsByOther[$r->user_id][$r->ip][] = $r->event_date;
+        }
+
+        $sameNonEmpty = function ($a, $b) {
+            $a = trim(mb_strtolower((string) $a));
+            $b = trim(mb_strtolower((string) $b));
+            return $a !== '' && $a === $b;
+        };
+
+        foreach ($incroci as $other => $info) {
+            $ui = $otherInfo->get($other);
+
+            $ipList = [];
+            foreach ($ipsByOther[$other] ?? [] as $ip => $dates) {
+                $ipList[] = [
+                    'ip'     => $ip,
+                    'count'  => count($dates),
+                    'first'  => min($dates),
+                    'last'   => max($dates),
+                    'shared' => in_array($ip, $aIps, true),
+                ];
+            }
+            usort($ipList, fn ($a, $b) => $b['last'] <=> $a['last']);
+
+            $crossUtenti[] = [
+                'uid'              => $other,
+                'name'             => $ui ? trim(($ui->first_name ?? '') . ' ' . ($ui->second_name ?? '')) : null,
+                'email'            => $ui->email ?? null,
+                'active'           => $ui ? (int) $ui->active : null,
+                'city'             => $ui->city ?? null,
+                'birth_date'       => $ui->birth_date ?? null,
+                'reg_date'         => $ui->reg_date ?? null,
+                'provenienza'      => $ui->provenienza ?? null,
+                'flag_city'        => $ui && $sameNonEmpty($ui->city, $user->city),
+                'flag_birth'       => $ui && $ui->birth_date && $ui->birth_date === $user->birth_date,
+                'flag_reg_day'     => $ui && $ui->reg_date && substr($ui->reg_date, 0, 10) === substr((string) $user->reg_date, 0, 10),
+                'flag_provenienza' => $ui && $sameNonEmpty($ui->provenienza, $user->provenienza),
+                'flag_ip'          => count(array_filter($ipList, fn ($e) => $e['shared'])) > 0,
+                'ips'              => $ipList,
+                'incroci'          => $info['count'],
+                'ricerche'         => $info['ricerche'],
+                'ultima'           => $info['ultima'],
+            ];
+        }
+        usort($crossUtenti, fn ($a, $b) => $b['incroci'] - $a['incroci']);
+    }
+
     // ===============================
     // 8) RETURN ALLA VIEW
     // ===============================
@@ -198,6 +285,7 @@ class UserProfileController extends Controller
         ],
         'storico' => $storico,
         'duplicatiSospetti' => $duplicatiSospetti,
+        'crossUtenti' => $crossUtenti,
     ]);
 }
 
@@ -855,6 +943,13 @@ $storicoQuery = DB::table('t_user_history')
                 $item->evento_color = 'dark';
                 $item->evento_icon = 'bi-fingerprint';
                 $item->tipologia = $item->event_info ?? 'Sospensione per duplicazione account';
+                break;
+
+            case 'ammonito duplicati':
+                $item->evento_label = 'AMMONITO';
+                $item->evento_color = 'orange';
+                $item->evento_icon = 'bi-megaphone-fill';
+                $item->tipologia = 'Gruppo sospetto duplicati';
                 break;
 
             case 'riattivazione':

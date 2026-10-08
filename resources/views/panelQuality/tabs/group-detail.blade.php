@@ -7,11 +7,11 @@
             default: return 'Non attivo';
         }
     };
-    $anyFlag = collect($members)->contains(fn ($m) => $m['flag_ip'] || $m['flag_birth'] || $m['flag_city'] || $m['flag_reg_day']);
+    $anyFlag = collect($members)->contains(fn ($m) => $m['flag_ip'] || $m['flag_birth'] || $m['flag_city'] || $m['flag_reg_day'] || $m['flag_provenienza']);
 @endphp
 
 <div style="font-size:12px;color:oklch(45% 0.02 250);margin-bottom:12px;">
-    Città/Nascita/Registrazione in <strong style="color:#b45309;">ambra</strong> = condivisi tra 2+ membri. Negli IP, <strong>stesso colore = stesso IP</strong> usato da membri diversi (passa il mouse per vedere con chi) — grigio = IP usato solo da questo utente.
+    Città/Nascita/Registrazione/Provenienza in <strong style="color:#b45309;">ambra</strong> = condivisi tra 2+ membri. Negli IP, <strong>stesso colore = stesso IP</strong> usato da membri diversi (passa il mouse per vedere con chi) — grigio = IP usato solo da questo utente.
     @if(!$anyFlag)
         <br><span style="color:oklch(50% 0.02 250);">Nessun segnale incrociato trovato oltre alla similarity delle risposte (nessun IP di prelievo registrato per questi utenti, o dati anagrafici tutti diversi).</span>
     @endif
@@ -27,6 +27,7 @@
             <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Città</th>
             <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Nascita</th>
             <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;">Registrazione</th>
+            <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Provenienza</th>
             <th style="padding:8px 12px;text-align:left;font-weight:600;color:oklch(45% 0.05 250);font-size:11px;text-transform:uppercase;letter-spacing:.04em;">IP prelievi</th>
         </tr>
     </thead>
@@ -45,6 +46,10 @@
             <a href="{{ url('user/' . $m['uid']) }}" target="_blank" style="text-decoration:none;font-family:monospace;font-size:11px;{{ $uidColor }}">{{ $m['uid'] }}</a>
             @if($isInactive)
                 <div style="font-size:10px;color:#dc2626;">{{ $activeLabel($m['active']) }}</div>
+            @elseif($m['ammonito_at'] ?? null)
+                <div style="font-size:10px;color:#c2410c;" title="Ammonito per sospetto duplicato">
+                    <i class="bi bi-megaphone-fill"></i> Ammonito {{ \Carbon\Carbon::parse($m['ammonito_at'])->format('d/m/Y') }}
+                </div>
             @endif
         </td>
         <td style="padding:8px 12px;">{{ $m['name'] ?: '—' }}</td>
@@ -56,6 +61,7 @@
         <td style="padding:8px 12px;white-space:nowrap;{{ $m['flag_reg_day'] ? $amber : '' }}">
             {{ $m['reg_date'] ? \Carbon\Carbon::parse($m['reg_date'])->format('d/m/Y H:i') : '—' }}
         </td>
+        <td style="padding:8px 12px;{{ $m['flag_provenienza'] ? $amber : '' }}">{{ $m['provenienza'] ?: '—' }}</td>
         <td style="padding:8px 12px;">
             @if(count($ipList) > 0)
                 <div style="display:flex;flex-wrap:wrap;gap:3px;max-width:260px;">
