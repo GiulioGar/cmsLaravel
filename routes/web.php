@@ -172,6 +172,9 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/user/{user_id}/bonus-malus', [UserProfileController::class, 'assignBonusMalus'])->name('user.bonus.malus');
     Route::post('/user/{user_id}/quality-malus', [UserProfileController::class, 'assignQualityMalus'])->name('user.quality.malus');
     Route::post('/user/{user_id}/ban', [UserProfileController::class, 'ban'])->name('user.ban');
+    Route::post('/user/{user_id}/notes', [UserProfileController::class, 'storeNote'])->name('user.notes.store');
+    Route::post('/user/{user_id}/notes/{note}/update', [UserProfileController::class, 'updateNote'])->name('user.notes.update');
+    Route::post('/user/{user_id}/notes/{note}/delete', [UserProfileController::class, 'deleteNote'])->name('user.notes.delete');
 
 
     // ============================================

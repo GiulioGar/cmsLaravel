@@ -354,9 +354,11 @@
             </div>
         </div>
 
-        {{-- ===== 3) PREMI ===== --}}
+        {{-- ===== 3) PREMI + NOTE ===== --}}
         <div class="col-12">
-            <div class="card">
+        <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card h-100">
                 <div class="card-header up-section-header">
                     <div class="up-section-left">
                         <div class="up-section-icon up-icon-amber"><i class="bi bi-gift"></i></div>
@@ -443,7 +445,54 @@
                     </table>
                 </div>
             </div>
-        </div>
+        </div>{{-- /col-lg-8 Premi --}}
+
+        {{-- ===== NOTE ===== --}}
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header up-section-header">
+                    <div class="up-section-left">
+                        <div class="up-section-icon up-icon-teal"><i class="bi bi-sticky-fill"></i></div>
+                        <h5 class="up-section-title up-title-teal mb-0">Note</h5>
+                    </div>
+                    <span class="badge bg-secondary">{{ $notes->count() }}</span>
+                </div>
+                <div class="card-body d-flex flex-column p-3">
+                    <div id="notesList" style="max-height:280px;overflow-y:auto;" class="mb-3 flex-grow-1">
+                        @forelse($notes as $n)
+                        <div class="up-note-item mb-3 pb-2 border-bottom"
+                             data-update-url="{{ route('user.notes.update', ['user_id' => $user->user_id, 'note' => $n->id]) }}"
+                             data-delete-url="{{ route('user.notes.delete', ['user_id' => $user->user_id, 'note' => $n->id]) }}">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <small class="text-muted">{{ \Carbon\Carbon::parse($n->created_at)->format('d/m/Y H:i') }}{{ $n->autore ? ' — ' . $n->autore : '' }}</small>
+                                <div class="up-note-actions text-nowrap">
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-muted up-note-edit" title="Modifica"><i class="bi bi-pencil"></i></button>
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-danger up-note-delete" title="Elimina"><i class="bi bi-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="up-note-text">{{ $n->nota }}</div>
+                            <textarea class="form-control form-control-sm up-note-edit-area d-none mt-1" rows="3">{{ $n->nota }}</textarea>
+                            <div class="up-note-edit-actions d-none mt-1">
+                                <button type="button" class="btn btn-sm btn-success up-note-save">Salva</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary up-note-cancel">Annulla</button>
+                            </div>
+                        </div>
+                        @empty
+                        <p class="text-muted text-center small py-3 mb-0">Nessuna nota per questo utente.</p>
+                        @endforelse
+                    </div>
+                    <div class="mt-auto">
+                        <textarea id="newNoteText" class="form-control form-control-sm mb-2" rows="2" placeholder="Scrivi una nota su questo utente…"></textarea>
+                        <button type="button" id="btnAddNote" class="btn btn-sm btn-teal w-100">
+                            <i class="bi bi-plus-lg me-1"></i>Aggiungi nota
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>{{-- /col-lg-4 Note --}}
+
+        </div>{{-- /row Premi+Note --}}
+        </div>{{-- /col-12 --}}
 
 {{-- ===== 4) STORICO ===== --}}
 <div class="col-12">
@@ -1134,6 +1183,111 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })
         .catch(() => showToast('Errore di connessione.', 'error'));
+    });
+
+    // ===========================
+    // NOTE UTENTE
+    // ===========================
+    const userNotesStoreUrl = @json(route('user.notes.store', ['user_id' => $user->user_id]));
+
+    document.getElementById('btnAddNote')?.addEventListener('click', () => {
+        const textEl = document.getElementById('newNoteText');
+        const nota = textEl.value.trim();
+        if (!nota) {
+            showToast('Scrivi qualcosa prima di salvare.', 'warning');
+            return;
+        }
+        fetch(userNotesStoreUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ nota }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Nota salvata.', 'success');
+                setTimeout(() => location.reload(), 300);
+            } else {
+                showToast(data.message || 'Errore durante il salvataggio.', 'error');
+            }
+        })
+        .catch(() => showToast('Errore di connessione.', 'error'));
+    });
+
+    document.querySelectorAll('.up-note-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const item = btn.closest('.up-note-item');
+            item.querySelector('.up-note-text').classList.add('d-none');
+            item.querySelector('.up-note-edit-area').classList.remove('d-none');
+            item.querySelector('.up-note-edit-actions').classList.remove('d-none');
+        });
+    });
+
+    document.querySelectorAll('.up-note-cancel').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const item = btn.closest('.up-note-item');
+            item.querySelector('.up-note-text').classList.remove('d-none');
+            item.querySelector('.up-note-edit-area').classList.add('d-none');
+            item.querySelector('.up-note-edit-actions').classList.add('d-none');
+        });
+    });
+
+    document.querySelectorAll('.up-note-save').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const item = btn.closest('.up-note-item');
+            const nota = item.querySelector('.up-note-edit-area').value.trim();
+            if (!nota) {
+                showToast('La nota non può essere vuota.', 'warning');
+                return;
+            }
+            fetch(item.dataset.updateUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ nota }),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Nota aggiornata.', 'success');
+                    setTimeout(() => location.reload(), 300);
+                } else {
+                    showToast(data.message || 'Errore durante l\'aggiornamento.', 'error');
+                }
+            })
+            .catch(() => showToast('Errore di connessione.', 'error'));
+        });
+    });
+
+    document.querySelectorAll('.up-note-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!confirm('Eliminare questa nota?')) return;
+            const item = btn.closest('.up-note-item');
+            fetch(item.dataset.deleteUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                },
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Nota eliminata.', 'success');
+                    setTimeout(() => location.reload(), 300);
+                } else {
+                    showToast(data.message || 'Errore durante l\'eliminazione.', 'error');
+                }
+            })
+            .catch(() => showToast('Errore di connessione.', 'error'));
+        });
     });
 
     // Riattiva da stato bannato

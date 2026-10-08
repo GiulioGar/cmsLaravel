@@ -257,7 +257,15 @@ class UserProfileController extends Controller
     }
 
     // ===============================
-    // 8) RETURN ALLA VIEW
+    // 8) NOTE
+    // ===============================
+    $notes = DB::table('t_user_notes')
+        ->where('uid', $uid)
+        ->orderByDesc('created_at')
+        ->get();
+
+    // ===============================
+    // 9) RETURN ALLA VIEW
     // ===============================
     return view('userProfile', [
         'user' => $user,
@@ -286,6 +294,7 @@ class UserProfileController extends Controller
         'storico' => $storico,
         'duplicatiSospetti' => $duplicatiSospetti,
         'crossUtenti' => $crossUtenti,
+        'notes' => $notes,
     ]);
 }
 
@@ -1149,6 +1158,58 @@ private function getRespintStatusMeta($status): array
                 'row_class' => 'respint-row-other',
             ];
     }
+}
+
+public function storeNote(Request $request, $user_id)
+{
+    $validated = $request->validate([
+        'nota' => 'required|string|max:5000',
+    ]);
+
+    $id = DB::table('t_user_notes')->insertGetId([
+        'uid'        => $user_id,
+        'nota'       => $validated['nota'],
+        'autore'     => session('user_name'),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    return response()->json(['success' => true, 'message' => 'Nota salvata.', 'id' => $id]);
+}
+
+public function updateNote(Request $request, $user_id, $note)
+{
+    $validated = $request->validate([
+        'nota' => 'required|string|max:5000',
+    ]);
+
+    $updated = DB::table('t_user_notes')
+        ->where('id', $note)
+        ->where('uid', $user_id)
+        ->update([
+            'nota'       => $validated['nota'],
+            'updated_at' => now(),
+        ]);
+
+    if (!$updated) {
+        return response()->json(['success' => false, 'message' => 'Nota non trovata.']);
+    }
+
+    return response()->json(['success' => true, 'message' => 'Nota aggiornata.']);
+}
+
+public function deleteNote($user_id, $note)
+{
+    $deleted = DB::table('t_user_notes')
+        ->where('id', $note)
+        ->where('uid', $user_id)
+        ->delete();
+
+    if (!$deleted) {
+        return response()->json(['success' => false, 'message' => 'Nota non trovata.']);
+    }
+
+    return response()->json(['success' => true, 'message' => 'Nota eliminata.']);
 }
 
 private function getGenderLabel($gender)
