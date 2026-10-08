@@ -213,6 +213,10 @@
                             <div class="up-info-key"><i class="bi bi-calendar-check up-info-key-icon"></i>Registrazione</div>
                             <div class="up-info-val">{{ $user->reg_date ?? '—' }}</div>
                         </div>
+                        <div class="up-info-row">
+                            <div class="up-info-key"><i class="bi bi-signpost-2 up-info-key-icon"></i>Provenienza</div>
+                            <div class="up-info-val">{{ $user->provenienza ?? '—' }}</div>
+                        </div>
                     </div>
                 </div>
             </div>

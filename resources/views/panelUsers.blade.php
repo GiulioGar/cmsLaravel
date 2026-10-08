@@ -536,7 +536,11 @@ function initPanelUsersTable() {
         language: {
             url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json",
             search: "Cerca utente:",
-            searchPlaceholder: "UID o email..."
+            searchPlaceholder: "UID o email...",
+            paginate: {
+                previous: '‹ Prec.',
+                next: 'Succ. ›'
+            }
         }
     });
 }

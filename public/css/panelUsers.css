@@ -76,6 +76,42 @@
     font-size: .82rem;
 }
 
+/* Le righe iniettate da DataTables (dataTables_filter/length in alto,
+   dataTables_info/paginate in basso) sono un <div class="row"> Bootstrap
+   "nudo", non annidato in colonne: ereditano i margini negativi di .row
+   (pensati per essere compensati dal padding di una .col) e sbordano oltre
+   il padding del card-body. Con .panel-users-card{overflow:hidden} quello
+   sbordamento viene tagliato invece che restare visibile — pagination e
+   info "Risultati da..." apparivano troncate in fondo alla card. */
+.panel-users-card .dataTables_wrapper > .row{
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.panel-users-card .dataTables_wrapper > .row > [class*="col-"]{
+    padding-left: 0;
+    padding-right: 0;
+}
+
+/* Riga in fondo (info "Risultati da..." + paginazione): invece dello split
+   rigido Bootstrap 5/12-7/12 (che strabordava con molte pagine), le impilo
+   full-width e le centro, con un separatore dalla tabella. */
+.panel-users-card .dataTables_wrapper > .row:has(.dataTables_paginate) > [class*="col-"]{
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+.panel-users-card .dataTables_wrapper > .row:has(.dataTables_paginate){
+    border-top: 1px solid rgba(0,0,0,.06);
+    margin-top: 1rem !important;
+    padding-top: 1rem;
+}
+
+.dataTables_wrapper .dataTables_info{
+    text-align: center;
+    margin-bottom: .6rem;
+}
+
 /* Search bar */
 .dataTables_wrapper .dataTables_filter{
     margin-bottom: .85rem;
@@ -168,6 +204,19 @@
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled{
     opacity: .45;
     cursor: not-allowed !important;
+}
+
+.dataTables_wrapper .dataTables_paginate{
+    text-align: center !important;
+}
+
+/* Con molte pagine (es. 1575) la lista bottoni non ci sta su una riga: la
+   centro e la lascio andare a capo su più righe invece di straripare. */
+.dataTables_wrapper .dataTables_paginate .pagination{
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: .4rem;
+    column-gap: .2rem;
 }
 
 /* Processing */
