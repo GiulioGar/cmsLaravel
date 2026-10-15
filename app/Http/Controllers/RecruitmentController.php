@@ -2817,13 +2817,15 @@ private function buildBonusEligibleQuery(Request $request, bool $excludeAlreadyB
 
     if ($excludeAlreadyBonused) {
         // Un utente che ha già ricevuto il bonus recruitment non può riaverlo:
-        // escluso a monte dal set eleggibile, non solo segnalato.
-        $query->whereNotExists(function ($sub) {
-            $sub->select(DB::raw(1))
-                ->from('t_user_history as h')
-                ->whereColumn('h.user_id', 'u.user_id')
-                ->where('h.event_type', 'BONUS RECRUITMENT');
-        });
+        // escluso a monte dal set eleggibile, non solo segnalato. Niente
+        // whereNotExists correlata: t_user_history ha ~730K righe e nessun
+        // indice su user_id/event_type, quindi costerebbe centinaia di ms
+        // PER OGNI riga del risultato — stesso bug gia' visto e corretto per
+        // il controllo email duplicate (vedi getDuplicateEmailsSet()).
+        $alreadyBonused = $this->getAlreadyBonusedUidsSet();
+        if (!empty($alreadyBonused)) {
+            $query->whereNotIn('u.user_id', array_keys($alreadyBonused));
+        }
     }
 
     if (!empty($regFrom)) {
@@ -2915,6 +2917,26 @@ private function getDuplicateEmailsSet(): array
             ->groupBy('email')
             ->havingRaw('COUNT(*) > 1')
             ->pluck('email')
+            ->flip()
+            ->toArray();
+    });
+}
+
+/**
+ * UID che hanno già ricevuto il bonus recruitment — una sola query diretta
+ * su t_user_history (nessuna correlazione per-riga), cacheata pochi minuti.
+ * L'insieme resta piccolo (solo chi ha ricevuto questo bonus specifico),
+ * quindi un whereNotIn con questa lista e' molto piu' leggero di una
+ * whereNotExists eseguita riga per riga su una tabella da 730K righe senza
+ * indice su user_id/event_type.
+ */
+private function getAlreadyBonusedUidsSet(): array
+{
+    return \Illuminate\Support\Facades\Cache::remember('recruitment_bonus_already_bonused_uids', 300, function () {
+        return DB::table('t_user_history')
+            ->where('event_type', 'BONUS RECRUITMENT')
+            ->distinct()
+            ->pluck('user_id')
             ->flip()
             ->toArray();
     });
@@ -3018,18 +3040,19 @@ public function assignBonus(Request $request)
             ->unique()
             ->values();
 
-        $targets = DB::table('t_user_info as u')
+        $alreadyBonused = $this->getAlreadyBonusedUidsSet();
+
+        $targetsQuery = DB::table('t_user_info as u')
             ->select('u.user_id', 'u.email', 'u.points', 'u.first_name')
-            ->whereIn('u.user_id', $userIds)
-            // Sicurezza anche in modalita' "selezionati": non riassegnare a chi
-            // ha gia' ricevuto il bonus recruitment (coerente col filtro "all").
-            ->whereNotExists(function ($sub) {
-                $sub->select(DB::raw(1))
-                    ->from('t_user_history as h')
-                    ->whereColumn('h.user_id', 'u.user_id')
-                    ->where('h.event_type', 'BONUS RECRUITMENT');
-            })
-            ->get();
+            ->whereIn('u.user_id', $userIds);
+
+        // Sicurezza anche in modalita' "selezionati": non riassegnare a chi
+        // ha gia' ricevuto il bonus recruitment (coerente col filtro "all").
+        if (!empty($alreadyBonused)) {
+            $targetsQuery->whereNotIn('u.user_id', array_keys($alreadyBonused));
+        }
+
+        $targets = $targetsQuery->get();
     } else {
         $targets = (clone $this->buildBonusEligibleQuery($request))
             ->select('u.user_id', 'u.email', 'u.points', 'u.first_name')
@@ -3088,6 +3111,13 @@ public function assignBonus(Request $request)
             ];
         }
     });
+
+    // Invalida subito il set cacheato "già bonusati": senza questo, chi è stato
+    // appena assegnato resterebbe eleggibile per un secondo invio fino allo
+    // scadere della cache (5 minuti) anche da un'altra richiesta/filtro.
+    if (!empty($updated)) {
+        \Illuminate\Support\Facades\Cache::forget('recruitment_bonus_already_bonused_uids');
+    }
 
     $emailsSent = 0;
     $emailsFailed = 0;
