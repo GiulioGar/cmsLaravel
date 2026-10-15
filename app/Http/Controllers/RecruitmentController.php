@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\BonusNotification;
+use Yajra\DataTables\Facades\DataTables;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -2789,6 +2792,327 @@ private function mapAge45Bucket($age)
     }
 
     return ((int) $age >= 45) ? 'over' : 'under';
+}
+
+// =========================================================================
+// ASSEGNA BONUS — filtro iscritti per periodo/provenienza/attivita', bulk bonus+email
+// =========================================================================
+
+/**
+ * Query base utenti eleggibili (attivi+confermati), con i filtri periodo/
+ * provenienza/attivita' applicati. Riusata sia dalla tabella (DataTables)
+ * sia dalla risoluzione "seleziona tutti i risultati" in assignBonus().
+ */
+private function buildBonusEligibleQuery(Request $request, bool $excludeAlreadyBonused = true)
+{
+    $regFrom = $request->input('reg_from');
+    $regTo   = $request->input('reg_to');
+    $referralId = $request->input('referral_id');
+    $attivitaMin = $request->input('attivita_min');
+
+    $query = DB::table('t_user_info as u')
+        ->where('u.active', 1)
+        ->where('u.confirm', 1)
+        ->where('u.email', 'not like', '%.top');
+
+    if ($excludeAlreadyBonused) {
+        // Un utente che ha già ricevuto il bonus recruitment non può riaverlo:
+        // escluso a monte dal set eleggibile, non solo segnalato.
+        $query->whereNotExists(function ($sub) {
+            $sub->select(DB::raw(1))
+                ->from('t_user_history as h')
+                ->whereColumn('h.user_id', 'u.user_id')
+                ->where('h.event_type', 'BONUS RECRUITMENT');
+        });
+    }
+
+    if (!empty($regFrom)) {
+        $query->whereDate('u.reg_date', '>=', $regFrom);
+    }
+
+    if (!empty($regTo)) {
+        $query->whereDate('u.reg_date', '<=', $regTo);
+    }
+
+    if (!empty($referralId)) {
+        $referral = DB::table('t_recruitment_referrals')->where('id', (int) $referralId)->first();
+
+        if ($referral && $referral->group_type === 'fallback') {
+            // Fallback: tutto cio' che non e' mappato da nessun altro referral attivo
+            $mappedSources = $this->getAllMappedSourceCodes();
+            $query->whereNotNull('u.provenienza')
+                ->where('u.provenienza', '<>', '');
+            if (!empty($mappedSources)) {
+                $query->whereNotIn('u.provenienza', $mappedSources);
+            }
+        } else {
+            $sources = $referral ? $this->parseSourceCodes($referral->source_codes) : [];
+            $query->whereIn('u.provenienza', !empty($sources) ? $sources : ['__none__']);
+        }
+    }
+
+    if ($attivitaMin !== null && $attivitaMin !== '') {
+        $query->where(DB::raw('COALESCE(u.actions, 0)'), '>=', (int) $attivitaMin);
+    }
+
+    return $query;
+}
+
+/**
+ * Tutti i source_codes mappati da un referral attivo (non-fallback) —
+ * serve per determinare cosa resta "non mappato" per il gruppo fallback.
+ */
+private function getAllMappedSourceCodes()
+{
+    $referrals = $this->getActiveReferrals();
+    $mapped = [];
+
+    foreach ($referrals as $referral) {
+        if ($referral->group_type === 'fallback') {
+            continue;
+        }
+        foreach ($this->parseSourceCodes($referral->source_codes) as $source) {
+            $mapped[] = $source;
+        }
+    }
+
+    return array_values(array_unique($mapped));
+}
+
+/**
+ * Label leggibile della provenienza (riusa gli stessi referral/source_codes
+ * di daily()/activity(), per restare coerenti con il resto del modulo).
+ */
+private function buildProvenienzaLabelMap()
+{
+    $referrals = $this->getActiveReferrals();
+    $map = [];
+
+    foreach ($referrals as $referral) {
+        if ($referral->group_type === 'fallback') {
+            continue;
+        }
+        foreach ($this->parseSourceCodes($referral->source_codes) as $source) {
+            $map[$source] = $referral->title;
+        }
+    }
+
+    return $map;
+}
+
+/**
+ * Email presenti su più account in TUTTA la tabella (indipendentemente da
+ * active/confirm/filtri) — una sola query aggregata, cacheata pochi minuti.
+ * Niente sottoquery correlata per-riga: su t_user_info senza indice su
+ * email, una EXISTS/COUNT per ogni riga del risultato filtrato porta il
+ * tempo di risposta a decine di secondi anche per poche righe restituite.
+ */
+private function getDuplicateEmailsSet(): array
+{
+    return \Illuminate\Support\Facades\Cache::remember('recruitment_bonus_duplicate_emails', 300, function () {
+        return DB::table('t_user_info')
+            ->select('email')
+            ->groupBy('email')
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck('email')
+            ->flip()
+            ->toArray();
+    });
+}
+
+public function bonusUsersData(Request $request)
+{
+    $labelMap = $this->buildProvenienzaLabelMap();
+    $duplicateEmails = $this->getDuplicateEmailsSet();
+
+    $query = $this->buildBonusEligibleQuery($request)
+        ->select([
+            'u.user_id',
+            'u.email',
+            'u.provenienza',
+            'u.reg_date',
+            DB::raw('COALESCE(u.actions, 0) as actions_count'),
+        ]);
+
+    // Conteggio duplicati sull'intero set filtrato (non solo la pagina corrente):
+    // riusa lo stesso set globale gia' cacheato, nessuna seconda query pesante.
+    $duplicateCount = empty($duplicateEmails) ? 0 : (clone $this->buildBonusEligibleQuery($request))
+        ->whereIn('u.email', array_keys($duplicateEmails))
+        ->count();
+
+    // Quanti, a parita' di filtri, sono stati esclusi perche' hanno gia' ricevuto
+    // il bonus recruitment in precedenza (solo per trasparenza in UI).
+    $alreadyBonusedCount = (clone $this->buildBonusEligibleQuery($request, false))->count()
+        - (clone $this->buildBonusEligibleQuery($request, true))->count();
+
+    return DataTables::of($query)
+        ->filterColumn('user_id', function ($q, $keyword) {
+            $q->where('u.user_id', 'like', "%{$keyword}%");
+        })
+        ->filterColumn('email', function ($q, $keyword) {
+            $q->where('u.email', 'like', "%{$keyword}%");
+        })
+        ->editColumn('user_id', function ($row) {
+            $uid = e($row->user_id);
+            $url = route('user.profile', ['user_id' => $row->user_id]);
+            return '<a target="_blank" href="' . $url . '" class="fw-bold text-primary text-decoration-none">' . $uid . '</a>';
+        })
+        ->editColumn('email', function ($row) use ($duplicateEmails) {
+            $email = e($row->email);
+            if (isset($duplicateEmails[$row->email])) {
+                return $email . ' <span class="badge bg-warning text-dark" title="Questa email è presente su più account">Email duplicata</span>';
+            }
+            return $email;
+        })
+        ->editColumn('provenienza', function ($row) use ($labelMap) {
+            if (empty($row->provenienza)) {
+                return 'N.D.';
+            }
+
+            $label = $labelMap[$row->provenienza] ?? null;
+
+            if ($label === null) {
+                return e($row->provenienza);
+            }
+
+            return e($label) . ' <span class="text-muted">(' . e($row->provenienza) . ')</span>';
+        })
+        ->editColumn('reg_date', function ($row) {
+            if (empty($row->reg_date)) {
+                return 'N.D.';
+            }
+            try {
+                return Carbon::parse($row->reg_date)->format('d/m/Y');
+            } catch (\Exception $e) {
+                return 'N.D.';
+            }
+        })
+        ->editColumn('actions_count', function ($row) {
+            return (int) $row->actions_count;
+        })
+        ->addColumn('select', function ($row) {
+            return '<input type="checkbox" class="bonus-row-check" value="' . e($row->user_id) . '">';
+        })
+        ->rawColumns(['user_id', 'email', 'provenienza', 'select'])
+        ->with('duplicate_count', $duplicateCount)
+        ->with('already_bonused_count', max(0, $alreadyBonusedCount))
+        ->make(true);
+}
+
+public function assignBonus(Request $request)
+{
+    $validated = $request->validate([
+        'value'     => 'required|integer|min:1',
+        'mode'      => 'required|in:selected,all',
+        'user_ids'  => 'required_if:mode,selected|array',
+        'user_ids.*' => 'string|max:10',
+    ]);
+
+    $value = (int) $validated['value'];
+    $mode  = $validated['mode'];
+
+    if ($mode === 'selected') {
+        $userIds = collect($validated['user_ids'] ?? [])
+            ->map(fn($v) => trim((string) $v))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $targets = DB::table('t_user_info as u')
+            ->select('u.user_id', 'u.email', 'u.points', 'u.first_name')
+            ->whereIn('u.user_id', $userIds)
+            // Sicurezza anche in modalita' "selezionati": non riassegnare a chi
+            // ha gia' ricevuto il bonus recruitment (coerente col filtro "all").
+            ->whereNotExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('t_user_history as h')
+                    ->whereColumn('h.user_id', 'u.user_id')
+                    ->where('h.event_type', 'BONUS RECRUITMENT');
+            })
+            ->get();
+    } else {
+        $targets = (clone $this->buildBonusEligibleQuery($request))
+            ->select('u.user_id', 'u.email', 'u.points', 'u.first_name')
+            ->get();
+    }
+
+    if ($targets->isEmpty()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Nessun utente da aggiornare.',
+        ], 422);
+    }
+
+    $maxBulk = 5000;
+    if ($targets->count() > $maxBulk) {
+        return response()->json([
+            'success' => false,
+            'message' => "Troppi utenti selezionati ({$targets->count()}). Restringi i filtri (max {$maxBulk} per invio).",
+        ], 422);
+    }
+
+    $assignedBy = session('user_name', 'Admin');
+    $updated = [];
+
+    DB::transaction(function () use ($targets, $value, $assignedBy, &$updated) {
+        foreach ($targets as $target) {
+            $user = DB::table('t_user_info')
+                ->where('user_id', $target->user_id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$user) {
+                continue;
+            }
+
+            $prev = (int) $user->points;
+            $new  = $prev + $value;
+
+            DB::table('t_user_info')
+                ->where('user_id', $target->user_id)
+                ->update(['points' => $new]);
+
+            DB::table('t_user_history')->insert([
+                'user_id'    => $target->user_id,
+                'event_date' => now(),
+                'event_type' => 'BONUS RECRUITMENT',
+                'event_info' => 'Bonus recruitment assegnato da ' . $assignedBy,
+                'prev_level' => $prev,
+                'new_level'  => $new,
+            ]);
+
+            $updated[] = [
+                'user_id' => $target->user_id,
+                'email'   => $user->email,
+                'nome'    => $target->first_name ?: $target->user_id,
+            ];
+        }
+    });
+
+    $emailsSent = 0;
+    $emailsFailed = 0;
+
+    foreach ($updated as $u) {
+        if (empty($u['email'])) {
+            continue;
+        }
+
+        try {
+            Mail::to($u['email'])->send(new BonusNotification($value, $u['nome'], $u['user_id']));
+            $emailsSent++;
+        } catch (\Exception $e) {
+            Log::error('Errore invio email bonus recruitment: ' . $e->getMessage());
+            $emailsFailed++;
+        }
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => count($updated) . ' utenti aggiornati, ' . $emailsSent . ' email inviate' . ($emailsFailed > 0 ? " ({$emailsFailed} fallite)" : '') . '.',
+        'updated' => count($updated),
+        'emails_sent' => $emailsSent,
+        'emails_failed' => $emailsFailed,
+    ]);
 }
 
 }

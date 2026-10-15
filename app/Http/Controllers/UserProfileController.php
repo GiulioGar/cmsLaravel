@@ -916,6 +916,14 @@ $storicoQuery = DB::table('t_user_history')
                 $item->tipologia = $item->event_info ?? 'Bonus';
                 break;
 
+            case 'bonus recruitment':
+                $item->bytes = abs($diff);
+                $item->evento_label = 'BONUS RECRUITMENT';
+                $item->evento_color = 'success';
+                $item->evento_icon = 'bi-gift-fill';
+                $item->tipologia = $item->event_info ?? 'Bonus recruitment';
+                break;
+
             case 'malus':
                 $item->bytes = -abs($diff);
                 $item->evento_label = 'MALUS';

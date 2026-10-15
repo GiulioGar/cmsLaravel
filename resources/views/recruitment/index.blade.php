@@ -27,6 +27,11 @@
             <i class="bi bi-plus-circle me-1"></i>
             Gestione Campagne
         </button>
+
+        <button type="button" class="btn btn-success" id="btnOpenBonusModal">
+            <i class="bi bi-gift me-1"></i>
+            Assegna Bonus
+        </button>
     </div>
 </div>
 
@@ -397,6 +402,109 @@
                 <button class="btn btn-primary" type="button" id="btnDownloadReport">
                     Scarica Excel
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bonusModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content recruitment-modal bonus-modal-content">
+            <div class="modal-header bonus-modal-header">
+                <div>
+                    <h5 class="modal-title">
+                        <i class="bi bi-gift-fill text-success me-2"></i>Assegna Bonus
+                    </h5>
+                    <div class="bonus-modal-subtitle">Filtra gli iscritti e assegna un bonus con notifica email</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+
+            <div class="modal-body bonus-modal-body">
+
+                <div class="bonus-filters-bar row g-3 align-items-end">
+                    <div class="col-md-3 filter-box">
+                        <label class="form-label">Iscritto dal</label>
+                        <input type="date" class="form-control" id="bonusRegFrom">
+                    </div>
+                    <div class="col-md-3 filter-box">
+                        <label class="form-label">Iscritto al</label>
+                        <input type="date" class="form-control" id="bonusRegTo">
+                    </div>
+                    <div class="col-md-3 filter-box">
+                        <label class="form-label">Provenienza</label>
+                        <select class="form-select" id="bonusReferral">
+                            <option value="">Tutte</option>
+                            @foreach($referrals as $ref)
+                                <option value="{{ $ref->id }}">{{ $ref->title }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3 filter-box">
+                        <label class="form-label">Attività</label>
+                        <input type="number" class="form-control" id="bonusAttivita" min="0" placeholder="Almeno N azioni">
+                    </div>
+                </div>
+
+                <div id="bonusAlert" class="alert d-none mt-3 mb-0"></div>
+
+                <div class="bonus-stats-row">
+                    <div class="bonus-stat-chip bonus-stat-chip-primary">
+                        <div class="bonus-stat-chip-value" id="bonusTotalCount">0</div>
+                        <div class="bonus-stat-chip-label">Utenti trovati</div>
+                    </div>
+                    <div class="bonus-stat-chip bonus-stat-chip-warning">
+                        <div class="bonus-stat-chip-value" id="bonusDuplicateCount">0</div>
+                        <div class="bonus-stat-chip-label">Email duplicate</div>
+                    </div>
+                    <div class="bonus-stat-chip bonus-stat-chip-muted">
+                        <div class="bonus-stat-chip-value" id="bonusAlreadyBonusedCount">0</div>
+                        <div class="bonus-stat-chip-label">Già bonusati (esclusi)</div>
+                    </div>
+                    <div class="bonus-stat-chip bonus-stat-chip-success">
+                        <div class="bonus-stat-chip-value" id="bonusSelectedChip">0</div>
+                        <div class="bonus-stat-chip-label" id="bonusSelectedChipLabel">Selezionati</div>
+                    </div>
+                </div>
+
+                <div class="bonus-selectall-row">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="bonusSelectAll">
+                        <label class="form-check-label" for="bonusSelectAll">
+                            Seleziona tutti i risultati del filtro
+                        </label>
+                    </div>
+                </div>
+
+                <div class="table-responsive bonus-table-wrap">
+                    <table id="bonus-users-table" class="table table-sm table-hover align-middle w-100 bonus-users-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>UID</th>
+                                <th>Email</th>
+                                <th>Provenienza</th>
+                                <th>Iscritto il</th>
+                                <th>Attività</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <div class="modal-footer bonus-modal-footer justify-content-between">
+                <div class="bonus-value-group">
+                    <label for="bonusValue">Bytes da assegnare</label>
+                    <input type="number" class="form-control" id="bonusValue" min="1">
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Chiudi</button>
+                    <button class="btn btn-success" type="button" id="btnConfirmAssignBonus">
+                        <i class="bi bi-send-fill me-1"></i>Assegna Bonus
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1948,6 +2056,244 @@ btnDownloadReport.addEventListener('click', function () {
             btnDownloadReport.disabled = false;
             btnDownloadReport.innerHTML = 'Scarica Excel';
         });
+});
+
+// =====================================================================
+// ASSEGNA BONUS
+// =====================================================================
+
+const btnOpenBonusModal = document.getElementById('btnOpenBonusModal');
+const bonusModalElement = document.getElementById('bonusModal');
+const bonusModal = new bootstrap.Modal(bonusModalElement);
+
+const bonusRegFrom = document.getElementById('bonusRegFrom');
+const bonusRegTo = document.getElementById('bonusRegTo');
+const bonusReferral = document.getElementById('bonusReferral');
+const bonusAttivita = document.getElementById('bonusAttivita');
+const bonusSelectAll = document.getElementById('bonusSelectAll');
+const bonusAlert = document.getElementById('bonusAlert');
+const bonusTotalCount = document.getElementById('bonusTotalCount');
+const bonusDuplicateCount = document.getElementById('bonusDuplicateCount');
+const bonusAlreadyBonusedCount = document.getElementById('bonusAlreadyBonusedCount');
+const bonusSelectedChip = document.getElementById('bonusSelectedChip');
+const bonusSelectedChipLabel = document.getElementById('bonusSelectedChipLabel');
+const bonusValue = document.getElementById('bonusValue');
+const btnConfirmAssignBonus = document.getElementById('btnConfirmAssignBonus');
+
+let bonusSelectedUids = new Set();
+let bonusTable = null;
+
+function hideBonusAlert() {
+    bonusAlert.classList.add('d-none');
+    bonusAlert.innerText = '';
+}
+
+function showBonusAlert(message, type) {
+    bonusAlert.className = 'alert mt-3 mb-0 alert-' + type;
+    bonusAlert.innerText = message;
+}
+
+function updateBonusSelectedSummary() {
+    if (bonusSelectAll.checked) {
+        bonusSelectedChip.innerText = bonusTotalCount.innerText;
+        bonusSelectedChipLabel.innerText = 'Selezionati (tutti i risultati)';
+    } else {
+        bonusSelectedChip.innerText = bonusSelectedUids.size;
+        bonusSelectedChipLabel.innerText = 'Selezionati';
+    }
+}
+
+function initBonusTable() {
+    if ($.fn.DataTable.isDataTable('#bonus-users-table')) {
+        return;
+    }
+
+    bonusTable = $('#bonus-users-table').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("recruitment.bonus.users") }}',
+            data: function (d) {
+                d.reg_from = bonusRegFrom.value;
+                d.reg_to = bonusRegTo.value;
+                d.referral_id = bonusReferral.value;
+                d.attivita_min = bonusAttivita.value;
+            },
+            dataSrc: function (json) {
+                bonusTotalCount.innerText = json.recordsFiltered || 0;
+                bonusDuplicateCount.innerText = json.duplicate_count || 0;
+                bonusAlreadyBonusedCount.innerText = json.already_bonused_count || 0;
+                updateBonusSelectedSummary();
+                return json.data;
+            }
+        },
+        pageLength: 25,
+        lengthMenu: [25, 50, 100, 200],
+        scrollX: false,
+        autoWidth: false,
+        order: [],
+        columns: [
+            { data: 'select', orderable: false, searchable: false, width: '30px' },
+            { data: 'user_id', name: 'u.user_id' },
+            { data: 'email', name: 'u.email' },
+            { data: 'provenienza', name: 'u.provenienza', orderable: false, searchable: false },
+            { data: 'reg_date', name: 'u.reg_date', orderable: false, searchable: false },
+            { data: 'actions_count', name: 'u.actions', orderable: false, searchable: false }
+        ],
+        language: {
+            url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json",
+            search: "Cerca:",
+            searchPlaceholder: "UID o email...",
+            paginate: {
+                previous: '‹ Prec.',
+                next: 'Succ. ›'
+            }
+        },
+        drawCallback: function () {
+            document.querySelectorAll('.bonus-row-check').forEach(function (cb) {
+                cb.checked = bonusSelectedUids.has(cb.value);
+                cb.disabled = bonusSelectAll.checked;
+            });
+        }
+    });
+}
+
+function formatDateInput(date) {
+    return date.toISOString().slice(0, 10);
+}
+
+function setBonusDefaultPeriod() {
+    const today = new Date();
+    const from = new Date();
+    from.setDate(today.getDate() - 30);
+
+    bonusRegTo.value = formatDateInput(today);
+    bonusRegFrom.value = formatDateInput(from);
+}
+
+btnOpenBonusModal.addEventListener('click', function () {
+    hideBonusAlert();
+    bonusSelectedUids.clear();
+    bonusSelectAll.checked = false;
+    bonusValue.value = '';
+    // Default: solo iscritti negli ultimi 30 giorni, per non caricare l'intero
+    // bacino (decine di migliaia di utenti) al primo apertura della modale.
+    setBonusDefaultPeriod();
+    bonusModal.show();
+
+    setTimeout(function () {
+        if (bonusTable) {
+            bonusTable.ajax.reload(null, true);
+        } else {
+            initBonusTable();
+        }
+    }, 200);
+});
+
+[bonusRegFrom, bonusRegTo, bonusReferral, bonusAttivita].forEach(function (el) {
+    el.addEventListener('change', function () {
+        if (bonusTable) {
+            bonusTable.ajax.reload(null, true);
+        }
+    });
+});
+
+document.getElementById('bonus-users-table').addEventListener('change', function (e) {
+    if (!e.target.classList.contains('bonus-row-check')) {
+        return;
+    }
+
+    if (e.target.checked) {
+        bonusSelectedUids.add(e.target.value);
+    } else {
+        bonusSelectedUids.delete(e.target.value);
+    }
+
+    updateBonusSelectedSummary();
+});
+
+bonusSelectAll.addEventListener('change', function () {
+    document.querySelectorAll('.bonus-row-check').forEach(function (cb) {
+        cb.disabled = bonusSelectAll.checked;
+    });
+    updateBonusSelectedSummary();
+});
+
+btnConfirmAssignBonus.addEventListener('click', function () {
+    hideBonusAlert();
+
+    const value = parseInt(bonusValue.value, 10);
+
+    if (!value || value < 1) {
+        showBonusAlert('Inserisci un valore di bytes valido.', 'danger');
+        return;
+    }
+
+    const mode = bonusSelectAll.checked ? 'all' : 'selected';
+    const count = bonusSelectAll.checked ? parseInt(bonusTotalCount.innerText, 10) : bonusSelectedUids.size;
+
+    if (count === 0) {
+        showBonusAlert('Nessun utente selezionato.', 'danger');
+        return;
+    }
+
+    if (!confirm('Confermi l\'assegnazione di ' + value + ' bytes a ' + count + ' utenti?\nVerrà inviata una email di notifica a ciascuno.')) {
+        return;
+    }
+
+    const payload = {
+        value: value,
+        mode: mode,
+        reg_from: bonusRegFrom.value,
+        reg_to: bonusRegTo.value,
+        referral_id: bonusReferral.value,
+        attivita_min: bonusAttivita.value
+    };
+
+    if (mode === 'selected') {
+        payload.user_ids = Array.from(bonusSelectedUids);
+    }
+
+    btnConfirmAssignBonus.disabled = true;
+    btnConfirmAssignBonus.innerHTML = 'Assegnazione...';
+
+    fetch('{{ route("recruitment.bonus.assign") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(function (response) {
+        return response.json().then(function (data) {
+            return { ok: response.ok, data: data };
+        });
+    })
+    .then(function (result) {
+        btnConfirmAssignBonus.disabled = false;
+        btnConfirmAssignBonus.innerHTML = 'Assegna Bonus';
+
+        if (!result.ok || !result.data.success) {
+            showBonusAlert(result.data.message || 'Errore durante l\'assegnazione.', 'danger');
+            return;
+        }
+
+        showBonusAlert(result.data.message, 'success');
+        bonusSelectedUids.clear();
+        bonusSelectAll.checked = false;
+        if (bonusTable) {
+            bonusTable.ajax.reload(null, true);
+        }
+    })
+    .catch(function (error) {
+        console.error(error);
+        btnConfirmAssignBonus.disabled = false;
+        btnConfirmAssignBonus.innerHTML = 'Assegna Bonus';
+        showBonusAlert('Errore di connessione.', 'danger');
+    });
 });
 
 });

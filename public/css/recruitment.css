@@ -1719,3 +1719,176 @@
 .recruitment-modal .modal-body {
     background: #ffffff;
 }
+
+/* =========================================================================
+   MODALE "ASSEGNA BONUS"
+   ========================================================================= */
+
+.bonus-modal-header {
+    align-items: flex-start;
+}
+
+.bonus-modal-subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.bonus-modal-body {
+    background: #f8fafc;
+    padding: 20px 24px;
+}
+
+.bonus-filters-bar {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px 16px 4px;
+    margin: 0 0 4px;
+}
+
+.bonus-stats-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.bonus-stat-chip {
+    flex: 1;
+    min-width: 150px;
+    border-radius: 14px;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    transition: box-shadow .15s ease;
+}
+
+.bonus-stat-chip-value {
+    font-size: 1.55rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.bonus-stat-chip-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #6b7280;
+    font-weight: 700;
+    margin-top: 3px;
+}
+
+.bonus-stat-chip-primary {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+.bonus-stat-chip-primary .bonus-stat-chip-value { color: #1d4ed8; }
+
+.bonus-stat-chip-warning {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+.bonus-stat-chip-warning .bonus-stat-chip-value { color: #b45309; }
+
+.bonus-stat-chip-muted {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+}
+.bonus-stat-chip-muted .bonus-stat-chip-value { color: #6b7280; }
+
+.bonus-stat-chip-success {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+.bonus-stat-chip-success .bonus-stat-chip-value { color: #047857; }
+
+.bonus-selectall-row {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 10px 16px;
+    margin-bottom: 14px;
+}
+
+.bonus-selectall-row .form-check-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.bonus-table-wrap {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.bonus-users-table {
+    margin-bottom: 0;
+}
+
+.bonus-users-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8fafc;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: #6b7280;
+    font-weight: 700;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.bonus-users-table tbody td {
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+
+.bonus-users-table .badge {
+    font-weight: 600;
+    border-radius: 20px;
+    font-size: 0.68rem;
+}
+
+.bonus-modal-footer {
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
+}
+
+.bonus-value-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bonus-value-group label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: #6b7280;
+    font-weight: 700;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.bonus-value-group .form-control {
+    width: 110px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+@media (max-width: 575.98px) {
+    .bonus-modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .bonus-value-group {
+        justify-content: space-between;
+    }
+}

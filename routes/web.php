@@ -230,6 +230,10 @@ Route::middleware(['auth.custom'])->group(function () {
     ->name('recruitment.report.export');
     Route::get('/recruitment/report/referrals', [RecruitmentController::class, 'reportReferrals'])
     ->name('recruitment.report.referrals');
+    Route::get('/recruitment/bonus/users', [RecruitmentController::class, 'bonusUsersData'])
+    ->name('recruitment.bonus.users');
+    Route::post('/recruitment/bonus/assign', [RecruitmentController::class, 'assignBonus'])
+    ->name('recruitment.bonus.assign');
 
     // ============================================
     // TICKETS
