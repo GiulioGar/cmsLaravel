@@ -157,6 +157,10 @@ Route::middleware(['auth.custom'])->group(function () {
         Route::post('/panelUsers/inactive-disable', [PanelUsersController::class, 'disableInactiveUsers'])->name('panelUsers.disableInactiveUsers');
         Route::get('/panelUsers/active-summary', [PanelUsersController::class, 'getActiveSummary'])->name('panelUsers.activeSummary');
         Route::post('/panelUsers/sync-actions', [PanelUsersController::class, 'syncActions'])->name('panelUsers.syncActions');
+        Route::get('/panelUsers/anomalies/summary', [PanelUsersController::class, 'getAnomaliesSummary'])->name('panelUsers.anomalies.summary');
+        Route::get('/panelUsers/anomalies/unconfirmed', [PanelUsersController::class, 'getUnconfirmedList'])->name('panelUsers.anomalies.unconfirmed');
+        Route::get('/panelUsers/anomalies/implausible-age', [PanelUsersController::class, 'getImplausibleAgeList'])->name('panelUsers.anomalies.implausibleAge');
+        Route::post('/panelUsers/anomalies/update-birth-date/{user_id}', [PanelUsersController::class, 'updateBirthDate'])->name('panelUsers.anomalies.updateBirthDate');
 
     // ============================================
     // USER actions

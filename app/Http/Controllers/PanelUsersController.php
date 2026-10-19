@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Carbon\Carbon;
@@ -265,7 +266,6 @@ public function getData(Request $request)
      */
     $query = DB::table('t_user_info as u')
         ->where('u.confirm', 1)
-        ->where('u.active', 1)
         ->leftJoinSub($invitesAgg, 'inv', function ($join) {
             $join->on('u.user_id', '=', 'inv.user_id');
         })
@@ -274,6 +274,7 @@ public function getData(Request $request)
             'u.email',
             'u.birth_date',
             'u.reg_date',
+            'u.active',
             DB::raw('COALESCE(inv.invites, 0) as invites'),
         ]);
 
@@ -336,8 +337,46 @@ public function getData(Request $request)
                 return 'N.D.';
             }
         })
-        ->rawColumns(['user_id', 'email'])
+        ->addColumn('stato', function ($row) {
+            $class = $this->getUserStatoBadgeClass($row->active);
+            $label = e($this->getUserStatoLabel($row->active));
+
+            return '<span class="pu-status-badge ' . $class . '">' . $label . '</span>';
+        })
+        ->rawColumns(['user_id', 'email', 'stato'])
         ->make(true);
+}
+
+private function getUserStatoLabel($active): string
+{
+    switch ((int) $active) {
+        case 1:
+            return 'Attivo';
+        case 0:
+            return 'Non attivo';
+        case 8:
+            return 'Bannato';
+        case 9:
+            return 'Cancellato';
+        default:
+            return 'Sconosciuto';
+    }
+}
+
+private function getUserStatoBadgeClass($active): string
+{
+    switch ((int) $active) {
+        case 1:
+            return 'pu-status-active';
+        case 0:
+            return 'pu-status-inactive';
+        case 8:
+            return 'pu-status-banned';
+        case 9:
+            return 'pu-status-cancelled';
+        default:
+            return 'pu-status-other';
+    }
 }
 
 
@@ -415,6 +454,7 @@ private function buildUserSearchQuery(array $values, string $mode)
             'province_id',
             'reg',
             'area',
+            'active',
         ]);
 
     if ($mode === 'email') {
@@ -432,7 +472,7 @@ public function searchPreview(Request $request)
         'mode' => 'required|in:uid,email',
         'values' => 'required|string',
         'fields' => 'nullable|array',
-        'fields.*' => 'in:nome,eta,provincia,regione,area',
+        'fields.*' => 'in:nome,eta,provincia,regione,area,stato',
     ]);
 
     $mode = $request->input('mode');
@@ -509,6 +549,10 @@ if (in_array('area', $fields)) {
     }
 }
 
+        if (in_array('stato', $fields)) {
+            $row['Stato'] = $this->getUserStatoLabel($user->active);
+        }
+
         return $row;
     })->values();
 
@@ -528,7 +572,7 @@ public function searchDownload(Request $request)
         'mode' => 'required|in:uid,email',
         'values' => 'required|string',
         'fields' => 'nullable|array',
-        'fields.*' => 'in:nome,eta,provincia,regione,area',
+        'fields.*' => 'in:nome,eta,provincia,regione,area,stato',
     ]);
 
     $mode = $request->input('mode');
@@ -563,6 +607,7 @@ public function searchDownload(Request $request)
     if (in_array('provincia', $fields)) $headers[] = 'Provincia';
     if (in_array('regione', $fields)) $headers[] = 'Regione';
     if (in_array('area', $fields)) $headers[] = 'Area';
+    if (in_array('stato', $fields)) $headers[] = 'Stato';
 
     fputcsv($handle, $headers, ';');
 
@@ -603,6 +648,10 @@ public function searchDownload(Request $request)
             $row[] = $decodeLocation
                 ? ($areaMap[$user->area] ?? 'N.D.')
                 : ($user->area ?? '');
+        }
+
+        if (in_array('stato', $fields)) {
+            $row[] = $this->getUserStatoLabel($user->active);
         }
 
         fputcsv($handle, $row, ';');
@@ -1061,6 +1110,110 @@ public function disableInactiveUsers(Request $request)
     ]);
 }
 
+/*
+ * Centro Controllo — verifiche automatiche sugli iscritti
+ */
 
+private function unconfirmedActiveZeroQuery()
+{
+    $since = now()->subMonths(6)->format('Y-m-d');
+
+    return DB::table('t_user_info')
+        ->where('active', 0)
+        ->where('reg_date', '>=', $since);
+}
+
+private function implausibleAgeQuery()
+{
+    return DB::table('t_user_info')
+        ->where('active', 1)
+        ->whereNotNull('birth_date')
+        ->where('birth_date', '<>', '0000-00-00')
+        ->whereRaw('(TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 14 OR TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) > 85)');
+}
+
+public function getAnomaliesSummary()
+{
+    return response()->json([
+        'success' => true,
+        'checks' => [
+            'unconfirmed'     => $this->unconfirmedActiveZeroQuery()->count(),
+            'implausible_age' => $this->implausibleAgeQuery()->count(),
+        ],
+    ]);
+}
+
+public function getUnconfirmedList()
+{
+    $rows = $this->unconfirmedActiveZeroQuery()
+        ->select('user_id', 'email', 'reg_date', 'confirm')
+        ->orderBy('reg_date', 'desc')
+        ->limit(2000)
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'count' => $rows->count(),
+        'rows' => $rows,
+    ]);
+}
+
+public function getImplausibleAgeList()
+{
+    $rows = $this->implausibleAgeQuery()
+        ->select('user_id', 'email', 'birth_date')
+        ->orderBy('birth_date', 'asc')
+        ->limit(2000)
+        ->get()
+        ->map(function ($row) {
+            try {
+                $row->age = Carbon::parse($row->birth_date)->age;
+            } catch (\Exception $e) {
+                $row->age = null;
+            }
+
+            return $row;
+        });
+
+    return response()->json([
+        'success' => true,
+        'count' => $rows->count(),
+        'rows' => $rows,
+    ]);
+}
+
+public function updateBirthDate(Request $request, $user_id)
+{
+    $validated = $request->validate([
+        'birth_date' => 'required|date|before:today',
+    ]);
+
+    try {
+        $user = DB::table('t_user_info')->where('user_id', $user_id)->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Utente non trovato.'], 404);
+        }
+
+        DB::table('t_user_info')
+            ->where('user_id', $user_id)
+            ->update(['birth_date' => $validated['birth_date']]);
+
+        DB::table('t_user_history')->insert([
+            'user_id'    => $user_id,
+            'event_date' => now(),
+            'event_type' => 'MODIFICA DATA NASCITA',
+            'event_info' => 'Data di nascita corretta da ' . ($user->birth_date ?? 'N.D.') . ' a ' . $validated['birth_date'] . ' (controllo età poco credibile)',
+            'prev_level' => $user->points ?? 0,
+            'new_level'  => $user->points ?? 0,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Data di nascita aggiornata correttamente.']);
+    } catch (\Exception $e) {
+        Log::error('Errore aggiornamento data di nascita: ' . $e->getMessage());
+
+        return response()->json(['success' => false, 'message' => 'Errore durante il salvataggio.'], 500);
+    }
+}
 
 }

@@ -558,3 +558,118 @@
 #inactiveUsersTable td:nth-child(5){
     white-space: nowrap;
 }
+
+/* Badge stato utente (tabella Utenti Panel + anteprima ricerca) */
+.pu-status-badge{
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.18rem 0.6rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.pu-status-active{
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.pu-status-inactive{
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.pu-status-banned{
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
+}
+
+.pu-status-cancelled{
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.pu-status-other{
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px dashed #d1d5db;
+}
+
+/* Tinta riga per stato (tabella Utenti Panel) */
+#panel-users-table tbody tr.pu-row-inactive > td{
+    background-color: #f8fafc;
+}
+
+#panel-users-table tbody tr.pu-row-banned > td{
+    background-color: #fffaf4;
+}
+
+#panel-users-table tbody tr.pu-row-cancelled > td{
+    background-color: #fef2f2;
+}
+
+/* ===== Centro Controllo ===== */
+
+.panel-control-card .card-header{
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.control-checks-row{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+}
+
+.control-check-icon-btn{
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+}
+
+.control-check-icon{
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    color: #fff;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
+.control-check-icon-btn:hover .control-check-icon{
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+}
+
+.control-check-icon-warning{
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.control-check-icon-danger{
+    background: linear-gradient(135deg, #f87171, #dc2626);
+}
+
+.control-check-dot{
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #b91c1c;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+}

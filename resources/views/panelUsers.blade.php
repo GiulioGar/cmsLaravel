@@ -34,11 +34,12 @@
                                 <th>Età</th>
                                 <th>Inviti</th>
                                 <th>Iscrizione</th>
+                                <th>Stato</th>
                             </tr>
                         </thead>
                             <tbody>
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">
+                                    <td colspan="6" class="text-center text-muted py-4">
                                         Caricamento utenti in corso...
                                     </td>
                                 </tr>
@@ -52,6 +53,106 @@
 
 {{-- COLONNA DESTRA --}}
 <div class="col-lg-5">
+
+<div class="card panel-users-card panel-control-card">
+    <div class="card-header">
+        <h4 class="mb-0"><i class="bi bi-shield-check me-2"></i>Centro Controllo</h4>
+        <small class="text-muted">Verifiche automatiche sugli iscritti, con azioni rapide</small>
+    </div>
+
+    <div class="card-body">
+        <div class="control-checks-row">
+
+            <div class="control-check-icon-btn" id="tileUnconfirmed"
+                 data-bs-toggle="tooltip" data-bs-placement="bottom"
+                 title="Email di conferma non ricevuta: iscritti non attivi negli ultimi 6 mesi. Clicca per verificare e abilitare manualmente.">
+                <span class="control-check-icon control-check-icon-warning">
+                    <i class="bi bi-envelope-exclamation"></i>
+                </span>
+                <span class="control-check-dot d-none" id="countUnconfirmed"></span>
+            </div>
+
+            <div class="control-check-icon-btn" id="tileImplausibleAge"
+                 data-bs-toggle="tooltip" data-bs-placement="bottom"
+                 title="Età poco credibile: attivi con meno di 14 o più di 85 anni. Clicca per verificare e correggere.">
+                <span class="control-check-icon control-check-icon-danger">
+                    <i class="bi bi-person-exclamation"></i>
+                </span>
+                <span class="control-check-dot d-none" id="countImplausibleAge"></span>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalUnconfirmed" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-envelope-exclamation me-2 text-warning"></i>Email di conferma non ricevuta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">
+                    Iscritti risultati <strong>non attivi</strong> negli ultimi 6 mesi: in alcuni casi l'email di conferma non arriva mai.
+                    Verifica e abilita manualmente chi ritieni valido.
+                </p>
+                <div id="unconfirmedLoader" class="text-center py-4">
+                    <div class="spinner-border text-secondary mb-2" style="width:1.8rem;height:1.8rem;"></div>
+                    <div class="text-muted small">Caricamento in corso...</div>
+                </div>
+                <div class="table-responsive d-none" id="unconfirmedTableWrap">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>UID</th>
+                                <th>Email</th>
+                                <th>Iscrizione</th>
+                                <th>Email confermata</th>
+                                <th class="text-end">Azione</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unconfirmedTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalImplausibleAge" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-exclamation me-2 text-danger"></i>Età poco credibile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">
+                    Utenti <strong>attivi</strong> con età anagrafica inferiore a 14 o superiore a 85 anni: correggi la data di nascita se errata.
+                </p>
+                <div id="implausibleAgeLoader" class="text-center py-4">
+                    <div class="spinner-border text-secondary mb-2" style="width:1.8rem;height:1.8rem;"></div>
+                    <div class="text-muted small">Caricamento in corso...</div>
+                </div>
+                <div class="table-responsive d-none" id="implausibleAgeTableWrap">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>UID</th>
+                                <th>Email</th>
+                                <th>Età</th>
+                                <th>Nuova data di nascita</th>
+                                <th class="text-end">Azione</th>
+                            </tr>
+                        </thead>
+                        <tbody id="implausibleAgeTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
  <div class="card panel-users-card panel-stats-card">
     <div class="card-header">
@@ -198,6 +299,11 @@
                 <div class="form-check">
                     <input class="form-check-input search-field" type="checkbox" value="area" id="fArea">
                     <label for="fArea" class="form-check-label">Area</label>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input search-field" type="checkbox" value="stato" id="fStato">
+                    <label for="fStato" class="form-check-label">Stato</label>
                 </div>
             </div>
         </div>
@@ -524,15 +630,28 @@ function initPanelUsersTable() {
             { targets: 1, width: '240px' },
             { targets: 2, width: '80px' },
             { targets: 3, width: '90px' },
-            { targets: 4, width: '110px' }
+            { targets: 4, width: '110px' },
+            { targets: 5, width: '110px' }
         ],
         columns: [
             { data: 'user_id',    name: 'u.user_id', searchable: true,  orderable: true },
             { data: 'email',      name: 'u.email', searchable: true,    orderable: true },
             { data: 'birth_date', name: 'u.birth_date', searchable: false, orderable: false },
             { data: 'invites',    name: 'invites', searchable: false,   orderable: true },
-            { data: 'reg_date',   name: 'u.reg_date', searchable: false, orderable: true }
+            { data: 'reg_date',   name: 'u.reg_date', searchable: false, orderable: true },
+            { data: 'stato',      name: 'u.active', searchable: false, orderable: true }
         ],
+        createdRow: function (row, data) {
+            var rowClass = {
+                0: 'pu-row-inactive',
+                8: 'pu-row-banned',
+                9: 'pu-row-cancelled'
+            }[parseInt(data.active, 10)];
+
+            if (rowClass) {
+                $(row).addClass(rowClass);
+            }
+        },
         language: {
             url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/it-IT.json",
             search: "Cerca utente:",
@@ -1096,6 +1215,203 @@ $(document).ready(function () {
             }
         });
     });
+});
+</script>
+
+<script>
+$(document).ready(function () {
+
+    [].slice.call(document.querySelectorAll('#tileUnconfirmed, #tileImplausibleAge'))
+        .forEach(function (el) { new bootstrap.Tooltip(el); });
+
+    $('#tileUnconfirmed').on('click', function () {
+        $('#modalUnconfirmed').modal('show');
+    });
+
+    $('#tileImplausibleAge').on('click', function () {
+        $('#modalImplausibleAge').modal('show');
+    });
+
+    function renderCheckCount(elId, count) {
+        const el = document.getElementById(elId);
+        if (count > 0) {
+            el.textContent = count > 99 ? '99+' : count;
+            el.classList.remove('d-none');
+        } else {
+            el.classList.add('d-none');
+        }
+    }
+
+    function loadAnomaliesSummary() {
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.summary") }}',
+            type: 'GET',
+            success: function (response) {
+                if (!response.success) return;
+                renderCheckCount('countUnconfirmed', response.checks.unconfirmed);
+                renderCheckCount('countImplausibleAge', response.checks.implausible_age);
+            },
+            error: function () {
+                $('#countUnconfirmed, #countImplausibleAge').addClass('d-none');
+            }
+        });
+    }
+
+    setTimeout(loadAnomaliesSummary, 400);
+
+    // --- Modale: Email di conferma non ricevuta ---
+    function loadUnconfirmedList() {
+        $('#unconfirmedTableWrap').addClass('d-none');
+        $('#unconfirmedLoader').removeClass('d-none');
+
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.unconfirmed") }}',
+            type: 'GET',
+            success: function (response) {
+                $('#unconfirmedLoader').addClass('d-none');
+                $('#unconfirmedTableWrap').removeClass('d-none');
+
+                if (!response.success || !response.rows.length) {
+                    $('#unconfirmedTableBody').html('<tr><td colspan="5" class="text-center text-muted py-3">Nessun iscritto da segnalare.</td></tr>');
+                    return;
+                }
+
+                let html = '';
+                response.rows.forEach(function (row) {
+                    html += `
+                        <tr data-uid="${row.user_id}">
+                            <td class="fw-bold">${row.user_id}</td>
+                            <td>${row.email ?? ''}</td>
+                            <td>${row.reg_date ?? ''}</td>
+                            <td>${parseInt(row.confirm, 10) === 1 ? '<span class="text-success">Sì</span>' : '<span class="text-danger">No</span>'}</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-success btn-enable-user">
+                                    <i class="bi bi-check-circle me-1"></i>Abilita
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                $('#unconfirmedTableBody').html(html);
+            },
+            error: function () {
+                $('#unconfirmedLoader').addClass('d-none');
+                $('#unconfirmedTableWrap').removeClass('d-none');
+                $('#unconfirmedTableBody').html('<tr><td colspan="5" class="text-center text-danger py-3">Errore nel caricamento.</td></tr>');
+            }
+        });
+    }
+
+    $('#modalUnconfirmed').on('show.bs.modal', loadUnconfirmedList);
+
+    $('#unconfirmedTableBody').on('click', '.btn-enable-user', function () {
+        const btn = $(this);
+        const row = btn.closest('tr');
+        const uid = row.data('uid');
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '/user/' + uid + '/activate',
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}' },
+            success: function (response) {
+                if (response.success) {
+                    row.fadeOut(250, function () { row.remove(); });
+                    loadAnomaliesSummary();
+                } else {
+                    btn.prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Abilita');
+                    alert(response.message || 'Errore durante l\'abilitazione.');
+                }
+            },
+            error: function () {
+                btn.prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Abilita');
+                alert('Errore durante l\'abilitazione.');
+            }
+        });
+    });
+
+    // --- Modale: Età poco credibile ---
+    function loadImplausibleAgeList() {
+        $('#implausibleAgeTableWrap').addClass('d-none');
+        $('#implausibleAgeLoader').removeClass('d-none');
+
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.implausibleAge") }}',
+            type: 'GET',
+            success: function (response) {
+                $('#implausibleAgeLoader').addClass('d-none');
+                $('#implausibleAgeTableWrap').removeClass('d-none');
+
+                if (!response.success || !response.rows.length) {
+                    $('#implausibleAgeTableBody').html('<tr><td colspan="5" class="text-center text-muted py-3">Nessun iscritto da segnalare.</td></tr>');
+                    return;
+                }
+
+                let html = '';
+                response.rows.forEach(function (row) {
+                    html += `
+                        <tr data-uid="${row.user_id}">
+                            <td class="fw-bold">${row.user_id}</td>
+                            <td>${row.email ?? ''}</td>
+                            <td>${row.age ?? 'N.D.'} anni</td>
+                            <td><input type="date" class="form-control form-control-sm input-new-birth-date" value="${row.birth_date}"></td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary btn-save-birth-date">
+                                    <i class="bi bi-save me-1"></i>Salva
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                $('#implausibleAgeTableBody').html(html);
+            },
+            error: function () {
+                $('#implausibleAgeLoader').addClass('d-none');
+                $('#implausibleAgeTableWrap').removeClass('d-none');
+                $('#implausibleAgeTableBody').html('<tr><td colspan="5" class="text-center text-danger py-3">Errore nel caricamento.</td></tr>');
+            }
+        });
+    }
+
+    $('#modalImplausibleAge').on('show.bs.modal', loadImplausibleAgeList);
+
+    $('#implausibleAgeTableBody').on('click', '.btn-save-birth-date', function () {
+        const btn = $(this);
+        const row = btn.closest('tr');
+        const uid = row.data('uid');
+        const newBirthDate = row.find('.input-new-birth-date').val();
+
+        if (!newBirthDate) {
+            alert('Inserisci una data di nascita valida.');
+            return;
+        }
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '{{ url("/panelUsers/anomalies/update-birth-date") }}/' + uid,
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}', birth_date: newBirthDate },
+            success: function (response) {
+                if (response.success) {
+                    row.fadeOut(250, function () { row.remove(); });
+                    loadAnomaliesSummary();
+                } else {
+                    btn.prop('disabled', false).html('<i class="bi bi-save me-1"></i>Salva');
+                    alert(response.message || 'Errore durante il salvataggio.');
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="bi bi-save me-1"></i>Salva');
+                const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Errore durante il salvataggio.';
+                alert(msg);
+            }
+        });
+    });
+
 });
 </script>
 
