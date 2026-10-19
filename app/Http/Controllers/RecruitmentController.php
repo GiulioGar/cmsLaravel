@@ -222,7 +222,6 @@ class RecruitmentController extends Controller
         });
 
         $totalRegistered = array_sum(array_column($groupedReferrals, 'total'));
-        $totalCost = round(array_sum(array_column($groupedReferrals, 'cost')), 2);
 
         $monthLabel = ucfirst($startDate->locale('it')->translatedFormat('F Y'));
 
@@ -232,7 +231,6 @@ class RecruitmentController extends Controller
             'year'             => $year,
             'month_label'      => $monthLabel,
             'total_registered' => $totalRegistered,
-            'total_cost'       => $totalCost,
             'referrals'        => array_map(function ($item) {
                 unset($item['sort_order']);
                 return $item;
@@ -1125,10 +1123,11 @@ private function computeMonthSegmentBreakdown(
         return [];
     }
 
-    $validPeriods = array_values(array_filter($cpiByReferral[$referralId], function ($p) use ($referenceDate) {
+    $monthEnd = date('Y-m-t', strtotime($referenceDate));
+    $validPeriods = array_values(array_filter($cpiByReferral[$referralId], function ($p) use ($referenceDate, $monthEnd) {
         $start = substr($p['start_date'], 0, 10);
         $end   = $p['end_date'] !== null ? substr($p['end_date'], 0, 10) : null;
-        return $referenceDate >= $start && ($end === null || $referenceDate <= $end);
+        return $start <= $monthEnd && ($end === null || $end >= $referenceDate);
     }));
 
     if (empty($validPeriods)) {
@@ -1177,10 +1176,11 @@ private function computeSegmentedCost(
         return 0.0;
     }
 
-    $validPeriods = array_values(array_filter($cpiByReferral[$referralId], function ($p) use ($referenceDate) {
+    $monthEnd = date('Y-m-t', strtotime($referenceDate));
+    $validPeriods = array_values(array_filter($cpiByReferral[$referralId], function ($p) use ($referenceDate, $monthEnd) {
         $start = substr($p['start_date'], 0, 10);
         $end   = $p['end_date'] !== null ? substr($p['end_date'], 0, 10) : null;
-        return $referenceDate >= $start && ($end === null || $referenceDate <= $end);
+        return $start <= $monthEnd && ($end === null || $end >= $referenceDate);
     }));
 
     if (empty($validPeriods)) {

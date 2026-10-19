@@ -996,7 +996,6 @@ function renderDailyBox(data) {
     }
 
     const VAT = 0.22;
-    const totalGross = data.total_cost > 0 ? data.total_cost * (1 + VAT) : 0;
 
     let html = `
         <div class="daily-month-shell">
@@ -1006,13 +1005,6 @@ function renderDailyBox(data) {
                     <div class="daily-month-summary-value">${formatNumber(data.total_registered)}</div>
                     <div class="daily-month-summary-subtitle">${escapeHtml(data.month_label)}</div>
                 </div>
-
-                ${data.total_cost > 0 ? `
-                <div class="daily-month-invoice-summary">
-                    <div class="daily-month-summary-label">Fattura prevista</div>
-                    <div class="daily-month-summary-value">${formatCurrency(data.total_cost)}</div>
-                    <div class="daily-month-summary-subtitle">Totale ${formatCurrency(totalGross)} (+ ${formatCurrency(data.total_cost * VAT)} IVA)</div>
-                </div>` : ''}
 
                 <div class="daily-month-badge">
                     <span class="daily-month-badge-label">Referral attivi</span>
@@ -1065,6 +1057,7 @@ function renderDailyBox(data) {
 
                 ${item.cost > 0 ? `
                 <div class="daily-referral-invoice">
+                    <div class="daily-referral-invoice-title">Fattura prevista</div>
                     <div class="daily-referral-invoice-row">
                         <span class="daily-referral-invoice-label">Imponibile</span>
                         <span class="daily-referral-invoice-value">${formatCurrency(item.cost)}</span>
