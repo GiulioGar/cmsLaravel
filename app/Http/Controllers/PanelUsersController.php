@@ -1283,6 +1283,69 @@ private function suspiciousEmailDomains()
     return $suspicious;
 }
 
+/**
+ * Utenti con provincia nota ma a cui manca almeno uno dei tre campi derivati
+ * (area geografica, regione, ampiezza centro).
+ */
+private function incompleteGeoQuery()
+{
+    return DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotNull('province_id')
+        ->where(function ($q) {
+            $q->whereNull('area')
+                ->orWhereNull('reg')
+                ->orWhereNull('amp')
+                ->orWhere('amp', 0);
+        });
+}
+
+/**
+ * Mappa province_id -> {area, reg, amp} ricostruita dai dati gia' presenti
+ * nel database (nessuna lista esterna): per ogni provincia, il valore piu'
+ * frequente tra gli utenti che gia' hanno quel campo valorizzato. area/reg
+ * sono sempre univoci per provincia; amp (popolazione) ha una quota minima
+ * di valori sporchi/di test, isolati prendendo il valore dominante.
+ */
+private function provinceDerivedGeoMap()
+{
+    $map = [];
+
+    foreach (['area', 'reg'] as $field) {
+        $rows = DB::table('t_user_info')
+            ->whereNotNull('province_id')
+            ->whereNotNull($field)
+            ->selectRaw("province_id, $field as val, COUNT(*) as cnt")
+            ->groupBy('province_id', $field)
+            ->orderByDesc('cnt')
+            ->get();
+
+        foreach ($rows as $row) {
+            if (!isset($map[$row->province_id][$field])) {
+                $map[$row->province_id][$field] = $row->val;
+            }
+        }
+    }
+
+    $ampRows = DB::table('t_user_info')
+        ->whereNotNull('province_id')
+        ->whereNotNull('amp')
+        ->where('amp', '>', 0)
+        ->selectRaw('province_id, amp as val, COUNT(*) as cnt')
+        ->groupBy('province_id', 'amp')
+        ->orderByDesc('cnt')
+        ->get();
+
+    foreach ($ampRows as $row) {
+        if (!isset($map[$row->province_id]['amp'])) {
+            $map[$row->province_id]['amp'] = $row->val;
+        }
+    }
+
+    return $map;
+}
+
 public function getAnomaliesSummary()
 {
     $suspiciousDomains = $this->suspiciousEmailDomains();
@@ -1293,7 +1356,87 @@ public function getAnomaliesSummary()
             'unconfirmed'       => $this->unconfirmedActiveZeroQuery()->count(),
             'implausible_age'   => $this->implausibleAgeQuery()->count(),
             'suspicious_email'  => array_sum(array_column($suspiciousDomains, 'count')),
+            'missing_geo'       => $this->incompleteGeoQuery()->count(),
         ],
+    ]);
+}
+
+public function getMissingGeoSummary()
+{
+    $geoMap = $this->provinceDerivedGeoMap();
+
+    $byProvince = $this->incompleteGeoQuery()
+        ->selectRaw('province_id, COUNT(*) as cnt')
+        ->groupBy('province_id')
+        ->get();
+
+    $resolvable = 0;
+    $unresolvable = 0;
+    $unresolvableProvinces = [];
+
+    foreach ($byProvince as $row) {
+        if (isset($geoMap[$row->province_id])) {
+            $resolvable += $row->cnt;
+        } else {
+            $unresolvable += $row->cnt;
+            $unresolvableProvinces[] = [
+                'province_id' => $row->province_id,
+                'count' => $row->cnt,
+            ];
+        }
+    }
+
+    return response()->json([
+        'success' => true,
+        'total' => $resolvable + $unresolvable,
+        'resolvable' => $resolvable,
+        'unresolvable' => $unresolvable,
+        'unresolvable_provinces' => $unresolvableProvinces,
+    ]);
+}
+
+public function applyMissingGeo()
+{
+    $geoMap = $this->provinceDerivedGeoMap();
+
+    $updated = ['area' => 0, 'reg' => 0, 'amp' => 0];
+
+    foreach ($geoMap as $provinceId => $values) {
+        if (isset($values['area'])) {
+            $updated['area'] += DB::table('t_user_info')
+                ->where('active', 1)
+                ->where('confirm', 1)
+                ->where('province_id', $provinceId)
+                ->whereNull('area')
+                ->update(['area' => $values['area']]);
+        }
+
+        if (isset($values['reg'])) {
+            $updated['reg'] += DB::table('t_user_info')
+                ->where('active', 1)
+                ->where('confirm', 1)
+                ->where('province_id', $provinceId)
+                ->whereNull('reg')
+                ->update(['reg' => $values['reg']]);
+        }
+
+        if (isset($values['amp'])) {
+            $updated['amp'] += DB::table('t_user_info')
+                ->where('active', 1)
+                ->where('confirm', 1)
+                ->where('province_id', $provinceId)
+                ->where(function ($q) {
+                    $q->whereNull('amp')->orWhere('amp', 0);
+                })
+                ->update(['amp' => $values['amp']]);
+        }
+    }
+
+    Log::info('panelUsers: ricodifica geografica (area/reg/amp) eseguita da ' . (session('user_name') ?? 'staff') . ' - ' . json_encode($updated));
+
+    return response()->json([
+        'success' => true,
+        'updated' => $updated,
     ]);
 }
 

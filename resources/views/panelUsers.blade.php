@@ -90,6 +90,15 @@
                 <span class="control-check-dot d-none" id="countSuspiciousEmail"></span>
             </div>
 
+            <div class="control-check-icon-btn" id="tileMissingGeo"
+                 data-bs-toggle="tooltip" data-bs-placement="bottom"
+                 title="Dati geografici mancanti (area/regione/ampiezza) derivabili dalla provincia. Clicca per verificare e applicare la correzione.">
+                <span class="control-check-icon control-check-icon-warning">
+                    <i class="bi bi-geo-alt"></i>
+                </span>
+                <span class="control-check-dot d-none" id="countMissingGeo"></span>
+            </div>
+
         </div>
     </div>
 </div>
@@ -215,6 +224,67 @@
                         </thead>
                         <tbody id="suspiciousEmailTableBody"></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalMissingGeo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content pu-email-modal">
+            <div class="modal-header pu-email-modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="pu-email-modal-icon"><i class="bi bi-geo-alt"></i></span>
+                    <div>
+                        <h5 class="modal-title mb-0">Dati geografici mancanti</h5>
+                        <small class="text-muted">Area geografica, regione e ampiezza centro derivate dalla provincia</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <p class="text-muted small mb-3">
+                    Chi ha la provincia di residenza ma non area/regione/ampiezza può essere corretto in automatico:
+                    il valore corretto si ricava dagli altri utenti della stessa provincia già censiti correttamente,
+                    nessun dato esterno. Operazione sicura e ripetibile (aggiorna solo i campi vuoti).
+                </p>
+
+                <div id="missingGeoLoader" class="text-center py-4">
+                    <div class="spinner-border text-secondary mb-2" style="width:1.8rem;height:1.8rem;"></div>
+                    <div class="text-muted small">Caricamento in corso...</div>
+                </div>
+
+                <div id="missingGeoContent" class="d-none">
+                    <div class="pu-email-legend mb-3">
+                        <div class="pu-email-legend-item">
+                            <span class="pu-sev-badge pu-sev-suspect">Risolvibili</span>
+                            <span>provincia nota, valore ricavabile dagli altri utenti</span>
+                            <span class="pu-email-legend-count" id="missingGeoResolvable">0</span>
+                        </div>
+                        <div class="pu-email-legend-item">
+                            <span class="pu-sev-badge pu-sev-invalid">Non risolvibili</span>
+                            <span>provincia senza alcun riferimento noto nel database</span>
+                            <span class="pu-email-legend-count" id="missingGeoUnresolvable">0</span>
+                        </div>
+                    </div>
+
+                    <div id="missingGeoUnresolvableList" class="small text-muted mb-3 d-none"></div>
+
+                    <div id="missingGeoAllDone" class="pu-email-empty d-none">
+                        <i class="bi bi-patch-check"></i>
+                        <div class="fw-semibold mt-2">Nessun dato mancante</div>
+                        <div class="text-muted small">Area, regione e ampiezza sono completi per tutti gli iscritti con provincia nota.</div>
+                    </div>
+
+                    <div id="missingGeoActionWrap" class="text-end">
+                        <button type="button" class="btn btn-primary" id="btnApplyMissingGeo">
+                            <i class="bi bi-magic me-1"></i>Applica a tutti i risolvibili
+                        </button>
+                    </div>
+
+                    <div id="missingGeoResult" class="alert alert-success mt-3 d-none"></div>
                 </div>
             </div>
         </div>
@@ -1288,7 +1358,7 @@ $(document).ready(function () {
 <script>
 $(document).ready(function () {
 
-    [].slice.call(document.querySelectorAll('#tileUnconfirmed, #tileImplausibleAge, #tileSuspiciousEmail'))
+    [].slice.call(document.querySelectorAll('#tileUnconfirmed, #tileImplausibleAge, #tileSuspiciousEmail, #tileMissingGeo'))
         .forEach(function (el) { new bootstrap.Tooltip(el); });
 
     $('#tileUnconfirmed').on('click', function () {
@@ -1301,6 +1371,10 @@ $(document).ready(function () {
 
     $('#tileSuspiciousEmail').on('click', function () {
         $('#modalSuspiciousEmail').modal('show');
+    });
+
+    $('#tileMissingGeo').on('click', function () {
+        $('#modalMissingGeo').modal('show');
     });
 
     function renderCheckCount(elId, count) {
@@ -1322,9 +1396,10 @@ $(document).ready(function () {
                 renderCheckCount('countUnconfirmed', response.checks.unconfirmed);
                 renderCheckCount('countImplausibleAge', response.checks.implausible_age);
                 renderCheckCount('countSuspiciousEmail', response.checks.suspicious_email);
+                renderCheckCount('countMissingGeo', response.checks.missing_geo);
             },
             error: function () {
-                $('#countUnconfirmed, #countImplausibleAge, #countSuspiciousEmail').addClass('d-none');
+                $('#countUnconfirmed, #countImplausibleAge, #countSuspiciousEmail, #countMissingGeo').addClass('d-none');
             }
         });
     }
@@ -1576,6 +1651,79 @@ $(document).ready(function () {
             error: function (xhr) {
                 btn.prop('disabled', false).html('<i class="bi bi-save me-1"></i>Salva');
                 const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Errore durante il salvataggio.';
+                alert(msg);
+            }
+        });
+    });
+
+    // --- Modale: Dati geografici mancanti ---
+    function loadMissingGeoSummary(resetResult) {
+        $('#missingGeoContent, #missingGeoAllDone, #missingGeoUnresolvableList').addClass('d-none');
+        if (resetResult !== false) {
+            $('#missingGeoResult').addClass('d-none');
+        }
+        $('#missingGeoActionWrap').removeClass('d-none');
+        $('#missingGeoLoader').removeClass('d-none');
+
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.missingGeo") }}',
+            type: 'GET',
+            success: function (response) {
+                $('#missingGeoLoader').addClass('d-none');
+                $('#missingGeoContent').removeClass('d-none');
+
+                if (!response.success || response.total === 0) {
+                    $('#missingGeoAllDone').removeClass('d-none');
+                    $('#missingGeoActionWrap').addClass('d-none');
+                    return;
+                }
+
+                $('#missingGeoResolvable').text(response.resolvable);
+                $('#missingGeoUnresolvable').text(response.unresolvable);
+
+                $('#btnApplyMissingGeo').prop('disabled', response.resolvable === 0);
+
+                if (response.unresolvable_provinces && response.unresolvable_provinces.length) {
+                    let list = 'Province senza riferimento noto: ';
+                    list += response.unresolvable_provinces.map(p => `#${p.province_id} (${p.count} utenti)`).join(', ');
+                    $('#missingGeoUnresolvableList').text(list).removeClass('d-none');
+                }
+            },
+            error: function () {
+                $('#missingGeoLoader').addClass('d-none');
+                $('#missingGeoContent').removeClass('d-none');
+                $('#missingGeoAllDone, #missingGeoActionWrap').addClass('d-none');
+                alert('Errore durante il caricamento.');
+            }
+        });
+    }
+
+    $('#modalMissingGeo').on('show.bs.modal', loadMissingGeoSummary);
+
+    $('#btnApplyMissingGeo').on('click', function () {
+        const btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Applicazione in corso...');
+
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.applyMissingGeo") }}',
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}' },
+            success: function (response) {
+                if (response.success) {
+                    $('#missingGeoResult')
+                        .removeClass('d-none')
+                        .html(`Aggiornati: <strong>${response.updated.area}</strong> area, <strong>${response.updated.reg}</strong> regione, <strong>${response.updated.amp}</strong> ampiezza.`);
+                    btn.html('<i class="bi bi-magic me-1"></i>Applica a tutti i risolvibili');
+                    loadAnomaliesSummary();
+                    loadMissingGeoSummary(false);
+                } else {
+                    btn.prop('disabled', false).html('<i class="bi bi-magic me-1"></i>Applica a tutti i risolvibili');
+                    alert(response.message || 'Errore durante l\'applicazione.');
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="bi bi-magic me-1"></i>Applica a tutti i risolvibili');
+                const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Errore durante l\'applicazione.';
                 alert(msg);
             }
         });

@@ -163,6 +163,8 @@ Route::middleware(['auth.custom'])->group(function () {
         Route::post('/panelUsers/anomalies/update-birth-date/{user_id}', [PanelUsersController::class, 'updateBirthDate'])->name('panelUsers.anomalies.updateBirthDate');
         Route::get('/panelUsers/anomalies/suspicious-email', [PanelUsersController::class, 'getSuspiciousEmailList'])->name('panelUsers.anomalies.suspiciousEmail');
         Route::post('/panelUsers/anomalies/update-email/{user_id}', [PanelUsersController::class, 'updateEmail'])->name('panelUsers.anomalies.updateEmail');
+        Route::get('/panelUsers/anomalies/missing-geo', [PanelUsersController::class, 'getMissingGeoSummary'])->name('panelUsers.anomalies.missingGeo');
+        Route::post('/panelUsers/anomalies/missing-geo/apply', [PanelUsersController::class, 'applyMissingGeo'])->name('panelUsers.anomalies.applyMissingGeo');
 
     // ============================================
     // USER actions
