@@ -66,7 +66,7 @@
             <div class="control-check-icon-btn" id="tileUnconfirmed"
                  data-bs-toggle="tooltip" data-bs-placement="bottom"
                  title="Email di conferma non ricevuta: iscritti non attivi negli ultimi 6 mesi. Clicca per verificare e abilitare manualmente.">
-                <span class="control-check-icon control-check-icon-warning">
+                <span class="control-check-icon control-check-icon-amber">
                     <i class="bi bi-envelope-exclamation"></i>
                 </span>
                 <span class="control-check-dot d-none" id="countUnconfirmed"></span>
@@ -75,7 +75,7 @@
             <div class="control-check-icon-btn" id="tileImplausibleAge"
                  data-bs-toggle="tooltip" data-bs-placement="bottom"
                  title="Età poco credibile: attivi con meno di 14 o più di 85 anni. Clicca per verificare e correggere.">
-                <span class="control-check-icon control-check-icon-danger">
+                <span class="control-check-icon control-check-icon-rose">
                     <i class="bi bi-person-exclamation"></i>
                 </span>
                 <span class="control-check-dot d-none" id="countImplausibleAge"></span>
@@ -84,7 +84,7 @@
             <div class="control-check-icon-btn" id="tileSuspiciousEmail"
                  data-bs-toggle="tooltip" data-bs-placement="bottom"
                  title="Email con dominio sospetto (probabile refuso, es. gnail.com). Clicca per verificare e correggere.">
-                <span class="control-check-icon control-check-icon-warning">
+                <span class="control-check-icon control-check-icon-indigo">
                     <i class="bi bi-at"></i>
                 </span>
                 <span class="control-check-dot d-none" id="countSuspiciousEmail"></span>
@@ -93,10 +93,19 @@
             <div class="control-check-icon-btn" id="tileMissingGeo"
                  data-bs-toggle="tooltip" data-bs-placement="bottom"
                  title="Dati geografici mancanti (area/regione/ampiezza) derivabili dalla provincia. Clicca per verificare e applicare la correzione.">
-                <span class="control-check-icon control-check-icon-warning">
+                <span class="control-check-icon control-check-icon-teal">
                     <i class="bi bi-geo-alt"></i>
                 </span>
                 <span class="control-check-dot d-none" id="countMissingGeo"></span>
+            </div>
+
+            <div class="control-check-icon-btn" id="tileDataAnomalies"
+                 data-bs-toggle="tooltip" data-bs-placement="bottom"
+                 title="Anomalie anagrafiche: data iscrizione/nascita mal formattata, genere mancante o incoerente col nome, password non hashata. Clicca per verificare.">
+                <span class="control-check-icon control-check-icon-crimson">
+                    <i class="bi bi-person-vcard"></i>
+                </span>
+                <span class="control-check-dot d-none" id="countDataAnomalies"></span>
             </div>
 
         </div>
@@ -285,6 +294,118 @@
                     </div>
 
                     <div id="missingGeoResult" class="alert alert-success mt-3 d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDataAnomalies" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content pu-email-modal">
+            <div class="modal-header pu-email-modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="pu-email-modal-icon" style="background: linear-gradient(135deg, #f87171, #991b1b);"><i class="bi bi-person-vcard"></i></span>
+                    <div>
+                        <h5 class="modal-title mb-0">Anomalie anagrafiche</h5>
+                        <small class="text-muted">Data iscrizione, data di nascita, genere, password</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <div id="dataAnomaliesLoader" class="text-center py-5">
+                    <div class="spinner-border text-secondary mb-2" style="width:1.8rem;height:1.8rem;"></div>
+                    <div class="text-muted small">Caricamento in corso...</div>
+                </div>
+
+                <div id="dataAnomaliesContent" class="d-none">
+
+                    <!-- 1. reg_date -->
+                    <div class="pu-anom-section">
+                        <div class="pu-anom-section-header">
+                            <span>Data iscrizione mal formattata</span>
+                            <span class="pu-email-legend-count" id="countSectionRegDate">0</span>
+                        </div>
+                        <div class="table-responsive pu-anom-table-wrap">
+                            <table class="table table-sm align-middle pu-email-table">
+                                <thead><tr><th style="width:140px;">UID</th><th>Email</th><th>Valore attuale</th><th>Corretto</th><th class="text-end" style="width:90px;">Azione</th></tr></thead>
+                                <tbody id="regDateTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2. birth_date formato -->
+                    <div class="pu-anom-section">
+                        <div class="pu-anom-section-header">
+                            <span>Data di nascita mal formattata</span>
+                            <span class="pu-email-legend-count" id="countSectionBirthDate">0</span>
+                        </div>
+                        <div class="table-responsive pu-anom-table-wrap">
+                            <table class="table table-sm align-middle pu-email-table">
+                                <thead><tr><th style="width:140px;">UID</th><th>Email</th><th>Valore attuale</th><th>Corretto</th><th class="text-end" style="width:90px;">Azione</th></tr></thead>
+                                <tbody id="birthDateFormatTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 3. gender mancante -->
+                    <div class="pu-anom-section">
+                        <div class="pu-anom-section-header">
+                            <span>Genere mancante</span>
+                            <span class="pu-email-legend-count" id="countSectionMissingGender">0</span>
+                        </div>
+                        <div class="table-responsive pu-anom-table-wrap">
+                            <table class="table table-sm align-middle pu-email-table">
+                                <thead><tr><th style="width:140px;">UID</th><th>Email</th><th>Nome</th><th>Genere</th><th class="text-end" style="width:90px;">Azione</th></tr></thead>
+                                <tbody id="missingGenderTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 4. nome/genere incoerente -->
+                    <div class="pu-anom-section">
+                        <div class="pu-anom-section-header">
+                            <span>
+                                <span class="pu-sev-badge pu-sev-suspect">Da verificare</span>
+                                Genere incoerente col nome
+                            </span>
+                            <span class="pu-email-legend-count" id="countSectionNameGender">0</span>
+                        </div>
+                        <p class="text-muted small mb-2">Nomi molto diffusi nel panel (&ge;20 casi) usati per oltre il 95% con un solo genere: la minoranza è probabile un errore, ma può anche trattarsi di un nome realmente unisex o straniero — verificare prima di modificare.</p>
+                        <div class="table-responsive pu-anom-table-wrap">
+                            <table class="table table-sm align-middle pu-email-table">
+                                <thead><tr><th style="width:140px;">UID</th><th>Email</th><th>Nome</th><th>Genere</th><th class="text-end" style="width:90px;">Azione</th></tr></thead>
+                                <tbody id="nameGenderTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 5. password -->
+                    <div class="pu-anom-section">
+                        <div class="pu-anom-section-header">
+                            <span>Password non sicura</span>
+                        </div>
+                        <p class="text-muted small mb-2">
+                            Le password non vengono mai mostrate in chiaro in questa interfaccia.
+                        </p>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                            <div>
+                                <span class="pu-sev-badge pu-sev-invalid">Non valida</span>
+                                <span class="small text-muted">salvata in chiaro invece che con hash — <strong id="countPlaintextPassword">0</strong> utenti</span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" id="btnHashPasswords">
+                                <i class="bi bi-shield-lock me-1"></i>Hash automatico (stessa password, nessuna visualizzata)
+                            </button>
+                        </div>
+                        <div class="small text-muted">
+                            <span class="pu-sev-badge pu-sev-suspect">Da verificare</span>
+                            password assente — <strong id="countMissingPassword">0</strong> utenti: non risolvibile da qui, richiede reset manuale con l'utente.
+                        </div>
+                        <div id="passwordHashResult" class="alert alert-success mt-2 d-none"></div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -1358,7 +1479,7 @@ $(document).ready(function () {
 <script>
 $(document).ready(function () {
 
-    [].slice.call(document.querySelectorAll('#tileUnconfirmed, #tileImplausibleAge, #tileSuspiciousEmail, #tileMissingGeo'))
+    [].slice.call(document.querySelectorAll('#tileUnconfirmed, #tileImplausibleAge, #tileSuspiciousEmail, #tileMissingGeo, #tileDataAnomalies'))
         .forEach(function (el) { new bootstrap.Tooltip(el); });
 
     $('#tileUnconfirmed').on('click', function () {
@@ -1375,6 +1496,10 @@ $(document).ready(function () {
 
     $('#tileMissingGeo').on('click', function () {
         $('#modalMissingGeo').modal('show');
+    });
+
+    $('#tileDataAnomalies').on('click', function () {
+        $('#modalDataAnomalies').modal('show');
     });
 
     function renderCheckCount(elId, count) {
@@ -1397,9 +1522,10 @@ $(document).ready(function () {
                 renderCheckCount('countImplausibleAge', response.checks.implausible_age);
                 renderCheckCount('countSuspiciousEmail', response.checks.suspicious_email);
                 renderCheckCount('countMissingGeo', response.checks.missing_geo);
+                renderCheckCount('countDataAnomalies', response.checks.data_anomalies);
             },
             error: function () {
-                $('#countUnconfirmed, #countImplausibleAge, #countSuspiciousEmail, #countMissingGeo').addClass('d-none');
+                $('#countUnconfirmed, #countImplausibleAge, #countSuspiciousEmail, #countMissingGeo, #countDataAnomalies').addClass('d-none');
             }
         });
     }
@@ -1725,6 +1851,248 @@ $(document).ready(function () {
                 btn.prop('disabled', false).html('<i class="bi bi-magic me-1"></i>Applica a tutti i risolvibili');
                 const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Errore durante l\'applicazione.';
                 alert(msg);
+            }
+        });
+    });
+
+    // --- Modale: Anomalie anagrafiche ---
+    const profileUrlFor = (uid) => '{{ url("/user") }}/' + uid;
+
+    function emptyAnomRow(colspan, text) {
+        return `<tr><td colspan="${colspan}" class="text-center text-muted py-3">${text}</td></tr>`;
+    }
+
+    function loadRegDateSection() {
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.regDate") }}',
+            type: 'GET',
+            success: function (response) {
+                $('#countSectionRegDate').text(response.count);
+                if (!response.rows.length) {
+                    $('#regDateTableBody').html(emptyAnomRow(5, 'Nessuna anomalia trovata.'));
+                    return;
+                }
+                let html = '';
+                response.rows.forEach(function (row) {
+                    html += `
+                        <tr data-uid="${row.user_id}">
+                            <td><a href="${profileUrlFor(row.user_id)}" target="_blank" class="pu-email-uid-link">${row.user_id}<i class="bi bi-box-arrow-up-right ms-1"></i></a></td>
+                            <td>${row.email ?? ''}</td>
+                            <td><span class="pu-email-current">${row.reg_date}</span></td>
+                            <td><input type="text" class="form-control form-control-sm input-new-reg-date" value="${row.suggested_reg_date ?? ''}"></td>
+                            <td class="text-end"><button type="button" class="btn btn-sm btn-primary btn-save-reg-date"><i class="bi bi-save"></i></button></td>
+                        </tr>`;
+                });
+                $('#regDateTableBody').html(html);
+            }
+        });
+    }
+
+    $('#regDateTableBody').on('click', '.btn-save-reg-date', function () {
+        const btn = $(this);
+        const row = btn.closest('tr');
+        const uid = row.data('uid');
+        const val = row.find('.input-new-reg-date').val();
+        if (!val) { alert('Inserisci una data valida.'); return; }
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+        $.ajax({
+            url: '{{ url("/panelUsers/anomalies/update-reg-date") }}/' + uid,
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}', reg_date: val },
+            success: function (response) {
+                if (response.success) { row.fadeOut(250, function () { row.remove(); }); loadAnomaliesSummary(); }
+                else { btn.prop('disabled', false).html('<i class="bi bi-save"></i>'); alert(response.message || 'Errore.'); }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="bi bi-save"></i>');
+                alert((xhr.responseJSON && xhr.responseJSON.message) || 'Errore durante il salvataggio.');
+            }
+        });
+    });
+
+    function loadBirthDateFormatSection() {
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.birthDateFormat") }}',
+            type: 'GET',
+            success: function (response) {
+                $('#countSectionBirthDate').text(response.count);
+                if (!response.rows.length) {
+                    $('#birthDateFormatTableBody').html(emptyAnomRow(5, 'Nessuna anomalia trovata.'));
+                    return;
+                }
+                let html = '';
+                response.rows.forEach(function (row) {
+                    html += `
+                        <tr data-uid="${row.user_id}">
+                            <td><a href="${profileUrlFor(row.user_id)}" target="_blank" class="pu-email-uid-link">${row.user_id}<i class="bi bi-box-arrow-up-right ms-1"></i></a></td>
+                            <td>${row.email ?? ''}</td>
+                            <td><span class="pu-email-current">${row.birth_date}</span></td>
+                            <td><input type="date" class="form-control form-control-sm input-new-birth-date-format" value="${row.suggested_birth_date ?? ''}"></td>
+                            <td class="text-end"><button type="button" class="btn btn-sm btn-primary btn-save-birth-date-format"><i class="bi bi-save"></i></button></td>
+                        </tr>`;
+                });
+                $('#birthDateFormatTableBody').html(html);
+            }
+        });
+    }
+
+    $('#birthDateFormatTableBody').on('click', '.btn-save-birth-date-format', function () {
+        const btn = $(this);
+        const row = btn.closest('tr');
+        const uid = row.data('uid');
+        const val = row.find('.input-new-birth-date-format').val();
+        if (!val) { alert('Inserisci una data valida.'); return; }
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+        $.ajax({
+            url: '{{ url("/panelUsers/anomalies/update-birth-date") }}/' + uid,
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}', birth_date: val },
+            success: function (response) {
+                if (response.success) { row.fadeOut(250, function () { row.remove(); }); loadAnomaliesSummary(); }
+                else { btn.prop('disabled', false).html('<i class="bi bi-save"></i>'); alert(response.message || 'Errore.'); }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="bi bi-save"></i>');
+                alert((xhr.responseJSON && xhr.responseJSON.message) || 'Errore durante il salvataggio.');
+            }
+        });
+    });
+
+    function genderSelectHtml(selected) {
+        const sel1 = selected == 1 ? 'selected' : '';
+        const sel2 = selected == 2 ? 'selected' : '';
+        return `
+            <select class="form-select form-select-sm input-new-gender">
+                <option value="">Seleziona</option>
+                <option value="1" ${sel1}>Uomo</option>
+                <option value="2" ${sel2}>Donna</option>
+            </select>`;
+    }
+
+    function loadMissingGenderSection() {
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.missingGender") }}',
+            type: 'GET',
+            success: function (response) {
+                $('#countSectionMissingGender').text(response.count);
+                if (!response.rows.length) {
+                    $('#missingGenderTableBody').html(emptyAnomRow(5, 'Nessuna anomalia trovata.'));
+                    return;
+                }
+                let html = '';
+                response.rows.forEach(function (row) {
+                    html += `
+                        <tr data-uid="${row.user_id}">
+                            <td><a href="${profileUrlFor(row.user_id)}" target="_blank" class="pu-email-uid-link">${row.user_id}<i class="bi bi-box-arrow-up-right ms-1"></i></a></td>
+                            <td>${row.email ?? ''}</td>
+                            <td>${row.first_name ?? ''}</td>
+                            <td>${genderSelectHtml(row.suggested_gender)}</td>
+                            <td class="text-end"><button type="button" class="btn btn-sm btn-primary btn-save-gender"><i class="bi bi-save"></i></button></td>
+                        </tr>`;
+                });
+                $('#missingGenderTableBody').html(html);
+            }
+        });
+    }
+
+    function loadNameGenderSection() {
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.nameGenderMismatch") }}',
+            type: 'GET',
+            success: function (response) {
+                $('#countSectionNameGender').text(response.count);
+                if (!response.rows.length) {
+                    $('#nameGenderTableBody').html(emptyAnomRow(5, 'Nessuna anomalia trovata.'));
+                    return;
+                }
+                let html = '';
+                response.rows.forEach(function (row) {
+                    html += `
+                        <tr data-uid="${row.user_id}">
+                            <td><a href="${profileUrlFor(row.user_id)}" target="_blank" class="pu-email-uid-link">${row.user_id}<i class="bi bi-box-arrow-up-right ms-1"></i></a></td>
+                            <td>${row.email ?? ''}</td>
+                            <td>${row.first_name ?? ''}</td>
+                            <td>${genderSelectHtml(row.suggested_gender)}</td>
+                            <td class="text-end"><button type="button" class="btn btn-sm btn-primary btn-save-gender"><i class="bi bi-save"></i></button></td>
+                        </tr>`;
+                });
+                $('#nameGenderTableBody').html(html);
+            }
+        });
+    }
+
+    $('#missingGenderTableBody, #nameGenderTableBody').on('click', '.btn-save-gender', function () {
+        const btn = $(this);
+        const row = btn.closest('tr');
+        const uid = row.data('uid');
+        const val = row.find('.input-new-gender').val();
+        if (!val) { alert('Seleziona un genere.'); return; }
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+        $.ajax({
+            url: '{{ url("/panelUsers/anomalies/update-gender") }}/' + uid,
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}', gender: val },
+            success: function (response) {
+                if (response.success) { row.fadeOut(250, function () { row.remove(); }); loadAnomaliesSummary(); }
+                else { btn.prop('disabled', false).html('<i class="bi bi-save"></i>'); alert(response.message || 'Errore.'); }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="bi bi-save"></i>');
+                alert((xhr.responseJSON && xhr.responseJSON.message) || 'Errore durante il salvataggio.');
+            }
+        });
+    });
+
+    function loadDataAnomalies() {
+        $('#dataAnomaliesContent').addClass('d-none');
+        $('#passwordHashResult').addClass('d-none');
+        $('#dataAnomaliesLoader').removeClass('d-none');
+
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.dataSummary") }}',
+            type: 'GET',
+            success: function (response) {
+                $('#dataAnomaliesLoader').addClass('d-none');
+                $('#dataAnomaliesContent').removeClass('d-none');
+                $('#countPlaintextPassword').text(response.counts.plaintext_password);
+                $('#countMissingPassword').text(response.counts.missing_password);
+                $('#btnHashPasswords').prop('disabled', response.counts.plaintext_password === 0);
+
+                loadRegDateSection();
+                loadBirthDateFormatSection();
+                loadMissingGenderSection();
+                loadNameGenderSection();
+            },
+            error: function () {
+                $('#dataAnomaliesLoader').addClass('d-none');
+                alert('Errore durante il caricamento.');
+            }
+        });
+    }
+
+    $('#modalDataAnomalies').on('show.bs.modal', loadDataAnomalies);
+
+    $('#btnHashPasswords').on('click', function () {
+        const btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> In corso...');
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.hashPasswords") }}',
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}' },
+            success: function (response) {
+                if (response.success) {
+                    $('#passwordHashResult').removeClass('d-none').text('Hash applicato a ' + response.updated + ' password.');
+                    $('#countPlaintextPassword').text(0);
+                    btn.html('<i class="bi bi-shield-lock me-1"></i>Hash automatico (stessa password, nessuna visualizzata)').prop('disabled', true);
+                    loadAnomaliesSummary();
+                } else {
+                    btn.prop('disabled', false).html('<i class="bi bi-shield-lock me-1"></i>Hash automatico (stessa password, nessuna visualizzata)');
+                    alert(response.message || 'Errore.');
+                }
+            },
+            error: function () {
+                btn.prop('disabled', false).html('<i class="bi bi-shield-lock me-1"></i>Hash automatico (stessa password, nessuna visualizzata)');
+                alert('Errore durante l\'operazione.');
             }
         });
     });

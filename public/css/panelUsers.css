@@ -656,6 +656,28 @@
     background: linear-gradient(135deg, #f87171, #dc2626);
 }
 
+/* Palette estesa Centro Controllo: tonalita' distinte ma armoniche tra loro */
+
+.control-check-icon-amber{
+    background: linear-gradient(135deg, #f59e0b, #b45309);
+}
+
+.control-check-icon-rose{
+    background: linear-gradient(135deg, #fb7185, #be123c);
+}
+
+.control-check-icon-indigo{
+    background: linear-gradient(135deg, #818cf8, #4338ca);
+}
+
+.control-check-icon-teal{
+    background: linear-gradient(135deg, #2dd4bf, #0f766e);
+}
+
+.control-check-icon-crimson{
+    background: linear-gradient(135deg, #f87171, #991b1b);
+}
+
 .control-check-dot{
     position: absolute;
     top: -4px;
@@ -818,4 +840,40 @@
     border-color: #86efac;
     background-color: #f0fdf4;
     font-weight: 600;
+}
+
+/* ===== Modale: Anomalie anagrafiche ===== */
+
+.pu-anom-section{
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.pu-anom-section:last-child{
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.pu-anom-section-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1e293b;
+    margin-bottom: 10px;
+}
+
+.pu-anom-table-wrap{
+    max-height: 260px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.pu-anom-table-wrap .pu-email-table thead th{
+    position: sticky;
+    top: 0;
 }

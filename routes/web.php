@@ -165,6 +165,14 @@ Route::middleware(['auth.custom'])->group(function () {
         Route::post('/panelUsers/anomalies/update-email/{user_id}', [PanelUsersController::class, 'updateEmail'])->name('panelUsers.anomalies.updateEmail');
         Route::get('/panelUsers/anomalies/missing-geo', [PanelUsersController::class, 'getMissingGeoSummary'])->name('panelUsers.anomalies.missingGeo');
         Route::post('/panelUsers/anomalies/missing-geo/apply', [PanelUsersController::class, 'applyMissingGeo'])->name('panelUsers.anomalies.applyMissingGeo');
+        Route::get('/panelUsers/anomalies/data-summary', [PanelUsersController::class, 'getDataAnomaliesSummary'])->name('panelUsers.anomalies.dataSummary');
+        Route::get('/panelUsers/anomalies/reg-date', [PanelUsersController::class, 'getInvalidRegDateList'])->name('panelUsers.anomalies.regDate');
+        Route::post('/panelUsers/anomalies/update-reg-date/{user_id}', [PanelUsersController::class, 'updateRegDate'])->name('panelUsers.anomalies.updateRegDate');
+        Route::get('/panelUsers/anomalies/birth-date-format', [PanelUsersController::class, 'getInvalidBirthDateFormatList'])->name('panelUsers.anomalies.birthDateFormat');
+        Route::get('/panelUsers/anomalies/missing-gender', [PanelUsersController::class, 'getMissingGenderList'])->name('panelUsers.anomalies.missingGender');
+        Route::get('/panelUsers/anomalies/name-gender-mismatch', [PanelUsersController::class, 'getNameGenderMismatchList'])->name('panelUsers.anomalies.nameGenderMismatch');
+        Route::post('/panelUsers/anomalies/update-gender/{user_id}', [PanelUsersController::class, 'updateGender'])->name('panelUsers.anomalies.updateGender');
+        Route::post('/panelUsers/anomalies/hash-plaintext-passwords', [PanelUsersController::class, 'hashPlaintextPasswords'])->name('panelUsers.anomalies.hashPasswords');
 
     // ============================================
     // USER actions

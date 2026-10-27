@@ -25,6 +25,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+
+        // Nessuno scheduler/cron in uso in questo progetto: il comando
+        // panelusers:warm-email-domain-cache resta disponibile per un lancio
+        // manuale occasionale, ma la cache si auto-ripara da sola grazie al
+        // controllo "a piccoli passi" in PanelUsersController::domainHasValidMx.
     }
 
     /**

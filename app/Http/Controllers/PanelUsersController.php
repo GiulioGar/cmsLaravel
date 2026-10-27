@@ -12,6 +12,8 @@ use Carbon\Carbon;
 
 class PanelUsersController extends Controller
 {
+    /** Contatore lookup DNS live gia' eseguiti in questa richiesta (vedi domainHasValidMx). */
+    private $emailDomainMxChecksUsed = 0;
 
         public function index()
         {
@@ -1133,15 +1135,38 @@ private function implausibleAgeQuery()
 }
 
 /**
- * Verifica reale (DNS) se un dominio puo' ricevere posta: record MX, con
- * fallback su A (alcuni mail server minori non pubblicano MX e usano A).
- * Risultato cachato 7 giorni per dominio per non rifare il lookup ad ogni richiesta.
+ * Verifica (DNS) se un dominio puo' ricevere posta: record MX, con fallback
+ * su A. Risultato cachato 7 giorni per dominio.
+ *
+ * Niente cron/scheduler in questo progetto, quindi niente lookup massivo in
+ * background: per non bloccare una richiesta web per decine di secondi con
+ * centinaia di domini da controllare (es. dopo un cache:clear), si fa un
+ * controllo "a piccoli passi" - al massimo self::EMAIL_DOMAIN_MX_CHECK_BUDGET
+ * lookup dal vivo per richiesta. I domini oltre il budget restano "da
+ * controllare" (trattati come validi, mai bloccanti) e vengono presi alla
+ * prossima apertura della pagina: con uso normale la cache si auto-ripara
+ * in poche richieste, senza bisogno di alcuna manutenzione.
  */
+const EMAIL_DOMAIN_MX_CHECK_BUDGET = 5;
+
 private function domainHasValidMx($domain)
 {
-    return Cache::remember('email_domain_mx_' . $domain, now()->addDays(7), function () use ($domain) {
-        return checkdnsrr($domain, 'MX') || checkdnsrr($domain, 'A');
-    });
+    $key = 'email_domain_mx_' . $domain;
+    $cached = Cache::get($key);
+
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    if ($this->emailDomainMxChecksUsed >= self::EMAIL_DOMAIN_MX_CHECK_BUDGET) {
+        return true;
+    }
+
+    $this->emailDomainMxChecksUsed++;
+    $valid = checkdnsrr($domain, 'MX') || checkdnsrr($domain, 'A');
+    Cache::put($key, $valid, now()->addDays(7));
+
+    return $valid;
 }
 
 /**
@@ -1346,6 +1371,143 @@ private function provinceDerivedGeoMap()
     return $map;
 }
 
+/**
+ * reg_date valorizzata ma in un formato diverso dai due standard in uso
+ * ("Y-m-d H:i:s", 19 caratteri, e "Y-m-d H:i" senza secondi, 16 caratteri).
+ */
+private function invalidRegDateQuery()
+{
+    return DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotNull('reg_date')
+        ->where('reg_date', '<>', '')
+        ->whereRaw('LENGTH(reg_date) NOT IN (16, 19)');
+}
+
+/**
+ * birth_date valorizzata ma non nel formato standard "Y-m-d" (es. timestamp
+ * ISO con ora/millisecondi residuo di un'importazione).
+ */
+private function invalidBirthDateQuery()
+{
+    return DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotNull('birth_date')
+        ->where('birth_date', '<>', '0000-00-00')
+        ->whereRaw('LENGTH(birth_date) <> 10');
+}
+
+private function missingGenderQuery()
+{
+    return DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNull('gender');
+}
+
+/**
+ * Mappa nome (minuscolo, senza spazi ai lati) -> genere dominante, costruita
+ * dai dati gia' presenti nel database: solo nomi con almeno 20 occorrenze e
+ * una concordanza di genere superiore al 95%, per minimizzare i falsi
+ * positivi su nomi unisex, stranieri o composti.
+ */
+private function nameGenderMap()
+{
+    // Aggregazione pesante (full group-by su ~97k righe, ~200ms): il
+    // Centro Controllo la richiede piu' volte in pochi secondi (badge di
+    // riepilogo + le sezioni del modale "Anomalie anagrafiche" in parallelo),
+    // quindi si cache per qualche minuto invece di ricalcolarla ad ogni
+    // chiamata. I dati sorgente cambiano di rado (correzioni manuali sporadiche),
+    // uno scarto di pochi minuti e' innocuo trattandosi solo di un suggerimento.
+    return Cache::remember('panelusers_name_gender_map', now()->addMinutes(10), function () {
+        $rows = DB::table('t_user_info')
+            ->whereNotNull('first_name')
+            ->where('first_name', '<>', '')
+            ->whereNotNull('gender')
+            ->selectRaw('LOWER(TRIM(first_name)) as name, gender, COUNT(*) as cnt')
+            ->groupBy('name', 'gender')
+            ->get();
+
+        $byName = [];
+        foreach ($rows as $row) {
+            $byName[$row->name][$row->gender] = $row->cnt;
+        }
+
+        $map = [];
+        foreach ($byName as $name => $genders) {
+            $total = array_sum($genders);
+
+            if ($total < 20) {
+                continue;
+            }
+
+            arsort($genders);
+            $domGender = array_key_first($genders);
+            $domCount = reset($genders);
+
+            if (($domCount / $total) > 0.95) {
+                $map[$name] = (int) $domGender;
+            }
+        }
+
+        return $map;
+    });
+}
+
+/**
+ * Utenti il cui genere non coincide con quello dominante per il loro nome
+ * (secondo nameGenderMap()). Richiede sempre revisione manuale: non e'
+ * un errore certo, solo una minoranza statistica.
+ */
+private function nameGenderMismatchRows()
+{
+    $map = $this->nameGenderMap();
+
+    if (empty($map)) {
+        return collect();
+    }
+
+    return DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotNull('first_name')
+        ->where('first_name', '<>', '')
+        ->whereNotNull('gender')
+        ->select('user_id', 'email', 'first_name', 'gender')
+        ->get()
+        ->filter(function ($row) use ($map) {
+            $name = strtolower(trim($row->first_name));
+            return isset($map[$name]) && $map[$name] !== (int) $row->gender;
+        })
+        ->values();
+}
+
+/**
+ * Password non hashata nel formato standard (MD5, 32 caratteri): quasi
+ * certamente salvata in chiaro per un errore di importazione o di flusso.
+ */
+private function plaintextPasswordQuery()
+{
+    return DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotNull('pwd')
+        ->where('pwd', '<>', '')
+        ->whereRaw('LENGTH(pwd) <> 32');
+}
+
+private function missingPasswordQuery()
+{
+    return DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->where(function ($q) {
+            $q->whereNull('pwd')->orWhere('pwd', '');
+        });
+}
+
 public function getAnomaliesSummary()
 {
     $suspiciousDomains = $this->suspiciousEmailDomains();
@@ -1357,8 +1519,193 @@ public function getAnomaliesSummary()
             'implausible_age'   => $this->implausibleAgeQuery()->count(),
             'suspicious_email'  => array_sum(array_column($suspiciousDomains, 'count')),
             'missing_geo'       => $this->incompleteGeoQuery()->count(),
+            'data_anomalies'    => $this->invalidRegDateQuery()->count()
+                + $this->invalidBirthDateQuery()->count()
+                + $this->missingGenderQuery()->count()
+                + $this->nameGenderMismatchRows()->count()
+                + $this->plaintextPasswordQuery()->count(),
         ],
     ]);
+}
+
+public function getDataAnomaliesSummary()
+{
+    return response()->json([
+        'success' => true,
+        'counts' => [
+            'reg_date'          => $this->invalidRegDateQuery()->count(),
+            'birth_date'        => $this->invalidBirthDateQuery()->count(),
+            'missing_gender'    => $this->missingGenderQuery()->count(),
+            'name_gender'       => $this->nameGenderMismatchRows()->count(),
+            'plaintext_password' => $this->plaintextPasswordQuery()->count(),
+            'missing_password'  => $this->missingPasswordQuery()->count(),
+        ],
+    ]);
+}
+
+public function getInvalidRegDateList()
+{
+    $rows = $this->invalidRegDateQuery()
+        ->select('user_id', 'email', 'reg_date')
+        ->limit(500)
+        ->get()
+        ->map(function ($row) {
+            try {
+                $row->suggested_reg_date = Carbon::parse(trim($row->reg_date))->format('Y-m-d H:i:s');
+            } catch (\Exception $e) {
+                $row->suggested_reg_date = null;
+            }
+
+            return $row;
+        });
+
+    return response()->json(['success' => true, 'count' => $rows->count(), 'rows' => $rows]);
+}
+
+public function updateRegDate(Request $request, $user_id)
+{
+    $validated = $request->validate([
+        'reg_date' => 'required|date',
+    ]);
+
+    try {
+        $user = DB::table('t_user_info')->where('user_id', $user_id)->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Utente non trovato.'], 404);
+        }
+
+        $newRegDate = Carbon::parse($validated['reg_date'])->format('Y-m-d H:i:s');
+
+        DB::table('t_user_info')->where('user_id', $user_id)->update(['reg_date' => $newRegDate]);
+
+        DB::table('t_user_history')->insert([
+            'user_id'    => $user_id,
+            'event_date' => now(),
+            'event_type' => 'CORREZIONE DATA ISCRIZIONE',
+            'event_info' => 'Data iscrizione corretta da "' . $user->reg_date . '" a "' . $newRegDate . '" (formato anomalo)',
+            'prev_level' => $user->points ?? 0,
+            'new_level'  => $user->points ?? 0,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Data iscrizione aggiornata correttamente.']);
+    } catch (\Exception $e) {
+        Log::error('Errore aggiornamento reg_date: ' . $e->getMessage());
+
+        return response()->json(['success' => false, 'message' => 'Errore durante il salvataggio.'], 500);
+    }
+}
+
+public function getInvalidBirthDateFormatList()
+{
+    $rows = $this->invalidBirthDateQuery()
+        ->select('user_id', 'email', 'birth_date')
+        ->limit(500)
+        ->get()
+        ->map(function ($row) {
+            try {
+                $row->suggested_birth_date = Carbon::parse($row->birth_date)->format('Y-m-d');
+            } catch (\Exception $e) {
+                $row->suggested_birth_date = null;
+            }
+
+            return $row;
+        });
+
+    return response()->json(['success' => true, 'count' => $rows->count(), 'rows' => $rows]);
+}
+
+public function getMissingGenderList()
+{
+    $map = $this->nameGenderMap();
+
+    $rows = $this->missingGenderQuery()
+        ->select('user_id', 'email', 'first_name')
+        ->limit(500)
+        ->get()
+        ->map(function ($row) use ($map) {
+            $name = strtolower(trim($row->first_name ?? ''));
+            $row->suggested_gender = $map[$name] ?? null;
+
+            return $row;
+        });
+
+    return response()->json(['success' => true, 'count' => $rows->count(), 'rows' => $rows]);
+}
+
+public function getNameGenderMismatchList()
+{
+    $map = $this->nameGenderMap();
+
+    $rows = $this->nameGenderMismatchRows()
+        ->take(500)
+        ->map(function ($row) use ($map) {
+            $name = strtolower(trim($row->first_name));
+            $row->suggested_gender = $map[$name] ?? null;
+
+            return $row;
+        })
+        ->values();
+
+    return response()->json(['success' => true, 'count' => $rows->count(), 'rows' => $rows]);
+}
+
+public function updateGender(Request $request, $user_id)
+{
+    $validated = $request->validate([
+        'gender' => 'required|in:1,2',
+    ]);
+
+    try {
+        $user = DB::table('t_user_info')->where('user_id', $user_id)->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Utente non trovato.'], 404);
+        }
+
+        DB::table('t_user_info')->where('user_id', $user_id)->update(['gender' => $validated['gender']]);
+
+        DB::table('t_user_history')->insert([
+            'user_id'    => $user_id,
+            'event_date' => now(),
+            'event_type' => 'CORREZIONE GENERE',
+            'event_info' => 'Genere corretto da "' . ($user->gender ?? 'N.D.') . '" a "' . $validated['gender'] . '"',
+            'prev_level' => $user->points ?? 0,
+            'new_level'  => $user->points ?? 0,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Genere aggiornato correttamente.']);
+    } catch (\Exception $e) {
+        Log::error('Errore aggiornamento gender: ' . $e->getMessage());
+
+        return response()->json(['success' => false, 'message' => 'Errore durante il salvataggio.'], 500);
+    }
+}
+
+public function getPlaintextPasswordList()
+{
+    return response()->json([
+        'success' => true,
+        'count' => $this->plaintextPasswordQuery()->count(),
+    ]);
+}
+
+public function hashPlaintextPasswords()
+{
+    $rows = $this->plaintextPasswordQuery()->select('user_id', 'pwd')->get();
+
+    $updated = 0;
+
+    foreach ($rows as $row) {
+        DB::table('t_user_info')
+            ->where('user_id', $row->user_id)
+            ->update(['pwd' => md5($row->pwd)]);
+        $updated++;
+    }
+
+    Log::info('panelUsers: hash automatico password in chiaro eseguito da ' . (session('user_name') ?? 'staff') . ' - righe aggiornate: ' . $updated);
+
+    return response()->json(['success' => true, 'updated' => $updated]);
 }
 
 public function getMissingGeoSummary()
