@@ -1132,13 +1132,167 @@ private function implausibleAgeQuery()
         ->whereRaw('(TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) < 14 OR TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) > 85)');
 }
 
+/**
+ * Verifica reale (DNS) se un dominio puo' ricevere posta: record MX, con
+ * fallback su A (alcuni mail server minori non pubblicano MX e usano A).
+ * Risultato cachato 7 giorni per dominio per non rifare il lookup ad ogni richiesta.
+ */
+private function domainHasValidMx($domain)
+{
+    return Cache::remember('email_domain_mx_' . $domain, now()->addDays(7), function () use ($domain) {
+        return checkdnsrr($domain, 'MX') || checkdnsrr($domain, 'A');
+    });
+}
+
+/**
+ * Soglia oltre la quale un dominio e' considerato "diffuso" nel panel (quindi
+ * affidabile di per se', indipendentemente dal DNS) per il controllo di similitudine.
+ */
+const EMAIL_DOMAIN_POPULAR_THRESHOLD = 30;
+
+/**
+ * Domini reali ma rari nel panel, scartati manualmente dal controllo di
+ * similitudine perche' verificati come falsi positivi: pur essendo testualmente
+ * vicini a un dominio popolare, sono servizi email esistenti e legittimi.
+ */
+const EMAIL_DOMAIN_SIMILARITY_EXCEPTIONS = [
+    'mac.com', 'mail.com', 'mozmail.com', 'yopmail.com',
+];
+
+/**
+ * Domini email del panel da segnalare, per due motivi indipendenti:
+ *
+ * 1. Nessun MX/A valido: oggettivamente incapaci di ricevere posta.
+ * 2. Dominio raro (pochi utenti) molto simile a un dominio molto diffuso nel
+ *    panel: tipico dei domini "typosquattati" (es. gnail.com) che i truffatori
+ *    registrano apposta con un server di posta funzionante per intercettare i
+ *    refusi di chi scrive male gmail.com - quindi passano il controllo DNS pur
+ *    essendo quasi certamente un errore dell'utente.
+ *
+ * Il suggerimento di correzione usa sempre il dominio diffuso/valido piu' vicino
+ * realmente presente nel database, mai una lista esterna.
+ */
+private function suspiciousEmailDomains()
+{
+    $domains = DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotNull('email')
+        ->where('email', 'like', '%@%')
+        ->selectRaw('LOWER(SUBSTRING_INDEX(email, "@", -1)) as domain, COUNT(*) as cnt')
+        ->groupBy('domain')
+        ->get();
+
+    $counts = [];
+    $validDomains = [];
+    $noMxDomains = [];
+
+    foreach ($domains as $row) {
+        $domain = trim($row->domain);
+
+        if ($domain === '' || strpos($domain, '.') === false) {
+            continue;
+        }
+
+        $counts[$domain] = (int) $row->cnt;
+
+        if ($this->domainHasValidMx($domain)) {
+            $validDomains[] = $domain;
+        } else {
+            $noMxDomains[] = $domain;
+        }
+    }
+
+    // Domini "diffusi": affidabili per il confronto di similitudine a prescindere dal DNS.
+    $popularDomains = array_keys(array_filter($counts, function ($cnt) {
+        return $cnt >= self::EMAIL_DOMAIN_POPULAR_THRESHOLD;
+    }));
+
+    $closestDomainAndDistance = function ($domain, array $candidates) {
+        $bestMatch = null;
+        $bestDistance = null;
+
+        foreach ($candidates as $candidate) {
+            if ($candidate === $domain) {
+                continue;
+            }
+
+            $distance = levenshtein($domain, $candidate);
+
+            if ($bestDistance === null || $distance < $bestDistance) {
+                $bestDistance = $distance;
+                $bestMatch = $candidate;
+            }
+        }
+
+        return [$bestMatch, $bestDistance];
+    };
+
+    $suspicious = [];
+
+    // 1. Nessun MX/A valido.
+    foreach ($noMxDomains as $domain) {
+        [$bestMatch, $bestDistance] = $closestDomainAndDistance($domain, $validDomains);
+
+        $suspicious[$domain] = [
+            'domain'    => $domain,
+            'suggested' => ($bestDistance !== null && $bestDistance <= 3) ? $bestMatch : null,
+            'count'     => $counts[$domain],
+            // certo: nessun MX/A, il dominio non puo' ricevere posta.
+            'severity'  => 'invalid',
+        ];
+    }
+
+    // Nome prima del primo punto (es. "yahoo" da "yahoo.fr") dei domini popolari,
+    // per riconoscere varianti nazionali legittime dello stesso provider (stesso
+    // nome, TLD diverso: yahoo.fr/de/es, hotmail.de/es/fr... tutte con MX reale).
+    $popularNames = array_unique(array_map(function ($d) {
+        return strstr($d, '.', true);
+    }, $popularDomains));
+
+    // 2. Raro e molto simile a un dominio diffuso (typosquatting con DNS valido).
+    foreach ($counts as $domain => $cnt) {
+        if (isset($suspicious[$domain]) || in_array($domain, $popularDomains, true)) {
+            continue;
+        }
+
+        $domainName = strstr($domain, '.', true);
+
+        if (in_array($domainName, $popularNames, true) && in_array($domain, $validDomains, true)) {
+            continue;
+        }
+
+        if (in_array($domain, self::EMAIL_DOMAIN_SIMILARITY_EXCEPTIONS, true)) {
+            continue;
+        }
+
+        [$bestMatch, $bestDistance] = $closestDomainAndDistance($domain, $popularDomains);
+
+        if ($bestDistance !== null && $bestDistance <= 2) {
+            $suspicious[$domain] = [
+                'domain'    => $domain,
+                'suggested' => $bestMatch,
+                'count'     => $cnt,
+                // da verificare: il dominio ha DNS valido, potrebbe essere un provider
+                // reale ma poco diffuso nel panel, non solo un refuso.
+                'severity'  => 'suspect',
+            ];
+        }
+    }
+
+    return $suspicious;
+}
+
 public function getAnomaliesSummary()
 {
+    $suspiciousDomains = $this->suspiciousEmailDomains();
+
     return response()->json([
         'success' => true,
         'checks' => [
-            'unconfirmed'     => $this->unconfirmedActiveZeroQuery()->count(),
-            'implausible_age' => $this->implausibleAgeQuery()->count(),
+            'unconfirmed'       => $this->unconfirmedActiveZeroQuery()->count(),
+            'implausible_age'   => $this->implausibleAgeQuery()->count(),
+            'suspicious_email'  => array_sum(array_column($suspiciousDomains, 'count')),
         ],
     ]);
 }
@@ -1180,6 +1334,92 @@ public function getImplausibleAgeList()
         'count' => $rows->count(),
         'rows' => $rows,
     ]);
+}
+
+public function getSuspiciousEmailList()
+{
+    $suspiciousDomains = $this->suspiciousEmailDomains();
+
+    if (empty($suspiciousDomains)) {
+        return response()->json(['success' => true, 'count' => 0, 'rows' => []]);
+    }
+
+    $rows = DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotNull('email')
+        ->where('email', 'like', '%@%')
+        ->whereIn(DB::raw('LOWER(SUBSTRING_INDEX(email, "@", -1))'), array_keys($suspiciousDomains))
+        ->select('user_id', 'email')
+        ->orderBy('email')
+        ->limit(2000)
+        ->get()
+        ->map(function ($row) use ($suspiciousDomains) {
+            $domain = strtolower(substr(strrchr($row->email, '@'), 1));
+            $local = substr($row->email, 0, strrpos($row->email, '@'));
+            $suggested = $suspiciousDomains[$domain]['suggested'] ?? null;
+
+            $row->domain = $domain;
+            $row->suggested_email = $suggested ? ($local . '@' . $suggested) : $row->email;
+            $row->severity = $suspiciousDomains[$domain]['severity'] ?? 'suspect';
+
+            return $row;
+        })
+        ->sortBy(function ($row) {
+            return $row->severity === 'invalid' ? 0 : 1;
+        })
+        ->values();
+
+    return response()->json([
+        'success' => true,
+        'count' => $rows->count(),
+        'rows' => $rows,
+    ]);
+}
+
+public function updateEmail(Request $request, $user_id)
+{
+    $validated = $request->validate([
+        'email' => 'required|email|max:255',
+    ]);
+
+    try {
+        $user = DB::table('t_user_info')->where('user_id', $user_id)->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Utente non trovato.'], 404);
+        }
+
+        $newEmail = strtolower(trim($validated['email']));
+
+        $exists = DB::table('t_user_info')
+            ->where('email', $newEmail)
+            ->where('user_id', '<>', $user_id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['success' => false, 'message' => 'Email gia\' in uso da un altro utente.'], 422);
+        }
+
+        DB::table('t_user_info')
+            ->where('user_id', $user_id)
+            ->update(['email' => $newEmail]);
+
+        DB::table('t_user_history')->insert([
+            'user_id'    => $user_id,
+            'event_date' => now(),
+            'event_type' => 'CORREZIONE EMAIL',
+            'event_info' => 'Email corretta da ' . $user->email . ' a ' . $newEmail . ' (controllo dominio sospetto)',
+            'prev_level' => $user->points ?? 0,
+            'new_level'  => $user->points ?? 0,
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Email aggiornata correttamente.']);
+    } catch (\Exception $e) {
+        Log::error('Errore aggiornamento email: ' . $e->getMessage());
+
+        return response()->json(['success' => false, 'message' => 'Errore durante il salvataggio.'], 500);
+    }
 }
 
 public function updateBirthDate(Request $request, $user_id)

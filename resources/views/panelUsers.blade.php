@@ -81,6 +81,15 @@
                 <span class="control-check-dot d-none" id="countImplausibleAge"></span>
             </div>
 
+            <div class="control-check-icon-btn" id="tileSuspiciousEmail"
+                 data-bs-toggle="tooltip" data-bs-placement="bottom"
+                 title="Email con dominio sospetto (probabile refuso, es. gnail.com). Clicca per verificare e correggere.">
+                <span class="control-check-icon control-check-icon-warning">
+                    <i class="bi bi-at"></i>
+                </span>
+                <span class="control-check-dot d-none" id="countSuspiciousEmail"></span>
+            </div>
+
         </div>
     </div>
 </div>
@@ -147,6 +156,64 @@
                             </tr>
                         </thead>
                         <tbody id="implausibleAgeTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSuspiciousEmail" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content pu-email-modal">
+            <div class="modal-header pu-email-modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="pu-email-modal-icon"><i class="bi bi-at"></i></span>
+                    <div>
+                        <h5 class="modal-title mb-0">Email con dominio sospetto</h5>
+                        <small class="text-muted">Verifica DNS + analisi di somiglianza sui domini del panel</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="pu-email-legend">
+                    <div class="pu-email-legend-item">
+                        <span class="pu-sev-badge pu-sev-invalid">Non valida</span>
+                        <span>dominio senza server di posta — sicuramente non funzionante</span>
+                        <span class="pu-email-legend-count" id="suspiciousEmailCountInvalid">0</span>
+                    </div>
+                    <div class="pu-email-legend-item">
+                        <span class="pu-sev-badge pu-sev-suspect">Da verificare</span>
+                        <span>DNS valido ma dominio raro e simile a uno diffuso — potrebbe anche essere un provider reale poco comune</span>
+                        <span class="pu-email-legend-count" id="suspiciousEmailCountSuspect">0</span>
+                    </div>
+                </div>
+
+                <div id="suspiciousEmailLoader" class="text-center py-5">
+                    <div class="spinner-border text-secondary mb-2" style="width:1.8rem;height:1.8rem;"></div>
+                    <div class="text-muted small">Caricamento in corso...</div>
+                </div>
+
+                <div id="suspiciousEmailEmpty" class="pu-email-empty d-none">
+                    <i class="bi bi-patch-check"></i>
+                    <div class="fw-semibold mt-2">Nessun dominio sospetto trovato</div>
+                    <div class="text-muted small">Tutte le email attive risultano su domini affidabili.</div>
+                </div>
+
+                <div class="table-responsive d-none pu-email-table-wrap" id="suspiciousEmailTableWrap">
+                    <table class="table table-sm align-middle pu-email-table">
+                        <thead>
+                            <tr>
+                                <th style="width:120px;">Stato</th>
+                                <th style="width:140px;">UID</th>
+                                <th>Email attuale</th>
+                                <th>Email corretta</th>
+                                <th class="text-end" style="width:110px;">Azione</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suspiciousEmailTableBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -1221,7 +1288,7 @@ $(document).ready(function () {
 <script>
 $(document).ready(function () {
 
-    [].slice.call(document.querySelectorAll('#tileUnconfirmed, #tileImplausibleAge'))
+    [].slice.call(document.querySelectorAll('#tileUnconfirmed, #tileImplausibleAge, #tileSuspiciousEmail'))
         .forEach(function (el) { new bootstrap.Tooltip(el); });
 
     $('#tileUnconfirmed').on('click', function () {
@@ -1230,6 +1297,10 @@ $(document).ready(function () {
 
     $('#tileImplausibleAge').on('click', function () {
         $('#modalImplausibleAge').modal('show');
+    });
+
+    $('#tileSuspiciousEmail').on('click', function () {
+        $('#modalSuspiciousEmail').modal('show');
     });
 
     function renderCheckCount(elId, count) {
@@ -1250,9 +1321,10 @@ $(document).ready(function () {
                 if (!response.success) return;
                 renderCheckCount('countUnconfirmed', response.checks.unconfirmed);
                 renderCheckCount('countImplausibleAge', response.checks.implausible_age);
+                renderCheckCount('countSuspiciousEmail', response.checks.suspicious_email);
             },
             error: function () {
-                $('#countUnconfirmed, #countImplausibleAge').addClass('d-none');
+                $('#countUnconfirmed, #countImplausibleAge, #countSuspiciousEmail').addClass('d-none');
             }
         });
     }
@@ -1395,6 +1467,103 @@ $(document).ready(function () {
             url: '{{ url("/panelUsers/anomalies/update-birth-date") }}/' + uid,
             type: 'POST',
             data: { _token: '{{ csrf_token() }}', birth_date: newBirthDate },
+            success: function (response) {
+                if (response.success) {
+                    row.fadeOut(250, function () { row.remove(); });
+                    loadAnomaliesSummary();
+                } else {
+                    btn.prop('disabled', false).html('<i class="bi bi-save me-1"></i>Salva');
+                    alert(response.message || 'Errore durante il salvataggio.');
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('<i class="bi bi-save me-1"></i>Salva');
+                const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Errore durante il salvataggio.';
+                alert(msg);
+            }
+        });
+    });
+
+    // --- Modale: Email con dominio sospetto ---
+    function loadSuspiciousEmailList() {
+        $('#suspiciousEmailTableWrap, #suspiciousEmailEmpty').addClass('d-none');
+        $('#suspiciousEmailLoader').removeClass('d-none');
+        $('#suspiciousEmailCountInvalid, #suspiciousEmailCountSuspect').text('0');
+
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.suspiciousEmail") }}',
+            type: 'GET',
+            success: function (response) {
+                $('#suspiciousEmailLoader').addClass('d-none');
+
+                if (!response.success || !response.rows.length) {
+                    $('#suspiciousEmailEmpty').removeClass('d-none');
+                    return;
+                }
+
+                $('#suspiciousEmailTableWrap').removeClass('d-none');
+
+                const countInvalid = response.rows.filter(r => r.severity === 'invalid').length;
+                const countSuspect = response.rows.length - countInvalid;
+                $('#suspiciousEmailCountInvalid').text(countInvalid);
+                $('#suspiciousEmailCountSuspect').text(countSuspect);
+
+                let html = '';
+                response.rows.forEach(function (row) {
+                    const isInvalid = row.severity === 'invalid';
+                    const rowClass = isInvalid ? 'pu-email-row-invalid' : 'pu-email-row-suspect';
+                    const badge = isInvalid
+                        ? '<span class="pu-sev-badge pu-sev-invalid" data-bs-toggle="tooltip" title="Dominio senza server di posta: email sicuramente non funzionante.">Non valida</span>'
+                        : '<span class="pu-sev-badge pu-sev-suspect" data-bs-toggle="tooltip" title="Dominio con DNS valido ma raro nel panel: potrebbe essere un refuso o un provider reale poco comune. Verificare prima di modificare.">Da verificare</span>';
+                    const profileUrl = '{{ url("/user") }}/' + row.user_id;
+                    const changed = row.suggested_email !== row.email;
+
+                    html += `
+                        <tr data-uid="${row.user_id}" class="${rowClass}">
+                            <td>${badge}</td>
+                            <td><a href="${profileUrl}" target="_blank" class="pu-email-uid-link">${row.user_id}<i class="bi bi-box-arrow-up-right ms-1"></i></a></td>
+                            <td><span class="pu-email-current">${row.email ?? ''}</span></td>
+                            <td><input type="email" class="form-control form-control-sm input-new-email ${changed ? 'pu-email-suggested-changed' : ''}" value="${row.suggested_email}"></td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-primary btn-save-email">
+                                    <i class="bi bi-save me-1"></i>Salva
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                $('#suspiciousEmailTableBody').html(html);
+                [].slice.call(document.querySelectorAll('#suspiciousEmailTableBody [data-bs-toggle="tooltip"]'))
+                    .forEach(function (el) { new bootstrap.Tooltip(el); });
+            },
+            error: function () {
+                $('#suspiciousEmailLoader').addClass('d-none');
+                $('#suspiciousEmailTableWrap').removeClass('d-none');
+                $('#suspiciousEmailTableBody').html('<tr><td colspan="5" class="text-center text-danger py-3">Errore nel caricamento.</td></tr>');
+            }
+        });
+    }
+
+    $('#modalSuspiciousEmail').on('show.bs.modal', loadSuspiciousEmailList);
+
+    $('#suspiciousEmailTableBody').on('click', '.btn-save-email', function () {
+        const btn = $(this);
+        const row = btn.closest('tr');
+        const uid = row.data('uid');
+        const newEmail = row.find('.input-new-email').val();
+
+        if (!newEmail) {
+            alert('Inserisci un indirizzo email valido.');
+            return;
+        }
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '{{ url("/panelUsers/anomalies/update-email") }}/' + uid,
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}', email: newEmail },
             success: function (response) {
                 if (response.success) {
                     row.fadeOut(250, function () { row.remove(); });

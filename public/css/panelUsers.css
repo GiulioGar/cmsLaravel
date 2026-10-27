@@ -673,3 +673,149 @@
     justify-content: center;
     border: 2px solid #fff;
 }
+
+/* ===== Modale: Email con dominio sospetto ===== */
+
+.pu-email-modal-header{
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.pu-email-modal-icon{
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #fff;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+    flex-shrink: 0;
+}
+
+.pu-email-legend{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+}
+
+.pu-email-legend-item{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: #475569;
+}
+
+.pu-email-legend-count{
+    margin-left: auto;
+    font-weight: 700;
+    color: #1e293b;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    min-width: 28px;
+    text-align: center;
+    padding: 1px 8px;
+    font-size: 0.78rem;
+}
+
+/* Badge severita' (riusa la palette di .pu-status-*) */
+.pu-sev-badge{
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.pu-sev-invalid{
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.pu-sev-suspect{
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.pu-email-empty{
+    text-align: center;
+    padding: 48px 16px;
+    color: #64748b;
+}
+
+.pu-email-empty i{
+    font-size: 2rem;
+    color: #22c55e;
+}
+
+.pu-email-table thead th{
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    z-index: 1;
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.pu-email-table tbody tr:hover > td{
+    background-color: #f8fafc;
+}
+
+.pu-email-table tbody tr.pu-email-row-invalid > td{
+    background-color: #fef2f2;
+}
+
+.pu-email-table tbody tr.pu-email-row-suspect > td{
+    background-color: #fffbeb;
+}
+
+.pu-email-table tbody tr.pu-email-row-invalid:hover > td{
+    background-color: #fee2e2;
+}
+
+.pu-email-table tbody tr.pu-email-row-suspect:hover > td{
+    background-color: #fef3c7;
+}
+
+.pu-email-current{
+    font-family: 'Courier New', monospace;
+    font-size: 0.82rem;
+    color: #475569;
+}
+
+.pu-email-uid-link{
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pu-email-uid-link i{
+    font-size: 0.68rem;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+.pu-email-suggested-changed{
+    border-color: #86efac;
+    background-color: #f0fdf4;
+    font-weight: 600;
+}

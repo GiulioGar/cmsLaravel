@@ -161,6 +161,8 @@ Route::middleware(['auth.custom'])->group(function () {
         Route::get('/panelUsers/anomalies/unconfirmed', [PanelUsersController::class, 'getUnconfirmedList'])->name('panelUsers.anomalies.unconfirmed');
         Route::get('/panelUsers/anomalies/implausible-age', [PanelUsersController::class, 'getImplausibleAgeList'])->name('panelUsers.anomalies.implausibleAge');
         Route::post('/panelUsers/anomalies/update-birth-date/{user_id}', [PanelUsersController::class, 'updateBirthDate'])->name('panelUsers.anomalies.updateBirthDate');
+        Route::get('/panelUsers/anomalies/suspicious-email', [PanelUsersController::class, 'getSuspiciousEmailList'])->name('panelUsers.anomalies.suspiciousEmail');
+        Route::post('/panelUsers/anomalies/update-email/{user_id}', [PanelUsersController::class, 'updateEmail'])->name('panelUsers.anomalies.updateEmail');
 
     // ============================================
     // USER actions
