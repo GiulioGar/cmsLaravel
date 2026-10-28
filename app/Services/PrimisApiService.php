@@ -120,7 +120,26 @@ public function getQuestion(string $projectName, string $surveyId, int $question
     return $response->json();
 }
 
+/**
+ * Aggiorna lo status di un survey (0=design, 1=testing, 2=collection,
+ * 3=analysis, 4=closed). La risposta puo' contenere "success": false
+ * con HTTP 200 (es. status non valido): l'interpretazione resta al
+ * chiamante, qui si solleva eccezione solo per errori di comunicazione.
+ */
+public function updateSurveyStatus(string $projectName, string $surveyId, int $status): array
+{
+    $url = $this->baseUrl . "projects/{$projectName}/surveys/{$surveyId}/update";
 
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . $this->token,
+        'Accept'        => 'application/json',
+    ])->put($url, ['status' => $status]);
 
+    if ($response->failed()) {
+        throw new \Exception('Errore di comunicazione con Primis [updateSurveyStatus]');
+    }
+
+    return $response->json();
+}
 
 }

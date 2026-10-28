@@ -333,8 +333,29 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
     return $response;
 }
 
-    public function closeSurvey(Request $request)
+    public function closeSurvey(Request $request, PrimisApiService $primis)
     {
+        return $this->changeSurveyStatus($request, $primis, 0, 4, 1, 'La ricerca è già chiusa.');
+    }
+
+    public function reopenSurvey(Request $request, PrimisApiService $primis)
+    {
+        return $this->changeSurveyStatus($request, $primis, 1, 2, 0, 'La ricerca non è chiusa.');
+    }
+
+    /**
+     * Cambia lo status del survey su Primis e, solo se Primis conferma,
+     * allinea t_panel_control.stato. Se Primis fallisce (comunicazione o
+     * success:false), lo stato locale NON viene toccato.
+     */
+    private function changeSurveyStatus(
+        Request $request,
+        PrimisApiService $primis,
+        int $requiredLocalStato,
+        int $primisStatus,
+        int $newLocalStato,
+        string $alreadyMessage
+    ) {
         $prj = $request->input('prj');
         $sid = $request->input('sid');
 
@@ -347,14 +368,30 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
             return response()->json(['success' => false, 'message' => 'Ricerca non trovata.'], 404);
         }
 
-        if ((int) $survey->stato === 1) {
-            return response()->json(['success' => false, 'message' => 'La ricerca è già chiusa.'], 400);
+        if ((int) $survey->stato !== $requiredLocalStato) {
+            return response()->json(['success' => false, 'message' => $alreadyMessage], 400);
+        }
+
+        try {
+            $primisResponse = $primis->updateSurveyStatus($prj, $sid, $primisStatus);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Errore di comunicazione con Primis: ' . $e->getMessage(),
+            ], 502);
+        }
+
+        if (!($primisResponse['success'] ?? false)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Primis ha rifiutato la richiesta: ' . ($primisResponse['error_message'] ?? 'errore sconosciuto'),
+            ], 502);
         }
 
         DB::table('t_panel_control')
             ->where('prj', $prj)
             ->where('sur_id', $sid)
-            ->update(['stato' => 1]);
+            ->update(['stato' => $newLocalStato]);
 
         return response()->json(['success' => true]);
     }

@@ -411,6 +411,40 @@
             });
     }
 
+    function reopenSurvey(prjValue, sidValue) {
+        if (!confirm('Sei sicuro di voler riaprire questa ricerca?')) {
+            return;
+        }
+
+        fetch(routes.reopenSurvey, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({
+                prj: prjValue,
+                sid: sidValue
+            })
+        })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                if (data.success) {
+                    alert('Ricerca riaperta con successo!');
+                    window.location.reload();
+                    return;
+                }
+
+                alert('Errore: ' + (data.message || 'Operazione non riuscita.'));
+            })
+            .catch(function (error) {
+                console.error(error);
+                alert('Si è verificato un errore.');
+            });
+    }
+
     function bindResetBloccate() {
         const button = document.getElementById('resetBloccateBtn');
 
@@ -458,6 +492,9 @@
     function exposeGlobalActions() {
         window.closeSurvey = function (prjValue, sidValue) {
             closeSurvey(prjValue, sidValue);
+        };
+        window.reopenSurvey = function (prjValue, sidValue) {
+            reopenSurvey(prjValue, sidValue);
         };
     }
 

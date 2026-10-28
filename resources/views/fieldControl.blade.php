@@ -87,12 +87,15 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="settingsDropdown">
                     <li>
-                        <a class="dropdown-item {{ $panelData->stato == 1 ? 'disabled text-muted' : '' }}"
-                           href="#"
-                           onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')"
-                           {{ $panelData->stato == 1 ? 'style=pointer-events:none;opacity:0.5;' : '' }}>
-                            Chiudi Ricerca
-                        </a>
+                        @if(!empty($panelData) && (int) $panelData->stato === 1)
+                            <a class="dropdown-item" href="#" onclick="reopenSurvey('{{ $prj }}', '{{ $sid }}')">
+                                Riapri Ricerca
+                            </a>
+                        @else
+                            <a class="dropdown-item" href="#" onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')">
+                                Chiudi Ricerca
+                            </a>
+                        @endif
                     </li>
                     <li>
                     <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#resetBloccateModal">

@@ -5,6 +5,7 @@
         sid: @json($sid),
         routes: {
             closeSurvey: @json(route('close.survey')),
+            reopenSurvey: @json(route('reopen.survey')),
             resetBloccate: @json(route('reset.bloccate'))
         }
     }, window.FieldControlConfig || {});
