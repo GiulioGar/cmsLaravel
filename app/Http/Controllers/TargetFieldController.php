@@ -5,13 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\PrimisApiService;
+use App\Services\FieldControlSreService;
 
 class TargetFieldController extends Controller
 {
-    public function index(Request $request, PrimisApiService $primis)
+    public function index(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
     {
         $prj = $request->query('prj');
         $sid = $request->query('sid');
+
+        $panelData = DB::table('t_panel_control')->where('sur_id', $sid)->first();
+
+        // Dati leggeri per le modali condivise Download/Reset Bloccate (toolbar in alto)
+        $toolbarSummary = $sreService->getLightPanelSummary($prj, $sid);
 
         $ricercheInCorso = DB::table('t_panel_control')
             ->where('stato', 0)
@@ -43,6 +49,9 @@ class TargetFieldController extends Controller
         return view('targetField', [
             'prj' => $prj,
             'sid' => $sid,
+            'panelData' => $panelData,
+            'panelCounts' => $toolbarSummary['panelCounts'],
+            'counts' => $toolbarSummary['counts'],
             'ricercheInCorso' => $ricercheInCorso,
             'questions' => $filtered
         ]);

@@ -15,6 +15,21 @@ class FieldControlSreService
     |--------------------------------------------------------------------------
     */
 
+    /**
+     * Versione leggera di buildInterviewDataset()+summarizeInterviews(), senza
+     * Primis (question map) ne' build di log/quote/filtrate: serve solo per
+     * popolare le modali Download/Reset Bloccate su pagine diverse da
+     * fieldControl (lista panel + conteggio bloccate).
+     */
+    public function getLightPanelSummary(string $prj, string $sid): array
+    {
+        $directory = $this->resolveResultsDirectory($prj, $sid);
+        $files = $this->getSreFiles($directory);
+        $interviews = $this->buildInterviewDataset($files, $prj, $sid);
+
+        return $this->summarizeInterviews($interviews, count($files));
+    }
+
     public function resolveResultsDirectory(string $prj, string $sid): ?string
     {
         $serverDirectory = "/var/imr/fields/{$prj}/{$sid}/results";

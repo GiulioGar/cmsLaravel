@@ -892,9 +892,13 @@
 </div>
 @endforeach
 
+@include('partials.field-toolbar-modals')
+
 @endsection
 
 @section('scripts')
+@include('partials.field-toolbar-scripts')
+
 <script>
 /* ---- Mappa codici domanda (da questionsFromApi) ---- */
 @php

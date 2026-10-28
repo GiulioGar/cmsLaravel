@@ -64,13 +64,18 @@ class FieldQualityController extends Controller
 
     private const SCALE_AGGRAVATION_RISK = 15;
 
-    public function index(Request $request, PrimisApiService $primis)
+    public function index(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
     {
         ini_set('memory_limit', '512M');
         set_time_limit(0);
 
         $prj = $request->query('prj');
         $sid = $request->query('sid');
+
+        // Dati leggeri per le modali condivise Download/Reset Bloccate (toolbar in alto)
+        $toolbarSummary = $sreService->getLightPanelSummary($prj, $sid);
+        $panelCounts = $toolbarSummary['panelCounts'];
+        $counts = $toolbarSummary['counts'];
 
         $directory = base_path("var/imr/fields/{$prj}/{$sid}/results");
         if (!is_dir($directory)) {
@@ -195,6 +200,8 @@ class FieldQualityController extends Controller
             'prj'                => $prj,
             'sid'                => $sid,
             'panelData'          => $panelData,
+            'panelCounts'        => $panelCounts,
+            'counts'             => $counts,
             'ricercheInCorso'    => $ricercheInCorso,
             'averageScore'       => $stats['average'],
             'maxScore'           => $stats['max'],

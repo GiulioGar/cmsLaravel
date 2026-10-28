@@ -61,7 +61,10 @@ use Illuminate\Support\Str;
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item {{ !empty($panelData) && $panelData->stato == 1 ? 'disabled text-muted' : '' }}"
+                               href="#"
+                               onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')"
+                               {{ !empty($panelData) && $panelData->stato == 1 ? 'style=pointer-events:none;opacity:0.5;' : '' }}>
                                 Chiudi Ricerca
                             </a>
                         </li>
@@ -163,12 +166,14 @@ use Illuminate\Support\Str;
     </div>
   </div>
 
-
+@include('partials.field-toolbar-modals')
 
 @endsection
 
 {{-- JavaScript --}}
 @section('scripts')
+@include('partials.field-toolbar-scripts')
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
 
