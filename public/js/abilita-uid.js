@@ -300,21 +300,13 @@ async function copyLinks() {
             });
     }
 
-    function isNumericOnlyLines(lines) {
-        if (!lines.length) return false;
-
-        return lines.every(function (v) {
-            return /^\d+$/.test(v);
-        });
-    }
-
     function updateResetButtonState() {
         const btnReset = document.getElementById('btn-reset-iids');
         const lines = parseUidIidInputLines();
 
         if (!btnReset) return;
 
-        btnReset.disabled = !isNumericOnlyLines(lines);
+        btnReset.disabled = lines.length === 0;
     }
 
     // ====== UI HELPERS ======
@@ -652,7 +644,7 @@ async function copyLinks() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Attenzione',
-                text: 'Seleziona SID/PRJ e inserisci almeno un IID.'
+                text: 'Seleziona SID/PRJ e inserisci almeno un UID o IID.'
             });
             return;
         }
@@ -679,6 +671,8 @@ async function copyLinks() {
                 }
 
                 const files = Array.isArray(data.files) ? data.files : [];
+                const historyRows = Array.isArray(data.history_rows) ? data.history_rows : [];
+                const unresolved = Array.isArray(data.unresolved) ? data.unresolved : [];
                 const maxPreview = 12;
 
                 let filesHtml = '';
@@ -705,7 +699,35 @@ async function copyLinks() {
                 } else {
                     filesHtml =
                         '<div class="mt-3 text-start text-muted">' +
-                            'Nessun file .sre trovato per gli IID inseriti. Verrà eseguito solo il reset nel database.' +
+                            'Nessun file .sre trovato per gli UID/IID inseriti. Verrà eseguito solo il reset nel database.' +
+                        '</div>';
+                }
+
+                let historyHtml = '';
+
+                if (historyRows.length > 0) {
+                    const historyList = historyRows
+                        .map(function (h) {
+                            return '<li style="text-align:left;">' + h.event_type + ' &mdash; ' + h.event_date + '</li>';
+                        })
+                        .join('');
+
+                    historyHtml =
+                        '<div class="mt-3 text-start">' +
+                            '<div><strong>Storico da eliminare (' + historyRows.length + '):</strong></div>' +
+                            '<ul class="mt-2 mb-1" style="max-height:160px; overflow:auto; padding-left:18px;">' +
+                                historyList +
+                            '</ul>' +
+                        '</div>';
+                }
+
+                let unresolvedHtml = '';
+
+                if (unresolved.length > 0) {
+                    unresolvedHtml =
+                        '<div class="mt-3 text-start text-warning">' +
+                            '<strong>' + unresolved.length + ' riga/he non risolte, verranno ignorate:</strong> ' +
+                            unresolved.join(', ') +
                         '</div>';
                 }
 
@@ -714,8 +736,10 @@ async function copyLinks() {
                     title: 'Conferma eliminazione',
                     html:
                         '<div>' +
-                            '<div>Stai per resettare gli IID selezionati.</div>' +
+                            '<div>Stai per resettare gli UID/IID selezionati.</div>' +
                             filesHtml +
+                            historyHtml +
+                            unresolvedHtml +
                         '</div>',
                     showCancelButton: true,
                     confirmButtonText: 'Sì, procedi',
@@ -744,7 +768,7 @@ async function copyLinks() {
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Reset completato',
-                                    html: 'Aggiornati <b>' + data.updated + '</b> record<br>Cancellati <b>' + data.deleted + '</b> file'
+                                    html: 'Aggiornati <b>' + data.updated + '</b> record<br>Cancellati <b>' + data.deleted + '</b> file<br>Storico eliminato: <b>' + (data.history_deleted || 0) + '</b> righe'
                                 });
                                 updateLog(data.actions);
                                 refreshResults();

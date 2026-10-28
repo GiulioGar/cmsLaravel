@@ -5,11 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\UidGeneratorService;
+use App\Services\FieldControlSreService;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
 class AbilitaUidController extends Controller
 {
+    private const HISTORY_RESETTABLE_EVENT_TYPES = [
+        'interview_complete',
+        'interview_complete_cint',
+        'interview_screenout',
+        'interview_quotafull',
+        'withdraw',
+    ];
+
     public function index()
     {
         $surveys = DB::table('t_surveys')
@@ -441,7 +450,7 @@ public function enableUids(Request $request)
     ]);
 }
 
-public function previewResetIids(Request $request)
+public function previewResetIids(Request $request, FieldControlSreService $sreService)
 {
     $sid = $request->input('sid');
     $prj = $request->input('prj');
@@ -454,15 +463,24 @@ public function previewResetIids(Request $request)
         ], 400);
     }
 
-    $iids = preg_split('/\r\n|\r|\n/', $iidsRaw);
-    $iids = array_map('trim', $iids);
-    $iids = array_filter($iids, fn($v) => $v !== '' && ctype_digit($v));
-    $iids = array_values(array_unique($iids));
+    $lines = preg_split('/\r\n|\r|\n/', $iidsRaw);
+    $lines = array_map('trim', $lines);
+    $lines = array_values(array_unique(array_filter($lines, fn($v) => $v !== '')));
+
+    if (empty($lines)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Nessun UID/IID valido.'
+        ], 400);
+    }
+
+    $resolved = $this->resolveResetTargets($sid, $prj, $lines, $sreService);
+    $iids = $resolved['iids'];
 
     if (empty($iids)) {
         return response()->json([
             'success' => false,
-            'message' => 'Nessun IID numerico valido.'
+            'message' => 'Nessun UID/IID risolvibile.'
         ], 400);
     }
 
@@ -488,15 +506,24 @@ if (is_dir($directory)) {
     $files = array_values(array_unique($files));
     sort($files);
 
+    $historyRows = $this->findHistoryRowsForReset($sid, $prj, $resolved['uids']);
+
     return response()->json([
         'success' => true,
         'iids' => $iids,
+        'unresolved' => $resolved['unresolved'],
         'files' => $files,
         'files_count' => count($files),
+        'history_rows' => array_map(fn($row) => [
+            'id' => $row->id,
+            'event_type' => $row->event_type,
+            'event_date' => $row->event_date,
+        ], $historyRows),
+        'history_count' => count($historyRows),
     ]);
 }
 
-public function resetIids(Request $request)
+public function resetIids(Request $request, FieldControlSreService $sreService)
 {
     $sid = $request->input('sid');
     $prj = $request->input('prj');
@@ -509,16 +536,18 @@ public function resetIids(Request $request)
         ], 400);
     }
 
-    // 1. split, trim, solo numerici, deduplica
-    $iids = preg_split('/\r\n|\r|\n/', $iidsRaw);
-    $iids = array_map('trim', $iids);
-    $iids = array_filter($iids, fn($v) => $v !== '' && ctype_digit($v));
-    $iids = array_values(array_unique($iids));
+    // 1. split, trim, deduplica
+    $lines = preg_split('/\r\n|\r|\n/', $iidsRaw);
+    $lines = array_map('trim', $lines);
+    $lines = array_values(array_unique(array_filter($lines, fn($v) => $v !== '')));
+
+    $resolved = $this->resolveResetTargets($sid, $prj, $lines, $sreService);
+    $iids = $resolved['iids'];
 
     if (empty($iids)) {
         return response()->json([
             'success' => false,
-            'message' => 'Nessun IID numerico valido da resettare.'
+            'message' => 'Nessun UID/IID risolvibile da resettare.'
         ], 400);
     }
 
@@ -560,12 +589,133 @@ if (is_dir($directory)) {
     }
 }
 
+    // 4. pulizia storico t_user_history (solo esiti intervista, stesso sid/prj)
+    $historyRows = $this->findHistoryRowsForReset($sid, $prj, $resolved['uids']);
+    $historyDeleted = 0;
+
+    if (!empty($historyRows)) {
+        $historyIds = array_map(fn($row) => $row->id, $historyRows);
+        $historyDeleted = DB::table('t_user_history')->whereIn('id', $historyIds)->delete();
+
+        foreach ($historyRows as $row) {
+            $log[] = "Storico eliminato: {$row->event_type} del {$row->event_date}";
+        }
+    }
+
     return response()->json([
         'success' => true,
         'updated' => $updated,
         'deleted' => $deleted,
+        'history_deleted' => $historyDeleted,
+        'unresolved' => $resolved['unresolved'],
         'actions' => array_slice($log, -5)
     ]);
+}
+
+/**
+ * Risolve un elenco misto di UID/IID in una lista di IID su cui operare
+ * (stesso IID usato oggi da findSreFilesByIid/update t_respint), piu' la
+ * lista di UID noti (per la pulizia storico) e le righe non risolvibili.
+ *
+ * Il fallback su file .sre serve perche' t_respint.iid puo' restare -1
+ * anche quando il file e' gia' presente su disco (scrittura esterna in
+ * ritardo, vedi memoria abilitauid_reset_uid_attempt).
+ */
+private function resolveResetTargets(string $sid, string $prj, array $lines, FieldControlSreService $sreService): array
+{
+    $iids = [];
+    $uidsByIid = [];
+    $unresolved = [];
+
+    foreach ($lines as $line) {
+        if (ctype_digit($line)) {
+            $iid = (int) $line;
+            $iids[] = $iid;
+
+            $row = DB::table('t_respint')->select('uid')->where('sid', $sid)->where('iid', $iid)->first();
+
+            if ($row && $row->uid) {
+                $uidsByIid[$iid] = $row->uid;
+            }
+
+            continue;
+        }
+
+        $row = DB::table('t_respint')->select('iid', 'uid')->where('sid', $sid)->where('uid', $line)->first();
+        $iid = $row->iid ?? null;
+
+        if ($iid === null || (int) $iid === -1) {
+            $directory = $sreService->resolveResultsDirectory($prj, $sid);
+            $foundIid = null;
+
+            foreach ($sreService->getSreFiles($directory) as $file) {
+                $parsed = $sreService->parseSreFile($file);
+
+                if (!empty($parsed) && ($parsed['uid'] ?? null) === $line) {
+                    $foundIid = $parsed['iid'] ?? null;
+                    break;
+                }
+            }
+
+            if ($foundIid !== null && ctype_digit((string) $foundIid)) {
+                $iid = (int) $foundIid;
+            }
+        }
+
+        if ($iid === null || (int) $iid === -1) {
+            $unresolved[] = $line;
+            continue;
+        }
+
+        $iid = (int) $iid;
+        $iids[] = $iid;
+        $uidsByIid[$iid] = $line;
+    }
+
+    return [
+        'iids' => array_values(array_unique($iids)),
+        'uids' => array_values(array_unique($uidsByIid)),
+        'unresolved' => array_values(array_unique($unresolved)),
+    ];
+}
+
+/**
+ * Righe di t_user_history candidate alla cancellazione per un reset:
+ * stesso uid, stesso sid/prj ricavati da event_info "(iid,sid,prj)",
+ * solo per gli event_type di esito intervista.
+ */
+private function findHistoryRowsForReset(string $sid, string $prj, array $uids): array
+{
+    if (empty($uids)) {
+        return [];
+    }
+
+    $rows = DB::table('t_user_history')
+        ->select('id', 'user_id', 'event_type', 'event_date', 'event_info')
+        ->whereIn('user_id', $uids)
+        ->whereIn('event_type', self::HISTORY_RESETTABLE_EVENT_TYPES)
+        ->get();
+
+    $matched = [];
+
+    foreach ($rows as $row) {
+        $info = [];
+
+        if (strpos($row->event_info, ',') !== false) {
+            $info = explode(',', $row->event_info);
+        } elseif (strpos($row->event_info, '|') !== false) {
+            $info = explode('|', $row->event_info);
+        }
+
+        $rowSid = trim($info[1] ?? '');
+        $rowPrj = trim(str_replace(['(', ')'], '', $info[2] ?? ''));
+
+        if ($rowSid === $sid && $rowPrj === $prj) {
+            $matched[] = $row;
+        }
+    }
+
+    return $matched;
 }
 
 private function findSreFilesByIid(string $directory, string $iid): array
