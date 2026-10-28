@@ -1788,6 +1788,20 @@ h3 {font-size: 15px!important;}
   padding-top: .85rem;
 }
 
+.fc-kpi-meta-row--labeled{
+  justify-content:space-between;
+  gap:.5rem;
+}
+
+.fc-kpi-meta-caption{
+  font-size:.66rem;
+  font-weight:700;
+  letter-spacing:.02em;
+  color:#6d28d9;
+  opacity:.75;
+  white-space:nowrap;
+}
+
 .fc-kpi-pill{
   display:inline-flex;
   align-items:center;

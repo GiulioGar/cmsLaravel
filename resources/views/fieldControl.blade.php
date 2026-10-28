@@ -628,7 +628,8 @@
                             <div class="fc-kpi-value">{{ $counts['contatti'] }}</div>
 
                             @if($panelRateInfo !== null && $panelRateInfo['valore_corrente'] > 0)
-                            <div class="fc-kpi-meta-row">
+                            <div class="fc-kpi-meta-row fc-kpi-meta-row--labeled">
+                                <span class="fc-kpi-meta-caption">IR Panel Interactive</span>
                                 <div class="fc-kpi-pill"
                                     style="{{ $panelRateInfo['maturo'] ? '' : 'opacity:.72' }}"
                                     data-bs-toggle="tooltip"
@@ -947,7 +948,8 @@
                                     <div class="fc-kpi-value">{{ $panelData['contatti'] }}</div>
 
                                     @if($panelName === 'Interactive' && $abilitati > 0 && $panelRateInfo !== null)
-                                    <div class="fc-kpi-meta-row">
+                                    <div class="fc-kpi-meta-row fc-kpi-meta-row--labeled">
+                                        <span class="fc-kpi-meta-caption">IR Panel Interactive</span>
                                         <div class="fc-kpi-pill"
                                             style="{{ $panelRateInfo['maturo'] ? '' : 'opacity:.72' }}"
                                             data-bs-toggle="tooltip"
