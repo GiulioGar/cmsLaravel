@@ -597,6 +597,414 @@
         });
     }
 
+    function bindRedirectionsModal() {
+        const saveAllBtn = document.getElementById('redirectionsSaveAllBtn');
+        const saveAllStatus = document.getElementById('redirectionsSaveAllStatus');
+        const tableBody = document.getElementById('redirectionsTableBody');
+
+        if (!tableBody || !routes.updateRedirections) {
+            return;
+        }
+
+        function showRowStatus(index, success, message) {
+            const el = tableBody.querySelector('.fc-redirect-row-status[data-index="' + index + '"]');
+            if (!el) {
+                return;
+            }
+
+            el.textContent = success ? 'Salvato' : (message || 'Errore');
+            el.classList.toggle('is-error', !success);
+            el.classList.add('is-visible');
+
+            setTimeout(function () {
+                el.classList.remove('is-visible');
+            }, 2500);
+        }
+
+        function showAllStatus(success, message) {
+            if (!saveAllStatus) {
+                return;
+            }
+
+            saveAllStatus.textContent = message || (success ? 'Tutte le modifiche sono state salvate.' : 'Errore durante il salvataggio.');
+            saveAllStatus.classList.toggle('is-error', !success);
+        }
+
+        function sendUpdates(updates) {
+            return fetch(routes.updateRedirections, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    prj: prj,
+                    sid: sid,
+                    updates: updates
+                })
+            }).then(function (response) {
+                return response.json();
+            });
+        }
+
+        tableBody.addEventListener('click', function (event) {
+            const deleteBtn = event.target.closest('.fc-redirect-delete-group');
+            if (deleteBtn) {
+                const parameterName = deleteBtn.getAttribute('data-parameter-name');
+                const parameterValue = deleteBtn.getAttribute('data-parameter-value');
+                const groupLabel = deleteBtn.getAttribute('data-group-label');
+
+                if (!routes.deleteRedirectionsGroup) {
+                    return;
+                }
+
+                if (!confirm('Eliminare tutte le redirection del panel "' + groupLabel + '"? L\'operazione non è reversibile.')) {
+                    return;
+                }
+
+                fetch(routes.deleteRedirectionsGroup, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        prj: prj,
+                        sid: sid,
+                        parameter_name: parameterName,
+                        parameter_value: parameterValue
+                    })
+                })
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        if (data.success) {
+                            window.location.reload();
+                            return;
+                        }
+
+                        alert(data.message || 'Errore durante l\'eliminazione.');
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        alert('Errore di rete durante l\'eliminazione.');
+                    });
+
+                return;
+            }
+
+            const btn = event.target.closest('.fc-redirect-save-row');
+            if (!btn) {
+                return;
+            }
+
+            const index = btn.getAttribute('data-index');
+            const input = tableBody.querySelector('.fc-redirect-input[data-index="' + index + '"]');
+
+            if (!input) {
+                return;
+            }
+
+            const redirectTo = input.value.trim();
+            if (redirectTo === '') {
+                showRowStatus(index, false, 'Il link non può essere vuoto');
+                return;
+            }
+
+            sendUpdates([{ index: parseInt(index, 10), redirect_to: redirectTo }])
+                .then(function (data) {
+                    showRowStatus(index, !!data.success, data.message);
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    showRowStatus(index, false, 'Errore di rete');
+                });
+        });
+
+        if (saveAllBtn) {
+            saveAllBtn.addEventListener('click', function () {
+                const updates = [];
+
+                tableBody.querySelectorAll('.fc-redirect-input').forEach(function (input) {
+                    const value = input.value.trim();
+                    if (value !== '') {
+                        updates.push({ index: parseInt(input.getAttribute('data-index'), 10), redirect_to: value });
+                    }
+                });
+
+                if (!updates.length) {
+                    showAllStatus(false, 'Nessun link da salvare.');
+                    return;
+                }
+
+                sendUpdates(updates)
+                    .then(function (data) {
+                        showAllStatus(!!data.success, data.message);
+
+                        if (data.success) {
+                            updates.forEach(function (update) {
+                                showRowStatus(update.index, true);
+                            });
+                        }
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        showAllStatus(false, 'Errore di rete');
+                    });
+            });
+        }
+    }
+
+    function bindRedirectImport() {
+        const analyzeBtn = document.getElementById('redirectImportAnalyzeBtn');
+        const textarea = document.getElementById('redirectImportTextarea');
+        const reviewWrap = document.getElementById('redirectImportReviewWrap');
+        const reviewBody = document.getElementById('redirectImportReviewBody');
+        const confirmBtn = document.getElementById('redirectImportConfirmBtn');
+        const statusEl = document.getElementById('redirectImportStatus');
+        const panelNamesMap = config.panelNamesMap || {};
+
+        if (!analyzeBtn || !textarea || !reviewBody) {
+            return;
+        }
+
+        const exitOptions = [
+            { value: '', label: '-- scegli --' },
+            { value: '3', label: 'Completa' },
+            { value: '4', label: 'Non in target' },
+            { value: '5', label: 'Quotafull' },
+            { value: '7', label: 'Stop Int' },
+            { value: '10', label: 'Bad Quality' }
+        ];
+
+        function buildExitSelect(selectedValue) {
+            const select = document.createElement('select');
+            select.className = 'form-select form-select-sm fc-redirect-import-exit';
+
+            exitOptions.forEach(function (opt) {
+                const optionEl = document.createElement('option');
+                optionEl.value = opt.value;
+                optionEl.textContent = opt.label;
+                if (selectedValue !== null && String(selectedValue) === opt.value) {
+                    optionEl.selected = true;
+                }
+                select.appendChild(optionEl);
+            });
+
+            return select;
+        }
+
+        function getDefaultPanelValue() {
+            const customInput = document.getElementById('redirectImportPanelCustom');
+            const customValue = customInput ? customInput.value.trim() : '';
+            if (customValue !== '') {
+                return customValue;
+            }
+
+            const globalSelect = document.getElementById('redirectImportPanelSelect');
+            return globalSelect ? globalSelect.value : '';
+        }
+
+        function buildPanelSelect(defaultValue) {
+            const select = document.createElement('select');
+            select.className = 'form-select form-select-sm fc-redirect-import-panel';
+
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = '';
+            emptyOpt.textContent = '-- panel --';
+            select.appendChild(emptyOpt);
+
+            let hasMatch = false;
+
+            Object.keys(panelNamesMap).forEach(function (code) {
+                const optionEl = document.createElement('option');
+                optionEl.value = code;
+                optionEl.textContent = panelNamesMap[code];
+                if (defaultValue && String(defaultValue) === String(code)) {
+                    optionEl.selected = true;
+                    hasMatch = true;
+                }
+                select.appendChild(optionEl);
+            });
+
+            // Codice personalizzato (non presente nell'elenco panel noti)
+            if (defaultValue && !hasMatch) {
+                const customOpt = document.createElement('option');
+                customOpt.value = defaultValue;
+                customOpt.textContent = 'Codice #' + defaultValue;
+                customOpt.selected = true;
+                select.appendChild(customOpt);
+            }
+
+            return select;
+        }
+
+        function clearStatus() {
+            statusEl.textContent = '';
+            statusEl.classList.remove('is-error');
+        }
+
+        function setStatus(success, message) {
+            statusEl.textContent = message || '';
+            statusEl.classList.toggle('is-error', !success);
+        }
+
+        analyzeBtn.addEventListener('click', function () {
+            const text = textarea.value.trim();
+
+            if (!text || !routes.parseRedirections) {
+                return;
+            }
+
+            fetch(routes.parseRedirections, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ text: text })
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (!data.success) {
+                        alert(data.message || 'Nessuna redirection riconosciuta in questo testo.');
+                        return;
+                    }
+
+                    reviewBody.innerHTML = '';
+
+                    data.candidates.forEach(function (candidate) {
+                        const card = document.createElement('div');
+                        card.className = 'fc-redirect-import-row';
+                        if (candidate.needs_review) {
+                            card.classList.add('fc-redirect-import-needs-review-row');
+                        }
+
+                        const head = document.createElement('div');
+                        head.className = 'fc-redirect-import-row-head';
+
+                        const checkLabel = document.createElement('label');
+                        checkLabel.className = 'fc-redirect-import-check';
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.className = 'form-check-input fc-redirect-import-include';
+                        checkbox.checked = true;
+                        const labelText = document.createElement('span');
+                        labelText.className = 'fc-redirect-import-raw-label';
+                        labelText.textContent = candidate.raw_label;
+                        checkLabel.appendChild(checkbox);
+                        checkLabel.appendChild(labelText);
+
+                        if (candidate.needs_review) {
+                            const badge = document.createElement('span');
+                            badge.className = 'fc-redirect-import-review-badge';
+                            badge.textContent = 'da rivedere';
+                            checkLabel.appendChild(badge);
+                        }
+
+                        const controls = document.createElement('div');
+                        controls.className = 'fc-redirect-import-row-controls';
+                        controls.appendChild(buildExitSelect(candidate.exit_code));
+                        controls.appendChild(buildPanelSelect(getDefaultPanelValue()));
+
+                        head.appendChild(checkLabel);
+                        head.appendChild(controls);
+
+                        const linkWrap = document.createElement('div');
+                        linkWrap.className = 'fc-redirect-import-row-link';
+                        const linkInput = document.createElement('input');
+                        linkInput.type = 'text';
+                        linkInput.className = 'form-control fc-redirect-import-link';
+                        linkInput.value = candidate.redirect_to;
+                        linkInput.spellcheck = false;
+                        linkWrap.appendChild(linkInput);
+
+                        card.appendChild(head);
+                        card.appendChild(linkWrap);
+                        reviewBody.appendChild(card);
+                    });
+
+                    reviewWrap.style.display = '';
+                    clearStatus();
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    alert('Errore durante l\'analisi del testo.');
+                });
+        });
+
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function () {
+                const entries = [];
+                let hasError = false;
+
+                reviewBody.querySelectorAll('.fc-redirect-import-row').forEach(function (row) {
+                    row.classList.remove('fc-redirect-import-row-error');
+
+                    const include = row.querySelector('.fc-redirect-import-include');
+                    if (!include || !include.checked) {
+                        return;
+                    }
+
+                    const exitSelect = row.querySelector('.fc-redirect-import-exit');
+                    const panelSelect = row.querySelector('.fc-redirect-import-panel');
+                    const linkInput = row.querySelector('.fc-redirect-import-link');
+
+                    if (!exitSelect.value || !panelSelect.value || !linkInput.value.trim()) {
+                        row.classList.add('fc-redirect-import-row-error');
+                        hasError = true;
+                        return;
+                    }
+
+                    entries.push({
+                        parameter_name: 'pan',
+                        parameter_value: panelSelect.value,
+                        exit_code: parseInt(exitSelect.value, 10),
+                        redirect_to: linkInput.value.trim()
+                    });
+                });
+
+                if (hasError) {
+                    setStatus(false, 'Completa esito, panel e link per tutte le righe selezionate (evidenziate in rosso).');
+                    return;
+                }
+
+                if (!entries.length) {
+                    setStatus(false, 'Seleziona almeno una riga da aggiungere.');
+                    return;
+                }
+
+                fetch(routes.addRedirections, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ prj: prj, sid: sid, entries: entries })
+                })
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        if (data.success) {
+                            alert((data.added || entries.length) + ' redirection aggiunte con successo.');
+                            window.location.reload();
+                            return;
+                        }
+
+                        setStatus(false, data.message || 'Errore durante il salvataggio.');
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        setStatus(false, 'Errore di rete.');
+                    });
+            });
+        }
+    }
+
     function exposeGlobalActions() {
         window.closeSurvey = function (prjValue, sidValue) {
             closeSurvey(prjValue, sidValue);
@@ -655,6 +1063,8 @@ function initDropdowns() {
         initCharts();
         initDailyCharts();
         bindResetBloccate();
+        bindRedirectionsModal();
+        bindRedirectImport();
         exposeGlobalActions();
 
         document.querySelectorAll('[data-bs-toggle="pill"]').forEach(function (trigger) {

@@ -31,6 +31,9 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     // 👇 NON SERVE PIÙ PER LA CLASSIFICAZIONE
     // $panelNames = $this->getPanelNamesMap();
 
+    $redirections = $sreService->getRedirectionsList($prj, $sid);
+    $panelNamesMap = $this->getPanelNamesMap();
+
     $panelValueFromDB = $panelData->panel ?? null;
 
     $files = $sreService->getSreFiles($directory);
@@ -188,7 +191,9 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'dataSummaryByPanel',
         'ricercheInCorso',
         'primisSurveyStatus',
-        'mediaRedPanel'
+        'mediaRedPanel',
+        'redirections',
+        'panelNamesMap'
     ));
 }
 
@@ -394,6 +399,69 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
             ->update(['stato' => $newLocalStato]);
 
         return response()->json(['success' => true]);
+    }
+
+    public function parseRedirectionsText(Request $request, FieldControlSreService $sreService)
+    {
+        $text = (string) $request->input('text', '');
+
+        if (trim($text) === '') {
+            return response()->json(['success' => false, 'message' => 'Incolla prima il testo da analizzare.'], 422);
+        }
+
+        $candidates = $sreService->parseRedirectionText($text);
+
+        if (empty($candidates)) {
+            return response()->json(['success' => false, 'message' => 'Non ho riconosciuto nessuna redirection in questo testo.'], 422);
+        }
+
+        return response()->json(['success' => true, 'candidates' => $candidates]);
+    }
+
+    public function addRedirections(Request $request, FieldControlSreService $sreService)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+        $entries = $request->input('entries', []);
+
+        if (!is_array($entries)) {
+            return response()->json(['success' => false, 'message' => 'Formato non valido.'], 422);
+        }
+
+        $result = $sreService->addRedirections($prj, $sid, $entries);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function deleteRedirectionsGroup(Request $request, FieldControlSreService $sreService)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+        $parameterName = (string) $request->input('parameter_name', 'pan');
+        $parameterValue = (string) $request->input('parameter_value', '');
+
+        if ($parameterValue === '') {
+            return response()->json(['success' => false, 'message' => 'Panel non specificato.'], 422);
+        }
+
+        $result = $sreService->deleteRedirectionsGroup($prj, $sid, $parameterName, $parameterValue);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function updateRedirections(Request $request, FieldControlSreService $sreService)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+        $updates = $request->input('updates', []);
+
+        if (!is_array($updates)) {
+            return response()->json(['success' => false, 'message' => 'Formato aggiornamenti non valido.'], 422);
+        }
+
+        $result = $sreService->updateRedirections($prj, $sid, $updates);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     public function resetBloccate(Request $request, FieldControlSreService $sreService)

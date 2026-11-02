@@ -6,8 +6,13 @@
         routes: {
             closeSurvey: @json(route('close.survey')),
             reopenSurvey: @json(route('reopen.survey')),
-            resetBloccate: @json(route('reset.bloccate'))
-        }
+            resetBloccate: @json(route('reset.bloccate')),
+            updateRedirections: @json(route('redirections.update')),
+            parseRedirections: @json(route('redirections.parse')),
+            addRedirections: @json(route('redirections.add')),
+            deleteRedirectionsGroup: @json(route('redirections.deleteGroup'))
+        },
+        panelNamesMap: @json($panelNamesMap ?? [])
     }, window.FieldControlConfig || {});
 </script>
 

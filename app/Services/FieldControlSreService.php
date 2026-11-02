@@ -138,6 +138,438 @@ class FieldControlSreService
         return array_values($variables);
     }
 
+    public function getRedirectionsList(string $prj, string $sid): array
+    {
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return [];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return [];
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return [];
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config)) {
+            return [];
+        }
+
+        $redirections = $config['interview']['production']['redirections'] ?? [];
+        if (!is_array($redirections)) {
+            return [];
+        }
+
+        $statusMap = $this->getInterviewStatusMap();
+        $list = [];
+
+        foreach ($redirections as $rawIndex => $redirection) {
+            if (!is_array($redirection)) {
+                continue;
+            }
+
+            $parameterName = (string) ($redirection['parameter_name'] ?? '');
+            if ($parameterName === 'test') {
+                continue;
+            }
+
+            $redirectTo = (string) ($redirection['redirect_to'] ?? '');
+            if ($redirectTo === '') {
+                continue;
+            }
+
+            $exitCode = (int) ($redirection['exit_code'] ?? -1);
+
+            $list[] = [
+                'index' => (int) $rawIndex,
+                'parameter_name' => $parameterName,
+                'parameter_value' => (string) ($redirection['parameter_value'] ?? ''),
+                'exit_code' => $exitCode,
+                'exit_label' => $statusMap[$exitCode] ?? 'Sconosciuto',
+                'redirect_to' => $redirectTo,
+            ];
+        }
+
+        return $list;
+    }
+
+    /**
+     * Elimina TUTTE le redirection di un panel (stesso parameter_name +
+     * parameter_value), cosi' come vengono create in blocco: non ha senso
+     * eliminare solo l'esito "Completa" di un panel e lasciare orfani gli
+     * altri due (Non in target/Quotafull).
+     */
+    public function deleteRedirectionsGroup(string $prj, string $sid, string $parameterName, string $parameterValue): array
+    {
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return ['success' => false, 'message' => 'Cartella resources non trovata per questa ricerca.'];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config) || !isset($config['interview']['production']['redirections']) || !is_array($config['interview']['production']['redirections'])) {
+            return ['success' => false, 'message' => 'Struttura redirections non trovata nel config.json.'];
+        }
+
+        $original = $config['interview']['production']['redirections'];
+
+        $filtered = array_values(array_filter($original, function ($entry) use ($parameterName, $parameterValue) {
+            if (!is_array($entry)) {
+                return true;
+            }
+
+            $matches = (string) ($entry['parameter_name'] ?? '') === $parameterName
+                && (string) ($entry['parameter_value'] ?? '') === $parameterValue;
+
+            return !$matches;
+        }));
+
+        $removedCount = count($original) - count($filtered);
+
+        if ($removedCount === 0) {
+            return ['success' => false, 'message' => 'Nessuna redirection trovata per questo panel.'];
+        }
+
+        if (!is_writable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non scrivibile.'];
+        }
+
+        $config['interview']['production']['redirections'] = $filtered;
+
+        $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) {
+            return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
+        }
+
+        if (@file_put_contents($configPath, $encoded) === false) {
+            return ['success' => false, 'message' => 'Errore durante la scrittura del config.json.'];
+        }
+
+        return ['success' => true, 'removed' => $removedCount];
+    }
+
+    /**
+     * Aggiorna in blocco il campo redirect_to di una o più redirection esistenti
+     * nel config.json, individuate tramite l'indice originale nell'array
+     * interview.production.redirections (quello restituito da getRedirectionsList()).
+     * Legge e riscrive il file una sola volta per tutte le modifiche passate.
+     *
+     * @param array $updates lista di ['index' => int, 'redirect_to' => string]
+     */
+    public function updateRedirections(string $prj, string $sid, array $updates): array
+    {
+        if (empty($updates)) {
+            return ['success' => false, 'message' => 'Nessuna modifica da salvare.'];
+        }
+
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return ['success' => false, 'message' => 'Cartella resources non trovata per questa ricerca.'];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config) || !isset($config['interview']['production']['redirections']) || !is_array($config['interview']['production']['redirections'])) {
+            return ['success' => false, 'message' => 'Struttura redirections non trovata nel config.json.'];
+        }
+
+        $updatedCount = 0;
+
+        foreach ($updates as $update) {
+            if (!is_array($update)) {
+                continue;
+            }
+
+            $index = (int) ($update['index'] ?? -1);
+            $redirectTo = trim((string) ($update['redirect_to'] ?? ''));
+
+            if ($redirectTo === '') {
+                continue;
+            }
+
+            if (!isset($config['interview']['production']['redirections'][$index]) || !is_array($config['interview']['production']['redirections'][$index])) {
+                continue;
+            }
+
+            $config['interview']['production']['redirections'][$index]['redirect_to'] = $redirectTo;
+            $updatedCount++;
+        }
+
+        if ($updatedCount === 0) {
+            return ['success' => false, 'message' => 'Nessuna redirection valida da aggiornare.'];
+        }
+
+        if (!is_writable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non scrivibile.'];
+        }
+
+        $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) {
+            return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
+        }
+
+        if (@file_put_contents($configPath, $encoded) === false) {
+            return ['success' => false, 'message' => 'Errore durante la scrittura del config.json.'];
+        }
+
+        return ['success' => true, 'updated' => $updatedCount];
+    }
+
+    /**
+     * Aggiunge nuove redirection in coda all'array interview.production.redirections
+     * del config.json. Ogni elemento di $newEntries deve avere almeno
+     * parameter_value, exit_code, redirect_to; parameter_name di default è "pan".
+     */
+    public function addRedirections(string $prj, string $sid, array $newEntries): array
+    {
+        if (empty($newEntries)) {
+            return ['success' => false, 'message' => 'Nessuna redirection da aggiungere.'];
+        }
+
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return ['success' => false, 'message' => 'Cartella resources non trovata per questa ricerca.'];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config)) {
+            return ['success' => false, 'message' => 'File config.json non valido.'];
+        }
+
+        if (!isset($config['interview']['production']['redirections']) || !is_array($config['interview']['production']['redirections'])) {
+            $config['interview']['production']['redirections'] = [];
+        }
+
+        $addedCount = 0;
+
+        foreach ($newEntries as $entry) {
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $parameterValue = trim((string) ($entry['parameter_value'] ?? ''));
+            $exitCode = isset($entry['exit_code']) && $entry['exit_code'] !== '' ? (int) $entry['exit_code'] : null;
+            $redirectTo = trim((string) ($entry['redirect_to'] ?? ''));
+            $parameterName = trim((string) ($entry['parameter_name'] ?? 'pan'));
+
+            if ($parameterValue === '' || $exitCode === null || $redirectTo === '') {
+                continue;
+            }
+
+            $config['interview']['production']['redirections'][] = [
+                'parameter_name' => $parameterName !== '' ? $parameterName : 'pan',
+                'parameter_value' => $parameterValue,
+                'exit_code' => $exitCode,
+                'redirect_to' => $redirectTo,
+            ];
+            $addedCount++;
+        }
+
+        if ($addedCount === 0) {
+            return ['success' => false, 'message' => 'Nessuna redirection valida da aggiungere (controlla panel, esito e link).'];
+        }
+
+        if (!is_writable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non scrivibile.'];
+        }
+
+        $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) {
+            return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
+        }
+
+        if (@file_put_contents($configPath, $encoded) === false) {
+            return ['success' => false, 'message' => 'Errore durante la scrittura del config.json.'];
+        }
+
+        return ['success' => true, 'added' => $addedCount];
+    }
+
+    /**
+     * Analizza un testo incollato (tipicamente il testo di un'email di un
+     * fornitore panel) e prova a riconoscere righe "Esito: URL" o "Esito\tURL",
+     * convertendo eventuali placeholder (es. [transaction_id], [insert_value],
+     * XXXX) nella sintassi $(nome_variabile) già usata nei redirect_to esistenti.
+     * Il risultato è sempre da rivedere/confermare manualmente prima di scrivere
+     * nel config.json: qui non scriviamo nulla, solo analisi.
+     */
+    public function parseRedirectionText(string $text): array
+    {
+        $statusMap = $this->getInterviewStatusMap();
+
+        // Label -> exit_code per i casi non ambigui (il formato lo descrive
+        // esplicitamente l'utente: 3=completa, 4=screenout, 5=quotafull).
+        $certainLabels = [
+            3 => ['complete', 'completes', 'completed', 'qualified'],
+            4 => ['screenout', 'screen out', 'screened', 'termination', 'qualification termination', 'terminate', 'non in target'],
+            5 => ['quotafull', 'quota full', 'overquota', 'over quota'],
+        ];
+
+        // Label che somigliano a un esito ma non sono riconducibili con certezza
+        // a 3/4/5: le segnaliamo "da rivedere" senza indovinare l'exit_code.
+        $ambiguousLabels = [
+            'quality', 'quality check', 'quality checks',
+            'dedupe', 'duplication', 'duplication/security termination', 'security termination',
+        ];
+
+        $reverse = [];
+        foreach ($certainLabels as $code => $labels) {
+            foreach ($labels as $label) {
+                $reverse[$label] = $code;
+            }
+        }
+
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+        $lines = explode("\n", $text);
+        $lineCount = count($lines);
+
+        $results = [];
+
+        for ($i = 0; $i < $lineCount; $i++) {
+            $line = trim($lines[$i]);
+            if ($line === '') {
+                continue;
+            }
+
+            // Caso 1: label e URL sulla stessa riga (tabelle incollate da email,
+            // separate da tab o da uno o più ":" seguiti da spazi).
+            if (preg_match('/^(.*?)[:\t]+\s*(https?:\/\/\S+)\s*$/i', $line, $m)) {
+                $rawLabel = trim($m[1]);
+                $url = trim($m[2]);
+
+                if ($rawLabel !== '' && !preg_match('/^https?:\/\//i', $rawLabel)) {
+                    $results[] = $this->buildRedirectionCandidate($rawLabel, $url, $reverse, $ambiguousLabels, $statusMap);
+                    continue;
+                }
+            }
+
+            // Caso 2: riga di sola label (senza URL), con l'URL sulla riga
+            // successiva non vuota.
+            if (!preg_match('/https?:\/\//i', $line)) {
+                $normalized = $this->normalizeRedirectionLabel($line);
+
+                if (isset($reverse[$normalized]) || in_array($normalized, $ambiguousLabels, true)) {
+                    $j = $i + 1;
+                    while ($j < $lineCount && trim($lines[$j]) === '') {
+                        $j++;
+                    }
+
+                    if ($j < $lineCount && preg_match('/(https?:\/\/\S+)/i', $lines[$j], $um)) {
+                        $results[] = $this->buildRedirectionCandidate($line, trim($um[1]), $reverse, $ambiguousLabels, $statusMap);
+                        $i = $j;
+                    }
+                }
+            }
+        }
+
+        return $results;
+    }
+
+    private function normalizeRedirectionLabel(string $label): string
+    {
+        $label = strtolower(trim($label));
+        $label = preg_replace('/\(.*?\)/', '', $label); // rimuove "(Qualified)", "(Terminate)" ecc.
+        $label = rtrim($label, ": \t");
+        $label = preg_replace('/\s+/', ' ', $label);
+
+        return trim($label);
+    }
+
+    private function buildRedirectionCandidate(string $rawLabel, string $url, array $reverse, array $ambiguousLabels, array $statusMap): array
+    {
+        $normalized = $this->normalizeRedirectionLabel($rawLabel);
+        $exitCode = $reverse[$normalized] ?? null;
+        $isKnownAmbiguous = in_array($normalized, $ambiguousLabels, true);
+
+        [$cleanUrl, $variables] = $this->extractRedirectionVariables($url);
+
+        return [
+            'raw_label' => $rawLabel,
+            'exit_code' => $exitCode,
+            'exit_label' => $exitCode !== null ? ($statusMap[$exitCode] ?? null) : null,
+            'redirect_to' => $cleanUrl,
+            'variables' => $variables,
+            'needs_review' => $exitCode === null || $isKnownAmbiguous,
+        ];
+    }
+
+    /**
+     * Sostituisce i placeholder noti in un link di redirect con la sintassi
+     * $(nome_variabile): [nome_esplicito] viene usato cosi' com'e', mentre
+     * placeholder generici ([insert_value], XXXX, XXXXXX) vengono rinominati
+     * in base al parametro della query string che li precede (es. RID=XXXX
+     * diventa RID=$(rid)). Se non si riesce a risalire a un nome, il
+     * placeholder viene lasciato invariato (andra' corretto a mano in fase di
+     * revisione).
+     */
+    private function extractRedirectionVariables(string $url): array
+    {
+        $variables = [];
+        $genericNames = ['insert_value', 'insertvalue', 'value', 'placeholder', 'insert_here', 'your_value', 'xxx'];
+
+        // [nome] preceduto da "chiave=" direttamente attaccato
+        $url = preg_replace_callback('/([a-zA-Z0-9_\.]+)=\[([a-zA-Z0-9_]+)\]/', function ($m) use (&$variables, $genericNames) {
+            $key = $m[1];
+            $bracketName = strtolower($m[2]);
+            $varName = in_array($bracketName, $genericNames, true) ? strtolower($key) : $bracketName;
+            $variables[$varName] = $varName;
+
+            return $key . '=$(' . $varName . ')';
+        }, $url);
+
+        // [nome] isolato, non preceduto da "chiave="
+        $url = preg_replace_callback('/\[([a-zA-Z0-9_]+)\]/', function ($m) use (&$variables) {
+            $varName = strtolower($m[1]);
+            $variables[$varName] = $varName;
+
+            return '$(' . $varName . ')';
+        }, $url);
+
+        // XXXX / XXXXXX preceduto da "chiave=" (placeholder generico senza nome esplicito)
+        $url = preg_replace_callback('/([a-zA-Z0-9_\.]+)=([Xx]{3,})(?=[&#\s]|$)/', function ($m) use (&$variables) {
+            $varName = strtolower($m[1]);
+            $variables[$varName] = $varName;
+
+            return $m[1] . '=$(' . $varName . ')';
+        }, $url);
+
+        return [$url, array_values($variables)];
+    }
+
     /*
     |--------------------------------------------------------------------------
     | PARSING

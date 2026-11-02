@@ -67,6 +67,10 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/close-survey', [FieldControlController::class, 'closeSurvey'])->name('close.survey');
     Route::post('/reopen-survey', [FieldControlController::class, 'reopenSurvey'])->name('reopen.survey');
     Route::post('/reset-bloccate', [FieldControlController::class, 'resetBloccate'])->name('reset.bloccate');
+    Route::post('/update-redirections', [FieldControlController::class, 'updateRedirections'])->name('redirections.update');
+    Route::post('/parse-redirections', [FieldControlController::class, 'parseRedirectionsText'])->name('redirections.parse');
+    Route::post('/add-redirections', [FieldControlController::class, 'addRedirections'])->name('redirections.add');
+    Route::post('/delete-redirections-group', [FieldControlController::class, 'deleteRedirectionsGroup'])->name('redirections.deleteGroup');
 
     // ============================================
     // FIELD QUALITY

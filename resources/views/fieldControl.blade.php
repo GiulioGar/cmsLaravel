@@ -433,24 +433,29 @@
                     <div class="fc-header-actions-grid">
                         <a href="#" class="fc-header-action-btn is-info" data-bs-toggle="modal" data-bs-target="#downloadModal">
                             <span class="fc-header-action-icon"><i class="fas fa-download"></i></span>
-                            Download risultati
+                            <span class="fc-header-action-label">Download risultati</span>
                         </a>
 
                         @if(!empty($panelData) && (int) $panelData->stato === 1)
                             <a href="#" class="fc-header-action-btn is-success" onclick="reopenSurvey('{{ $prj }}', '{{ $sid }}')">
                                 <span class="fc-header-action-icon"><i class="fas fa-play"></i></span>
-                                Riapri Ricerca
+                                <span class="fc-header-action-label">Riapri Ricerca</span>
                             </a>
                         @else
                             <a href="#" class="fc-header-action-btn is-danger" onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')">
                                 <span class="fc-header-action-icon"><i class="fas fa-stop"></i></span>
-                                Chiudi Ricerca
+                                <span class="fc-header-action-label">Chiudi Ricerca</span>
                             </a>
                         @endif
 
                         <a href="#" class="fc-header-action-btn is-warning" data-bs-toggle="modal" data-bs-target="#resetBloccateModal">
                             <span class="fc-header-action-icon"><i class="fas fa-lock-open"></i></span>
-                            Reset Bloccate
+                            <span class="fc-header-action-label">Reset Bloccate</span>
+                        </a>
+
+                        <a href="#" class="fc-header-action-btn is-link" data-bs-toggle="modal" data-bs-target="#redirectionsModal">
+                            <span class="fc-header-action-icon"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
+                            <span class="fc-header-action-label">Redirection</span>
                         </a>
                     </div>
                 </div>
@@ -1250,6 +1255,145 @@
 
 
 @include('partials.field-toolbar-modals')
+
+<!-- MODALE REDIRECTION -->
+<div class="modal fade" id="redirectionsModal" tabindex="-1" aria-labelledby="redirectionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="redirectionsModalLabel"><i class="fa-solid fa-arrow-up-right-from-square me-2"></i>Redirection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                @if(empty($redirections))
+                    <div class="fc-empty-inline">
+                        <div class="fc-empty-icon sm">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </div>
+                        <div>
+                            <div class="fc-empty-title sm">Nessuna redirection impostata</div>
+                            <div class="fc-empty-subtitle sm">Il file config.json di questa ricerca non contiene redirection configurate.</div>
+                        </div>
+                    </div>
+                @else
+                    @php
+                        $redirectionGroups = [];
+                        foreach ($redirections as $redirect) {
+                            $groupKey = $redirect['parameter_name'] . '|' . $redirect['parameter_value'];
+
+                            if (!isset($redirectionGroups[$groupKey])) {
+                                $isPanel = $redirect['parameter_name'] === 'pan';
+                                $groupLabel = $isPanel
+                                    ? ($panelNamesMap[$redirect['parameter_value']] ?? ('Panel #' . $redirect['parameter_value']))
+                                    : ($redirect['parameter_name'] . '=' . $redirect['parameter_value']);
+
+                                $redirectionGroups[$groupKey] = [
+                                    'label' => $groupLabel,
+                                    'parameter_name' => $redirect['parameter_name'],
+                                    'parameter_value' => $redirect['parameter_value'],
+                                    'items' => [],
+                                ];
+                            }
+
+                            $redirectionGroups[$groupKey]['items'][] = $redirect;
+                        }
+                    @endphp
+
+                    <div class="fc-redirect-list" id="redirectionsTableBody">
+                        @foreach ($redirectionGroups as $group)
+                            <div class="fc-redirect-group">
+                                <div class="fc-redirect-group-head">
+                                    <span class="fc-redirect-group-label"><i class="fa-solid fa-layer-group me-1"></i>{{ $group['label'] }}</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger fc-redirect-delete-group"
+                                            data-parameter-name="{{ $group['parameter_name'] }}"
+                                            data-parameter-value="{{ $group['parameter_value'] }}"
+                                            data-group-label="{{ $group['label'] }}">
+                                        <i class="fa-solid fa-trash me-1"></i>Elimina {{ $group['label'] }}
+                                    </button>
+                                </div>
+
+                                @foreach ($group['items'] as $redirect)
+                                    @php
+                                        if ($redirect['exit_code'] === 3) {
+                                            $exitClass = 'is-ok';
+                                        } elseif ($redirect['exit_code'] === 4) {
+                                            $exitClass = 'is-warn';
+                                        } elseif ($redirect['exit_code'] === 5) {
+                                            $exitClass = 'is-danger';
+                                        } else {
+                                            $exitClass = 'is-neutral';
+                                        }
+                                    @endphp
+                                    <div class="fc-redirect-card" data-redirect-index="{{ $redirect['index'] }}">
+                                        <span class="fc-redirect-exit-pill {{ $exitClass }}">{{ $redirect['exit_label'] }}</span>
+                                        <input type="text" class="form-control fc-redirect-input"
+                                               data-index="{{ $redirect['index'] }}"
+                                               value="{{ $redirect['redirect_to'] }}"
+                                               spellcheck="false">
+                                        <button type="button" class="btn btn-outline-primary fc-redirect-save-row" data-index="{{ $redirect['index'] }}" title="Salva questo link">
+                                            <i class="fa-solid fa-floppy-disk"></i>
+                                        </button>
+                                        <span class="fc-redirect-row-status" data-index="{{ $redirect['index'] }}"></span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <hr class="my-3">
+
+                <div class="fc-redirect-import">
+                    <div class="fc-redirect-import-title"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>Aggiungi da testo fornitore</div>
+                    <p class="fc-redirect-import-hint">Incolla qui il testo dell'email con i link di redirezione (es. "Complete: https://..."), poi analizza e rivedi prima di aggiungere.</p>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-7">
+                            <label class="fc-redirect-import-label" for="redirectImportPanelSelect">Panel di destinazione</label>
+                            <select id="redirectImportPanelSelect" class="form-select form-select-sm">
+                                <option value="">-- seleziona panel --</option>
+                                @foreach ($panelNamesMap as $code => $name)
+                                    <option value="{{ $code }}">{{ $name }} (#{{ $code }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-5">
+                            <label class="fc-redirect-import-label" for="redirectImportPanelCustom">oppure codice personalizzato</label>
+                            <input type="text" id="redirectImportPanelCustom" class="form-control form-control-sm" placeholder="es. 12">
+                        </div>
+                    </div>
+
+                    <textarea id="redirectImportTextarea" class="form-control form-control-sm" rows="5" placeholder="Incolla qui il testo del fornitore..."></textarea>
+
+                    <div class="d-flex justify-content-end mt-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="redirectImportAnalyzeBtn">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i>Analizza testo
+                        </button>
+                    </div>
+
+                    <div id="redirectImportReviewWrap" class="mt-3" style="display:none;">
+                        <div id="redirectImportReviewBody" class="fc-redirect-list"></div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span id="redirectImportStatus" class="fc-redirect-save-all-status"></span>
+                            <button type="button" class="btn btn-sm btn-primary" id="redirectImportConfirmBtn">
+                                <i class="fa-solid fa-plus me-1"></i>Aggiungi le redirection selezionate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span id="redirectionsSaveAllStatus" class="fc-redirect-save-all-status me-auto"></span>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                @if(!empty($redirections))
+                    <button type="button" class="btn btn-primary" id="redirectionsSaveAllBtn">
+                        <i class="fa-solid fa-floppy-disk me-1"></i>Salva tutte le modifiche
+                    </button>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
 
