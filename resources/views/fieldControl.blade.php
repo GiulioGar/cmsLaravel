@@ -13,10 +13,10 @@
 
 <!-- NAVBAR MODERNA CON MENU A TENDINA -->
 <nav class="navbar custom-navbar mb-4">
-    <div class="container-fluid d-flex align-items-center justify-content-between px-0">
+    <div class="container-fluid d-flex align-items-center justify-content-start px-0">
         <!-- Brand a sinistra -->
         <a class="navbar-brand d-flex align-items-center" href="{{ url('fieldControl?prj='.$prj.'&sid='.$sid) }}">
-            <i class="fas fa-chart-bar me-2"></i>
+            <span class="fc-brand-icon"><i class="fas fa-chart-bar"></i></span>
             <span>Status Field</span>
         </a>
 
@@ -383,7 +383,10 @@
                         <span class="fc-header-mini-icon"><i class="fa-solid fa-arrows-down-to-people"></i></span>
                         <div>
                             <span class="fc-header-mini-key">Target</span>
-                            <span class="fc-header-mini-val">{{ $sexLabel }}<br>{{ $panelData->age1_target ?? 'N/A' }}-{{ $panelData->age2_target ?? 'N/A' }} anni</span>
+                            <span class="fc-header-mini-val">
+                                <span class="fc-target-sex">{{ $sexLabel }}</span>
+                                <span class="fc-target-age">{{ $panelData->age1_target ?? 'N/A' }}-{{ $panelData->age2_target ?? 'N/A' }} anni</span>
+                            </span>
                         </div>
                     </div>
                     <div class="fc-header-mini">
@@ -391,10 +394,12 @@
                         <div>
                             <span class="fc-header-mini-key">Timing</span>
                             <span class="fc-header-mini-val">
-                                {{ $panelData->sur_date ? \Carbon\Carbon::parse($panelData->sur_date)->format('d/m/Y') : 'N/A' }}
-                                -
-                                {{ $panelData->end_field ? \Carbon\Carbon::parse($panelData->end_field)->format('d/m/Y') : 'N/A' }}
-                                <br>{{ $giorniField }} giorni{{ $isClosed ? ' (chiuso)' : '' }}
+                                <span class="fc-timing-dates">
+                                    {{ $panelData->sur_date ? \Carbon\Carbon::parse($panelData->sur_date)->format('d/m/Y') : 'N/A' }}
+                                    <i class="fas fa-arrow-right-long fc-timing-arrow"></i>
+                                    {{ $panelData->end_field ? \Carbon\Carbon::parse($panelData->end_field)->format('d/m/Y') : 'N/A' }}
+                                </span>
+                                <span class="fc-timing-days">{{ $giorniField }} giorni{{ $isClosed ? ' · chiuso' : '' }}</span>
                             </span>
                             @if($timingHint)
                                 <div class="timing-hint {{ $timingHintClass }} fc-header-timinghint">
@@ -426,34 +431,27 @@
                 <div class="fc-header-block fc-header-actions">
                     <div class="fc-header-actions-title">Azioni rapide</div>
                     <div class="fc-header-actions-grid">
-                        <a href="#" class="fc-header-action-btn" data-bs-toggle="modal" data-bs-target="#downloadModal">
-                            <i class="fas fa-download"></i> Download risultati
+                        <a href="#" class="fc-header-action-btn is-info" data-bs-toggle="modal" data-bs-target="#downloadModal">
+                            <span class="fc-header-action-icon"><i class="fas fa-download"></i></span>
+                            Download risultati
                         </a>
 
-                        <div class="dropdown fc-header-action-dropdown">
-                            <a href="#" class="fc-header-action-btn" id="settingsDropdown" role="button"
-                               data-bs-toggle="dropdown" data-bs-auto-close="true" aria-expanded="false">
-                                <i class="fas fa-cog"></i> Impostazioni ricerca
+                        @if(!empty($panelData) && (int) $panelData->stato === 1)
+                            <a href="#" class="fc-header-action-btn is-success" onclick="reopenSurvey('{{ $prj }}', '{{ $sid }}')">
+                                <span class="fc-header-action-icon"><i class="fas fa-play"></i></span>
+                                Riapri Ricerca
                             </a>
-                            <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
-                                <li>
-                                    @if(!empty($panelData) && (int) $panelData->stato === 1)
-                                        <a class="dropdown-item" href="#" onclick="reopenSurvey('{{ $prj }}', '{{ $sid }}')">
-                                            Riapri Ricerca
-                                        </a>
-                                    @else
-                                        <a class="dropdown-item" href="#" onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')">
-                                            Chiudi Ricerca
-                                        </a>
-                                    @endif
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#resetBloccateModal">
-                                        Reset Bloccate
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                        @else
+                            <a href="#" class="fc-header-action-btn is-danger" onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')">
+                                <span class="fc-header-action-icon"><i class="fas fa-stop"></i></span>
+                                Chiudi Ricerca
+                            </a>
+                        @endif
+
+                        <a href="#" class="fc-header-action-btn is-warning" data-bs-toggle="modal" data-bs-target="#resetBloccateModal">
+                            <span class="fc-header-action-icon"><i class="fas fa-lock-open"></i></span>
+                            Reset Bloccate
+                        </a>
                     </div>
                 </div>
 
@@ -639,7 +637,7 @@
         <div class="card fc-chart-card-v2 h-100">
             <div class="fc-chart-head-v2">
                 <div>
-                    <div class="fc-afield-eyebrow">Quality</div>
+                    <div class="fc-afield-eyebrow">Uscite</div>
                     <div class="fc-afield-title" style="font-size:1rem">Cause di screenout</div>
                 </div>
             </div>

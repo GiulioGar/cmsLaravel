@@ -308,13 +308,24 @@
                         color: '#334155',
                         fontSize: 11,
                         fontWeight: 600
+                    },
+                    splitLine: {
+                        show: true,
+                        interval: 0,
+                        lineStyle: {
+                            color: 'rgba(148, 163, 184, 0.3)',
+                            width: 1,
+                            type: 'solid',
+                            shadowBlur: 6,
+                            shadowColor: 'rgba(148, 163, 184, 0.45)'
+                        }
                     }
                 },
                 series: [{
                     name: 'Filtrate',
                     type: 'bar',
                     data: visibleValues,
-                    barMaxWidth: 14,
+                    barMaxWidth: 12,
                     label: {
                         show: true,
                         position: 'right',
@@ -340,7 +351,10 @@
                         color: '#93c5fd',
                         borderColor: '#2563eb',
                         borderWidth: 1,
-                        borderRadius: [0, 6, 6, 0]
+                        borderRadius: 10,
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(37, 99, 235, 0.28)',
+                        shadowOffsetY: 4
                     }
                 }]
             });
