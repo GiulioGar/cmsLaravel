@@ -7,6 +7,7 @@
     const sid = config.sid || '';
     const routes = config.routes || {};
     const chartsData = config.filtrateCountsByPanel || {};
+    const dailySeriesData = config.dailySeriesByPanel || {};
 
     function initTooltips() {
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -66,11 +67,11 @@
             return;
         }
 
-        const maxVisibleFiltrateRows = 7;
+        const maxVisibleFiltrateRows = 6;
         const minPercentageForDenseLabels = 1;
         const denseLabelsThreshold = 6;
-        const rowHeight = 44;
-        const chartVerticalPadding = 36;
+        const rowHeight = 34;
+        const chartVerticalPadding = 20;
 
         Object.keys(chartsData).forEach(function (panelName) {
             const panelRows = chartsData[panelName];
@@ -220,20 +221,14 @@
             chart.setOption({
                 animationDuration: 500,
                 grid: {
-                    top: 28,
-                    right: hasDenseBars ? 60 : 44,
-                    bottom: 12,
+                    top: 6,
+                    right: hasDenseBars ? 54 : 40,
+                    bottom: 6,
                     left: 52,
                     containLabel: false
                 },
                 legend: {
-                    top: 0,
-                    right: 0,
-                    textStyle: {
-                        color: '#374151',
-                        fontSize: 11
-                    },
-                    data: ['Filtrate']
+                    show: false
                 },
                 tooltip: {
                     trigger: 'axis',
@@ -297,15 +292,7 @@
                 xAxis: {
                     type: 'value',
                     minInterval: 1,
-                    axisLabel: {
-                        color: '#4b5563',
-                        fontSize: 11
-                    },
-                    splitLine: {
-                        lineStyle: {
-                            color: '#edf2f7'
-                        }
-                    }
+                    show: false
                 },
                 yAxis: {
                     type: 'category',
@@ -315,25 +302,24 @@
                         show: false
                     },
                     axisLine: {
-                        lineStyle: {
-                            color: '#d7dee7'
-                        }
+                        show: false
                     },
                     axisLabel: {
-                        color: '#1f2937',
-                        fontSize: 11
+                        color: '#334155',
+                        fontSize: 11,
+                        fontWeight: 600
                     }
                 },
                 series: [{
                     name: 'Filtrate',
                     type: 'bar',
                     data: visibleValues,
-                    barMaxWidth: 24,
+                    barMaxWidth: 14,
                     label: {
                         show: true,
                         position: 'right',
                         color: '#1f2937',
-                        fontSize: 9,
+                        fontSize: 10,
                         fontWeight: 700,
                         formatter: function (params) {
                             var value = Number(params.value || 0);
@@ -351,12 +337,120 @@
                         }
                     },
                     itemStyle: {
-                        color: '#7bd87d',
-                        borderColor: '#2E7D32',
+                        color: '#93c5fd',
+                        borderColor: '#2563eb',
                         borderWidth: 1,
                         borderRadius: [0, 6, 6, 0]
                     }
                 }]
+            });
+
+            chart.resize();
+        });
+    }
+
+    function formatShortDate(isoDate) {
+        var parts = String(isoDate).split('-');
+
+        if (parts.length !== 3) {
+            return isoDate;
+        }
+
+        return parts[2] + '/' + parts[1];
+    }
+
+    function initDailyCharts() {
+        if (typeof echarts === 'undefined') {
+            return;
+        }
+
+        Object.keys(dailySeriesData).forEach(function (seriesName) {
+            const rows = dailySeriesData[seriesName] || [];
+
+            if (!rows.length) {
+                return;
+            }
+
+            const canvasId = 'chart-daily-' + buildPanelSlug(seriesName);
+            const chartElement = document.getElementById(canvasId);
+
+            if (!chartElement) {
+                return;
+            }
+
+            const dates = rows.map(function (row) { return formatShortDate(row.date); });
+            const contatti = rows.map(function (row) { return row.contatti; });
+            const complete = rows.map(function (row) { return row.complete; });
+            const ir = rows.map(function (row) { return row.ir; });
+
+            var chart = echarts.getInstanceByDom(chartElement) || echarts.init(chartElement, null, {
+                renderer: 'canvas'
+            });
+
+            chart.setOption({
+                animationDuration: 500,
+                grid: {
+                    top: 36,
+                    right: 46,
+                    bottom: 30,
+                    left: 44
+                },
+                legend: {
+                    top: 0,
+                    left: 0,
+                    textStyle: { color: '#374151', fontSize: 11 },
+                    data: ['Contatti', 'Complete', 'IR']
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: dates,
+                    axisLabel: { color: '#4b5563', fontSize: 10 },
+                    axisLine: { lineStyle: { color: '#d7dee7' } }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '',
+                        axisLabel: { color: '#4b5563', fontSize: 10 },
+                        splitLine: { lineStyle: { color: '#edf2f7' } }
+                    },
+                    {
+                        type: 'value',
+                        min: 0,
+                        max: 100,
+                        axisLabel: { color: '#4b5563', fontSize: 10, formatter: '{value}%' },
+                        splitLine: { show: false }
+                    }
+                ],
+                series: [
+                    {
+                        name: 'Contatti',
+                        type: 'bar',
+                        data: contatti,
+                        barMaxWidth: 18,
+                        itemStyle: { color: 'rgba(148, 163, 184, 0.55)', borderRadius: [3, 3, 0, 0] }
+                    },
+                    {
+                        name: 'Complete',
+                        type: 'bar',
+                        data: complete,
+                        barMaxWidth: 18,
+                        itemStyle: { color: '#16a34a', borderRadius: [3, 3, 0, 0] }
+                    },
+                    {
+                        name: 'IR',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: ir,
+                        smooth: true,
+                        symbolSize: 6,
+                        itemStyle: { color: '#f59e0b' },
+                        lineStyle: { color: '#f59e0b', width: 2 }
+                    }
+                ]
             });
 
             chart.resize();
@@ -368,7 +462,7 @@
             return;
         }
 
-        document.querySelectorAll('.fc-chart-canvas > div[id^="chart-panel-"]').forEach(function (chartElement) {
+        document.querySelectorAll('.fc-chart-canvas > div[id^="chart-panel-"], .fc-daily-chart[id^="chart-daily-"]').forEach(function (chartElement) {
             var chart = echarts.getInstanceByDom(chartElement);
 
             if (chart) {
@@ -499,7 +593,7 @@
     }
 
 function initDropdowns() {
-    const dropdownToggles = document.querySelectorAll('.custom-navbar [data-bs-toggle="dropdown"]');
+    const dropdownToggles = document.querySelectorAll('.custom-navbar [data-bs-toggle="dropdown"], .fc-header-actions [data-bs-toggle="dropdown"]');
 
     dropdownToggles.forEach(function (toggleEl) {
         const instance = bootstrap.Dropdown.getOrCreateInstance(toggleEl);
@@ -529,7 +623,7 @@ function initDropdowns() {
     });
 
     document.addEventListener('click', function (event) {
-        if (!event.target.closest('.custom-navbar .dropdown')) {
+        if (!event.target.closest('.custom-navbar .dropdown') && !event.target.closest('.fc-header-actions .dropdown')) {
             dropdownToggles.forEach(function (toggleEl) {
                 const instance = bootstrap.Dropdown.getInstance(toggleEl);
                 if (instance) {
@@ -545,6 +639,7 @@ function initDropdowns() {
         initDropdowns();
         initProgressBars();
         initCharts();
+        initDailyCharts();
         bindResetBloccate();
         exposeGlobalActions();
 

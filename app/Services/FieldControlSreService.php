@@ -385,14 +385,19 @@ class FieldControlSreService
             )
             : 'empty';
 
+        $panelLabel = (string) ($interview['panel'] ?? 'Sconosciuto');
+        $statoLabel = $statusMap[$interview['status_code']] ?? 'Sconosciuto';
+
         $logData[] = [
             'iid' => $interview['iid'],
             'uid' => $interview['uid'],
             'ultimo_update' => $this->formatLogUpdateHtml($interview['end_date']),
             'ultima_azione_sistema' => $systemQuestionHtml,
             'ultima_azione_file' => $fileQuestionHtml,
-            'stato' => $statusMap[$interview['status_code']] ?? 'Sconosciuto',
+            'stato' => $statoLabel,
             'durata' => $this->formatDuration((int) $interview['duration']),
+            'panel' => $panelLabel,
+            'iid_tooltip' => $this->buildIidTooltipHtml($interview, $questionMap, $panelLabel, $statoLabel),
         ];
     }
 
@@ -703,6 +708,34 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
             . '</div>';
 
         return "<span data-bs-toggle='tooltip' data-bs-html='true' data-bs-custom-class='fc-question-tooltip' title='{$tooltipTitle}'>{$questionCode}</span>";
+    }
+
+    private function buildIidTooltipHtml(array $interview, array $questionMap, string $panelLabel, string $statoLabel): string
+    {
+        $sysCode = (int) ($interview['last_question_code'] ?? 0);
+        $sysLabel = $questionMap[$sysCode]['code'] ?? 'N/A';
+
+        $fileCode = (int) ($interview['last_file_question_code'] ?? 0);
+        $fileLabel = $fileCode > 0 ? ($questionMap[$fileCode]['code'] ?? 'N/A') : '—';
+
+        $rows = [
+            ['Panel', $panelLabel],
+            ['UID', (string) ($interview['uid'] ?? 'N/A')],
+            ['Stato', $statoLabel],
+            ['Inizio', (string) ($interview['start_date'] ?? 'N/A')],
+            ['Fine', (string) ($interview['end_date'] ?? 'N/A')],
+            ['Durata', $this->formatDuration((int) ($interview['duration'] ?? 0))],
+            ['Ultima domanda (sistema)', (string) $sysLabel],
+            ['Ultima domanda (file)', (string) $fileLabel],
+        ];
+
+        $html = '<div class="fc-iid-tooltip">';
+        foreach ($rows as [$label, $value]) {
+            $html .= '<div class="fc-iid-tooltip-row"><span class="fc-iid-tooltip-label">' . e($label) . '</span><span class="fc-iid-tooltip-value">' . e($value) . '</span></div>';
+        }
+        $html .= '</div>';
+
+        return $html;
     }
 
     private function formatLogUpdateHtml($rawDate): string
