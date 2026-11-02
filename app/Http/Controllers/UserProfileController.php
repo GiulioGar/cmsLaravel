@@ -330,7 +330,6 @@ public function delete($user_id)
                 'confirm' => 9,
                 'email' => DB::raw("CONCAT('deleted_', user_id, '_', UNIX_TIMESTAMP(), '@deleted.local')"),
                 'paypalEmail' => null,
-                'mobile_phone' => null,
                 'home_phone' => null,
             ]);
 

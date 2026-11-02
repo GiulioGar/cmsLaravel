@@ -129,6 +129,11 @@
                     <div class="text-muted small">Caricamento in corso...</div>
                 </div>
                 <div class="table-responsive d-none" id="unconfirmedTableWrap">
+                    <div class="d-flex justify-content-end mb-2">
+                        <button type="button" id="btnEnableAllUnconfirmed" class="btn btn-sm btn-success">
+                            <i class="bi bi-check-all me-1"></i>Abilita tutti
+                        </button>
+                    </div>
                     <table class="table table-sm align-middle">
                         <thead>
                             <tr>
@@ -1578,6 +1583,16 @@ $(document).ready(function () {
 
     $('#modalUnconfirmed').on('show.bs.modal', loadUnconfirmedList);
 
+    const activateUserUrlTemplate = '{{ route("user.activate", ["user_id" => "__UID__"]) }}';
+
+    function activateUser(uid) {
+        return $.ajax({
+            url: activateUserUrlTemplate.replace('__UID__', uid),
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}' }
+        });
+    }
+
     $('#unconfirmedTableBody').on('click', '.btn-enable-user', function () {
         const btn = $(this);
         const row = btn.closest('tr');
@@ -1585,24 +1600,57 @@ $(document).ready(function () {
 
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
-        $.ajax({
-            url: '/user/' + uid + '/activate',
-            type: 'POST',
-            data: { _token: '{{ csrf_token() }}' },
-            success: function (response) {
-                if (response.success) {
-                    row.fadeOut(250, function () { row.remove(); });
-                    loadAnomaliesSummary();
-                } else {
-                    btn.prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Abilita');
-                    alert(response.message || 'Errore durante l\'abilitazione.');
-                }
-            },
-            error: function () {
+        activateUser(uid).done(function (response) {
+            if (response.success) {
+                row.fadeOut(250, function () { row.remove(); });
+                loadAnomaliesSummary();
+            } else {
                 btn.prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Abilita');
-                alert('Errore durante l\'abilitazione.');
+                alert(response.message || 'Errore durante l\'abilitazione.');
             }
+        }).fail(function () {
+            btn.prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i>Abilita');
+            alert('Errore durante l\'abilitazione.');
         });
+    });
+
+    $('#btnEnableAllUnconfirmed').on('click', function () {
+        const bulkBtn = $(this);
+        const rows = $('#unconfirmedTableBody tr[data-uid]').toArray();
+
+        if (!rows.length) return;
+
+        bulkBtn.prop('disabled', true);
+        let done = 0;
+        let failed = 0;
+
+        function next() {
+            if (!rows.length) {
+                loadAnomaliesSummary();
+                bulkBtn.prop('disabled', false).html('<i class="bi bi-check-all me-1"></i>Abilita tutti');
+                if (failed > 0) {
+                    alert(failed + ' utenti non abilitati per errore su ' + (done + failed) + '.');
+                }
+                return;
+            }
+
+            const row = $(rows.shift());
+            const uid = row.data('uid');
+            bulkBtn.html('<span class="spinner-border spinner-border-sm me-1"></span>Abilito ' + (done + failed + 1) + '/' + (done + failed + rows.length + 1) + '...');
+
+            activateUser(uid).done(function (response) {
+                if (response.success) {
+                    done++;
+                    row.remove();
+                } else {
+                    failed++;
+                }
+            }).fail(function () {
+                failed++;
+            }).always(next);
+        }
+
+        next();
     });
 
     // --- Modale: Età poco credibile ---
