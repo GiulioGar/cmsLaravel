@@ -415,31 +415,36 @@
                 <div class="fc-header-block fc-header-actions">
                     <div class="fc-header-actions-title">Azioni rapide</div>
                     <div class="fc-header-actions-grid">
-                        <a href="#" class="fc-header-action-btn is-info" data-bs-toggle="modal" data-bs-target="#downloadModal">
+                        <a href="#" class="fc-header-action-btn" data-bs-toggle="modal" data-bs-target="#downloadModal"
+                           title="Download risultati" aria-label="Download risultati">
                             <span class="fc-header-action-icon"><i class="fas fa-download"></i></span>
-                            <span class="fc-header-action-label">Download risultati</span>
                         </a>
 
                         @if(!empty($panelData) && (int) $panelData->stato === 1)
-                            <a href="#" class="fc-header-action-btn is-success" onclick="reopenSurvey('{{ $prj }}', '{{ $sid }}')">
+                            <a href="#" class="fc-header-action-btn" onclick="reopenSurvey('{{ $prj }}', '{{ $sid }}')"
+                               title="Riapri Ricerca" aria-label="Riapri Ricerca">
                                 <span class="fc-header-action-icon"><i class="fas fa-play"></i></span>
-                                <span class="fc-header-action-label">Riapri Ricerca</span>
                             </a>
                         @else
-                            <a href="#" class="fc-header-action-btn is-danger" onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')">
+                            <a href="#" class="fc-header-action-btn" onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')"
+                               title="Chiudi Ricerca" aria-label="Chiudi Ricerca">
                                 <span class="fc-header-action-icon"><i class="fas fa-stop"></i></span>
-                                <span class="fc-header-action-label">Chiudi Ricerca</span>
                             </a>
                         @endif
 
-                        <a href="#" class="fc-header-action-btn is-warning" data-bs-toggle="modal" data-bs-target="#resetBloccateModal">
-                            <span class="fc-header-action-icon"><i class="fas fa-lock-open"></i></span>
-                            <span class="fc-header-action-label">Reset Bloccate</span>
+                        <a href="#" class="fc-header-action-btn" data-bs-toggle="modal" data-bs-target="#resetBloccateModal"
+                           title="Reset Bloccate" aria-label="Reset Bloccate">
+                            <span class="fc-header-action-icon"><i class="fas fa-arrow-rotate-left"></i></span>
                         </a>
 
-                        <a href="#" class="fc-header-action-btn is-link" data-bs-toggle="modal" data-bs-target="#redirectionsModal">
-                            <span class="fc-header-action-icon"><i class="fa-solid fa-arrow-up-right-from-square"></i></span>
-                            <span class="fc-header-action-label">Redirection</span>
+                        <a href="#" class="fc-header-action-btn" data-bs-toggle="modal" data-bs-target="#redirectionsModal"
+                           title="Redirection" aria-label="Redirection">
+                            <span class="fc-header-action-icon"><i class="fa-solid fa-link"></i></span>
+                        </a>
+
+                        <a href="#" class="fc-header-action-btn" data-bs-toggle="modal" data-bs-target="#quotaTargetsModal"
+                           title="Quote" aria-label="Quote">
+                            <span class="fc-header-action-icon"><i class="fas fa-chart-line"></i></span>
                         </a>
                     </div>
                 </div>
@@ -1245,14 +1250,14 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="redirectionsModalLabel"><i class="fa-solid fa-arrow-up-right-from-square me-2"></i>Redirection</h5>
+                <h5 class="modal-title" id="redirectionsModalLabel"><i class="fa-solid fa-link me-2"></i>Redirection</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
             <div class="modal-body">
                 @if(empty($redirections))
                     <div class="fc-empty-inline">
                         <div class="fc-empty-icon sm">
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            <i class="fa-solid fa-link"></i>
                         </div>
                         <div>
                             <div class="fc-empty-title sm">Nessuna redirection impostata</div>
@@ -1378,6 +1383,211 @@
         </div>
     </div>
 </div>
+<!-- ================= FINE MODALE REDIRECTION ================= -->
+
+<!-- ================= MODALE QUOTE ================= -->
+<div class="modal fade" id="quotaTargetsModal" tabindex="-1" aria-labelledby="quotaTargetsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content fc-qedit-modal">
+            <div class="modal-header fc-qedit-header">
+                <div>
+                    <h5 class="modal-title" id="quotaTargetsModalLabel"><i class="fas fa-chart-line me-2"></i>Gestione Quote</h5>
+                    <div class="fc-qedit-header-subtitle">Modifica le quote definite nel config.json della ricerca</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="fc-qedit-topbar">
+                    <div class="fc-qedit-total-box">
+                        <span class="fc-qedit-total-icon"><i class="fas fa-users"></i></span>
+                        <div class="fc-qedit-total-text">
+                            <span class="fc-qedit-total-label">Interviste totali</span>
+                            <div class="fc-qedit-total-edit">
+                                <input type="number" min="0" class="form-control form-control-sm fc-qedit-total-input"
+                                       id="quotaTotalInterviewsInput"
+                                       value="{{ $quotaTargetsData['total_interviews'] ?? '' }}">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="quotaTotalSaveBtn" title="Salva">
+                                    <i class="fa-solid fa-floppy-disk"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <span class="fc-redirect-row-status" id="quotaTotalStatus"></span>
+                    </div>
+
+                    <div class="fc-qedit-topbar-right">
+                        <span id="quotaRowFeedback" class="fc-redirect-save-all-status"></span>
+                        <div class="fc-qedit-count-badge" id="quotaCountBadge">
+                            <i class="fa-solid fa-layer-group me-1"></i>
+                            {{ count($quotaTargetsData['targets'] ?? []) }} {{ count($quotaTargetsData['targets'] ?? []) === 1 ? 'quota configurata' : 'quote configurate' }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fc-qedit-total-alert" id="quotaTotalAlert" style="display:none;">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    <span id="quotaTotalAlertText"></span>
+                </div>
+
+                <div class="fc-qedit-table-wrap">
+                    <table class="table table-sm quota-table-modern align-middle mb-0">
+                        <thead>
+                            <tr class="quota-table-head">
+                                <th>Quota</th>
+                                <th>Tipo</th>
+                                <th style="width:110px;">Valore</th>
+                                <th style="width:92px;" class="text-end">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="quotaTargetsTableBody">
+                            @forelse ($quotaTargetsData['targets'] ?? [] as $target)
+                                <tr class="fc-qedit-row" data-quota-index="{{ $target['index'] }}"
+                                    data-question-id="{{ $target['question_id'] }}"
+                                    data-parameter-name="{{ $target['parameter_name'] }}">
+                                    <td>
+                                        <div class="quota-name-wrap">
+                                            <span class="quota-name">{{ $target['name'] }}</span>
+                                            <input type="text" class="form-control form-control-sm fc-qedit-description"
+                                                   data-index="{{ $target['index'] }}"
+                                                   value="{{ $target['description'] }}" placeholder="Descrizione">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if($target['parameter_name'])
+                                            <span class="fc-qedit-type-pill is-parameter">{{ $target['parameter_name'] }} = {{ $target['parameter_value'] }}</span>
+                                        @elseif($target['question_id'])
+                                            <span class="fc-qedit-type-pill is-question">Domanda #{{ $target['question_id'] }} · [{{ implode(', ', $target['option_id']) }}]</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <input type="number" min="0" class="form-control form-control-sm fc-qedit-value"
+                                               data-index="{{ $target['index'] }}" value="{{ $target['value'] }}">
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="fc-qedit-row-actions">
+                                            <button type="button" class="btn btn-outline-primary btn-sm fc-qedit-save-row" data-index="{{ $target['index'] }}" title="Salva questa quota">
+                                                <i class="fa-solid fa-floppy-disk"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger btn-sm fc-qedit-delete-row" data-index="{{ $target['index'] }}" data-quota-name="{{ $target['name'] }}" title="Elimina questa quota">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        <span class="fc-redirect-row-status" data-index="{{ $target['index'] }}"></span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr id="quotaTargetsEmptyRow">
+                                    <td colspan="4">
+                                        <div class="fc-empty-inline">
+                                            <div class="fc-empty-icon sm">
+                                                <i class="fas fa-chart-line"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fc-empty-title sm">Nessuna quota impostata</div>
+                                                <div class="fc-empty-subtitle sm">Il file config.json di questa ricerca non contiene quote in quota.targets.</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="fc-qedit-add-section">
+                    <button type="button" class="fc-qedit-add-toggle" id="quotaAddToggleBtn">
+                        <i class="fa-solid fa-plus me-2"></i>Aggiungi nuova quota
+                    </button>
+
+                    <div class="fc-qedit-add" id="quotaAddFormWrap" style="display:none;">
+
+                        <div class="fc-qedit-mode-switch">
+                            <button type="button" class="fc-qedit-mode-btn is-active" id="quotaModeQuestionBtn" data-mode="question">
+                                <i class="fa-solid fa-circle-question me-1"></i>Domanda e opzioni
+                            </button>
+                            <button type="button" class="fc-qedit-mode-btn" id="quotaModeParameterBtn" data-mode="parameter">
+                                <i class="fa-solid fa-sliders me-1"></i>Parametro
+                            </button>
+                        </div>
+
+                        <div class="row g-2 mb-2 mt-1" id="quotaAddQuestionFields">
+                            <div class="col-12">
+                                <label class="fc-redirect-import-label" for="quotaAddQuestionSelect">1. Domanda</label>
+                                <select class="form-select form-select-sm" id="quotaAddQuestionSelect">
+                                    <option value="">-- seleziona una domanda --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2" id="quotaAddParameterFields" style="display:none;">
+                            <div class="col-6">
+                                <label class="fc-redirect-import-label" for="quotaAddParameterName">1. Parametro</label>
+                                <input type="text" class="form-control form-control-sm" id="quotaAddParameterName" placeholder="es. pan">
+                            </div>
+                            <div class="col-6">
+                                <label class="fc-redirect-import-label" for="quotaAddParameterValue">Valore parametro</label>
+                                <input type="text" class="form-control form-control-sm" id="quotaAddParameterValue" placeholder="es. 4">
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2" id="quotaAddOptionsWrap" style="display:none;">
+                            <div class="col-12">
+                                <label class="fc-redirect-import-label">2. Opzioni da includere nella quota</label>
+                                <div id="quotaAddOptionsList" class="fc-qedit-options-list">
+                                    <span class="fc-qedit-options-placeholder">Seleziona prima una domanda</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="fc-qedit-add-hint">
+                            <i class="fa-solid fa-wand-magic-sparkles me-1"></i>Nome e descrizione sono suggeriti automaticamente in base alla scelta sopra, ma restano modificabili.
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="fc-redirect-import-label" for="quotaAddName">3. Nome (identificativo tecnico)</label>
+                                <input type="text" class="form-control form-control-sm" id="quotaAddName" placeholder="es. gen_m">
+                            </div>
+                            <div class="col-6">
+                                <label class="fc-redirect-import-label" for="quotaAddDescription">Descrizione</label>
+                                <input type="text" class="form-control form-control-sm" id="quotaAddDescription" placeholder="es. Genere maschile">
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-4">
+                                <label class="fc-redirect-import-label" for="quotaAddValue">4. Valore quota</label>
+                                <input type="number" min="0" class="form-control form-control-sm" id="quotaAddValue" placeholder="es. 230">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span id="quotaAddStatus" class="fc-redirect-save-all-status"></span>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-2" id="quotaAddCancelBtn">Annulla</button>
+                                <button type="button" class="btn btn-sm btn-primary" id="quotaAddConfirmBtn">
+                                    <i class="fa-solid fa-plus me-1"></i>Aggiungi quota
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer fc-qedit-footer">
+                <div class="fc-qedit-publish-note me-auto">
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                    Pubblicazione su Primis non ancora disponibile: in attesa dell'API di ripubblicazione. Le modifiche restano per ora solo nel config.json.
+                </div>
+                <span id="quotaPublishStatus" class="fc-redirect-save-all-status"></span>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+                <button type="button" class="btn btn-warning" id="quotaPublishBtn" disabled title="Non ancora disponibile: in attesa dell'API di ripubblicazione Primis">
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i>Pubblica su Primis
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ================= FINE MODALE QUOTE ================= -->
 
 @endsection
 

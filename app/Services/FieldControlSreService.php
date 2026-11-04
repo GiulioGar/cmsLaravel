@@ -420,6 +420,337 @@ class FieldControlSreService
     }
 
     /**
+     * Ritorna il contenuto grezzo (stringa) del config.json di una ricerca,
+     * o null se la cartella/il file non esistono o non sono leggibili.
+     * Usato per la pubblicazione su Primis (upload del file cosi' com'e'),
+     * dove serve il contenuto raw e non l'array decodificato.
+     */
+    public function readConfigJsonRaw(string $prj, string $sid): ?string
+    {
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return null;
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return null;
+        }
+
+        $content = @file_get_contents($configPath);
+
+        return ($content !== false && trim($content) !== '') ? $content : null;
+    }
+
+    /**
+     * Lista grezza delle quote (quota.targets) cosi' come definite nel
+     * config.json, con l'indice originale nell'array (necessario per
+     * modificarle/eliminarle in modo puntuale con updateQuotaTarget() e
+     * deleteQuotaTarget()). total_interviews e' gestito a parte perche'
+     * non e' un elemento dell'array targets ma un valore singolo.
+     */
+    public function getQuotaTargetsList(string $prj, string $sid): array
+    {
+        $empty = ['total_interviews' => null, 'targets' => []];
+
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return $empty;
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return $empty;
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return $empty;
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config)) {
+            return $empty;
+        }
+
+        $totalInterviews = $config['quota']['total_interviews'] ?? null;
+        $targets = $config['quota']['targets'] ?? [];
+
+        if (!is_array($targets)) {
+            $targets = [];
+        }
+
+        $list = [];
+
+        foreach ($targets as $rawIndex => $target) {
+            if (!is_array($target)) {
+                continue;
+            }
+
+            $list[] = [
+                'index' => (int) $rawIndex,
+                'name' => (string) ($target['name'] ?? ''),
+                'description' => (string) ($target['description'] ?? ''),
+                'question_id' => isset($target['question_id']) ? (int) $target['question_id'] : null,
+                'option_id' => is_array($target['option_id'] ?? null) ? array_values($target['option_id']) : [],
+                'parameter_name' => isset($target['parameter_name']) ? (string) $target['parameter_name'] : null,
+                'parameter_value' => isset($target['parameter_value']) ? (string) $target['parameter_value'] : null,
+                'value' => isset($target['value']) ? (int) $target['value'] : 0,
+            ];
+        }
+
+        return [
+            'total_interviews' => $totalInterviews !== null ? (int) $totalInterviews : null,
+            'targets' => $list,
+        ];
+    }
+
+    /**
+     * Aggiunge una nuova quota in coda a quota.targets nel config.json.
+     * Supporta le due forme viste nei config.json reali: quota legata a
+     * domanda+opzioni (question_id + option_id[]) oppure quota legata a
+     * un parametro (parameter_name + parameter_value, es. source_panel).
+     */
+    public function addQuotaTarget(string $prj, string $sid, array $entry): array
+    {
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return ['success' => false, 'message' => 'Cartella resources non trovata per questa ricerca.'];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config)) {
+            return ['success' => false, 'message' => 'File config.json non valido.'];
+        }
+
+        if (!isset($config['quota']) || !is_array($config['quota'])) {
+            $config['quota'] = [];
+        }
+        if (!isset($config['quota']['targets']) || !is_array($config['quota']['targets'])) {
+            $config['quota']['targets'] = [];
+        }
+
+        $name = trim((string) ($entry['name'] ?? ''));
+        $description = trim((string) ($entry['description'] ?? ''));
+        $value = (isset($entry['value']) && $entry['value'] !== '' && is_numeric($entry['value'])) ? (int) $entry['value'] : null;
+        $questionId = (isset($entry['question_id']) && $entry['question_id'] !== '' && is_numeric($entry['question_id'])) ? (int) $entry['question_id'] : null;
+        $optionIds = $entry['option_id'] ?? [];
+        $parameterName = trim((string) ($entry['parameter_name'] ?? ''));
+        $parameterValue = trim((string) ($entry['parameter_value'] ?? ''));
+
+        if ($name === '' || $value === null) {
+            return ['success' => false, 'message' => 'Nome e valore della quota sono obbligatori.'];
+        }
+
+        foreach ($config['quota']['targets'] as $existing) {
+            if (is_array($existing) && (string) ($existing['name'] ?? '') === $name) {
+                return ['success' => false, 'message' => 'Esiste gia\' una quota con questo nome.'];
+            }
+        }
+
+        $newTarget = [
+            'name' => $name,
+            'description' => $description !== '' ? $description : $name,
+            'value' => $value,
+        ];
+
+        if ($questionId !== null && is_array($optionIds) && !empty($optionIds)) {
+            $newTarget['question_id'] = $questionId;
+            $newTarget['option_id'] = array_values(array_map('intval', $optionIds));
+        } elseif ($parameterName !== '' && $parameterValue !== '') {
+            $newTarget['parameter_name'] = $parameterName;
+            $newTarget['parameter_value'] = $parameterValue;
+        } else {
+            return ['success' => false, 'message' => 'Specifica domanda + opzioni oppure parametro + valore per questa quota.'];
+        }
+
+        $newIndex = count($config['quota']['targets']);
+        $config['quota']['targets'][] = $newTarget;
+
+        $result = $this->writeConfigJson($configPath, $config);
+
+        if ($result['success']) {
+            // Stessa forma di getQuotaTargetsList(), cosi' il frontend puo'
+            // aggiungere la riga in tabella senza ricaricare la pagina.
+            $result['target'] = [
+                'index' => $newIndex,
+                'name' => $newTarget['name'],
+                'description' => $newTarget['description'],
+                'question_id' => $newTarget['question_id'] ?? null,
+                'option_id' => $newTarget['option_id'] ?? [],
+                'parameter_name' => $newTarget['parameter_name'] ?? null,
+                'parameter_value' => $newTarget['parameter_value'] ?? null,
+                'value' => $newTarget['value'],
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Aggiorna una quota esistente in quota.targets, individuata tramite
+     * l'indice originale nell'array (quello restituito da
+     * getQuotaTargetsList()). Il nome non e' modificabile: e' la chiave
+     * che lega la quota a t_quota_status.target_name, rinominarla
+     * creerebbe una quota orfana lato Primis.
+     */
+    public function updateQuotaTarget(string $prj, string $sid, int $index, array $entry): array
+    {
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return ['success' => false, 'message' => 'Cartella resources non trovata per questa ricerca.'];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config) || !isset($config['quota']['targets'][$index]) || !is_array($config['quota']['targets'][$index])) {
+            return ['success' => false, 'message' => 'Quota non trovata nel config.json.'];
+        }
+
+        $target = $config['quota']['targets'][$index];
+
+        if (array_key_exists('description', $entry)) {
+            $description = trim((string) $entry['description']);
+            if ($description !== '') {
+                $target['description'] = $description;
+            }
+        }
+
+        if (array_key_exists('value', $entry) && $entry['value'] !== '' && is_numeric($entry['value'])) {
+            $target['value'] = (int) $entry['value'];
+        }
+
+        if (array_key_exists('option_id', $entry) && is_array($entry['option_id']) && !empty($entry['option_id'])) {
+            $target['option_id'] = array_values(array_map('intval', $entry['option_id']));
+        }
+
+        if (array_key_exists('parameter_value', $entry) && trim((string) $entry['parameter_value']) !== '') {
+            $target['parameter_value'] = trim((string) $entry['parameter_value']);
+        }
+
+        $config['quota']['targets'][$index] = $target;
+
+        return $this->writeConfigJson($configPath, $config);
+    }
+
+    /**
+     * Elimina una quota da quota.targets tramite il suo indice originale
+     * nell'array (quello restituito da getQuotaTargetsList()).
+     */
+    public function deleteQuotaTarget(string $prj, string $sid, int $index): array
+    {
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return ['success' => false, 'message' => 'Cartella resources non trovata per questa ricerca.'];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config) || !isset($config['quota']['targets'][$index]) || !is_array($config['quota']['targets'][$index])) {
+            return ['success' => false, 'message' => 'Quota non trovata nel config.json.'];
+        }
+
+        $removedName = $config['quota']['targets'][$index]['name'] ?? null;
+
+        unset($config['quota']['targets'][$index]);
+        $config['quota']['targets'] = array_values($config['quota']['targets']);
+
+        $result = $this->writeConfigJson($configPath, $config);
+
+        if ($result['success']) {
+            $result['removed_name'] = $removedName;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Aggiorna quota.total_interviews (il totale complessivo, non legato a
+     * una singola domanda/opzione/panel).
+     */
+    public function updateQuotaTotalInterviews(string $prj, string $sid, int $value): array
+    {
+        $resourcesDirectory = $this->resolveResourcesDirectory($prj, $sid);
+        if (!$resourcesDirectory) {
+            return ['success' => false, 'message' => 'Cartella resources non trovata per questa ricerca.'];
+        }
+
+        $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+        if (!is_file($configPath) || !is_readable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
+        }
+
+        $content = @file_get_contents($configPath);
+        if ($content === false || trim($content) === '') {
+            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
+        }
+
+        $config = json_decode($content, true);
+        if (!is_array($config)) {
+            return ['success' => false, 'message' => 'File config.json non valido.'];
+        }
+
+        if (!isset($config['quota']) || !is_array($config['quota'])) {
+            $config['quota'] = [];
+        }
+
+        $config['quota']['total_interviews'] = $value;
+
+        return $this->writeConfigJson($configPath, $config);
+    }
+
+    /**
+     * Helper comune di scrittura per le funzioni quota.*: codifica e
+     * salva l'array di config aggiornato, con gli stessi controlli e lo
+     * stesso formato di output (success/message) usati per le redirection.
+     */
+    private function writeConfigJson(string $configPath, array $config): array
+    {
+        if (!is_writable($configPath)) {
+            return ['success' => false, 'message' => 'File config.json non scrivibile.'];
+        }
+
+        $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) {
+            return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
+        }
+
+        if (@file_put_contents($configPath, $encoded) === false) {
+            return ['success' => false, 'message' => 'Errore durante la scrittura del config.json.'];
+        }
+
+        return ['success' => true];
+    }
+
+    /**
      * Analizza un testo incollato (tipicamente il testo di un'email di un
      * fornitore panel) e prova a riconoscere righe "Esito: URL" o "Esito\tURL",
      * convertendo eventuali placeholder (es. [transaction_id], [insert_value],

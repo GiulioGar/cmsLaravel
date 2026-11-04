@@ -32,6 +32,7 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     // $panelNames = $this->getPanelNamesMap();
 
     $redirections = $sreService->getRedirectionsList($prj, $sid);
+    $quotaTargetsData = $sreService->getQuotaTargetsList($prj, $sid);
     $panelNamesMap = $this->getPanelNamesMap();
 
     $panelValueFromDB = $panelData->panel ?? null;
@@ -193,7 +194,9 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'primisSurveyStatus',
         'mediaRedPanel',
         'redirections',
-        'panelNamesMap'
+        'quotaTargetsData',
+        'panelNamesMap',
+        'questionMap'
     ));
 }
 
@@ -462,6 +465,101 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
         $result = $sreService->updateRedirections($prj, $sid, $updates);
 
         return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function addQuotaTarget(Request $request, FieldControlSreService $sreService)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+        $entry = $request->input('entry', []);
+
+        if (!is_array($entry)) {
+            return response()->json(['success' => false, 'message' => 'Formato non valido.'], 422);
+        }
+
+        $result = $sreService->addQuotaTarget($prj, $sid, $entry);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function updateQuotaTarget(Request $request, FieldControlSreService $sreService)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+        $index = (int) $request->input('index', -1);
+        $entry = $request->input('entry', []);
+
+        if ($index < 0 || !is_array($entry)) {
+            return response()->json(['success' => false, 'message' => 'Formato non valido.'], 422);
+        }
+
+        $result = $sreService->updateQuotaTarget($prj, $sid, $index, $entry);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function deleteQuotaTarget(Request $request, FieldControlSreService $sreService)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+        $index = (int) $request->input('index', -1);
+
+        if ($index < 0) {
+            return response()->json(['success' => false, 'message' => 'Quota non specificata.'], 422);
+        }
+
+        $result = $sreService->deleteQuotaTarget($prj, $sid, $index);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function updateQuotaTotalInterviews(Request $request, FieldControlSreService $sreService)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+        $value = $request->input('value');
+
+        if ($value === null || $value === '' || !is_numeric($value)) {
+            return response()->json(['success' => false, 'message' => 'Valore non valido.'], 422);
+        }
+
+        $result = $sreService->updateQuotaTotalInterviews($prj, $sid, (int) $value);
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Pubblica il config.json corrente (con le quote aggiornate) su Primis
+     * tramite l'Upload File API, cosi' che Primis possa risincronizzare
+     * t_quota_status. Il file e' gia' sul filesystem che Primis legge
+     * (stesso path usato per le redirection): questa chiamata serve solo
+     * a far rilevare a Primis la modifica, non a "farci arrivare" il file.
+     */
+    public function publishQuotaConfig(Request $request, FieldControlSreService $sreService, PrimisApiService $primis)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+
+        $content = $sreService->readConfigJsonRaw($prj, $sid);
+
+        if ($content === null) {
+            return response()->json(['success' => false, 'message' => 'File config.json non trovato o non leggibile.'], 404);
+        }
+
+        try {
+            $response = $primis->uploadFile($prj, $sid, 'config.json', $content);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Errore di comunicazione con Primis: ' . $e->getMessage()], 502);
+        }
+
+        if (!($response['success'] ?? false)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Primis ha rifiutato la pubblicazione: ' . ($response['error_message'] ?? 'errore sconosciuto'),
+            ], 422);
+        }
+
+        return response()->json(['success' => true, 'message' => 'config.json pubblicato su Primis.']);
     }
 
     public function resetBloccate(Request $request, FieldControlSreService $sreService)

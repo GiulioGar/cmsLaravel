@@ -142,4 +142,36 @@ public function updateSurveyStatus(string $projectName, string $surveyId, int $s
     return $response->json();
 }
 
+/**
+ * Upload di un file (SDL o risorsa) su un survey. Secondo la API
+ * Reference, le estensioni accettate sono solo "sdl", "jpeg", "gif",
+ * "png": un "config.json" e' atteso essere rifiutato da Primis con
+ * "extension 'json' is not valid". Si solleva eccezione solo per
+ * errori di comunicazione, non per success:false nella risposta.
+ */
+public function uploadFile(string $projectName, string $surveyId, string $name, string $content, ?string $path = null): array
+{
+    $url = $this->baseUrl . "projects/{$projectName}/surveys/{$surveyId}/upload";
+
+    $body = [
+        'name'    => $name,
+        'content' => base64_encode($content),
+    ];
+
+    if ($path !== null && $path !== '') {
+        $body['path'] = $path;
+    }
+
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . $this->token,
+        'Accept'        => 'application/json',
+    ])->post($url, $body);
+
+    if ($response->failed()) {
+        throw new \Exception('Errore di comunicazione con Primis [uploadFile]');
+    }
+
+    return $response->json();
+}
+
 }

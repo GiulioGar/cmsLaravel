@@ -10,9 +10,15 @@
             updateRedirections: @json(route('redirections.update')),
             parseRedirections: @json(route('redirections.parse')),
             addRedirections: @json(route('redirections.add')),
-            deleteRedirectionsGroup: @json(route('redirections.deleteGroup'))
+            deleteRedirectionsGroup: @json(route('redirections.deleteGroup')),
+            addQuotaTarget: @json(route('quotaTargets.add')),
+            updateQuotaTarget: @json(route('quotaTargets.update')),
+            deleteQuotaTarget: @json(route('quotaTargets.delete')),
+            updateQuotaTotalInterviews: @json(route('quotaTargets.updateTotal')),
+            publishQuotaConfig: @json(route('quotaTargets.publish'))
         },
-        panelNamesMap: @json($panelNamesMap ?? [])
+        panelNamesMap: @json($panelNamesMap ?? []),
+        questionMap: @json($questionMap ?? [])
     }, window.FieldControlConfig || {});
 </script>
 

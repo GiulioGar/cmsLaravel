@@ -14,6 +14,13 @@
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
+
+        // Bottoni Azioni rapide: usano gia' data-bs-toggle="modal", quindi il
+        // tooltip si inizializza a parte sul semplice attributo title.
+        const quickActionTriggers = [].slice.call(document.querySelectorAll('.fc-header-action-btn[title]'));
+        quickActionTriggers.map(function (el) {
+            return new bootstrap.Tooltip(el);
+        });
     }
 
     function initProgressBars() {
@@ -1005,6 +1012,661 @@
         }
     }
 
+    function bindQuotaTargetsModal() {
+        const tableBody = document.getElementById('quotaTargetsTableBody');
+        const totalInput = document.getElementById('quotaTotalInterviewsInput');
+        const totalSaveBtn = document.getElementById('quotaTotalSaveBtn');
+        const totalStatus = document.getElementById('quotaTotalStatus');
+        const addBtn = document.getElementById('quotaAddConfirmBtn');
+        const addStatus = document.getElementById('quotaAddStatus');
+        const publishBtn = document.getElementById('quotaPublishBtn');
+        const publishStatus = document.getElementById('quotaPublishStatus');
+        const questionSelect = document.getElementById('quotaAddQuestionSelect');
+        const optionsWrap = document.getElementById('quotaAddOptionsWrap');
+        const optionsList = document.getElementById('quotaAddOptionsList');
+        const questionMap = config.questionMap || {};
+
+        if (!routes.addQuotaTarget) {
+            return;
+        }
+
+        function populateQuestionSelect() {
+            if (!questionSelect) {
+                return;
+            }
+
+            Object.keys(questionMap).forEach(function (questionId) {
+                const question = questionMap[questionId];
+                const options = question && question.options;
+
+                if (!options || !options.length) {
+                    return;
+                }
+
+                const opt = document.createElement('option');
+                opt.value = questionId;
+                opt.textContent = (question.code ? question.code + ' - ' : '') + (question.text || '').substring(0, 80);
+                questionSelect.appendChild(opt);
+            });
+        }
+
+        function renderOptionsForQuestion(questionId) {
+            if (!optionsList || !optionsWrap) {
+                return;
+            }
+
+            optionsList.innerHTML = '';
+
+            const question = questionMap[questionId];
+            const options = question && question.options;
+
+            if (!questionId || !options || !options.length) {
+                optionsWrap.style.display = 'none';
+                return;
+            }
+
+            options.forEach(function (label, idx) {
+                const wrap = document.createElement('div');
+                wrap.className = 'form-check fc-qedit-option-check';
+
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.className = 'form-check-input';
+                input.value = idx;
+                input.id = 'quotaAddOption_' + idx;
+
+                const labelEl = document.createElement('label');
+                labelEl.className = 'form-check-label';
+                labelEl.setAttribute('for', input.id);
+                labelEl.textContent = label;
+
+                wrap.appendChild(input);
+                wrap.appendChild(labelEl);
+                optionsList.appendChild(wrap);
+            });
+
+            optionsWrap.style.display = '';
+        }
+
+        populateQuestionSelect();
+
+        const nameInput = document.getElementById('quotaAddName');
+        const descInput = document.getElementById('quotaAddDescription');
+        const parameterNameInput = document.getElementById('quotaAddParameterName');
+        const parameterValueInput = document.getElementById('quotaAddParameterValue');
+
+        function slugify(text) {
+            return (text || '')
+                .toString()
+                .toLowerCase()
+                .normalize('NFD').replace(/[̀-ͯ]/g, '')
+                .replace(/[^a-z0-9]+/g, '_')
+                .replace(/^_+|_+$/g, '')
+                .substring(0, 24);
+        }
+
+        function suggestFromQuestion() {
+            if (!questionSelect || !nameInput || !descInput) {
+                return;
+            }
+
+            const question = questionMap[questionSelect.value];
+            if (!question) {
+                return;
+            }
+
+            const selectedIdx = optionsList
+                ? [].slice.call(optionsList.querySelectorAll('input[type="checkbox"]:checked')).map(function (el) { return parseInt(el.value, 10); })
+                : [];
+
+            const codeSlug = slugify(question.code || question.text || ('q' + questionSelect.value));
+            let name = codeSlug;
+            let description = (question.text || '').substring(0, 70);
+
+            if (selectedIdx.length === 1) {
+                const label = (question.options || [])[selectedIdx[0]] || '';
+                name = codeSlug + (label ? '_' + slugify(label) : '');
+                description = label || description;
+            } else if (selectedIdx.length > 1) {
+                name = codeSlug + '_' + selectedIdx.join('_');
+                description = selectedIdx
+                    .map(function (idx) { return (question.options || [])[idx]; })
+                    .filter(Boolean)
+                    .join(' + ') || description;
+            }
+
+            if (!nameInput.dataset.dirty) {
+                nameInput.value = name;
+            }
+            if (!descInput.dataset.dirty) {
+                descInput.value = description;
+            }
+        }
+
+        function suggestFromParameter() {
+            if (!nameInput || !descInput || !parameterNameInput || !parameterValueInput) {
+                return;
+            }
+
+            const paramName = parameterNameInput.value.trim();
+            const paramValue = parameterValueInput.value.trim();
+
+            if (!paramName && !paramValue) {
+                return;
+            }
+
+            const name = slugify(paramName) + (paramValue ? '_' + slugify(paramValue) : '');
+            const description = (paramName && paramValue) ? (paramName + ' = ' + paramValue) : (paramName || paramValue);
+
+            if (!nameInput.dataset.dirty) {
+                nameInput.value = name;
+            }
+            if (!descInput.dataset.dirty) {
+                descInput.value = description;
+            }
+        }
+
+        if (nameInput) {
+            nameInput.addEventListener('input', function () { nameInput.dataset.dirty = '1'; });
+        }
+        if (descInput) {
+            descInput.addEventListener('input', function () { descInput.dataset.dirty = '1'; });
+        }
+
+        if (questionSelect) {
+            questionSelect.addEventListener('change', function () {
+                renderOptionsForQuestion(questionSelect.value);
+                suggestFromQuestion();
+            });
+        }
+
+        if (optionsList) {
+            optionsList.addEventListener('change', function (event) {
+                if (event.target && event.target.type === 'checkbox') {
+                    suggestFromQuestion();
+                }
+            });
+        }
+
+        if (parameterNameInput) {
+            parameterNameInput.addEventListener('input', suggestFromParameter);
+        }
+        if (parameterValueInput) {
+            parameterValueInput.addEventListener('input', suggestFromParameter);
+        }
+
+        const addToggleBtn = document.getElementById('quotaAddToggleBtn');
+        const addFormWrap = document.getElementById('quotaAddFormWrap');
+        const addCancelBtn = document.getElementById('quotaAddCancelBtn');
+        const modeQuestionBtn = document.getElementById('quotaModeQuestionBtn');
+        const modeParameterBtn = document.getElementById('quotaModeParameterBtn');
+        const questionFields = document.getElementById('quotaAddQuestionFields');
+        const parameterFields = document.getElementById('quotaAddParameterFields');
+
+        function closeAddForm() {
+            if (addFormWrap) {
+                addFormWrap.style.display = 'none';
+                addFormWrap.querySelectorAll('input[type="text"], input[type="number"]').forEach(function (input) {
+                    input.value = '';
+                    delete input.dataset.dirty;
+                });
+                if (questionSelect) {
+                    questionSelect.value = '';
+                }
+                if (optionsWrap) {
+                    optionsWrap.style.display = 'none';
+                }
+            }
+            if (addToggleBtn) {
+                addToggleBtn.style.display = '';
+            }
+            if (addStatus) {
+                addStatus.textContent = '';
+                addStatus.classList.remove('is-error');
+            }
+        }
+
+        if (addToggleBtn && addFormWrap) {
+            addToggleBtn.addEventListener('click', function () {
+                addFormWrap.style.display = '';
+                addToggleBtn.style.display = 'none';
+            });
+        }
+
+        if (addCancelBtn) {
+            addCancelBtn.addEventListener('click', closeAddForm);
+        }
+
+        function setQuotaMode(mode) {
+            const isQuestion = mode === 'question';
+
+            if (modeQuestionBtn) {
+                modeQuestionBtn.classList.toggle('is-active', isQuestion);
+            }
+            if (modeParameterBtn) {
+                modeParameterBtn.classList.toggle('is-active', !isQuestion);
+            }
+            if (questionFields) {
+                questionFields.style.display = isQuestion ? '' : 'none';
+            }
+            if (parameterFields) {
+                parameterFields.style.display = isQuestion ? 'none' : '';
+            }
+            if (optionsWrap && !isQuestion) {
+                optionsWrap.style.display = 'none';
+            } else if (optionsWrap && isQuestion && questionSelect && questionSelect.value) {
+                optionsWrap.style.display = '';
+            }
+        }
+
+        if (modeQuestionBtn) {
+            modeQuestionBtn.addEventListener('click', function () { setQuotaMode('question'); });
+        }
+        if (modeParameterBtn) {
+            modeParameterBtn.addEventListener('click', function () { setQuotaMode('parameter'); });
+        }
+
+        function showRowStatus(container, index, success, message) {
+            const el = container.querySelector('.fc-redirect-row-status[data-index="' + index + '"]');
+            if (!el) {
+                return;
+            }
+
+            el.textContent = success ? 'Salvato' : (message || 'Errore');
+            el.classList.toggle('is-error', !success);
+            el.classList.add('is-visible');
+
+            setTimeout(function () {
+                el.classList.remove('is-visible');
+            }, 2500);
+        }
+
+        function postJson(url, payload) {
+            return fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify(payload)
+            }).then(function (response) {
+                return response.json();
+            });
+        }
+
+        if (totalSaveBtn && totalInput) {
+            totalSaveBtn.addEventListener('click', function () {
+                const value = totalInput.value;
+
+                if (value === '' || isNaN(parseInt(value, 10))) {
+                    totalStatus.textContent = 'Valore non valido';
+                    totalStatus.classList.add('is-error', 'is-visible');
+                    return;
+                }
+
+                postJson(routes.updateQuotaTotalInterviews, { prj: prj, sid: sid, value: parseInt(value, 10) })
+                    .then(function (data) {
+                        totalStatus.textContent = data.success ? 'Salvato' : (data.message || 'Errore');
+                        totalStatus.classList.toggle('is-error', !data.success);
+                        totalStatus.classList.add('is-visible');
+                        setTimeout(function () { totalStatus.classList.remove('is-visible'); }, 2500);
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        totalStatus.textContent = 'Errore di rete';
+                        totalStatus.classList.add('is-error', 'is-visible');
+                    });
+            });
+        }
+
+        function showQuotaFeedback(message, isError) {
+            const feedback = document.getElementById('quotaRowFeedback');
+            if (!feedback) {
+                return;
+            }
+
+            feedback.textContent = message;
+            feedback.classList.toggle('is-error', !!isError);
+
+            setTimeout(function () {
+                if (feedback.textContent === message) {
+                    feedback.textContent = '';
+                    feedback.classList.remove('is-error');
+                }
+            }, 3000);
+        }
+
+        function computeMaxQuotaGroupSum() {
+            if (!tableBody) {
+                return 0;
+            }
+
+            const groups = {};
+
+            tableBody.querySelectorAll('.fc-qedit-row').forEach(function (row) {
+                const questionId = row.getAttribute('data-question-id');
+                const parameterName = row.getAttribute('data-parameter-name');
+                const valueInput = row.querySelector('.fc-qedit-value');
+                const value = valueInput ? (parseInt(valueInput.value, 10) || 0) : 0;
+
+                let key = null;
+                if (questionId && questionId !== 'null' && questionId !== '') {
+                    key = 'q_' + questionId;
+                } else if (parameterName && parameterName !== 'null' && parameterName !== '') {
+                    key = 'p_' + parameterName;
+                }
+
+                if (!key) {
+                    return;
+                }
+
+                groups[key] = (groups[key] || 0) + value;
+            });
+
+            let max = 0;
+            Object.keys(groups).forEach(function (key) {
+                if (groups[key] > max) {
+                    max = groups[key];
+                }
+            });
+
+            return max;
+        }
+
+        function validateQuotaTotal() {
+            if (!totalInput) {
+                return;
+            }
+
+            const alertBox = document.getElementById('quotaTotalAlert');
+            const alertText = document.getElementById('quotaTotalAlertText');
+            const maxGroupSum = computeMaxQuotaGroupSum();
+            const totalValue = parseInt(totalInput.value, 10) || 0;
+
+            if (maxGroupSum > 0 && totalValue < maxGroupSum) {
+                totalInput.classList.add('is-invalid-quota');
+                if (alertBox && alertText) {
+                    alertText.textContent = 'Interviste totali (' + totalValue + ') inferiore alla somma delle quote collegate alla stessa domanda/parametro (' + maxGroupSum + '). Aumenta il totale o riduci quelle quote.';
+                    alertBox.style.display = '';
+                }
+            } else {
+                totalInput.classList.remove('is-invalid-quota');
+                if (alertBox) {
+                    alertBox.style.display = 'none';
+                }
+            }
+        }
+
+        if (totalInput) {
+            totalInput.addEventListener('input', validateQuotaTotal);
+        }
+
+        if (tableBody) {
+            tableBody.addEventListener('input', function (event) {
+                if (event.target && event.target.classList.contains('fc-qedit-value')) {
+                    validateQuotaTotal();
+                }
+            });
+        }
+
+        validateQuotaTotal();
+
+        function updateQuotaCountBadge() {
+            const badge = document.getElementById('quotaCountBadge');
+            if (!badge || !tableBody) {
+                return;
+            }
+
+            const count = tableBody.querySelectorAll('.fc-qedit-row').length;
+            badge.innerHTML = '<i class="fa-solid fa-layer-group me-1"></i>' + count + (count === 1 ? ' quota configurata' : ' quote configurate');
+        }
+
+        function buildQuotaTypePill(target) {
+            const pill = document.createElement('span');
+            pill.className = 'fc-qedit-type-pill';
+
+            if (target.parameter_name) {
+                pill.classList.add('is-parameter');
+                pill.textContent = target.parameter_name + ' = ' + target.parameter_value;
+            } else if (target.question_id) {
+                pill.classList.add('is-question');
+                pill.textContent = 'Domanda #' + target.question_id + ' · [' + (target.option_id || []).join(', ') + ']';
+            }
+
+            return pill;
+        }
+
+        function appendQuotaRow(target) {
+            if (!tableBody) {
+                return;
+            }
+
+            const emptyRow = document.getElementById('quotaTargetsEmptyRow');
+            if (emptyRow) {
+                emptyRow.remove();
+            }
+
+            const tr = document.createElement('tr');
+            tr.className = 'fc-qedit-row';
+            tr.setAttribute('data-quota-index', target.index);
+            tr.setAttribute('data-question-id', target.question_id || '');
+            tr.setAttribute('data-parameter-name', target.parameter_name || '');
+
+            const tdName = document.createElement('td');
+            const nameWrap = document.createElement('div');
+            nameWrap.className = 'quota-name-wrap';
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'quota-name';
+            nameSpan.textContent = target.name;
+            const descInput = document.createElement('input');
+            descInput.type = 'text';
+            descInput.className = 'form-control form-control-sm fc-qedit-description';
+            descInput.setAttribute('data-index', target.index);
+            descInput.value = target.description || '';
+            descInput.placeholder = 'Descrizione';
+            nameWrap.appendChild(nameSpan);
+            nameWrap.appendChild(descInput);
+            tdName.appendChild(nameWrap);
+
+            const tdType = document.createElement('td');
+            tdType.appendChild(buildQuotaTypePill(target));
+
+            const tdValue = document.createElement('td');
+            const valueInput = document.createElement('input');
+            valueInput.type = 'number';
+            valueInput.min = '0';
+            valueInput.className = 'form-control form-control-sm fc-qedit-value';
+            valueInput.setAttribute('data-index', target.index);
+            valueInput.value = target.value;
+            tdValue.appendChild(valueInput);
+
+            const tdActions = document.createElement('td');
+            tdActions.className = 'text-end';
+            const actionsWrap = document.createElement('div');
+            actionsWrap.className = 'fc-qedit-row-actions';
+
+            const saveRowBtn = document.createElement('button');
+            saveRowBtn.type = 'button';
+            saveRowBtn.className = 'btn btn-outline-primary btn-sm fc-qedit-save-row';
+            saveRowBtn.setAttribute('data-index', target.index);
+            saveRowBtn.title = 'Salva questa quota';
+            saveRowBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i>';
+
+            const deleteRowBtn = document.createElement('button');
+            deleteRowBtn.type = 'button';
+            deleteRowBtn.className = 'btn btn-outline-danger btn-sm fc-qedit-delete-row';
+            deleteRowBtn.setAttribute('data-index', target.index);
+            deleteRowBtn.setAttribute('data-quota-name', target.name);
+            deleteRowBtn.title = 'Elimina questa quota';
+            deleteRowBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+
+            actionsWrap.appendChild(saveRowBtn);
+            actionsWrap.appendChild(deleteRowBtn);
+            tdActions.appendChild(actionsWrap);
+
+            const statusSpan = document.createElement('span');
+            statusSpan.className = 'fc-redirect-row-status';
+            statusSpan.setAttribute('data-index', target.index);
+            tdActions.appendChild(statusSpan);
+
+            tr.appendChild(tdName);
+            tr.appendChild(tdType);
+            tr.appendChild(tdValue);
+            tr.appendChild(tdActions);
+
+            tableBody.appendChild(tr);
+            updateQuotaCountBadge();
+            validateQuotaTotal();
+        }
+
+        function removeQuotaRow(index) {
+            if (!tableBody) {
+                return;
+            }
+
+            const row = tableBody.querySelector('.fc-qedit-row[data-quota-index="' + index + '"]');
+            if (row) {
+                row.remove();
+            }
+
+            if (!tableBody.querySelector('.fc-qedit-row')) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.id = 'quotaTargetsEmptyRow';
+                emptyRow.innerHTML = '<td colspan="4">'
+                    + '<div class="fc-empty-inline">'
+                    + '<div class="fc-empty-icon sm"><i class="fas fa-chart-line"></i></div>'
+                    + '<div>'
+                    + '<div class="fc-empty-title sm">Nessuna quota impostata</div>'
+                    + '<div class="fc-empty-subtitle sm">Il file config.json di questa ricerca non contiene quote in quota.targets.</div>'
+                    + '</div></div></td>';
+                tableBody.appendChild(emptyRow);
+            }
+
+            updateQuotaCountBadge();
+            validateQuotaTotal();
+        }
+
+        if (tableBody) {
+            tableBody.addEventListener('click', function (event) {
+                const saveBtn = event.target.closest('.fc-qedit-save-row');
+                if (saveBtn) {
+                    const index = saveBtn.getAttribute('data-index');
+                    const card = tableBody.querySelector('.fc-qedit-row[data-quota-index="' + index + '"]');
+                    if (!card) {
+                        return;
+                    }
+
+                    const description = card.querySelector('.fc-qedit-description').value.trim();
+                    const value = card.querySelector('.fc-qedit-value').value;
+
+                    postJson(routes.updateQuotaTarget, {
+                        prj: prj,
+                        sid: sid,
+                        index: parseInt(index, 10),
+                        entry: { description: description, value: value }
+                    })
+                        .then(function (data) {
+                            showRowStatus(tableBody, index, !!data.success, data.message);
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            showRowStatus(tableBody, index, false, 'Errore di rete');
+                        });
+
+                    return;
+                }
+
+                const deleteBtn = event.target.closest('.fc-qedit-delete-row');
+                if (deleteBtn) {
+                    const index = deleteBtn.getAttribute('data-index');
+                    const quotaName = deleteBtn.getAttribute('data-quota-name');
+
+                    if (!confirm('Eliminare la quota "' + quotaName + '"? L\'operazione non è reversibile.')) {
+                        return;
+                    }
+
+                    postJson(routes.deleteQuotaTarget, { prj: prj, sid: sid, index: parseInt(index, 10) })
+                        .then(function (data) {
+                            if (data.success) {
+                                removeQuotaRow(index);
+                                showQuotaFeedback('Quota "' + quotaName + '" eliminata.', false);
+                                return;
+                            }
+
+                            alert(data.message || 'Errore durante l\'eliminazione.');
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            alert('Errore di rete durante l\'eliminazione.');
+                        });
+                }
+            });
+        }
+
+        if (addBtn) {
+            addBtn.addEventListener('click', function () {
+                const selectedOptions = optionsList
+                    ? [].slice.call(optionsList.querySelectorAll('input[type="checkbox"]:checked')).map(function (el) { return el.value; })
+                    : [];
+
+                const entry = {
+                    name: document.getElementById('quotaAddName').value.trim(),
+                    description: document.getElementById('quotaAddDescription').value.trim(),
+                    value: document.getElementById('quotaAddValue').value,
+                    question_id: questionSelect ? questionSelect.value : '',
+                    option_id: selectedOptions,
+                    parameter_name: document.getElementById('quotaAddParameterName').value.trim(),
+                    parameter_value: document.getElementById('quotaAddParameterValue').value.trim()
+                };
+
+                postJson(routes.addQuotaTarget, { prj: prj, sid: sid, entry: entry })
+                    .then(function (data) {
+                        if (data.success && data.target) {
+                            appendQuotaRow(data.target);
+                            closeAddForm();
+                            setQuotaMode('question');
+                            showQuotaFeedback('Quota "' + data.target.name + '" aggiunta.', false);
+                            return;
+                        }
+
+                        addStatus.textContent = data.message || 'Errore durante l\'aggiunta.';
+                        addStatus.classList.add('is-error');
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        addStatus.textContent = 'Errore di rete';
+                        addStatus.classList.add('is-error');
+                    });
+            });
+        }
+
+        if (publishBtn) {
+            publishBtn.addEventListener('click', function () {
+                if (!confirm('Pubblicare il config.json corrente su Primis? Questo tenta di aggiornare le quote reali della ricerca.')) {
+                    return;
+                }
+
+                publishBtn.disabled = true;
+                publishStatus.textContent = 'Pubblicazione in corso...';
+                publishStatus.classList.remove('is-error');
+
+                postJson(routes.publishQuotaConfig, { prj: prj, sid: sid })
+                    .then(function (data) {
+                        publishStatus.textContent = data.message || (data.success ? 'Pubblicato.' : 'Errore durante la pubblicazione.');
+                        publishStatus.classList.toggle('is-error', !data.success);
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        publishStatus.textContent = 'Errore di rete durante la pubblicazione.';
+                        publishStatus.classList.add('is-error');
+                    })
+                    .finally(function () {
+                        publishBtn.disabled = false;
+                    });
+            });
+        }
+    }
+
     function exposeGlobalActions() {
         window.closeSurvey = function (prjValue, sidValue) {
             closeSurvey(prjValue, sidValue);
@@ -1065,6 +1727,7 @@ function initDropdowns() {
         bindResetBloccate();
         bindRedirectionsModal();
         bindRedirectImport();
+        bindQuotaTargetsModal();
         exposeGlobalActions();
 
         document.querySelectorAll('[data-bs-toggle="pill"]').forEach(function (trigger) {

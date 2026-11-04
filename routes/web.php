@@ -71,6 +71,11 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/parse-redirections', [FieldControlController::class, 'parseRedirectionsText'])->name('redirections.parse');
     Route::post('/add-redirections', [FieldControlController::class, 'addRedirections'])->name('redirections.add');
     Route::post('/delete-redirections-group', [FieldControlController::class, 'deleteRedirectionsGroup'])->name('redirections.deleteGroup');
+    Route::post('/add-quota-target', [FieldControlController::class, 'addQuotaTarget'])->name('quotaTargets.add');
+    Route::post('/update-quota-target', [FieldControlController::class, 'updateQuotaTarget'])->name('quotaTargets.update');
+    Route::post('/delete-quota-target', [FieldControlController::class, 'deleteQuotaTarget'])->name('quotaTargets.delete');
+    Route::post('/update-quota-total-interviews', [FieldControlController::class, 'updateQuotaTotalInterviews'])->name('quotaTargets.updateTotal');
+    Route::post('/publish-quota-config', [FieldControlController::class, 'publishQuotaConfig'])->name('quotaTargets.publish');
 
     // ============================================
     // FIELD QUALITY
