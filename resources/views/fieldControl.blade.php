@@ -348,6 +348,7 @@
         <div class="card fc-header-card">
             <div class="fc-header-body">
 
+                <!-- Area A: Identita' ricerca -->
                 <div class="fc-header-block fc-header-id">
                     <div class="fc-header-eyebrow"><i class="fas fa-folder-open me-1"></i>Ricerca</div>
                     <div class="fc-header-idvalue">#{{ $panelData->sur_id ?? 'N/A' }}</div>
@@ -358,26 +359,26 @@
                     </div>
                 </div>
 
-                <div class="fc-header-block fc-header-progress">
-                    <span class="fc-status-pill {{ $isClosed ? 'is-closed' : 'is-open' }}">
-                        <i class="{{ $statusIcon }} me-1"></i>{{ $isClosed ? 'Field chiuso' : 'Field aperto' }}
-                    </span>
-                    <span class="primis-status-badge {{ $primisStatusClass }} fc-header-primis-inline">
-                        <i class="{{ $primisStatusIcon }} me-1"></i>Primis: {{ $primisStatusLabel }}
-                    </span>
-
-                    <div class="fc-header-progress-row">
-                        <span class="fc-header-progress-label">Avanzamento</span>
-                        <span class="fc-header-progress-value">{{ $complete }} / {{ $goal ?: 'N/A' }} ({{ $pct }}%)</span>
+                <!-- Area B: Stato e LOI -->
+                <div class="fc-header-block fc-header-status">
+                    <div class="fc-header-status-badges">
+                        <span class="fc-status-pill {{ $isClosed ? 'is-closed' : 'is-open' }}">
+                            <i class="{{ $statusIcon }} me-1"></i>{{ $isClosed ? 'Field chiuso' : 'Field aperto' }}
+                        </span>
+                        <span class="primis-status-badge {{ $primisStatusClass }}">
+                            <i class="{{ $primisStatusIcon }} me-1"></i>Primis: {{ $primisStatusLabel }}
+                        </span>
                     </div>
-                    <div class="progress kpi-progressbar fc-header-progressbar" role="progressbar" aria-valuenow="{{ $pct }}" aria-valuemin="0" aria-valuemax="100">
-                        <div class="progress-bar kpi-progressfill fc-header-progressfill" style="width:0" data-pct="{{ $pct }}"></div>
+                    <div class="fc-header-loi">
+                        <span class="fc-header-loi-icon"><i class="fas fa-stopwatch"></i></span>
+                        <div>
+                            <span class="fc-header-mini-key">LOI media</span>
+                            <span class="fc-header-loi-val">{{ $panelData->durata ?? 'N/A' }} min</span>
+                        </div>
                     </div>
-                    @if($missingInterviste !== null)
-                        <div class="fc-header-progress-hint">Mancano {{ $missingInterviste }} interviste</div>
-                    @endif
                 </div>
 
+                <!-- Area C: Target e Timing -->
                 <div class="fc-header-block fc-header-target">
                     <div class="fc-header-mini">
                         <span class="fc-header-mini-icon"><i class="fa-solid fa-arrows-down-to-people"></i></span>
@@ -410,24 +411,7 @@
                     </div>
                 </div>
 
-                <div class="fc-header-block fc-header-quality">
-                    <div class="fc-header-mini">
-                        <span class="fc-header-mini-icon"><i class="fas fa-stopwatch"></i></span>
-                        <div><span class="fc-header-mini-key">LOI media</span><span class="fc-header-mini-val">{{ $panelData->durata ?? 'N/A' }} min</span></div>
-                    </div>
-                    <div class="fc-header-mini">
-                        <span class="fc-header-mini-icon"><i class="fas fa-percent"></i></span>
-                        <div><span class="fc-header-mini-key">IR</span><span class="fc-header-mini-val">{{ $redemption ?? 0 }}%</span></div>
-                    </div>
-                    <div class="fc-header-mini">
-                        <span class="fc-header-mini-icon"><i class="fa-solid fa-layer-group"></i></span>
-                        <div>
-                            <span class="fc-header-mini-key">Panel</span>
-                            <span class="fc-header-mini-val">{{ !empty($panelCounts) ? implode(', ', array_keys($panelCounts)) : 'N/A' }}</span>
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Area D: Azioni rapide -->
                 <div class="fc-header-block fc-header-actions">
                     <div class="fc-header-actions-title">Azioni rapide</div>
                     <div class="fc-header-actions-grid">
