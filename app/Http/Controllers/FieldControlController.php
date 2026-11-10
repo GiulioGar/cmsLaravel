@@ -1412,6 +1412,7 @@ private function calcolaFattibilitaQuote(
             $confirmatiPerTipo[$mapping->tipo][] = [
                 'filtro' => $filtro,
                 'open' => (int) $item->missing > 0,
+                'missing' => (int) $item->missing,
             ];
         } elseif ($mapping && $mapping->tipo === 'none') {
             $item->fattibilita_tipo = 'generica';
@@ -1433,6 +1434,24 @@ private function calcolaFattibilitaQuote(
     if ($utentiDisponibiliCorretti !== $utentiDisponibili) {
         $stimaBase = $this->calcolaStimaInterviste($utentiDisponibiliCorretti, $irInteractive, $valoreUtilizzato);
         $quotaVincolante = 'Una o più quote demografiche sono già piene: la stima considera solo i segmenti ancora aperti.';
+
+        // Oltre a quanti il panel puo' fisicamente fornire, c'e' un secondo
+        // tetto: se una dimensione (es. eta') ha un SOLO segmento ancora
+        // aperto, quel segmento non puo' comunque accettare piu' interviste
+        // di quante gliene mancano (il suo "missing"). Una volta raggiunto,
+        // quella dimensione si chiude anche per le combinazioni con l'altra
+        // dimensione ancora aperta (es. "uomo") - che a quel punto non ha
+        // piu' nessuna combinazione disponibile per completare le proprie,
+        // restando scoperta. Il vero tetto e' quindi il piu' piccolo tra i
+        // "missing" di ogni dimensione con un solo segmento aperto.
+        foreach ($confirmatiPerTipo as $righe) {
+            $aperti = array_values(array_filter($righe, fn ($r) => $r['open']));
+
+            if (count($aperti) === 1 && $aperti[0]['missing'] < $stimaBase) {
+                $stimaBase = $aperti[0]['missing'];
+                $quotaVincolante = 'Una o più quote demografiche sono già piene: la stima considera solo i segmenti ancora aperti, limitati dalla dimensione più stretta.';
+            }
+        }
     }
 
     $stimaFinale = $stimaBase;
