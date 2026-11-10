@@ -88,16 +88,24 @@ private function buildStimaEFattibilita(string $prj, string $sid, PrimisApiServi
 
     $irInteractive = (float) ($panelCounts['Interactive']['redemption'] ?? 0);
 
+    $ondateInfo = ((int) $panelValueFromDB === 1)
+        ? $this->getOndate24h($sid, $prj, $utentiDisponibili)
+        : null;
+
+    // Un invio appena lanciato sposta subito gli utenti coinvolti fuori da
+    // "disponibili" (hanno gia' un respint per questa ricerca), ma per le
+    // prime 24h possono ancora completare l'intervista: "utenti_effettivi"
+    // li riconta con un peso che decade linearmente, invece di considerarli
+    // persi. E' la base giusta per OGNI calcolo di stima/fattibilita' qui
+    // sotto, non solo per il numero diagnostico nel tooltip.
+    $utentiEffettivi = $ondateInfo['utenti_effettivi'] ?? $utentiDisponibili;
+
     $stimaInterviste = ((int) $panelValueFromDB === 1)
         ? $this->calcolaStimaInterviste(
-            $utentiDisponibili,
+            $utentiEffettivi,
             $irInteractive,
             $panelRateInfo ? $panelRateInfo['valore_utilizzato'] : $mediaRedPanel
           )
-        : null;
-
-    $ondateInfo = ((int) $panelValueFromDB === 1)
-        ? $this->getOndate24h($sid, $prj, $utentiDisponibili)
         : null;
 
     $stimaDiagnostica = ($ondateInfo !== null && $panelRateInfo !== null && $irInteractive > 0)
@@ -116,7 +124,7 @@ private function buildStimaEFattibilita(string $prj, string $sid, PrimisApiServi
         $stimaInterviste,
         $panelRateInfo,
         $irInteractive,
-        $utentiDisponibili
+        $utentiEffettivi
     );
 
     return [
