@@ -1028,7 +1028,7 @@
     }
 
     function bindQuotaDemographicConfirm() {
-        const list = document.querySelector('.fc-stima-quote-fattibilita-list');
+        const list = document.querySelector('.fc-quote-fattibilita-modal-list');
 
         if (!list) {
             return;

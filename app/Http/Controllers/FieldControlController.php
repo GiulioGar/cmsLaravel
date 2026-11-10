@@ -1217,6 +1217,17 @@ private function calcolaFattibilitaQuote(
         $quotaVincolante = 'Una o più quote demografiche sono già piene: la stima considera solo i segmenti ancora aperti.';
     }
 
+    // Solo ora (dopo aver corretto gli utenti disponibili per le quote
+    // demografiche chiuse) si puo' tradurre l'incidenza di ogni quota
+    // generica in un numero vero di casi ancora raggiungibili, proiettando
+    // l'incidenza osservata sulla stessa stima di base usata per il totale.
+    foreach ($quotaData as $item) {
+        if ($item->fattibilita_tipo === 'generica' && isset($item->fattibilita_incidenza)) {
+            $stimaRiga = round(($item->fattibilita_incidenza / 100) * $stimaBase);
+            $item->fattibilita = (int) min($item->missing, max(0, $stimaRiga));
+        }
+    }
+
     $stimaFinale = $stimaBase;
 
     foreach ($vincoliGenerici as $vincolo) {
