@@ -64,6 +64,7 @@ Route::middleware(['auth.custom'])->group(function () {
     // ============================================
     Route::get('/fieldControl', [FieldControlController::class, 'index']);
     Route::get('/download-csv', [FieldControlController::class, 'downloadCSV'])->name('download.csv');
+    Route::get('/fieldControl/search-log', [FieldControlController::class, 'searchLog'])->name('fieldControl.searchLog');
     Route::post('/close-survey', [FieldControlController::class, 'closeSurvey'])->name('close.survey');
     Route::post('/reopen-survey', [FieldControlController::class, 'reopenSurvey'])->name('reopen.survey');
     Route::post('/reset-bloccate', [FieldControlController::class, 'resetBloccate'])->name('reset.bloccate');

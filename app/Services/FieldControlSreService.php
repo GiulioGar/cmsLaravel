@@ -1067,6 +1067,8 @@ class FieldControlSreService
             'bloccate' => 0,
             'bad_quality' => 0,
             'contatti' => $totalFiles,
+            'last_complete_at' => null,
+            'last_activity_at' => null,
         ];
 
         $panelCounts = [];
@@ -1085,15 +1087,43 @@ class FieldControlSreService
                     'bad_quality' => 0,
                     'contatti' => 0,
                     'redemption' => 0,
+                    'last_complete_at' => null,
+                    'last_activity_at' => null,
                 ];
             }
 
             $panelCounts[$panel]['contatti']++;
 
+            // "Ultima attivita'": end_date se presente (intervista conclusa,
+            // in un esito qualsiasi), altrimenti start_date per le sospese
+            // ancora senza una data di fine.
+            $activityAt = $this->parseDateToCarbon($interview['end_date'] ?? null)
+                ?: $this->parseDateToCarbon($interview['start_date'] ?? null);
+
+            if ($activityAt) {
+                if (!$counts['last_activity_at'] || $activityAt->gt($counts['last_activity_at'])) {
+                    $counts['last_activity_at'] = $activityAt;
+                }
+                if (!$panelCounts[$panel]['last_activity_at'] || $activityAt->gt($panelCounts[$panel]['last_activity_at'])) {
+                    $panelCounts[$panel]['last_activity_at'] = $activityAt;
+                }
+            }
+
             switch ((int)$interview['status_code']) {
                 case 3:
                     $counts['complete']++;
                     $panelCounts[$panel]['complete']++;
+
+                    $completeAt = $this->parseDateToCarbon($interview['end_date'] ?? null);
+
+                    if ($completeAt) {
+                        if (!$counts['last_complete_at'] || $completeAt->gt($counts['last_complete_at'])) {
+                            $counts['last_complete_at'] = $completeAt;
+                        }
+                        if (!$panelCounts[$panel]['last_complete_at'] || $completeAt->gt($panelCounts[$panel]['last_complete_at'])) {
+                            $panelCounts[$panel]['last_complete_at'] = $completeAt;
+                        }
+                    }
                     break;
                 case 4:
                     $counts['non_target']++;
@@ -1121,13 +1151,13 @@ class FieldControlSreService
         return compact('counts', 'panelCounts');
     }
 
-    public function buildLogDataFromInterviews(array $interviews, array $questionMap): array
+    public function buildLogDataFromInterviews(array $interviews, array $questionMap, int $limit = 1000): array
 {
     usort($interviews, function ($a, $b) {
         return $b['file_number'] <=> $a['file_number'];
     });
 
-    $interviews = array_slice($interviews, 0, 1000);
+    $interviews = array_slice($interviews, 0, $limit);
 
     $statusMap = $this->getInterviewStatusMap();
     $logData = [];

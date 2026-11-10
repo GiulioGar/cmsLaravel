@@ -367,6 +367,69 @@ public function downloadCSV(Request $request, FieldControlSreService $sreService
     return $response;
 }
 
+public function searchLog(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
+{
+    ini_set('memory_limit', '512M');
+
+    $prj = $request->query('prj');
+    $sid = $request->query('sid');
+    $iidFilter = trim((string) $request->query('iid', ''));
+    $uidFilter = trim((string) $request->query('uid', ''));
+    $panelFilter = trim((string) $request->query('panel', ''));
+
+    $directory = $sreService->resolveResultsDirectory($prj, $sid);
+
+    if (!$directory) {
+        return response()->json(['success' => false, 'message' => 'Directory dei file .sre non trovata.'], 404);
+    }
+
+    $files = $sreService->getSreFiles($directory);
+    $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
+
+    // Dataset completo (nessun cap): a differenza della vista di default
+    // (ultime 1000 interviste), la ricerca deve coprire tutta la ricerca.
+    $interviews = $sreService->buildInterviewDataset($files, $prj, $sid);
+
+    if ($iidFilter !== '') {
+        $interviews = array_filter($interviews, function ($interview) use ($iidFilter) {
+            return stripos((string) ($interview['iid'] ?? ''), $iidFilter) !== false;
+        });
+    }
+
+    if ($uidFilter !== '') {
+        $interviews = array_filter($interviews, function ($interview) use ($uidFilter) {
+            return stripos((string) ($interview['uid'] ?? ''), $uidFilter) !== false;
+        });
+    }
+
+    if ($panelFilter !== '') {
+        $interviews = array_filter($interviews, function ($interview) use ($panelFilter) {
+            return (string) ($interview['panel'] ?? '') === $panelFilter;
+        });
+    }
+
+    $interviews = array_values($interviews);
+    $totalMatches = count($interviews);
+
+    // Stesso tetto di sicurezza della vista di default (1000 righe renderizzate),
+    // qui applicato pero' DOPO il filtro, quindi sui risultati della ricerca e
+    // non sulle ultime 1000 interviste della ricerca.
+    $logData = $sreService->buildLogDataFromInterviews($interviews, $questionMap, 1000);
+
+    $html = view('partials.field-log-rows', [
+        'logData' => $logData,
+        'emptyTitle' => 'Nessun risultato',
+        'emptySubtitle' => 'Nessuna intervista corrisponde ai filtri impostati.',
+    ])->render();
+
+    return response()->json([
+        'success' => true,
+        'total' => $totalMatches,
+        'shown' => count($logData),
+        'html' => $html,
+    ]);
+}
+
     public function closeSurvey(Request $request, PrimisApiService $primis)
     {
         return $this->changeSurveyStatus($request, $primis, 0, 4, 1, 'La ricerca è già chiusa.');

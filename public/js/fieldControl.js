@@ -1733,6 +1733,133 @@ function initDropdowns() {
     });
 }
 
+    function bindLogFilter() {
+        const toggleBtn = document.getElementById('logFilterToggleBtn');
+        const filterBar = document.getElementById('logFilterBar');
+        const hint = document.getElementById('logFilterHint');
+        const iidInput = document.getElementById('logFilterIid');
+        const uidInput = document.getElementById('logFilterUid');
+        const panelSelect = document.getElementById('logFilterPanel');
+        const searchBtn = document.getElementById('logFilterSearchBtn');
+        const clearBtn = document.getElementById('logFilterClearBtn');
+        const tbody = document.getElementById('logTableBody');
+        const badge = document.getElementById('logHeaderBadge');
+
+        if (!toggleBtn || !filterBar || !tbody) {
+            return;
+        }
+
+        // Righe di default (ultime 1000) gia' presenti nel DOM al caricamento
+        // pagina: salvate cosi' il bottone "Azzera filtri" le ripristina senza
+        // un'altra chiamata al server.
+        const defaultHtml = tbody.innerHTML;
+        const defaultBadgeText = badge ? badge.textContent : '';
+
+        // initTooltips() ha gia' inizializzato i tooltip di queste righe al
+        // caricamento pagina: qui si re-inizializzano solo dopo aver sostituito
+        // l'innerHTML (righe DOM nuove, mai viste da bootstrap.Tooltip).
+        function initRowTooltips() {
+            [].slice.call(tbody.querySelectorAll('[data-bs-toggle="tooltip"]')).forEach(function (el) {
+                return new bootstrap.Tooltip(el);
+            });
+        }
+
+        toggleBtn.addEventListener('click', function () {
+            filterBar.classList.toggle('d-none');
+            toggleBtn.classList.toggle('is-active');
+        });
+
+        function setLoading(isLoading) {
+            searchBtn.disabled = isLoading;
+            searchBtn.innerHTML = isLoading
+                ? '<span class="spinner-border spinner-border-sm"></span>'
+                : '<i class="fas fa-magnifying-glass"></i>';
+        }
+
+        function runSearch() {
+            const iidValue = iidInput.value.trim();
+            const uidValue = uidInput.value.trim();
+            const panelValue = panelSelect.value;
+
+            if (!iidValue && !uidValue && !panelValue) {
+                return;
+            }
+
+            setLoading(true);
+            hint.classList.add('d-none');
+
+            const params = new URLSearchParams({
+                prj: prj,
+                sid: sid,
+                iid: iidValue,
+                uid: uidValue,
+                panel: panelValue
+            });
+
+            fetch(routes.searchLog + '?' + params.toString())
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    setLoading(false);
+
+                    if (!data.success) {
+                        hint.textContent = data.message || 'Errore durante la ricerca.';
+                        hint.classList.remove('d-none');
+                        return;
+                    }
+
+                    tbody.innerHTML = data.html;
+                    initRowTooltips();
+                    clearBtn.classList.remove('d-none');
+
+                    if (badge) {
+                        badge.textContent = data.total + (data.total === 1 ? ' risultato' : ' risultati');
+                    }
+
+                    if (data.total > data.shown) {
+                        hint.textContent = 'Mostrate le prime ' + data.shown + ' interviste su ' + data.total + ' trovate.';
+                        hint.classList.remove('d-none');
+                    } else {
+                        hint.classList.add('d-none');
+                    }
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    setLoading(false);
+                    hint.textContent = 'Si è verificato un errore durante la ricerca.';
+                    hint.classList.remove('d-none');
+                });
+        }
+
+        searchBtn.addEventListener('click', runSearch);
+
+        [iidInput, uidInput].forEach(function (input) {
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    runSearch();
+                }
+            });
+        });
+
+        panelSelect.addEventListener('change', runSearch);
+
+        clearBtn.addEventListener('click', function () {
+            iidInput.value = '';
+            uidInput.value = '';
+            panelSelect.value = '';
+            tbody.innerHTML = defaultHtml;
+            initRowTooltips();
+            clearBtn.classList.add('d-none');
+            hint.classList.add('d-none');
+
+            if (badge) {
+                badge.textContent = defaultBadgeText;
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         initTooltips();
         initDropdowns();
@@ -1743,6 +1870,7 @@ function initDropdowns() {
         bindRedirectionsModal();
         bindRedirectImport();
         bindQuotaTargetsModal();
+        bindLogFilter();
         exposeGlobalActions();
 
         document.querySelectorAll('[data-bs-toggle="pill"]').forEach(function (trigger) {

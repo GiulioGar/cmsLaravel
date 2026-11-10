@@ -15,7 +15,8 @@
             updateQuotaTarget: @json(route('quotaTargets.update')),
             deleteQuotaTarget: @json(route('quotaTargets.delete')),
             updateQuotaTotalInterviews: @json(route('quotaTargets.updateTotal')),
-            publishQuotaConfig: @json(route('quotaTargets.publish'))
+            publishQuotaConfig: @json(route('quotaTargets.publish')),
+            searchLog: @json(route('fieldControl.searchLog'))
         },
         panelNamesMap: @json($panelNamesMap ?? []),
         questionMap: @json($questionMap ?? [])
