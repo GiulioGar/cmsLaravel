@@ -1379,7 +1379,17 @@ private function calcolaFattibilitaQuote(
 
     $mappingRows = DB::table('t_quota_demographic_mapping')->where('sid', $sid)->get()->keyBy('quota_name');
     $valoreUtilizzato = (float) $panelRateInfo['valore_utilizzato'];
-    $totaleContatti = (int) ($counts['contatti'] ?? 0);
+    // Stesso denominatore gia' usato per l'IR campione ($irInteractive/$redemption
+    // altrove): contatti meno le interviste ancora sospese/bloccate, che non
+    // hanno un esito definito e non devono diluire l'incidenza. Usare il
+    // totale contatti grezzo qui sottostimava l'incidenza di ogni quota
+    // rispetto a quella implicita nell'IR campione, creando uno scarto tra
+    // la somma delle quote generiche e "Stima aggiuntive" (stesso identico
+    // dato, due denominatori diversi).
+    $totaleContatti = (int) ($counts['contatti'] ?? 0)
+        - (int) ($counts['sospese'] ?? 0)
+        - (int) ($counts['bloccate'] ?? 0)
+        - (int) ($counts['over_quota'] ?? 0);
 
     $confirmatiPerTipo = [];
     $vincoliGenerici = [];
