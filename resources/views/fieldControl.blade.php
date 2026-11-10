@@ -1632,6 +1632,35 @@
                         return !empty($quota->demographic_suggestion);
                     });
                 @endphp
+                @php
+                    $obiettivoGenerale = $quotaData->firstWhere('fattibilita_tipo', 'obiettivo_generale');
+                @endphp
+                @if($obiettivoGenerale)
+                    @php
+                        $ogTotale = (int) $obiettivoGenerale->totale;
+                        $ogEntrate = (int) $obiettivoGenerale->entrate;
+                        $ogPct = $ogTotale > 0 ? round($ogEntrate / $ogTotale * 100, 1) : 0;
+                    @endphp
+                    <div class="fc-qf-summary">
+                        <div class="fc-qf-summary-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="fc-qf-summary-body">
+                            <div class="fc-qf-summary-label">Interviste totali</div>
+                            <div class="fc-qf-summary-value">{{ number_format($ogEntrate, 0, ',', '.') }} <span class="fc-qf-summary-sep">/</span> {{ number_format($ogTotale, 0, ',', '.') }}</div>
+                            <div class="fc-qf-progress is-summary">
+                                <div class="fc-qf-progress-fill is-entrate" style="width: {{ min(100, $ogPct) }}%"></div>
+                            </div>
+                        </div>
+                        <div class="fc-qf-summary-pct">{{ number_format($ogPct, 1, ',', '.') }}%</div>
+                        <div class="fc-qf-summary-goal">
+                            <i class="fa-solid fa-bullseye"></i>
+                            <div>
+                                <div class="fc-qf-summary-goal-label">Obiettivo generale</div>
+                                <div class="fc-qf-summary-goal-value">{{ number_format($ogTotale, 0, ',', '.') }} interviste</div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 @if($haSuggerimentiInAttesa)
                     <div class="fc-quote-confirm-all-bar">
                         <span>Alcune quote sembrano legate a sesso/età: confermale tutte insieme, oppure una alla volta qui sotto.</span>
