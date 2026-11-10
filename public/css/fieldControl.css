@@ -2314,6 +2314,13 @@ h3 {font-size: 15px!important;}
   justify-content: space-between;
   gap: .5rem;
   min-width: 0;
+  padding: .3rem .5rem;
+  border-radius: 7px;
+}
+
+.fc-quote-fattibilita-row.is-vincolante{
+  background: rgba(239,68,68,.07);
+  border: 1px solid rgba(239,68,68,.2);
 }
 
 .fc-quote-fattibilita-label{
@@ -2323,6 +2330,12 @@ h3 {font-size: 15px!important;}
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+.fc-quote-vincolante-badge{
+  color: #ef4444;
+  margin-left: .3rem;
+  cursor: help;
 }
 
 .fc-quote-fattibilita-pill{

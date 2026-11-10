@@ -1627,9 +1627,18 @@
             <div class="modal-body">
                 <div class="fc-quote-fattibilita-modal-list">
                     @foreach ($quotaData as $quota)
-                        @continue($quota->quota === 'Interviste Totali')
-                        <div class="fc-quote-fattibilita-row">
-                            <span class="fc-quote-fattibilita-label">{{ $quota->quota }}</span>
+                        @php
+                            $isQuotaVincolante = $quotaVincolante && strpos($quotaVincolante, '"' . $quota->quota . '"') !== false;
+                        @endphp
+                        <div class="fc-quote-fattibilita-row {{ $isQuotaVincolante ? 'is-vincolante' : '' }}">
+                            <span class="fc-quote-fattibilita-label">
+                                {{ $quota->quota }}
+                                @if($isQuotaVincolante)
+                                    <span class="fc-quote-vincolante-badge" data-bs-toggle="tooltip" title="{{ $quotaVincolante }}">
+                                        <i class="fas fa-triangle-exclamation"></i>
+                                    </span>
+                                @endif
+                            </span>
 
                             @if($quota->demographic_confirmed)
                                 <span class="fc-quote-fattibilita-pill is-demografica"
@@ -1653,7 +1662,7 @@
                             @else
                                 <span class="fc-quote-fattibilita-pill is-generica"
                                       data-bs-toggle="tooltip"
-                                      title="Quota non agganciata a un dato anagrafico noto: proietta sulla stima di casi ancora raggiungibili l'incidenza osservata finora ({{ $quota->fattibilita_incidenza ?? 0 }}% delle interviste completate finora rientrava in questa quota).">
+                                      title="Quota non agganciata a un dato anagrafico noto: {{ $quota->fattibilita_incidenza ?? 0 }}% dei contatti fatti finora è risultato completo e rientrante in questa quota. Stima = disponibili × IR panel × questa percentuale, entro il limite di quanto manca alla quota.">
                                     +{{ $quota->fattibilita ?? 0 }} casi
                                 </span>
                             @endif

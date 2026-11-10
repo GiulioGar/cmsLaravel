@@ -1107,18 +1107,21 @@ private function guessQuotaDemographic(string $quotaName): ?array
 
 /**
  * Aggiunge, se possibile, un vincolo "generico" per una quota non
- * agganciata a un dato anagrafico: proietta l'incidenza osservata finora
- * (entrate/completi totali - le quote contano interviste COMPLETATE, non
- * contatti) sulle prossime interviste completate stimate, per capire a che
- * punto QUELLA quota si esaurirebbe.
+ * agganciata a un dato anagrafico: l'incidenza (entrate/contatti totali)
+ * rappresenta "quante volte su un contatto qualsiasi l'intervista finisce
+ * completa E in questa specifica quota" - gia' comprensiva del tasso di
+ * completamento, non va quindi moltiplicata di nuovo per l'IR del
+ * campione altrove (vedi calcolaFattibilitaQuote). Serve sia per il
+ * numero della singola quota, sia per capire a che punto quella quota si
+ * esaurirebbe (vincolo sul totale).
  */
-private function aggiungiVincoloGenerico($item, int $totaleCompletate, array &$vincoliGenerici): void
+private function aggiungiVincoloGenerico($item, int $totaleContatti, array &$vincoliGenerici): void
 {
-    if ($totaleCompletate <= 0 || (int) $item->entrate <= 0 || (int) $item->missing <= 0) {
+    if ($totaleContatti <= 0 || (int) $item->entrate <= 0 || (int) $item->missing <= 0) {
         return;
     }
 
-    $incidenza = $item->entrate / $totaleCompletate;
+    $incidenza = $item->entrate / $totaleContatti;
 
     if ($incidenza <= 0) {
         return;
@@ -1163,16 +1166,13 @@ private function calcolaFattibilitaQuote(
 
     $mappingRows = DB::table('t_quota_demographic_mapping')->where('sid', $sid)->get()->keyBy('quota_name');
     $valoreUtilizzato = (float) $panelRateInfo['valore_utilizzato'];
-    // Le quote contano le interviste COMPLETATE (t_quota_status.current_value),
-    // quindi l'incidenza di ogni quota va rapportata al totale completi, non
-    // ai contatti totali (che includono anche screenout/bloccate/quotafull).
-    $totaleCompletate = (int) ($counts['complete'] ?? 0);
+    $totaleContatti = (int) ($counts['contatti'] ?? 0);
 
     $gruppiChiusi = [];
     $vincoliGenerici = [];
 
     $quotaData = $quotaData->map(function ($item) use (
-        $mappingRows, $sid, $panelTarget, $totaleCompletate, $valoreUtilizzato, $irInteractive,
+        $mappingRows, $sid, $panelTarget, $totaleContatti, $valoreUtilizzato, $irInteractive,
         &$gruppiChiusi, &$vincoliGenerici
     ) {
         $rawName = $item->quota_raw;
@@ -1197,11 +1197,11 @@ private function calcolaFattibilitaQuote(
             }
         } elseif ($mapping && $mapping->tipo === 'none') {
             $item->fattibilita_tipo = 'generica';
-            $this->aggiungiVincoloGenerico($item, $totaleCompletate, $vincoliGenerici);
+            $this->aggiungiVincoloGenerico($item, $totaleContatti, $vincoliGenerici);
         } else {
             $item->demographic_suggestion = $this->guessQuotaDemographic($rawName);
             $item->fattibilita_tipo = 'generica';
-            $this->aggiungiVincoloGenerico($item, $totaleCompletate, $vincoliGenerici);
+            $this->aggiungiVincoloGenerico($item, $totaleContatti, $vincoliGenerici);
         }
 
         return $item;
@@ -1230,15 +1230,16 @@ private function calcolaFattibilitaQuote(
         }
     }
 
-    // Solo ora che $stimaFinale e' il vero totale finale (dopo aver
-    // considerato anche le altre quote generiche che potrebbero vincolarlo)
-    // si puo' tradurre l'incidenza di ogni quota generica in un numero di
-    // casi coerente col totale mostrato - usare $stimaBase qui porterebbe a
-    // numeri di riga piu' alti del totale stesso, quando un'altra quota lo
-    // ha gia' ristretto.
+    // Il numero di ogni quota generica e' il suo potenziale "da sola":
+    // disponibili (corretti per i segmenti demografici gia' chiusi) x IR
+    // panel x incidenza propria. E' indipendente dal totale finale - puo'
+    // benissimo essere piu' alto del totale mostrato, quando e' proprio
+    // quella quota (o un'altra) a vincolarlo: in quel caso resta comunque
+    // limitato al massimo dal suo "missing" (non ha senso promettere piu'
+    // casi di quanti ne servano davvero a quella quota).
     foreach ($quotaData as $item) {
         if ($item->fattibilita_tipo === 'generica' && isset($item->fattibilita_incidenza)) {
-            $stimaRiga = round(($item->fattibilita_incidenza / 100) * $stimaFinale);
+            $stimaRiga = round($utentiDisponibiliCorretti * ($valoreUtilizzato / 100) * ($item->fattibilita_incidenza / 100));
             $item->fattibilita = (int) min($item->missing, max(0, $stimaRiga));
         }
     }
