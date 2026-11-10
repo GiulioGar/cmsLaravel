@@ -1185,6 +1185,23 @@ const EMAIL_DOMAIN_SIMILARITY_EXCEPTIONS = [
 ];
 
 /**
+ * Domini confermati manualmente da un operatore come legittimi (bottone "Non
+ * e' un refuso" nella modale "Email con dominio sospetto"): persistiti su file
+ * invece che a DB, stesso pattern di whitelist.json/blacklist.json usati da
+ * FieldQualityController.
+ */
+private function loadEmailDomainWhitelist(): array
+{
+    $path = public_path('json/email_domain_whitelist.json');
+
+    if (!file_exists($path)) {
+        return [];
+    }
+
+    return json_decode(file_get_contents($path), true) ?? [];
+}
+
+/**
  * Domini email del panel da segnalare, per due motivi indipendenti:
  *
  * 1. Nessun MX/A valido: oggettivamente incapaci di ricevere posta.
@@ -1253,6 +1270,8 @@ private function suspiciousEmailDomains()
         return [$bestMatch, $bestDistance];
     };
 
+    $domainWhitelist = array_map('mb_strtolower', $this->loadEmailDomainWhitelist());
+
     $suspicious = [];
 
     // 1. Nessun MX/A valido.
@@ -1288,6 +1307,10 @@ private function suspiciousEmailDomains()
         }
 
         if (in_array($domain, self::EMAIL_DOMAIN_SIMILARITY_EXCEPTIONS, true)) {
+            continue;
+        }
+
+        if (in_array($domain, $domainWhitelist, true)) {
             continue;
         }
 
@@ -1910,6 +1933,25 @@ public function updateEmail(Request $request, $user_id)
 
         return response()->json(['success' => false, 'message' => 'Errore durante il salvataggio.'], 500);
     }
+}
+
+public function whitelistEmailDomain(Request $request)
+{
+    $validated = $request->validate([
+        'domain' => 'required|string|max:255',
+    ]);
+
+    $domain = mb_strtolower(trim($validated['domain']));
+    $path = public_path('json/email_domain_whitelist.json');
+    $list = file_exists($path) ? (json_decode(file_get_contents($path), true) ?? []) : [];
+    $lowerList = array_map('mb_strtolower', $list);
+
+    if (!in_array($domain, $lowerList, true)) {
+        $list[] = $domain;
+        file_put_contents($path, json_encode($list, JSON_PRETTY_PRINT));
+    }
+
+    return response()->json(['success' => true]);
 }
 
 public function updateBirthDate(Request $request, $user_id)

@@ -1766,9 +1766,13 @@ $(document).ready(function () {
                         : '<span class="pu-sev-badge pu-sev-suspect" data-bs-toggle="tooltip" title="Dominio con DNS valido ma raro nel panel: potrebbe essere un refuso o un provider reale poco comune. Verificare prima di modificare.">Da verificare</span>';
                     const profileUrl = '{{ url("/user") }}/' + row.user_id;
                     const changed = row.suggested_email !== row.email;
+                    const notTypoBtn = isInvalid ? '' : `
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-1 btn-not-typo" data-bs-toggle="tooltip" title="Il dominio e' legittimo: non proporlo piu' come sospetto.">
+                                    Non &egrave; un refuso
+                                </button>`;
 
                     html += `
-                        <tr data-uid="${row.user_id}" class="${rowClass}">
+                        <tr data-uid="${row.user_id}" data-domain="${row.domain}" class="${rowClass}">
                             <td>${badge}</td>
                             <td><a href="${profileUrl}" target="_blank" class="pu-email-uid-link">${row.user_id}<i class="bi bi-box-arrow-up-right ms-1"></i></a></td>
                             <td><span class="pu-email-current">${row.email ?? ''}</span></td>
@@ -1776,7 +1780,7 @@ $(document).ready(function () {
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-primary btn-save-email">
                                     <i class="bi bi-save me-1"></i>Salva
-                                </button>
+                                </button>${notTypoBtn}
                             </td>
                         </tr>
                     `;
@@ -1824,6 +1828,36 @@ $(document).ready(function () {
             },
             error: function (xhr) {
                 btn.prop('disabled', false).html('<i class="bi bi-save me-1"></i>Salva');
+                const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Errore durante il salvataggio.';
+                alert(msg);
+            }
+        });
+    });
+
+    $('#suspiciousEmailTableBody').on('click', '.btn-not-typo', function () {
+        const btn = $(this);
+        const row = btn.closest('tr');
+        const domain = row.data('domain');
+
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url: '{{ route("panelUsers.anomalies.whitelistDomain") }}',
+            type: 'POST',
+            data: { _token: '{{ csrf_token() }}', domain: domain },
+            success: function (response) {
+                if (response.success) {
+                    $('#suspiciousEmailTableBody tr').filter(function () {
+                        return $(this).data('domain') === domain;
+                    }).fadeOut(250, function () { $(this).remove(); });
+                    loadAnomaliesSummary();
+                } else {
+                    btn.prop('disabled', false).html('Non &egrave; un refuso');
+                    alert(response.message || 'Errore durante il salvataggio.');
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('Non &egrave; un refuso');
                 const msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Errore durante il salvataggio.';
                 alert(msg);
             }
