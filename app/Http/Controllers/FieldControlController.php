@@ -1167,6 +1167,103 @@ private function contaDisponibiliConFiltro($sid, $panelTarget, array $filtro): i
 }
 
 /**
+ * Conta i disponibili rimasti rispettando TUTTE le dimensioni demografiche
+ * confermate insieme (sesso, eta', area), non una alla volta: se sesso ed
+ * eta' hanno entrambe dei segmenti chiusi, una stessa persona puo' rientrare
+ * nel segmento chiuso di entrambe le dimensioni contemporaneamente - sottrarre
+ * il "chiuso" di ogni dimensione separatamente (come faceva la versione
+ * precedente) la conterebbe due volte, svuotando il pool molto piu' del
+ * dovuto. Qui invece si costruisce un'unica query: per ogni dimensione
+ * confermata, resta valido solo chi rientra in uno dei segmenti ANCORA
+ * APERTI di quella dimensione (OR tra i segmenti aperti), e le dimensioni si
+ * combinano tra loro in AND.
+ *
+ * @param array $confirmatiPerTipo tipo => [ ['filtro'=>array, 'open'=>bool], ... ]
+ */
+private function contaDisponibiliCorretti(string $sid, $panelTarget, array $confirmatiPerTipo, int $utentiDisponibiliBase): int
+{
+    if (empty($confirmatiPerTipo) || !$panelTarget) {
+        return $utentiDisponibiliBase;
+    }
+
+    // Se per una dimensione TUTTI i segmenti confermati sono chiusi, nessuno
+    // puo' piu' essere accettato su quella dimensione: il pool realmente
+    // disponibile e' zero, qualunque sia lo stato delle altre dimensioni.
+    foreach ($confirmatiPerTipo as $righe) {
+        if (empty(array_filter($righe, fn ($r) => $r['open']))) {
+            return 0;
+        }
+    }
+
+    $genderFilter = [1, 2];
+
+    switch ((int) $panelTarget->sex_target) {
+        case 1:
+            $genderFilter = [1];
+            break;
+        case 2:
+            $genderFilter = [2];
+            break;
+    }
+
+    $etaMin = (int) $panelTarget->age1_target;
+    $etaMax = (int) $panelTarget->age2_target;
+    $annoCorrente = (int) date('Y');
+
+    $query = DB::table('t_user_info')
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotExists(function ($query) use ($sid) {
+            $query->select(DB::raw(1))
+                ->from('t_respint')
+                ->whereRaw('t_respint.uid = t_user_info.user_id')
+                ->where('t_respint.sid', $sid);
+        });
+
+    if (isset($confirmatiPerTipo['sesso'])) {
+        $generiAperti = [];
+        foreach ($confirmatiPerTipo['sesso'] as $riga) {
+            if ($riga['open']) {
+                $generiAperti = array_merge($generiAperti, (array) ($riga['filtro']['gender'] ?? []));
+            }
+        }
+        $query->whereIn('gender', array_values(array_unique($generiAperti)) ?: $genderFilter);
+    } else {
+        $query->whereIn('gender', $genderFilter);
+    }
+
+    if (isset($confirmatiPerTipo['eta'])) {
+        $query->where(function ($q) use ($confirmatiPerTipo, $annoCorrente) {
+            foreach ($confirmatiPerTipo['eta'] as $riga) {
+                if (!$riga['open']) {
+                    continue;
+                }
+
+                $min = (int) ($riga['filtro']['eta_min'] ?? 0);
+                $max = (int) ($riga['filtro']['eta_max'] ?? 120);
+                $q->orWhereRaw('YEAR(birth_date) BETWEEN ? AND ?', [$annoCorrente - $max, $annoCorrente - $min]);
+            }
+        });
+    } else {
+        $query->whereRaw('YEAR(birth_date) BETWEEN ? AND ?', [$annoCorrente - $etaMax, $annoCorrente - $etaMin]);
+    }
+
+    if (isset($confirmatiPerTipo['area'])) {
+        $areeAperte = [];
+        foreach ($confirmatiPerTipo['area'] as $riga) {
+            if ($riga['open']) {
+                $areeAperte = array_merge($areeAperte, (array) ($riga['filtro']['area'] ?? []));
+            }
+        }
+        if (!empty($areeAperte)) {
+            $query->whereIn('area', array_values(array_unique($areeAperte)));
+        }
+    }
+
+    return $query->count();
+}
+
+/**
  * Prova a riconoscere se una quota riguarda sesso o eta' dalla convenzione
  * del suo nome (es. "genere_U", "age_5565"). E' solo un suggerimento: va
  * sempre confermato dall'operatore prima di essere usato nei calcoli -
@@ -1276,12 +1373,12 @@ private function calcolaFattibilitaQuote(
     $valoreUtilizzato = (float) $panelRateInfo['valore_utilizzato'];
     $totaleContatti = (int) ($counts['contatti'] ?? 0);
 
-    $gruppiChiusi = [];
+    $confirmatiPerTipo = [];
     $vincoliGenerici = [];
 
     $quotaData = $quotaData->map(function ($item) use (
         $mappingRows, $sid, $panelTarget, $totaleContatti, $valoreUtilizzato, $irInteractive,
-        &$gruppiChiusi, &$vincoliGenerici
+        &$confirmatiPerTipo, &$vincoliGenerici
     ) {
         $rawName = $item->quota_raw;
         $mapping = $mappingRows->get($rawName);
@@ -1306,9 +1403,16 @@ private function calcolaFattibilitaQuote(
             $item->fattibilita_tipo = $mapping->tipo;
             $item->fattibilita = (int) min($stimaRiga, $item->missing);
 
-            if ((int) $item->missing <= 0) {
-                $gruppiChiusi[$mapping->tipo] = ($gruppiChiusi[$mapping->tipo] ?? 0) + $disponibiliQuota;
-            }
+            // Tiene traccia di OGNI segmento confermato (aperto o chiuso) per
+            // poter poi contare i disponibili davvero rimasti con una query
+            // unica che incrocia le dimensioni (AND tra sesso/eta', OR tra i
+            // segmenti ancora aperti della stessa dimensione) - sottrarre il
+            // "chiuso" di ogni dimensione in modo indipendente conterebbe più
+            // volte le stesse persone quando piu' dimensioni sono confermate.
+            $confirmatiPerTipo[$mapping->tipo][] = [
+                'filtro' => $filtro,
+                'open' => (int) $item->missing > 0,
+            ];
         } elseif ($mapping && $mapping->tipo === 'none') {
             $item->fattibilita_tipo = 'generica';
             $this->aggiungiVincoloGenerico($item, $totaleContatti, $vincoliGenerici);
@@ -1321,11 +1425,7 @@ private function calcolaFattibilitaQuote(
         return $item;
     });
 
-    $utentiDisponibiliCorretti = $utentiDisponibili;
-
-    foreach ($gruppiChiusi as $disponibiliChiusi) {
-        $utentiDisponibiliCorretti = max(0, $utentiDisponibiliCorretti - $disponibiliChiusi);
-    }
+    $utentiDisponibiliCorretti = $this->contaDisponibiliCorretti($sid, $panelTarget, $confirmatiPerTipo, $utentiDisponibili);
 
     $stimaBase = $stimaInterviste;
     $quotaVincolante = null;
