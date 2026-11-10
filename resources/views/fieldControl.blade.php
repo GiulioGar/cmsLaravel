@@ -946,7 +946,11 @@
                             $irTooltip1 = 'IR: ' . number_format($redemption, 1) . '%  ·  Media red: ' . number_format($mediaRedPanel, 1) . '%';
                         }
 
-                        $_stC = (int) ($panelCounts['Interactive']['complete'] ?? 0);
+                        // "Già raccolte" e' il totale generale (tutti i panel): una quota
+                        // raggiunta resta raggiunta indipendentemente da quale panel l'ha
+                        // coperta. "Stima aggiuntive" invece resta solo-Interactive, perche'
+                        // e' il margine che stiamo stimando su quel panel specifico.
+                        $_stC = (int) ($counts['complete'] ?? 0);
                     @endphp
 
                     <div class="fc-stima-grid">

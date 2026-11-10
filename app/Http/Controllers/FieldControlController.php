@@ -801,7 +801,10 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
 
         $quotaData = $stima['quotaData'];
         $stimaAggiuntive = $stima['stimaVincolataDaQuote'] ?? $stima['stimaInterviste'] ?? 0;
-        $raccolte = (int) ($stima['panelCounts']['Interactive']['complete'] ?? 0);
+        // Totale generale (tutti i panel), coerente con "Già raccolte" in
+        // fieldControl.blade.php: una quota raggiunta resta raggiunta
+        // indipendentemente da quale panel l'ha coperta.
+        $raccolte = (int) ($stima['counts']['complete'] ?? 0);
 
         $rowsHtml = view('partials.field-quota-fattibilita-rows', [
             'quotaData' => $quotaData,
