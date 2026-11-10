@@ -23,7 +23,9 @@
         $mancanti = max(0, $totale - $copertura);
 
         $cardStateClass = '';
-        if ($completa || ($haVerdetto && $raggiungibile)) {
+        if ($completa) {
+            $cardStateClass = 'is-card-completa';
+        } elseif ($haVerdetto && $raggiungibile) {
             $cardStateClass = 'is-card-ok';
         } elseif ($haVerdetto) {
             $cardStateClass = 'is-card-risk';
@@ -42,7 +44,7 @@
 
             <div class="fc-qf-card-head-right">
                 @if($completa)
-                    <span class="fc-qf-verdict is-ok"><i class="fas fa-circle-check"></i>Completa</span>
+                    <span class="fc-qf-verdict is-completa"><i class="fas fa-circle-check"></i>Completa</span>
                 @elseif($haVerdetto && $raggiungibile)
                     <span class="fc-qf-verdict is-ok"><i class="fas fa-circle-check"></i>Raggiungibile</span>
                 @elseif($haVerdetto)

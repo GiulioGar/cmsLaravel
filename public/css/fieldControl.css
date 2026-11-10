@@ -2340,6 +2340,11 @@ h3 {font-size: 15px!important;}
 
 /* Bordo/sfondo colorato in base al verdetto: la prima cosa che si nota
    scorrendo la lista, prima ancora di leggere i numeri. */
+.fc-qf-card.is-card-completa{
+  background: rgba(37,99,235,.045);
+  border-left-color: var(--fc-accent-blue, #2563eb);
+}
+
 .fc-qf-card.is-card-ok{
   background: rgba(16,185,129,.045);
   border-left-color: #10b981;
@@ -2494,6 +2499,11 @@ h3 {font-size: 15px!important;}
 
 .fc-qf-verdict i{
   font-size: .8rem;
+}
+
+.fc-qf-verdict.is-completa{
+  background: var(--fc-accent-blue, #2563eb);
+  color: #fff;
 }
 
 .fc-qf-verdict.is-ok{
