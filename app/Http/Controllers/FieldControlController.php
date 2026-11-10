@@ -1217,23 +1217,25 @@ private function calcolaFattibilitaQuote(
         $quotaVincolante = 'Una o più quote demografiche sono già piene: la stima considera solo i segmenti ancora aperti.';
     }
 
-    // Solo ora (dopo aver corretto gli utenti disponibili per le quote
-    // demografiche chiuse) si puo' tradurre l'incidenza di ogni quota
-    // generica in un numero vero di casi ancora raggiungibili, proiettando
-    // l'incidenza osservata sulla stessa stima di base usata per il totale.
-    foreach ($quotaData as $item) {
-        if ($item->fattibilita_tipo === 'generica' && isset($item->fattibilita_incidenza)) {
-            $stimaRiga = round(($item->fattibilita_incidenza / 100) * $stimaBase);
-            $item->fattibilita = (int) min($item->missing, max(0, $stimaRiga));
-        }
-    }
-
     $stimaFinale = $stimaBase;
 
     foreach ($vincoliGenerici as $vincolo) {
         if ($vincolo['cap'] < $stimaFinale) {
             $stimaFinale = $vincolo['cap'];
             $quotaVincolante = 'Limitato dalla quota "' . $vincolo['label'] . '": al ritmo attuale si esaurirebbe prima.';
+        }
+    }
+
+    // Solo ora che $stimaFinale e' il vero totale finale (dopo aver
+    // considerato anche le altre quote generiche che potrebbero vincolarlo)
+    // si puo' tradurre l'incidenza di ogni quota generica in un numero di
+    // casi coerente col totale mostrato - usare $stimaBase qui porterebbe a
+    // numeri di riga piu' alti del totale stesso, quando un'altra quota lo
+    // ha gia' ristretto.
+    foreach ($quotaData as $item) {
+        if ($item->fattibilita_tipo === 'generica' && isset($item->fattibilita_incidenza)) {
+            $stimaRiga = round(($item->fattibilita_incidenza / 100) * $stimaFinale);
+            $item->fattibilita = (int) min($item->missing, max(0, $stimaRiga));
         }
     }
 
