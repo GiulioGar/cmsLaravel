@@ -49,35 +49,6 @@ use Illuminate\Support\Str;
                         <i class="fas fa-check-circle me-1"></i> Controllo Qualità
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#downloadModal">
-                        <i class="fas fa-download me-1"></i> Download
-                    </a>
-                </li>
-                <li class="nav-item dropdown position-relative">
-                    <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-cog me-1"></i> Impostazioni
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
-                        <li>
-                            @if(!empty($panelData) && (int) $panelData->stato === 1)
-                                <a class="dropdown-item" href="#" onclick="reopenSurvey('{{ $prj }}', '{{ $sid }}')">
-                                    Riapri Ricerca
-                                </a>
-                            @else
-                                <a class="dropdown-item" href="#" onclick="closeSurvey('{{ $prj }}', '{{ $sid }}')">
-                                    Chiudi Ricerca
-                                </a>
-                            @endif
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#resetBloccateModal">
-                                Reset Bloccate
-                            </a>
-                        </li>
-                    </ul>
-                </li>
             </ul>
         </div>
     </nav>
@@ -168,8 +139,6 @@ use Illuminate\Support\Str;
       </div>
     </div>
   </div>
-
-@include('partials.field-toolbar-modals')
 
 @endsection
 
