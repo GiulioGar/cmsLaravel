@@ -1108,16 +1108,17 @@ private function guessQuotaDemographic(string $quotaName): ?array
 /**
  * Aggiunge, se possibile, un vincolo "generico" per una quota non
  * agganciata a un dato anagrafico: proietta l'incidenza osservata finora
- * (entrate/contatti totali) sulle prossime interviste stimate, per capire
- * a che punto QUELLA quota si esaurirebbe.
+ * (entrate/completi totali - le quote contano interviste COMPLETATE, non
+ * contatti) sulle prossime interviste completate stimate, per capire a che
+ * punto QUELLA quota si esaurirebbe.
  */
-private function aggiungiVincoloGenerico($item, int $totaleContatti, array &$vincoliGenerici): void
+private function aggiungiVincoloGenerico($item, int $totaleCompletate, array &$vincoliGenerici): void
 {
-    if ($totaleContatti <= 0 || (int) $item->entrate <= 0 || (int) $item->missing <= 0) {
+    if ($totaleCompletate <= 0 || (int) $item->entrate <= 0 || (int) $item->missing <= 0) {
         return;
     }
 
-    $incidenza = $item->entrate / $totaleContatti;
+    $incidenza = $item->entrate / $totaleCompletate;
 
     if ($incidenza <= 0) {
         return;
@@ -1162,13 +1163,16 @@ private function calcolaFattibilitaQuote(
 
     $mappingRows = DB::table('t_quota_demographic_mapping')->where('sid', $sid)->get()->keyBy('quota_name');
     $valoreUtilizzato = (float) $panelRateInfo['valore_utilizzato'];
-    $totaleContatti = (int) ($counts['contatti'] ?? 0);
+    // Le quote contano le interviste COMPLETATE (t_quota_status.current_value),
+    // quindi l'incidenza di ogni quota va rapportata al totale completi, non
+    // ai contatti totali (che includono anche screenout/bloccate/quotafull).
+    $totaleCompletate = (int) ($counts['complete'] ?? 0);
 
     $gruppiChiusi = [];
     $vincoliGenerici = [];
 
     $quotaData = $quotaData->map(function ($item) use (
-        $mappingRows, $sid, $panelTarget, $totaleContatti, $valoreUtilizzato, $irInteractive,
+        $mappingRows, $sid, $panelTarget, $totaleCompletate, $valoreUtilizzato, $irInteractive,
         &$gruppiChiusi, &$vincoliGenerici
     ) {
         $rawName = $item->quota_raw;
@@ -1193,11 +1197,11 @@ private function calcolaFattibilitaQuote(
             }
         } elseif ($mapping && $mapping->tipo === 'none') {
             $item->fattibilita_tipo = 'generica';
-            $this->aggiungiVincoloGenerico($item, $totaleContatti, $vincoliGenerici);
+            $this->aggiungiVincoloGenerico($item, $totaleCompletate, $vincoliGenerici);
         } else {
             $item->demographic_suggestion = $this->guessQuotaDemographic($rawName);
             $item->fattibilita_tipo = 'generica';
-            $this->aggiungiVincoloGenerico($item, $totaleContatti, $vincoliGenerici);
+            $this->aggiungiVincoloGenerico($item, $totaleCompletate, $vincoliGenerici);
         }
 
         return $item;
