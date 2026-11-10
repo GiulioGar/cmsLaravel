@@ -20,11 +20,12 @@ class PanelControl extends Model
         'sur_date', 'red_surv', 'prj', 'stato', 'last_update', 'end_field', 'sex_target',
         'age1_target', 'age2_target', 'description', 'filtrati', 'quota_full', 'incomplete',
         'panel_interno', 'panel_esterno', 'contatti_totali', 'abilitati_aggiornati', 'goal',
-        'panel', 'giorni_rimanenti', 'durata', 'costo', 'paese', 'cliente', 'tipologia', 'bytes'
+        'panel', 'giorni_rimanenti', 'durata', 'costo', 'paese', 'cliente', 'tipologia', 'bytes',
+        'frozen_at', 'frozen_abilitati', 'frozen_contatti_interactive', 'frozen_complete_interactive'
     ];
 
     // Campi di tipo datetime
-    protected $dates = ['sur_date', 'last_update', 'end_field'];
+    protected $dates = ['sur_date', 'last_update', 'end_field', 'frozen_at'];
 
    // Calcola i giorni in field
        public function giorniInField()

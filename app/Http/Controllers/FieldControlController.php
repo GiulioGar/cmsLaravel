@@ -89,7 +89,14 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
 
     $bytes = $panelData->bytes ?? 0;
 
-    $this->updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes);
+    // Una ricerca chiusa (stato=1) non va piu' aggiornata: il pool di persone
+    // abilitate decade nel tempo (riusato da altre ricerche), quindi riaprire
+    // questa pagina rovinerebbe il dato storico gia' congelato alla chiusura
+    // (vedi changeSurveyStatus()). La pagina continua a mostrare i numeri live
+    // calcolati dai file .sre, solo la persistenza su DB viene saltata.
+    if ((int) ($panelData->stato ?? 0) !== 1) {
+        $this->updatePanelControl($sid, $counts, $abilitati, $panelCounts, $redemption, $bytes);
+    }
 
     $contattiInteractive = (int) ($panelCounts['Interactive']['contatti'] ?? 0);
 
@@ -489,6 +496,34 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
             ->where('prj', $prj)
             ->where('sur_id', $sid)
             ->update(['stato' => $newLocalStato]);
+
+        if ($newLocalStato === 1) {
+            // Chiusura: congela i numeri di adesso, prima che il pool di
+            // persone abilitate (t_respint) venga riutilizzato da altre
+            // ricerche e il dato storico diventi illeggibile.
+            DB::table('t_panel_control')
+                ->where('prj', $prj)
+                ->where('sur_id', $sid)
+                ->update([
+                    'frozen_at' => now(),
+                    'frozen_abilitati' => $survey->abilitati,
+                    'frozen_contatti_interactive' => $survey->abilitati > 0
+                        ? (int) round($survey->abilitati * $survey->red_panel / 100)
+                        : 0,
+                    'frozen_complete_interactive' => $survey->complete_int,
+                ]);
+        } elseif ($newLocalStato === 0) {
+            // Riapertura: la ricerca torna live, lo snapshot congelato non e' piu' valido.
+            DB::table('t_panel_control')
+                ->where('prj', $prj)
+                ->where('sur_id', $sid)
+                ->update([
+                    'frozen_at' => null,
+                    'frozen_abilitati' => null,
+                    'frozen_contatti_interactive' => null,
+                    'frozen_complete_interactive' => null,
+                ]);
+        }
 
         return response()->json(['success' => true]);
     }
@@ -912,14 +947,31 @@ private function sortPanelsForDisplay(array $panels): array
 
 private function calcolaMediaRedPanel()
 {
-    return Cache::remember('fieldcontrol_media_red_panel_v2', now()->addMinutes(30), function () {
+    return Cache::remember('fieldcontrol_media_red_panel_v3', now()->addMinutes(30), function () {
         $unAnnoFa = now()->subYear();
 
-        return DB::table('t_panel_control')
+        // Preferisce il dato congelato alla chiusura (frozen_*, affidabile)
+        // quando presente; per le ricerche chiuse prima di questa modifica
+        // resta il filtro 5-20% su red_panel, unica difesa disponibile contro
+        // i valori azzerati dal decadimento del pool di persone abilitate.
+        $rows = DB::table('t_panel_control')
             ->where('panel', 1)
-            ->whereBetween('red_panel', [5, 20])
             ->where('sur_date', '>=', $unAnnoFa)
-            ->avg('red_panel') ?? 0;
+            ->where(function ($query) {
+                $query->whereNotNull('frozen_at')
+                    ->orWhereBetween('red_panel', [5, 20]);
+            })
+            ->get(['red_panel', 'frozen_at', 'frozen_abilitati', 'frozen_contatti_interactive']);
+
+        $valori = $rows->map(function ($row) {
+            if ($row->frozen_at !== null && (int) $row->frozen_abilitati > 0) {
+                return ($row->frozen_contatti_interactive / $row->frozen_abilitati) * 100;
+            }
+
+            return (float) $row->red_panel;
+        });
+
+        return $valori->count() > 0 ? $valori->avg() : 0;
     });
 }
 
