@@ -1242,21 +1242,38 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
     |--------------------------------------------------------------------------
     */
 
-    public function buildFiltrateCountsFromInterviews(array $interviews, array $questionMap): array
+    /**
+     * Conteggio domande (per panel) su cui le interviste si sono fermate, per
+     * ciascuno degli stati di uscita richiesti (default: screenout=4,
+     * quotafull=5, bloccate/Stop Int=7, sospese/In Corso=0). Un solo
+     * passaggio su $interviews per tutti gli stati, invece di una scansione
+     * per stato, visto che $interviews puo' contenere migliaia di righe.
+     *
+     * Usa sempre last_file_question_code ("ultima domanda nel File Dati",
+     * verificata scorrendo l'ultima riga del .sre) con fallback su
+     * last_question_code ("ultima domanda da sistema") solo se il file non
+     * ha un valore valido - vedi nota in buildLogDataFromInterviews() sulla
+     * stessa distinzione.
+     *
+     * Ritorna [status_code => [panel => [label => count]]].
+     */
+    public function buildQuestionCountsByStatusFromInterviews(array $interviews, array $questionMap, array $statusCodes = [4, 5, 7, 0]): array
     {
-        $panelFiltrateCounts = [];
+        $countsByStatus = array_fill_keys($statusCodes, []);
 
         foreach ($interviews as $interview) {
+            $statusCode = (int) $interview['status_code'];
 
-            if ((int)$interview['status_code'] !== 4) {
+            if (!array_key_exists($statusCode, $countsByStatus)) {
                 continue;
             }
 
             $panel = $interview['panel'];
-            $questionId = (int)$interview['last_question_code'];
+            $lastFileQuestionCode = (int) ($interview['last_file_question_code'] ?? 0);
+            $questionId = $lastFileQuestionCode > 0 ? $lastFileQuestionCode : (int) $interview['last_question_code'];
 
-            if (!isset($panelFiltrateCounts[$panel])) {
-                $panelFiltrateCounts[$panel] = [];
+            if (!isset($countsByStatus[$statusCode][$panel])) {
+                $countsByStatus[$statusCode][$panel] = [];
             }
 
             $question = $questionMap[$questionId] ?? [
@@ -1266,15 +1283,17 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
 
             $label = $question['code'] . ' - ' . $question['text'];
 
-            $panelFiltrateCounts[$panel][$label] =
-                ($panelFiltrateCounts[$panel][$label] ?? 0) + 1;
+            $countsByStatus[$statusCode][$panel][$label] =
+                ($countsByStatus[$statusCode][$panel][$label] ?? 0) + 1;
         }
 
-        foreach ($panelFiltrateCounts as &$rows) {
-            arsort($rows);
+        foreach ($countsByStatus as &$panels) {
+            foreach ($panels as &$rows) {
+                arsort($rows);
+            }
         }
 
-        return $panelFiltrateCounts;
+        return $countsByStatus;
     }
 
     /*

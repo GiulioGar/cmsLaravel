@@ -632,38 +632,58 @@
             <div class="fc-chart-head-v2">
                 <div>
                     <div class="fc-afield-eyebrow">Uscite</div>
-                    <div class="fc-afield-title" style="font-size:1rem">Cause di screenout</div>
+                    <div class="fc-afield-title" style="font-size:1rem" id="exitStatusTitle">{{ $exitStatusTabs[4]['title'] }}</div>
                 </div>
             </div>
 
             <div class="card-body">
-                @if($hasFiltrate)
-                    <ul class="nav nav-pills fc-mini-tabs" id="panel-nav">
-                        @foreach ($panelCounts as $panelName => $pData)
-                            <li class="nav-item">
-                                <a class="nav-link fc-mini-tab-link {{ $loop->first ? 'active' : '' }}"
-                                   data-bs-toggle="pill" href="#tab-panel-{{ $loop->index }}">{{ $panelName }}</a>
-                            </li>
-                        @endforeach
-                    </ul>
+                <ul class="nav fc-exit-status-tabs" id="exit-status-nav">
+                    @foreach ($exitStatusTabs as $statusCode => $meta)
+                        <li class="nav-item">
+                            <a class="nav-link fc-exit-status-tab-link fc-exit-tab-{{ $meta['key'] }} {{ $loop->first ? 'active' : '' }}"
+                               data-bs-toggle="pill"
+                               data-exit-title="{{ $meta['title'] }}"
+                               title="{{ $meta['title'] }}"
+                               href="#tab-exit-{{ $meta['key'] }}">
+                                <i class="fas {{ $meta['icon'] }}"></i>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
 
-                    <div class="tab-content mt-2">
-                        @foreach ($panelCounts as $panelName => $pData)
-                            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-panel-{{ $loop->index }}">
-                                <div class="fc-screenout-subtitle">Panel: <b>{{ $panelName }}</b> — principali domande di screenout</div>
-                                <div class="fc-chart-canvas">
-                                    <div id="chart-panel-{{ \Illuminate\Support\Str::slug($panelName, '-') }}" style="width: 100%; height: 100%;"></div>
+                <div class="tab-content mt-2">
+                    @foreach ($exitStatusTabs as $statusCode => $meta)
+                        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-exit-{{ $meta['key'] }}">
+                            @if($hasExitDataByStatus[$statusCode])
+                                <ul class="nav nav-pills fc-mini-tabs" id="panel-nav-{{ $meta['key'] }}">
+                                    @foreach ($exitCountsByStatus[$statusCode] as $panelName => $rows)
+                                        <li class="nav-item">
+                                            <a class="nav-link fc-mini-tab-link {{ $loop->first ? 'active' : '' }}"
+                                               data-bs-toggle="pill" href="#tab-{{ $meta['key'] }}-panel-{{ $loop->index }}">{{ $panelName }}</a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+
+                                <div class="tab-content mt-2">
+                                    @foreach ($exitCountsByStatus[$statusCode] as $panelName => $rows)
+                                        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-{{ $meta['key'] }}-panel-{{ $loop->index }}">
+                                            <div class="fc-screenout-subtitle">Panel: <b>{{ $panelName }}</b> — {{ $meta['subtitle'] }}</div>
+                                            <div class="fc-chart-canvas">
+                                                <div id="chart-{{ $meta['key'] }}-{{ \Illuminate\Support\Str::slug($panelName, '-') }}" style="width: 100%; height: 100%;"></div>
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="fc-empty-card">
-                        <div class="fc-empty-icon"><i class="fas fa-filter"></i></div>
-                        <div class="fc-empty-title">Nessuna intervista filtrata da analizzare</div>
-                        <div class="fc-empty-subtitle">Quando ci saranno screenout, qui vedrai le domande che stanno filtrando maggiormente.</div>
-                    </div>
-                @endif
+                            @else
+                                <div class="fc-empty-card">
+                                    <div class="fc-empty-icon"><i class="fas {{ $meta['icon'] }}"></i></div>
+                                    <div class="fc-empty-title">{{ $meta['emptyTitle'] }}</div>
+                                    <div class="fc-empty-subtitle">{{ $meta['emptySubtitle'] }}</div>
+                                </div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
     </div>
@@ -1594,7 +1614,7 @@
 @section('scripts')
 <script>
     window.FieldControlConfig = {
-        filtrateCountsByPanel: @json($filtrateCountsByPanel),
+        exitCountsByKey: @json($exitCountsByKey),
         dailySeriesByPanel: @json($dailySeriesByPanel)
     };
 </script>

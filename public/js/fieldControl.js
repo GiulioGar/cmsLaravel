@@ -6,7 +6,7 @@
     const prj = config.prj || '';
     const sid = config.sid || '';
     const routes = config.routes || {};
-    const chartsData = config.filtrateCountsByPanel || {};
+    const exitCountsByKey = config.exitCountsByKey || {};
     const dailySeriesData = config.dailySeriesByPanel || {};
 
     function initTooltips() {
@@ -20,6 +20,17 @@
         const quickActionTriggers = [].slice.call(document.querySelectorAll('.fc-header-action-btn[title]'));
         quickActionTriggers.map(function (el) {
             return new bootstrap.Tooltip(el);
+        });
+
+        // Tab "Uscite" (Screenout/Quotafull/...): usano gia' data-bs-toggle="pill",
+        // stesso workaround dei bottoni Azioni rapide sopra. trigger:'hover'
+        // (senza 'focus', incluso di default) evita che il tooltip resti
+        // "incollato" dopo il click: il click sul tab lascia il focus
+        // sull'elemento e col trigger di default il tooltip non si chiude
+        // finche' non perde il focus, sovrapponendosi al tooltip successivo.
+        const exitStatusTriggers = [].slice.call(document.querySelectorAll('.fc-exit-status-tab-link[title]'));
+        exitStatusTriggers.map(function (el) {
+            return new bootstrap.Tooltip(el, { animation: false, trigger: 'hover' });
         });
     }
 
@@ -79,6 +90,9 @@
         const denseLabelsThreshold = 6;
         const rowHeight = 34;
         const chartVerticalPadding = 20;
+
+        Object.keys(exitCountsByKey).forEach(function (statusKey) {
+        const chartsData = exitCountsByKey[statusKey] || {};
 
         Object.keys(chartsData).forEach(function (panelName) {
             const panelRows = chartsData[panelName];
@@ -156,7 +170,7 @@
             });
             const hasDenseBars = visibleLabels.length > denseLabelsThreshold;
 
-            const canvasId = 'chart-panel-' + buildPanelSlug(panelName);
+            const canvasId = 'chart-' + statusKey + '-' + buildPanelSlug(panelName);
             const chartElement = document.getElementById(canvasId);
 
             if (!chartElement) {
@@ -368,6 +382,7 @@
 
             chart.resize();
         });
+        });
     }
 
     function formatShortDate(isoDate) {
@@ -483,7 +498,7 @@
             return;
         }
 
-        document.querySelectorAll('.fc-chart-canvas > div[id^="chart-panel-"], .fc-daily-chart[id^="chart-daily-"]').forEach(function (chartElement) {
+        document.querySelectorAll('.fc-chart-canvas > div[id^="chart-"], .fc-daily-chart[id^="chart-daily-"]').forEach(function (chartElement) {
             var chart = echarts.getInstanceByDom(chartElement);
 
             if (chart) {
@@ -1733,6 +1748,15 @@ function initDropdowns() {
         document.querySelectorAll('[data-bs-toggle="pill"]').forEach(function (trigger) {
             trigger.addEventListener('shown.bs.tab', function () {
                 resizeVisibleCharts();
+            });
+        });
+
+        const exitStatusTitle = document.getElementById('exitStatusTitle');
+        document.querySelectorAll('.fc-exit-status-tab-link').forEach(function (trigger) {
+            trigger.addEventListener('shown.bs.tab', function () {
+                if (exitStatusTitle) {
+                    exitStatusTitle.textContent = trigger.getAttribute('data-exit-title') || exitStatusTitle.textContent;
+                }
             });
         });
 

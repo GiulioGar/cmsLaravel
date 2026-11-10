@@ -128,15 +128,39 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     | QUESTION MAP + FILTRATE
     |--------------------------------------------------------------------------
     */
-    $filtrateCountsByPanel = $sreService->buildFiltrateCountsFromInterviews($interviews, $questionMap);
-    $filtrateCountsByPanel = $this->sortPanelsForDisplay($filtrateCountsByPanel);
+    // Icone e colori coerenti con la card "Distribuzione esiti" piu' in alto
+    // nella pagina ($outcomeIcons / classi fc-dist-* in fieldControl.blade.php):
+    // stessa semantica visiva per lo stesso stato intervista in tutta la pagina.
+    $exitStatusTabs = [
+        4 => ['key' => 'screenout', 'label' => 'Screenout', 'title' => 'Cause di screenout', 'subtitle' => 'principali domande di screenout', 'icon' => 'fa-bullseye', 'emptyTitle' => 'Nessuna intervista filtrata da analizzare', 'emptySubtitle' => "Quando ci saranno screenout, qui vedrai le domande che stanno filtrando maggiormente."],
+        5 => ['key' => 'quotafull', 'label' => 'Quotafull', 'title' => 'Cause di quotafull', 'subtitle' => 'principali domande di quotafull', 'icon' => 'fa-arrow-trend-up', 'emptyTitle' => 'Nessuna intervista in quotafull da analizzare', 'emptySubtitle' => "Quando ci saranno interviste in quotafull, qui vedrai su quali domande si sono fermate."],
+        7 => ['key' => 'bloccate', 'label' => 'Bloccate', 'title' => 'Cause di blocco', 'subtitle' => 'principali domande di blocco', 'icon' => 'fa-lock', 'emptyTitle' => 'Nessuna intervista bloccata da analizzare', 'emptySubtitle' => "Quando ci saranno interviste bloccate, qui vedrai su quali domande si sono fermate."],
+        0 => ['key' => 'sospese', 'label' => 'Sospese', 'title' => 'Domanda sospese', 'subtitle' => 'principali domande di sospensione', 'icon' => 'fa-pause', 'emptyTitle' => 'Nessuna intervista sospesa da analizzare', 'emptySubtitle' => "Quando ci saranno interviste in corso/sospese, qui vedrai a che domanda sono ferme."],
+    ];
 
-    $hasFiltrate = false;
-    foreach ($filtrateCountsByPanel as $panel => $rows) {
-        if (!empty($rows) && array_sum($rows) > 0) {
-            $hasFiltrate = true;
-            break;
+    $exitCountsByStatus = $sreService->buildQuestionCountsByStatusFromInterviews($interviews, $questionMap, array_keys($exitStatusTabs));
+
+    $hasExitDataByStatus = [];
+
+    foreach ($exitStatusTabs as $statusCode => $meta) {
+        $exitCountsByStatus[$statusCode] = $this->sortPanelsForDisplay($exitCountsByStatus[$statusCode] ?? []);
+
+        $hasData = false;
+        foreach ($exitCountsByStatus[$statusCode] as $rows) {
+            if (!empty($rows) && array_sum($rows) > 0) {
+                $hasData = true;
+                break;
+            }
         }
+        $hasExitDataByStatus[$statusCode] = $hasData;
+    }
+
+    // Stessi dati di $exitCountsByStatus, ma chiave = $meta['key'] (es. "screenout")
+    // invece dello status_code numerico: usata lato JS per costruire gli id dei
+    // canvas (chart-{key}-{panel}), piu' leggibile che usare direttamente il codice.
+    $exitCountsByKey = [];
+    foreach ($exitStatusTabs as $statusCode => $meta) {
+        $exitCountsByKey[$meta['key']] = $exitCountsByStatus[$statusCode];
     }
 
     /*
@@ -185,8 +209,10 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'panelRateInfo',
         'ondateInfo',
         'stimaDiagnostica',
-        'filtrateCountsByPanel',
-        'hasFiltrate',
+        'exitStatusTabs',
+        'exitCountsByStatus',
+        'exitCountsByKey',
+        'hasExitDataByStatus',
         'quotaData',
         'logData',
         'dataSummaryByPanel',

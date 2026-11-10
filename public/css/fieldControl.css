@@ -3827,6 +3827,41 @@ h3 {font-size: 15px!important;}
     color: #fff !important;
 }
 
+.fc-exit-status-tabs{
+    display: flex;
+    gap: .4rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: .6rem;
+    margin-bottom: .2rem;
+}
+
+.fc-exit-status-tab-link{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    border-radius: 9px !important;
+    font-size: .82rem;
+    color: #94a3b8 !important;
+    background: #f8fafc;
+    border: 1px solid transparent;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.fc-exit-status-tab-link:hover{
+    background: #f1f5f9;
+    color: #475569 !important;
+}
+
+/* Stessi colori semantici della card "Distribuzione esiti" (fc-dist-non_target/
+   over_quota/bloccate/sospese) per coerenza visiva in tutta la pagina. */
+.fc-exit-tab-screenout.active{ background: rgba(245, 158, 11, .14) !important; color: var(--fc-warn) !important; border-color: rgba(245, 158, 11, .35); }
+.fc-exit-tab-quotafull.active{ background: rgba(220, 38, 38, .12) !important; color: var(--fc-danger) !important; border-color: rgba(220, 38, 38, .32); }
+.fc-exit-tab-bloccate.active{ background: rgba(15, 23, 42, .1) !important; color: var(--fc-dark) !important; border-color: rgba(15, 23, 42, .28); }
+.fc-exit-tab-sospese.active{ background: rgba(59, 130, 246, .12) !important; color: var(--fc-info) !important; border-color: rgba(59, 130, 246, .3); }
+
 .fc-daily-chart{
     width: 100%;
     height: 260px;
