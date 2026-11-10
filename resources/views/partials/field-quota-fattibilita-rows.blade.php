@@ -21,8 +21,15 @@
         $completa = $entrate >= $totale;
         $raggiungibile = $completa || ($entrate + $fattibilita) >= $totale;
         $mancanti = max(0, $totale - $copertura);
+
+        $cardStateClass = '';
+        if ($completa || ($haVerdetto && $raggiungibile)) {
+            $cardStateClass = 'is-card-ok';
+        } elseif ($haVerdetto) {
+            $cardStateClass = 'is-card-risk';
+        }
     @endphp
-    <div class="fc-qf-card {{ $isQuotaVincolante ? 'is-vincolante' : '' }}">
+    <div class="fc-qf-card {{ $cardStateClass }} {{ $isQuotaVincolante ? 'is-vincolante' : '' }}">
         <div class="fc-qf-card-head">
             <span class="fc-qf-card-title">
                 {{ $quota->quota }}
@@ -33,22 +40,32 @@
                 @endif
             </span>
 
-            @if($quota->fattibilita_tipo === 'obiettivo_generale')
-                <span class="fc-qf-tag is-obiettivo" data-bs-toggle="tooltip"
-                      title="È l'obiettivo generale della ricerca (stesso dato di 'Max raggiungibile' più sopra in questa stessa card): non entra nel calcolo di fattibilità.">
-                    Obiettivo generale
-                </span>
-            @elseif($quota->demographic_confirmed)
-                <span class="fc-qf-tag is-demografica" data-bs-toggle="tooltip"
-                      title="Stima basata sulle persone disponibili del panel che corrispondono a questo filtro ({{ ucfirst($quota->demographic_confirmed['tipo']) }}), moltiplicate per l'IR del panel e l'IR del campione.">
-                    <i class="fa-solid fa-id-card"></i> {{ ucfirst($quota->demographic_confirmed['tipo']) }}
-                </span>
-            @elseif(empty($quota->demographic_suggestion))
-                <span class="fc-qf-tag is-generica" data-bs-toggle="tooltip"
-                      title="Quota non agganciata a un dato anagrafico noto: {{ $quota->fattibilita_incidenza ?? 0 }}% dei contatti fatti finora è risultato completo e rientrante in questa quota.">
-                    {{ $quota->fattibilita_incidenza ?? 0 }}% incidenza
-                </span>
-            @endif
+            <div class="fc-qf-card-head-right">
+                @if($completa)
+                    <span class="fc-qf-verdict is-ok"><i class="fas fa-circle-check"></i>Completa</span>
+                @elseif($haVerdetto && $raggiungibile)
+                    <span class="fc-qf-verdict is-ok"><i class="fas fa-circle-check"></i>Raggiungibile</span>
+                @elseif($haVerdetto)
+                    <span class="fc-qf-verdict is-risk"><i class="fas fa-triangle-exclamation"></i>Mancherebbero {{ $mancanti }}</span>
+                @endif
+
+                @if($quota->fattibilita_tipo === 'obiettivo_generale')
+                    <span class="fc-qf-tag is-obiettivo" data-bs-toggle="tooltip"
+                          title="È l'obiettivo generale della ricerca (stesso dato di 'Max raggiungibile' più sopra in questa stessa card): non entra nel calcolo di fattibilità.">
+                        Obiettivo generale
+                    </span>
+                @elseif($quota->demographic_confirmed)
+                    <span class="fc-qf-tag is-demografica" data-bs-toggle="tooltip"
+                          title="Stima basata sulle persone disponibili del panel che corrispondono a questo filtro ({{ ucfirst($quota->demographic_confirmed['tipo']) }}), moltiplicate per l'IR del panel e l'IR del campione.">
+                        <i class="fa-solid fa-id-card"></i> {{ ucfirst($quota->demographic_confirmed['tipo']) }}
+                    </span>
+                @elseif(empty($quota->demographic_suggestion))
+                    <span class="fc-qf-tag is-generica" data-bs-toggle="tooltip"
+                          title="Quota non agganciata a un dato anagrafico noto: {{ $quota->fattibilita_incidenza ?? 0 }}% dei contatti fatti finora è risultato completo e rientrante in questa quota.">
+                        {{ $quota->fattibilita_incidenza ?? 0 }}% incidenza
+                    </span>
+                @endif
+            </div>
         </div>
 
         <div class="fc-qf-progress">
@@ -69,14 +86,6 @@
                 @endif
                 <span class="fc-qf-num-total">/ {{ $totale }}</span>
             </div>
-
-            @if($completa)
-                <span class="fc-qf-verdict is-ok"><i class="fas fa-circle-check"></i>Completa</span>
-            @elseif($haVerdetto && $raggiungibile)
-                <span class="fc-qf-verdict is-ok"><i class="fas fa-circle-check"></i>Raggiungibile</span>
-            @elseif($haVerdetto)
-                <span class="fc-qf-verdict is-risk"><i class="fas fa-triangle-exclamation"></i>Mancherebbero {{ $mancanti }}</span>
-            @endif
         </div>
 
         @if(!empty($quota->demographic_suggestion))

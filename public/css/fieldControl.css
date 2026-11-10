@@ -2326,6 +2326,7 @@ h3 {font-size: 15px!important;}
 /* ---- Card per singola quota ---- */
 .fc-qf-card{
   border: 1px solid #e5e7eb;
+  border-left: 4px solid #e5e7eb;
   border-radius: 12px;
   padding: .75rem .9rem;
   background: #fff;
@@ -2337,8 +2338,19 @@ h3 {font-size: 15px!important;}
   box-shadow: 0 4px 12px rgba(16,24,40,.07);
 }
 
+/* Bordo/sfondo colorato in base al verdetto: la prima cosa che si nota
+   scorrendo la lista, prima ancora di leggere i numeri. */
+.fc-qf-card.is-card-ok{
+  background: rgba(16,185,129,.045);
+  border-left-color: #10b981;
+}
+
+.fc-qf-card.is-card-risk{
+  background: rgba(239,68,68,.045);
+  border-left-color: #ef4444;
+}
+
 .fc-qf-card.is-vincolante{
-  background: rgba(239,68,68,.04);
   border-color: rgba(239,68,68,.3);
 }
 
@@ -2348,6 +2360,13 @@ h3 {font-size: 15px!important;}
   justify-content: space-between;
   gap: .6rem;
   margin-bottom: .55rem;
+}
+
+.fc-qf-card-head-right{
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex: none;
 }
 
 .fc-qf-card-title{
@@ -2464,22 +2483,27 @@ h3 {font-size: 15px!important;}
 .fc-qf-verdict{
   display: inline-flex;
   align-items: center;
-  gap: .3rem;
-  padding: .2rem .6rem;
+  gap: .35rem;
+  padding: .3rem .75rem;
   border-radius: 999px;
-  font-size: .68rem;
+  font-size: .74rem;
   font-weight: 800;
   flex: none;
+  box-shadow: 0 1px 3px rgba(16,24,40,.08);
+}
+
+.fc-qf-verdict i{
+  font-size: .8rem;
 }
 
 .fc-qf-verdict.is-ok{
-  background: rgba(16,185,129,.12);
-  color: #0a8f5f;
+  background: #10b981;
+  color: #fff;
 }
 
 .fc-qf-verdict.is-risk{
-  background: rgba(239,68,68,.12);
-  color: #dc2626;
+  background: #ef4444;
+  color: #fff;
 }
 
 .fc-quote-demo-suggest{
