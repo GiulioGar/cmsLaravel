@@ -1027,6 +1027,73 @@
         }
     }
 
+    function bindQuotaDemographicConfirm() {
+        const tableBody = document.getElementById('quotaFattibilitaTableBody');
+
+        if (!tableBody) {
+            return;
+        }
+
+        tableBody.addEventListener('click', function (event) {
+            const confirmBtn = event.target.closest('.quota-demo-btn.is-confirm');
+            const rejectBtn = event.target.closest('.quota-demo-btn.is-reject');
+            const btn = confirmBtn || rejectBtn;
+
+            if (!btn) {
+                return;
+            }
+
+            const row = btn.closest('tr');
+            const suggestWrap = btn.closest('.quota-demo-suggest');
+            const quotaName = row ? row.getAttribute('data-quota-name') : null;
+
+            if (!quotaName) {
+                return;
+            }
+
+            btn.disabled = true;
+
+            const payload = { prj: prj, sid: sid, quota_name: quotaName };
+            let url = routes.rejectQuotaDemographic;
+
+            if (confirmBtn) {
+                url = routes.confirmQuotaDemographic;
+                payload.tipo = suggestWrap.getAttribute('data-quota-tipo');
+                payload.filtro = JSON.parse(suggestWrap.getAttribute('data-quota-filtro') || '{}');
+            }
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (data.success) {
+                        // La conferma/rifiuto puo' cambiare anche il totale
+                        // "Stima aggiuntive" (quote che si incrociano): piu'
+                        // semplice e sicuro ricaricare che aggiornare a mano
+                        // tutte le celle che dipendono da questo cambiamento.
+                        window.location.reload();
+                        return;
+                    }
+
+                    btn.disabled = false;
+                    alert(data.message || 'Errore durante il salvataggio.');
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    btn.disabled = false;
+                    alert('Si è verificato un errore di rete.');
+                });
+        });
+    }
+
     function bindQuotaTargetsModal() {
         const tableBody = document.getElementById('quotaTargetsTableBody');
         const totalInput = document.getElementById('quotaTotalInterviewsInput');
@@ -1870,6 +1937,7 @@ function initDropdowns() {
         bindRedirectionsModal();
         bindRedirectImport();
         bindQuotaTargetsModal();
+        bindQuotaDemographicConfirm();
         bindLogFilter();
         exposeGlobalActions();
 

@@ -2280,6 +2280,73 @@ h3 {font-size: 15px!important;}
   box-shadow: 0 4px 10px rgba(16,185,129,.16);
 }
 
+.quota-fattibilita-dash{
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.quota-fattibilita-pill{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  height: 26px;
+  padding: 0 .55rem;
+  border-radius: 8px;
+  font-size: .74rem;
+  font-weight: 800;
+  cursor: help;
+}
+
+.quota-fattibilita-pill.is-demografica{
+  background: rgba(37,99,235,.12);
+  color: var(--fc-accent-blue, #2563eb);
+}
+
+.quota-fattibilita-pill.is-generica{
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.quota-demo-suggest{
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: .2rem .4rem;
+}
+
+.quota-demo-suggest-label{
+  font-size: .68rem;
+  font-weight: 700;
+  color: #92400e;
+  white-space: nowrap;
+}
+
+.quota-demo-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: none;
+  font-size: .64rem;
+  flex: none;
+}
+
+.quota-demo-btn.is-confirm{
+  background: #10b981;
+  color: #fff;
+}
+
+.quota-demo-btn.is-reject{
+  background: #e2e8f0;
+  color: #475569;
+}
+
 /* ---- Card operativa: Log Attività (stile allineato a Controllo Quote / Stima) ---- */
 .log-card-modern{
   border-radius: 14px;

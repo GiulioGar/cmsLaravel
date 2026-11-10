@@ -132,6 +132,26 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
 
     /*
     |--------------------------------------------------------------------------
+    | FATTIBILITA' PER QUOTA
+    |--------------------------------------------------------------------------
+    */
+    $fattibilitaQuote = $this->calcolaFattibilitaQuote(
+        $quotaData,
+        $sid,
+        $panelData,
+        $counts,
+        $stimaInterviste,
+        $panelRateInfo,
+        $irInteractive,
+        $utentiDisponibili
+    );
+
+    $quotaData = $fattibilitaQuote['quotaData'];
+    $stimaVincolataDaQuote = $fattibilitaQuote['stima_vincolata'];
+    $quotaVincolante = $fattibilitaQuote['quota_vincolante'];
+
+    /*
+    |--------------------------------------------------------------------------
     | QUESTION MAP + FILTRATE
     |--------------------------------------------------------------------------
     */
@@ -221,6 +241,8 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'exitCountsByKey',
         'hasExitDataByStatus',
         'quotaData',
+        'stimaVincolataDaQuote',
+        'quotaVincolante',
         'logData',
         'dataSummaryByPanel',
         'ricercheInCorso',
@@ -637,6 +659,64 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
         return response()->json($result, $result['success'] ? 200 : 422);
     }
 
+    /**
+     * L'operatore conferma (o corregge) il tipo demografico suggerito per una
+     * quota: da questo momento viene usata per stimare quante persone
+     * disponibili rientrano davvero in quella quota (vedi calcolaFattibilitaQuote()).
+     */
+    public function confirmQuotaDemographic(Request $request)
+    {
+        $validated = $request->validate([
+            'prj' => 'required|string',
+            'sid' => 'required|string',
+            'quota_name' => 'required|string',
+            'tipo' => 'required|in:sesso,eta,area',
+            'filtro' => 'required|array',
+        ]);
+
+        DB::table('t_quota_demographic_mapping')->updateOrInsert(
+            ['sid' => $validated['sid'], 'quota_name' => $validated['quota_name']],
+            [
+                'prj' => $validated['prj'],
+                'tipo' => $validated['tipo'],
+                'filtro' => json_encode($validated['filtro']),
+                'confirmed_at' => now(),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * L'operatore dice esplicitamente che una quota NON è demografica
+     * (es. legata a una risposta del sondaggio): smette di riproporla come
+     * suggerimento, passa alla stima generica basata sul ritmo di riempimento.
+     */
+    public function rejectQuotaDemographic(Request $request)
+    {
+        $validated = $request->validate([
+            'prj' => 'required|string',
+            'sid' => 'required|string',
+            'quota_name' => 'required|string',
+        ]);
+
+        DB::table('t_quota_demographic_mapping')->updateOrInsert(
+            ['sid' => $validated['sid'], 'quota_name' => $validated['quota_name']],
+            [
+                'prj' => $validated['prj'],
+                'tipo' => 'none',
+                'filtro' => null,
+                'confirmed_at' => now(),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
+
+        return response()->json(['success' => true]);
+    }
+
     public function updateQuotaTotalInterviews(Request $request, FieldControlSreService $sreService)
     {
         $prj = $request->input('prj');
@@ -914,6 +994,245 @@ private function getUtentiDisponibili($sid, $panelTarget)
         ->count();
 }
 
+/**
+ * Come getUtentiDisponibili(), ma applicando in piu' il filtro di una
+ * singola quota (sesso/eta/area) confermato dall'operatore - usato per
+ * stimare quante persone disponibili rientrano in QUELLA quota specifica,
+ * non nel target generico della ricerca.
+ */
+private function contaDisponibiliConFiltro($sid, $panelTarget, array $filtro): int
+{
+    if (!$panelTarget) {
+        return 0;
+    }
+
+    $genderFilter = [1, 2];
+
+    switch ((int) $panelTarget->sex_target) {
+        case 1:
+            $genderFilter = [1];
+            break;
+        case 2:
+            $genderFilter = [2];
+            break;
+    }
+
+    if (!empty($filtro['gender'])) {
+        $genderFilter = array_values(array_intersect($genderFilter, (array) $filtro['gender']))
+            ?: (array) $filtro['gender'];
+    }
+
+    $etaMin = (int) $panelTarget->age1_target;
+    $etaMax = (int) $panelTarget->age2_target;
+
+    if (isset($filtro['eta_min'])) {
+        $etaMin = max($etaMin, (int) $filtro['eta_min']);
+    }
+
+    if (isset($filtro['eta_max'])) {
+        $etaMax = min($etaMax, (int) $filtro['eta_max']);
+    }
+
+    if ($etaMin > $etaMax) {
+        return 0;
+    }
+
+    $annoCorrente = date('Y');
+
+    $query = DB::table('t_user_info')
+        ->whereIn('gender', $genderFilter)
+        ->whereRaw("YEAR(birth_date) BETWEEN ? AND ?", [$annoCorrente - $etaMax, $annoCorrente - $etaMin])
+        ->where('active', 1)
+        ->where('confirm', 1)
+        ->whereNotExists(function ($query) use ($sid) {
+            $query->select(DB::raw(1))
+                ->from('t_respint')
+                ->whereRaw('t_respint.uid = t_user_info.user_id')
+                ->where('t_respint.sid', $sid);
+        });
+
+    if (!empty($filtro['area'])) {
+        $query->whereIn('area', (array) $filtro['area']);
+    }
+
+    return $query->count();
+}
+
+/**
+ * Prova a riconoscere se una quota riguarda sesso o eta' dalla convenzione
+ * del suo nome (es. "genere_U", "age_5565"). E' solo un suggerimento: va
+ * sempre confermato dall'operatore prima di essere usato nei calcoli -
+ * i nomi delle quote non seguono una convenzione garantita su tutte le
+ * ricerche (altrove si sono viste quote come "gdo_muffin_0" che non
+ * c'entrano nulla con l'anagrafica).
+ */
+private function guessQuotaDemographic(string $quotaName): ?array
+{
+    $parts = explode('_', $quotaName);
+
+    if (count($parts) < 2) {
+        return null;
+    }
+
+    $prefix = strtolower($parts[0]);
+    $value = $parts[1];
+
+    if (in_array($prefix, ['gener', 'genere', 'sesso'], true)) {
+        $v = strtoupper($value);
+
+        if ($v === 'U' || $v === 'M' || $v === '0') {
+            return ['tipo' => 'sesso', 'filtro' => ['gender' => [1]], 'label' => 'Uomo'];
+        }
+
+        if ($v === 'D' || $v === 'F' || $v === '1') {
+            return ['tipo' => 'sesso', 'filtro' => ['gender' => [2]], 'label' => 'Donna'];
+        }
+    }
+
+    if (in_array($prefix, ['age', 'eta', 'età'], true) && ctype_digit($value) && strlen($value) === 4) {
+        $etaMin = (int) substr($value, 0, 2);
+        $etaMax = (int) substr($value, 2, 2);
+
+        if ($etaMin > 0 && $etaMax >= $etaMin) {
+            return [
+                'tipo' => 'eta',
+                'filtro' => ['eta_min' => $etaMin, 'eta_max' => $etaMax],
+                'label' => $etaMin . '-' . $etaMax . ' anni',
+            ];
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Aggiunge, se possibile, un vincolo "generico" per una quota non
+ * agganciata a un dato anagrafico: proietta l'incidenza osservata finora
+ * (entrate/contatti totali) sulle prossime interviste stimate, per capire
+ * a che punto QUELLA quota si esaurirebbe.
+ */
+private function aggiungiVincoloGenerico($item, int $totaleContatti, array &$vincoliGenerici): void
+{
+    if ($totaleContatti <= 0 || (int) $item->entrate <= 0 || (int) $item->missing <= 0) {
+        return;
+    }
+
+    $incidenza = $item->entrate / $totaleContatti;
+
+    if ($incidenza <= 0) {
+        return;
+    }
+
+    $item->fattibilita_incidenza = round($incidenza * 100, 1);
+
+    $vincoliGenerici[] = [
+        'cap' => $item->missing / $incidenza,
+        'label' => $item->quota,
+    ];
+}
+
+/**
+ * Arricchisce $quotaData con la fattibilita' per quota (demografica
+ * confermata, suggerita, o generica) e ricalcola il totale di
+ * "Stima aggiuntive" tenendo conto delle quote che lo vincolano:
+ * - quote demografiche confermate e gia' chiuse (missing=0) escludono i
+ *   loro disponibili dal conteggio usato per il totale (es. "donne" piena
+ *   -&gt; il totale si basa solo sugli uomini disponibili);
+ * - quote generiche proiettano il ritmo di riempimento osservato finora.
+ */
+private function calcolaFattibilitaQuote(
+    $quotaData,
+    string $sid,
+    $panelTarget,
+    array $counts,
+    ?int $stimaInterviste,
+    ?array $panelRateInfo,
+    float $irInteractive,
+    int $utentiDisponibili
+): array {
+    $result = [
+        'quotaData' => $quotaData,
+        'stima_vincolata' => $stimaInterviste,
+        'quota_vincolante' => null,
+    ];
+
+    if ($stimaInterviste === null || $panelRateInfo === null || $quotaData->isEmpty()) {
+        return $result;
+    }
+
+    $mappingRows = DB::table('t_quota_demographic_mapping')->where('sid', $sid)->get()->keyBy('quota_name');
+    $valoreUtilizzato = (float) $panelRateInfo['valore_utilizzato'];
+    $totaleContatti = (int) ($counts['contatti'] ?? 0);
+
+    $gruppiChiusi = [];
+    $vincoliGenerici = [];
+
+    $quotaData = $quotaData->map(function ($item) use (
+        $mappingRows, $sid, $panelTarget, $totaleContatti, $valoreUtilizzato, $irInteractive,
+        &$gruppiChiusi, &$vincoliGenerici
+    ) {
+        $rawName = $item->quota_raw;
+        $mapping = $mappingRows->get($rawName);
+
+        $item->demographic_confirmed = null;
+        $item->demographic_suggestion = null;
+        $item->fattibilita = null;
+        $item->fattibilita_tipo = null;
+
+        if ($mapping && $mapping->tipo !== 'none') {
+            $filtro = json_decode($mapping->filtro, true) ?: [];
+            $disponibiliQuota = $this->contaDisponibiliConFiltro($sid, $panelTarget, $filtro);
+            $stimaRiga = max(0, round($disponibiliQuota * ($valoreUtilizzato / 100) * ($irInteractive / 100)));
+
+            $item->demographic_confirmed = ['tipo' => $mapping->tipo, 'filtro' => $filtro];
+            $item->fattibilita_tipo = $mapping->tipo;
+            $item->fattibilita = (int) min($stimaRiga, $item->missing);
+
+            if ((int) $item->missing <= 0) {
+                $gruppiChiusi[$mapping->tipo] = ($gruppiChiusi[$mapping->tipo] ?? 0) + $disponibiliQuota;
+            }
+        } elseif ($mapping && $mapping->tipo === 'none') {
+            $item->fattibilita_tipo = 'generica';
+            $this->aggiungiVincoloGenerico($item, $totaleContatti, $vincoliGenerici);
+        } else {
+            $item->demographic_suggestion = $this->guessQuotaDemographic($rawName);
+            $item->fattibilita_tipo = 'generica';
+            $this->aggiungiVincoloGenerico($item, $totaleContatti, $vincoliGenerici);
+        }
+
+        return $item;
+    });
+
+    $utentiDisponibiliCorretti = $utentiDisponibili;
+
+    foreach ($gruppiChiusi as $disponibiliChiusi) {
+        $utentiDisponibiliCorretti = max(0, $utentiDisponibiliCorretti - $disponibiliChiusi);
+    }
+
+    $stimaBase = $stimaInterviste;
+    $quotaVincolante = null;
+
+    if ($utentiDisponibiliCorretti !== $utentiDisponibili) {
+        $stimaBase = $this->calcolaStimaInterviste($utentiDisponibiliCorretti, $irInteractive, $valoreUtilizzato);
+        $quotaVincolante = 'Una o più quote demografiche sono già piene: la stima considera solo i segmenti ancora aperti.';
+    }
+
+    $stimaFinale = $stimaBase;
+
+    foreach ($vincoliGenerici as $vincolo) {
+        if ($vincolo['cap'] < $stimaFinale) {
+            $stimaFinale = $vincolo['cap'];
+            $quotaVincolante = 'Limitato dalla quota "' . $vincolo['label'] . '": al ritmo attuale si esaurirebbe prima.';
+        }
+    }
+
+    $result['quotaData'] = $quotaData;
+    $result['stima_vincolata'] = max(0, (int) round($stimaFinale));
+    $result['quota_vincolante'] = $quotaVincolante;
+
+    return $result;
+}
+
 private function sortPanelsForDisplay(array $panels): array
 {
     if (empty($panels)) {
@@ -1036,6 +1355,7 @@ private function getOndate24h(string $sid, string $prj, int $utentiDisponibili):
             ->get()
             ->map(function ($item) use ($quotaConfig, $questionMap) {
                 $item->missing = max(0, $item->totale - $item->entrate);
+                $item->quota_raw = $item->quota;
                 $quotaMeta = $this->formatQuotaName($item->quota, $quotaConfig, $questionMap);
                 $item->quota = $quotaMeta['label'];
                 $item->quota_tooltip = $quotaMeta['tooltip'];

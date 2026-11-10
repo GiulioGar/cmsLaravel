@@ -788,12 +788,13 @@
                                 <th class="text-center"><i class="fa-solid fa-bullseye me-1"></i>Totale</th>
                                 <th class="text-center"><i class="fa-solid fa-arrow-trend-up me-1"></i>Entrate / IR</th>
                                 <th class="text-center"><i class="fa-solid fa-triangle-exclamation me-1"></i>Missing</th>
+                                <th class="text-center"><i class="fa-solid fa-chart-pie me-1"></i>Fattibilità</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="quotaFattibilitaTableBody">
                         @if($quotaData->isEmpty())
                             <tr>
-                                <td colspan="4" class="p-0">
+                                <td colspan="5" class="p-0">
                                     <div class="fc-empty-inline">
                                         <div class="fc-empty-icon sm">
                                             <i class="fas fa-layer-group"></i>
@@ -827,7 +828,7 @@
                     }
                 @endphp
 
-                <tr class="quota-row {{ $isTotalRow ? 'quota-row-total' : '' }}">
+                <tr class="quota-row {{ $isTotalRow ? 'quota-row-total' : '' }}" data-quota-name="{{ $quota->quota_raw }}">
                     <td>
                         <div class="quota-name-wrap">
                             <div class="quota-name">
@@ -876,6 +877,34 @@
                         @else
                             <span class="quota-missing-pill is-ok">
                                 <i class="fas fa-check me-1"></i>0
+                            </span>
+                        @endif
+                    </td>
+
+                    <td class="text-center quota-fattibilita-cell">
+                        @if($isTotalRow)
+                            <span class="quota-fattibilita-dash">—</span>
+                        @elseif($quota->demographic_confirmed)
+                            <span class="quota-fattibilita-pill is-demografica"
+                                  data-bs-toggle="tooltip"
+                                  title="Stima basata sulle persone disponibili del panel che corrispondono a questo filtro ({{ ucfirst($quota->demographic_confirmed['tipo']) }}).">
+                                +{{ $quota->fattibilita }}
+                            </span>
+                        @elseif(!empty($quota->demographic_suggestion))
+                            <div class="quota-demo-suggest" data-quota-tipo="{{ $quota->demographic_suggestion['tipo'] }}" data-quota-filtro='@json($quota->demographic_suggestion['filtro'])'>
+                                <span class="quota-demo-suggest-label">{{ $quota->demographic_suggestion['label'] }}?</span>
+                                <button type="button" class="quota-demo-btn is-confirm" title="Conferma">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button type="button" class="quota-demo-btn is-reject" title="Non è demografica">
+                                    <i class="fas fa-xmark"></i>
+                                </button>
+                            </div>
+                        @else
+                            <span class="quota-fattibilita-pill is-generica"
+                                  data-bs-toggle="tooltip"
+                                  title="Stima generica: proietta sul totale residuo l'incidenza osservata finora ({{ $quota->fattibilita_incidenza ?? 0 }}% delle interviste completate finora rientrava in questa quota).">
+                                {{ $quota->fattibilita_incidenza ?? 0 }}%
                             </span>
                         @endif
                     </td>
@@ -956,10 +985,18 @@
                         </div>
 
                         @if($stimaInterviste !== null)
-                            @php $_stTot = $_stC + $stimaInterviste; @endphp
+                            @php
+                                $_stimaMostrata = $stimaVincolataDaQuote ?? $stimaInterviste;
+                                $_stTot = $_stC + $_stimaMostrata;
+                            @endphp
                             <div class="fc-stima-item">
-                                <div class="fc-stima-label"><i class="fa-solid fa-arrow-trend-up me-1"></i>Stima aggiuntive</div>
-                                <div class="fc-stima-value text-primary">+{{ $stimaInterviste }}</div>
+                                <div class="fc-stima-label">
+                                    <i class="fa-solid fa-arrow-trend-up me-1"></i>Stima aggiuntive
+                                    @if($quotaVincolante)
+                                        <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip" title="{{ $quotaVincolante }}" style="opacity:.5; font-size:.85em"></i>
+                                    @endif
+                                </div>
+                                <div class="fc-stima-value text-primary">+{{ $_stimaMostrata }}</div>
                             </div>
                             <div class="fc-stima-item">
                                 <div class="fc-stima-label"><i class="fa-solid fa-flag-checkered me-1"></i>Max raggiungibile</div>

@@ -77,6 +77,8 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/delete-quota-target', [FieldControlController::class, 'deleteQuotaTarget'])->name('quotaTargets.delete');
     Route::post('/update-quota-total-interviews', [FieldControlController::class, 'updateQuotaTotalInterviews'])->name('quotaTargets.updateTotal');
     Route::post('/publish-quota-config', [FieldControlController::class, 'publishQuotaConfig'])->name('quotaTargets.publish');
+    Route::post('/confirm-quota-demographic', [FieldControlController::class, 'confirmQuotaDemographic'])->name('quotaDemographic.confirm');
+    Route::post('/reject-quota-demographic', [FieldControlController::class, 'rejectQuotaDemographic'])->name('quotaDemographic.reject');
 
     // ============================================
     // FIELD QUALITY
