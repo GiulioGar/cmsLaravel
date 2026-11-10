@@ -128,9 +128,10 @@
 
     // Target (già presente nella vecchia card "Target")
     $sexLabel = 'N/A';
-    if (($panelData->sex_target ?? null) == 1) $sexLabel = 'Uomo';
-    elseif (($panelData->sex_target ?? null) == 2) $sexLabel = 'Donna';
-    elseif (($panelData->sex_target ?? null) == 3) $sexLabel = 'Uomo/Donna';
+    $sexIcons = [];
+    if (($panelData->sex_target ?? null) == 1) { $sexLabel = 'Uomo'; $sexIcons = ['fas fa-mars']; }
+    elseif (($panelData->sex_target ?? null) == 2) { $sexLabel = 'Donna'; $sexIcons = ['fas fa-venus']; }
+    elseif (($panelData->sex_target ?? null) == 3) { $sexLabel = 'Uomo/Donna'; $sexIcons = ['fas fa-mars', 'fas fa-venus']; }
 
     // Timing (già presente nella vecchia card "Timing")
     $giorniField = 'N/A';
@@ -175,18 +176,6 @@
     }
     // Se chiusa, nessun hint aggiuntivo: lo stato "Field chiuso" è già mostrato
     // una sola volta dalla pill di stato nel blocco Avanzamento.
-
-    // Stato ricerca / stato Primis (già presente nella vecchia card "Info")
-    $statusLabel = 'N/A';
-    $statusIcon = 'fas fa-question-circle';
-
-    if (($panelData->stato ?? null) == 0) {
-        $statusLabel = 'Aperta';
-        $statusIcon = 'fa-solid fa-door-open';
-    } elseif (($panelData->stato ?? null) == 1) {
-        $statusLabel = 'Chiusa';
-        $statusIcon = 'fa-solid fa-door-closed';
-    }
 
     $primisStatusLabel = 'N/A';
     $primisStatusClass = 'primis-status-neutral';
@@ -377,11 +366,8 @@
                 <!-- Area B: Stato e LOI -->
                 <div class="fc-header-block fc-header-status">
                     <div class="fc-header-status-badges">
-                        <span class="fc-status-pill {{ $isClosed ? 'is-closed' : 'is-open' }}">
-                            <i class="{{ $statusIcon }} me-1"></i>{{ $isClosed ? 'Field chiuso' : 'Field aperto' }}
-                        </span>
                         <span class="primis-status-badge {{ $primisStatusClass }}">
-                            <i class="{{ $primisStatusIcon }} me-1"></i>Primis: {{ $primisStatusLabel }}
+                            <i class="{{ $primisStatusIcon }} me-1"></i>Status: {{ $primisStatusLabel }}
                         </span>
                     </div>
                     <div class="fc-header-loi">
@@ -400,7 +386,11 @@
                         <div>
                             <span class="fc-header-mini-key">Target</span>
                             <span class="fc-header-mini-val">
-                                <span class="fc-target-sex">{{ $sexLabel }}</span>
+                                <span class="fc-target-sex" data-bs-toggle="tooltip" title="Target: {{ $sexLabel }}">
+                                    @foreach($sexIcons as $sexIcon)
+                                        <i class="{{ $sexIcon }}"></i>
+                                    @endforeach
+                                </span>
                                 <span class="fc-target-age">{{ $panelData->age1_target ?? 'N/A' }}-{{ $panelData->age2_target ?? 'N/A' }} anni</span>
                             </span>
                         </div>
@@ -411,17 +401,19 @@
                             <span class="fc-header-mini-key">Timing</span>
                             <span class="fc-header-mini-val">
                                 <span class="fc-timing-dates">
-                                    {{ $panelData->sur_date ? \Carbon\Carbon::parse($panelData->sur_date)->format('d/m/Y') : 'N/A' }}
+                                    {{ $panelData->sur_date ? \Carbon\Carbon::parse($panelData->sur_date)->format('d/m/y') : 'N/A' }}
                                     <i class="fas fa-arrow-right-long fc-timing-arrow"></i>
-                                    {{ $panelData->end_field ? \Carbon\Carbon::parse($panelData->end_field)->format('d/m/Y') : 'N/A' }}
+                                    {{ $panelData->end_field ? \Carbon\Carbon::parse($panelData->end_field)->format('d/m/y') : 'N/A' }}
                                 </span>
-                                <span class="fc-timing-days">{{ $giorniField }} giorni{{ $isClosed ? ' · chiuso' : '' }}</span>
                             </span>
-                            @if($timingHint)
-                                <div class="timing-hint {{ $timingHintClass }} fc-header-timinghint">
-                                    <i class="{{ $timingHintIcon }} me-1"></i><span>{{ $timingHint }}</span>
-                                </div>
-                            @endif
+                            <div class="fc-timing-footer">
+                                <span class="fc-timing-days"><i class="fa-regular fa-calendar me-1"></i>{{ $giorniField }} giorni{{ $isClosed ? ' totali' : '' }}</span>
+                                @if($timingHint)
+                                    <span class="timing-hint {{ $timingHintClass }}">
+                                        <i class="{{ $timingHintIcon }} me-1"></i>{{ $timingHint }}
+                                    </span>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -953,29 +945,39 @@
                         $_stC = (int) ($counts['complete'] ?? 0);
                     @endphp
 
-                    <div class="fc-stima-grid">
-                        <div class="fc-stima-item">
-                            <div class="fc-stima-label"><i class="fa-solid fa-check-circle me-1"></i>Già raccolte</div>
-                            <div class="fc-stima-value text-success">{{ $_stC }}</div>
-                        </div>
-
+                    <div class="fc-stima-main">
                         @if($stimaInterviste !== null)
                             @php
                                 $_stimaMostrata = $stimaVincolataDaQuote ?? $stimaInterviste;
                                 $_stTot = $_stC + $_stimaMostrata;
+                                $_ringPct = $_stTot > 0 ? min(100, round($_stC / $_stTot * 100)) : 0;
                             @endphp
-                            <div class="fc-stima-item">
-                                <div class="fc-stima-label">
-                                    <i class="fa-solid fa-arrow-trend-up me-1"></i>Stima aggiuntive
-                                    <i class="fas fa-info-circle ms-1 {{ $quotaVincolante ? '' : 'd-none' }}" id="fcStimaQuotaVincolanteInfo" data-bs-toggle="tooltip" title="{{ $quotaVincolante }}" style="opacity:.5; font-size:.85em"></i>
-                                </div>
-                                <div class="fc-stima-value text-primary" id="fcStimaAggiuntiveValue">+{{ $_stimaMostrata }}</div>
-                            </div>
-                            <div class="fc-stima-item">
-                                <div class="fc-stima-label"><i class="fa-solid fa-flag-checkered me-1"></i>Max raggiungibile</div>
-                                <div class="fc-stima-value" id="fcMaxRaggiungibileValue">{{ $_stTot }}</div>
+                            <div class="fc-metric-ring-visual fc-stima-ring" style="--ring-pct: {{ $_ringPct }}" id="fcStimaRingVisual"
+                                 data-bs-toggle="tooltip" title="Quota del massimo raggiungibile già coperta dalle interviste raccolte">
+                                <span id="fcStimaRingValue">{{ $_ringPct }}%</span>
                             </div>
                         @endif
+
+                        <div class="fc-stima-grid">
+                            <div class="fc-stima-item">
+                                <div class="fc-stima-label"><i class="fa-solid fa-check-circle me-1"></i>Già raccolte</div>
+                                <div class="fc-stima-value text-success">{{ $_stC }}</div>
+                            </div>
+
+                            @if($stimaInterviste !== null)
+                                <div class="fc-stima-item">
+                                    <div class="fc-stima-label">
+                                        <i class="fa-solid fa-arrow-trend-up me-1"></i>Stima aggiuntive
+                                        <i class="fas fa-info-circle ms-1 {{ $quotaVincolante ? '' : 'd-none' }}" id="fcStimaQuotaVincolanteInfo" data-bs-toggle="tooltip" title="{{ $quotaVincolante }}" style="opacity:.5; font-size:.85em"></i>
+                                    </div>
+                                    <div class="fc-stima-value text-primary" id="fcStimaAggiuntiveValue">+{{ $_stimaMostrata }}</div>
+                                </div>
+                                <div class="fc-stima-item">
+                                    <div class="fc-stima-label"><i class="fa-solid fa-flag-checkered me-1"></i>Max raggiungibile</div>
+                                    <div class="fc-stima-value" id="fcMaxRaggiungibileValue">{{ $_stTot }}</div>
+                                </div>
+                            @endif
+                        </div>
                     </div>
 
                     <div class="fc-stima-extra mt-3">

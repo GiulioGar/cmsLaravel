@@ -1057,6 +1057,16 @@
                 maxEl.textContent = data.max_raggiungibile;
             }
 
+            const ringEl = document.getElementById('fcStimaRingVisual');
+            const ringValueEl = document.getElementById('fcStimaRingValue');
+
+            if (ringEl && ringValueEl && data.max_raggiungibile > 0) {
+                const raccolte = data.max_raggiungibile - data.stima_aggiuntive;
+                const ringPct = Math.min(100, Math.round((raccolte / data.max_raggiungibile) * 100));
+                ringEl.style.setProperty('--ring-pct', ringPct);
+                ringValueEl.textContent = ringPct + '%';
+            }
+
             if (infoEl) {
                 if (data.quota_vincolante) {
                     infoEl.setAttribute('title', data.quota_vincolante);

@@ -13,11 +13,14 @@ use Illuminate\Support\Str;
 <div class="container field-control-container">
 
     <nav class="navbar custom-navbar mb-4">
-        <div class="container-fluid d-flex align-items-center justify-content-between px-0">
+        <div class="container-fluid d-flex align-items-center justify-content-start px-0">
             <a class="navbar-brand d-flex align-items-center" href="{{ url('fieldControl?prj='.$prj.'&sid='.$sid) }}">
-                <i class="fas fa-chart-bar me-2"></i>
+                <span class="fc-brand-icon"><i class="fas fa-chart-bar"></i></span>
                 <span>Status Field</span>
             </a>
+
+            <div class="fc-navbar-sep d-none d-md-block"></div>
+
             <ul class="nav custom-nav-links">
                 <li class="nav-item dropdown position-relative">
                     <a class="nav-link dropdown-toggle" href="#" id="ongoingResearchDropdown" role="button"
