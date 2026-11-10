@@ -18,7 +18,8 @@
             publishQuotaConfig: @json(route('quotaTargets.publish')),
             searchLog: @json(route('fieldControl.searchLog')),
             confirmQuotaDemographic: @json(route('quotaDemographic.confirm')),
-            rejectQuotaDemographic: @json(route('quotaDemographic.reject'))
+            rejectQuotaDemographic: @json(route('quotaDemographic.reject')),
+            confirmAllQuotaDemographic: @json(route('quotaDemographic.confirmAll'))
         },
         panelNamesMap: @json($panelNamesMap ?? []),
         questionMap: @json($questionMap ?? [])

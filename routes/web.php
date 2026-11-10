@@ -79,6 +79,7 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::post('/publish-quota-config', [FieldControlController::class, 'publishQuotaConfig'])->name('quotaTargets.publish');
     Route::post('/confirm-quota-demographic', [FieldControlController::class, 'confirmQuotaDemographic'])->name('quotaDemographic.confirm');
     Route::post('/reject-quota-demographic', [FieldControlController::class, 'rejectQuotaDemographic'])->name('quotaDemographic.reject');
+    Route::post('/confirm-all-quota-demographic', [FieldControlController::class, 'confirmAllQuotaDemographic'])->name('quotaDemographic.confirmAll');
 
     // ============================================
     // FIELD QUALITY

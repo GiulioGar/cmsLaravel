@@ -14,13 +14,15 @@ class FieldControlController extends Controller
 {
     private const PANEL_MATURITY_HOURS = 24;
 
-public function index(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
+/**
+ * Tutto cio' che serve per "Stima interviste e disponibilita' panel" +
+ * "Fattibilita' per quota": estratto da index() in modo che le route di
+ * conferma/rifiuto quota demografica possano ricalcolare e restituire solo
+ * questi dati senza un reload completo della pagina (stesso identico
+ * calcolo, nessuna duplicazione di formula).
+ */
+private function buildStimaEFattibilita(string $prj, string $sid, PrimisApiService $primis, FieldControlSreService $sreService): array
 {
-    ini_set('memory_limit', '512M');
-
-    $prj = $request->query('prj');
-    $sid = $request->query('sid');
-
     $panelData = PanelControl::where('sur_id', $sid)->first();
 
     $directory = $sreService->resolveResultsDirectory($prj, $sid);
@@ -28,29 +30,11 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
     $quotaData = $this->getQuotaData($prj, $sid, $sreService, $questionMap);
 
-    // 👇 NON SERVE PIÙ PER LA CLASSIFICAZIONE
-    // $panelNames = $this->getPanelNamesMap();
-
-    $redirections = $sreService->getRedirectionsList($prj, $sid);
-    $quotaTargetsData = $sreService->getQuotaTargetsList($prj, $sid);
-    $panelNamesMap = $this->getPanelNamesMap();
-
     $panelValueFromDB = $panelData->panel ?? null;
 
     $files = $sreService->getSreFiles($directory);
-
-    /*
-    |--------------------------------------------------------------------------
-    | NUOVA LOGICA SRE (SUPER IMPORTANTE)
-    |--------------------------------------------------------------------------
-    */
     $interviews = $sreService->buildInterviewDataset($files, $prj, $sid);
 
-    /*
-    |--------------------------------------------------------------------------
-    | SUMMARY
-    |--------------------------------------------------------------------------
-    */
     $summary = $sreService->summarizeInterviews($interviews, count($files));
     $counts = $summary['counts'];
     $panelCounts = $summary['panelCounts'];
@@ -78,12 +62,6 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
 
     $panelCounts = $this->sortPanelsForDisplay($panelCounts);
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | UTENTI / STIME
-    |--------------------------------------------------------------------------
-    */
     $utentiDisponibili = $this->getUtentiDisponibili($sid, $panelData);
     $mediaRedPanel = $this->calcolaMediaRedPanel();
 
@@ -130,11 +108,6 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
           ))
         : null;
 
-    /*
-    |--------------------------------------------------------------------------
-    | FATTIBILITA' PER QUOTA
-    |--------------------------------------------------------------------------
-    */
     $fattibilitaQuote = $this->calcolaFattibilitaQuote(
         $quotaData,
         $sid,
@@ -146,9 +119,57 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         $utentiDisponibili
     );
 
-    $quotaData = $fattibilitaQuote['quotaData'];
-    $stimaVincolataDaQuote = $fattibilitaQuote['stima_vincolata'];
-    $quotaVincolante = $fattibilitaQuote['quota_vincolante'];
+    return [
+        'panelData' => $panelData,
+        'questionMap' => $questionMap,
+        'interviews' => $interviews,
+        'counts' => $counts,
+        'panelCounts' => $panelCounts,
+        'abilitati' => $abilitati,
+        'redemption' => $redemption,
+        'utentiDisponibili' => $utentiDisponibili,
+        'mediaRedPanel' => $mediaRedPanel,
+        'panelRateInfo' => $panelRateInfo,
+        'irInteractive' => $irInteractive,
+        'stimaInterviste' => $stimaInterviste,
+        'ondateInfo' => $ondateInfo,
+        'stimaDiagnostica' => $stimaDiagnostica,
+        'quotaData' => $fattibilitaQuote['quotaData'],
+        'stimaVincolataDaQuote' => $fattibilitaQuote['stima_vincolata'],
+        'quotaVincolante' => $fattibilitaQuote['quota_vincolante'],
+    ];
+}
+
+public function index(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
+{
+    ini_set('memory_limit', '512M');
+
+    $prj = $request->query('prj');
+    $sid = $request->query('sid');
+
+    $stima = $this->buildStimaEFattibilita($prj, $sid, $primis, $sreService);
+
+    $panelData = $stima['panelData'];
+    $questionMap = $stima['questionMap'];
+    $interviews = $stima['interviews'];
+    $counts = $stima['counts'];
+    $panelCounts = $stima['panelCounts'];
+    $abilitati = $stima['abilitati'];
+    $redemption = $stima['redemption'];
+    $utentiDisponibili = $stima['utentiDisponibili'];
+    $mediaRedPanel = $stima['mediaRedPanel'];
+    $panelRateInfo = $stima['panelRateInfo'];
+    $irInteractive = $stima['irInteractive'];
+    $stimaInterviste = $stima['stimaInterviste'];
+    $ondateInfo = $stima['ondateInfo'];
+    $stimaDiagnostica = $stima['stimaDiagnostica'];
+    $quotaData = $stima['quotaData'];
+    $stimaVincolataDaQuote = $stima['stimaVincolataDaQuote'];
+    $quotaVincolante = $stima['quotaVincolante'];
+
+    $redirections = $sreService->getRedirectionsList($prj, $sid);
+    $quotaTargetsData = $sreService->getQuotaTargetsList($prj, $sid);
+    $panelNamesMap = $this->getPanelNamesMap();
 
     /*
     |--------------------------------------------------------------------------
@@ -664,7 +685,7 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
      * quota: da questo momento viene usata per stimare quante persone
      * disponibili rientrano davvero in quella quota (vedi calcolaFattibilitaQuote()).
      */
-    public function confirmQuotaDemographic(Request $request)
+    public function confirmQuotaDemographic(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
     {
         $validated = $request->validate([
             'prj' => 'required|string',
@@ -686,7 +707,7 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
             ]
         );
 
-        return response()->json(['success' => true]);
+        return $this->rispostaFattibilitaQuote($validated['prj'], $validated['sid'], $primis, $sreService);
     }
 
     /**
@@ -694,7 +715,7 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
      * (es. legata a una risposta del sondaggio): smette di riproporla come
      * suggerimento, passa alla stima generica basata sul ritmo di riempimento.
      */
-    public function rejectQuotaDemographic(Request $request)
+    public function rejectQuotaDemographic(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
     {
         $validated = $request->validate([
             'prj' => 'required|string',
@@ -714,7 +735,91 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
             ]
         );
 
-        return response()->json(['success' => true]);
+        return $this->rispostaFattibilitaQuote($validated['prj'], $validated['sid'], $primis, $sreService);
+    }
+
+    /**
+     * Conferma in un colpo solo tutti i suggerimenti sesso/età ancora in
+     * attesa per questa ricerca (bottone "Conferma tutte" nella modale).
+     */
+    public function confirmAllQuotaDemographic(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
+    {
+        $validated = $request->validate([
+            'prj' => 'required|string',
+            'sid' => 'required|string',
+        ]);
+
+        $prj = $validated['prj'];
+        $sid = $validated['sid'];
+
+        $questionMap = $this->buildQuestionMap($primis, $prj, $sid);
+        $quotaData = $this->getQuotaData($prj, $sid, $sreService, $questionMap);
+        $mappingRows = DB::table('t_quota_demographic_mapping')->where('sid', $sid)->pluck('quota_name')->all();
+
+        $now = now();
+        $batch = [];
+
+        foreach ($quotaData as $quota) {
+            if ($quota->quota === 'Interviste Totali' || in_array($quota->quota_raw, $mappingRows, true)) {
+                continue;
+            }
+
+            $suggestion = $this->guessQuotaDemographic($quota->quota_raw);
+
+            if ($suggestion === null) {
+                continue;
+            }
+
+            $batch[] = [
+                'prj' => $prj,
+                'sid' => $sid,
+                'quota_name' => $quota->quota_raw,
+                'tipo' => $suggestion['tipo'],
+                'filtro' => json_encode($suggestion['filtro']),
+                'confirmed_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if (!empty($batch)) {
+            DB::table('t_quota_demographic_mapping')->insert($batch);
+        }
+
+        return $this->rispostaFattibilitaQuote($prj, $sid, $primis, $sreService);
+    }
+
+    /**
+     * Ricalcola "Stima interviste e disponibilita' panel" + fattibilita' per
+     * quota e restituisce tutto cio' che serve al JS per aggiornare la
+     * pagina senza un reload completo, dopo conferma/rifiuto di un
+     * suggerimento (vedi public/js/fieldControl.js::bindQuotaDemographicConfirm()).
+     */
+    private function rispostaFattibilitaQuote(string $prj, string $sid, PrimisApiService $primis, FieldControlSreService $sreService)
+    {
+        $stima = $this->buildStimaEFattibilita($prj, $sid, $primis, $sreService);
+
+        $quotaData = $stima['quotaData'];
+        $stimaAggiuntive = $stima['stimaVincolataDaQuote'] ?? $stima['stimaInterviste'] ?? 0;
+        $raccolte = (int) ($stima['panelCounts']['Interactive']['complete'] ?? 0);
+
+        $rowsHtml = view('partials.field-quota-fattibilita-rows', [
+            'quotaData' => $quotaData,
+            'quotaVincolante' => $stima['quotaVincolante'],
+        ])->render();
+
+        $haSuggerimentiInAttesa = $quotaData->contains(function ($quota) {
+            return !empty($quota->demographic_suggestion);
+        });
+
+        return response()->json([
+            'success' => true,
+            'rows_html' => $rowsHtml,
+            'stima_aggiuntive' => $stimaAggiuntive,
+            'max_raggiungibile' => $raccolte + $stimaAggiuntive,
+            'quota_vincolante' => $stima['quotaVincolante'],
+            'ha_suggerimenti_in_attesa' => $haSuggerimentiInAttesa,
+        ]);
     }
 
     public function updateQuotaTotalInterviews(Request $request, FieldControlSreService $sreService)
@@ -1183,7 +1288,13 @@ private function calcolaFattibilitaQuote(
         $item->fattibilita = null;
         $item->fattibilita_tipo = null;
 
-        if ($mapping && $mapping->tipo !== 'none') {
+        if ($item->quota === 'Interviste Totali') {
+            // E' l'obiettivo generale della ricerca (stesso concetto di
+            // "Max raggiungibile" mostrato altrove in pagina), non una vera
+            // quota su un sottoinsieme di persone: non deve entrare nel
+            // meccanismo di vincolo sul totale, ne' avere una sua "fattibilita'".
+            $item->fattibilita_tipo = 'obiettivo_generale';
+        } elseif ($mapping && $mapping->tipo !== 'none') {
             $filtro = json_decode($mapping->filtro, true) ?: [];
             $disponibiliQuota = $this->contaDisponibiliConFiltro($sid, $panelTarget, $filtro);
             $stimaRiga = max(0, round($disponibiliQuota * ($valoreUtilizzato / 100) * ($irInteractive / 100)));

@@ -963,15 +963,13 @@
                             <div class="fc-stima-item">
                                 <div class="fc-stima-label">
                                     <i class="fa-solid fa-arrow-trend-up me-1"></i>Stima aggiuntive
-                                    @if($quotaVincolante)
-                                        <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip" title="{{ $quotaVincolante }}" style="opacity:.5; font-size:.85em"></i>
-                                    @endif
+                                    <i class="fas fa-info-circle ms-1 {{ $quotaVincolante ? '' : 'd-none' }}" id="fcStimaQuotaVincolanteInfo" data-bs-toggle="tooltip" title="{{ $quotaVincolante }}" style="opacity:.5; font-size:.85em"></i>
                                 </div>
-                                <div class="fc-stima-value text-primary">+{{ $_stimaMostrata }}</div>
+                                <div class="fc-stima-value text-primary" id="fcStimaAggiuntiveValue">+{{ $_stimaMostrata }}</div>
                             </div>
                             <div class="fc-stima-item">
                                 <div class="fc-stima-label"><i class="fa-solid fa-flag-checkered me-1"></i>Max raggiungibile</div>
-                                <div class="fc-stima-value">{{ $_stTot }}</div>
+                                <div class="fc-stima-value" id="fcMaxRaggiungibileValue">{{ $_stTot }}</div>
                             </div>
                         @endif
                     </div>
@@ -1625,49 +1623,21 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
             <div class="modal-body">
-                <div class="fc-quote-fattibilita-modal-list">
-                    @foreach ($quotaData as $quota)
-                        @php
-                            $isQuotaVincolante = $quotaVincolante && strpos($quotaVincolante, '"' . $quota->quota . '"') !== false;
-                        @endphp
-                        <div class="fc-quote-fattibilita-row {{ $isQuotaVincolante ? 'is-vincolante' : '' }}">
-                            <span class="fc-quote-fattibilita-label">
-                                {{ $quota->quota }}
-                                @if($isQuotaVincolante)
-                                    <span class="fc-quote-vincolante-badge" data-bs-toggle="tooltip" title="{{ $quotaVincolante }}">
-                                        <i class="fas fa-triangle-exclamation"></i>
-                                    </span>
-                                @endif
-                            </span>
-
-                            @if($quota->demographic_confirmed)
-                                <span class="fc-quote-fattibilita-pill is-demografica"
-                                      data-bs-toggle="tooltip"
-                                      title="Stima basata sulle persone disponibili del panel che corrispondono a questo filtro ({{ ucfirst($quota->demographic_confirmed['tipo']) }}), moltiplicate per l'IR del panel e l'IR del campione.">
-                                    +{{ $quota->fattibilita }} casi
-                                </span>
-                            @elseif(!empty($quota->demographic_suggestion))
-                                <div class="fc-quote-demo-suggest"
-                                     data-quota-name="{{ $quota->quota_raw }}"
-                                     data-quota-tipo="{{ $quota->demographic_suggestion['tipo'] }}"
-                                     data-quota-filtro='@json($quota->demographic_suggestion['filtro'])'>
-                                    <span class="fc-quote-demo-suggest-label">{{ $quota->demographic_suggestion['label'] }}?</span>
-                                    <button type="button" class="fc-quote-demo-btn is-confirm" title="Conferma">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                    <button type="button" class="fc-quote-demo-btn is-reject" title="Non è demografica">
-                                        <i class="fas fa-xmark"></i>
-                                    </button>
-                                </div>
-                            @else
-                                <span class="fc-quote-fattibilita-pill is-generica"
-                                      data-bs-toggle="tooltip"
-                                      title="Quota non agganciata a un dato anagrafico noto: {{ $quota->fattibilita_incidenza ?? 0 }}% dei contatti fatti finora è risultato completo e rientrante in questa quota. Stima = disponibili × IR panel × questa percentuale, entro il limite di quanto manca alla quota.">
-                                    +{{ $quota->fattibilita ?? 0 }} casi
-                                </span>
-                            @endif
-                        </div>
-                    @endforeach
+                @php
+                    $haSuggerimentiInAttesa = $quotaData->contains(function ($quota) {
+                        return !empty($quota->demographic_suggestion);
+                    });
+                @endphp
+                @if($haSuggerimentiInAttesa)
+                    <div class="fc-quote-confirm-all-bar">
+                        <span>Alcune quote sembrano legate a sesso/età: confermale tutte insieme, oppure una alla volta qui sotto.</span>
+                        <button type="button" class="btn btn-sm btn-success" id="quotaConfirmAllBtn">
+                            <i class="fas fa-check-double me-1"></i>Conferma tutte
+                        </button>
+                    </div>
+                @endif
+                <div class="fc-quote-fattibilita-modal-list" id="quotaFattibilitaModalList">
+                    @include('partials.field-quota-fattibilita-rows', ['quotaData' => $quotaData, 'quotaVincolante' => $quotaVincolante])
                 </div>
             </div>
             <div class="modal-footer">

@@ -1028,10 +1028,52 @@
     }
 
     function bindQuotaDemographicConfirm() {
-        const list = document.querySelector('.fc-quote-fattibilita-modal-list');
+        const list = document.getElementById('quotaFattibilitaModalList');
+        const confirmAllBtn = document.getElementById('quotaConfirmAllBtn');
+        const confirmAllBar = document.querySelector('.fc-quote-confirm-all-bar');
 
         if (!list) {
             return;
+        }
+
+        // Applica alla pagina il risultato gia' ricalcolato dal server (righe
+        // della modale + totale "Stima aggiuntive"/"Max raggiungibile"), senza
+        // ricaricare la pagina.
+        function applyFattibilitaResponse(data) {
+            list.innerHTML = data.rows_html;
+            [].slice.call(list.querySelectorAll('[data-bs-toggle="tooltip"]')).forEach(function (el) {
+                return new bootstrap.Tooltip(el);
+            });
+
+            const stimaEl = document.getElementById('fcStimaAggiuntiveValue');
+            const maxEl = document.getElementById('fcMaxRaggiungibileValue');
+            const infoEl = document.getElementById('fcStimaQuotaVincolanteInfo');
+
+            if (stimaEl) {
+                stimaEl.textContent = '+' + data.stima_aggiuntive;
+            }
+
+            if (maxEl) {
+                maxEl.textContent = data.max_raggiungibile;
+            }
+
+            if (infoEl) {
+                if (data.quota_vincolante) {
+                    infoEl.setAttribute('title', data.quota_vincolante);
+                    infoEl.classList.remove('d-none');
+                    const existingTooltip = bootstrap.Tooltip.getInstance(infoEl);
+                    if (existingTooltip) {
+                        existingTooltip.dispose();
+                    }
+                    new bootstrap.Tooltip(infoEl);
+                } else {
+                    infoEl.classList.add('d-none');
+                }
+            }
+
+            if (confirmAllBar) {
+                confirmAllBar.classList.toggle('d-none', !data.ha_suggerimenti_in_attesa);
+            }
         }
 
         list.addEventListener('click', function (event) {
@@ -1074,11 +1116,7 @@
                 })
                 .then(function (data) {
                     if (data.success) {
-                        // La conferma/rifiuto puo' cambiare anche il totale
-                        // "Stima aggiuntive" (quote che si incrociano): piu'
-                        // semplice e sicuro ricaricare che aggiornare a mano
-                        // tutte le celle che dipendono da questo cambiamento.
-                        window.location.reload();
+                        applyFattibilitaResponse(data);
                         return;
                     }
 
@@ -1091,6 +1129,42 @@
                     alert('Si è verificato un errore di rete.');
                 });
         });
+
+        if (confirmAllBtn) {
+            confirmAllBtn.addEventListener('click', function () {
+                confirmAllBtn.disabled = true;
+                confirmAllBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+                fetch(routes.confirmAllQuotaDemographic, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ prj: prj, sid: sid })
+                })
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        confirmAllBtn.disabled = false;
+                        confirmAllBtn.innerHTML = '<i class="fas fa-check-double me-1"></i>Conferma tutte';
+
+                        if (data.success) {
+                            applyFattibilitaResponse(data);
+                            return;
+                        }
+
+                        alert(data.message || 'Errore durante il salvataggio.');
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        confirmAllBtn.disabled = false;
+                        confirmAllBtn.innerHTML = '<i class="fas fa-check-double me-1"></i>Conferma tutte';
+                        alert('Si è verificato un errore di rete.');
+                    });
+            });
+        }
     }
 
     function bindQuotaTargetsModal() {
