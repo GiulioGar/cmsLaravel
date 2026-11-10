@@ -950,11 +950,14 @@
                             @php
                                 $_stimaMostrata = $stimaVincolataDaQuote ?? $stimaInterviste;
                                 $_stTot = $_stC + $_stimaMostrata;
-                                $_ringPct = $_stTot > 0 ? min(100, round($_stC / $_stTot * 100)) : 0;
+                                $_raccoltePct = $_stTot > 0 ? min(100, round($_stC / $_stTot * 100)) : 0;
+                                $_aggiuntivePct = $_stTot > 0 ? max(0, 100 - $_raccoltePct) : 0;
                             @endphp
-                            <div class="fc-metric-ring-visual fc-stima-ring" style="--ring-pct: {{ $_ringPct }}" id="fcStimaRingVisual"
-                                 data-bs-toggle="tooltip" title="Quota del massimo raggiungibile già coperta dalle interviste raccolte">
-                                <span id="fcStimaRingValue">{{ $_ringPct }}%</span>
+                            <div class="fc-qf-progress fc-stima-progress" id="fcStimaProgress">
+                                <div class="fc-qf-progress-fill is-entrate" id="fcStimaProgressRaccolte" style="width: {{ $_raccoltePct }}%"></div>
+                                @if($_aggiuntivePct > 0)
+                                    <div class="fc-qf-progress-fill is-proiettato" id="fcStimaProgressAggiuntive" style="width: {{ $_aggiuntivePct }}%; left: {{ $_raccoltePct }}%"></div>
+                                @endif
                             </div>
                         @endif
 

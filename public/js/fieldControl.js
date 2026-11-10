@@ -1057,14 +1057,18 @@
                 maxEl.textContent = data.max_raggiungibile;
             }
 
-            const ringEl = document.getElementById('fcStimaRingVisual');
-            const ringValueEl = document.getElementById('fcStimaRingValue');
+            const raccolteBarEl = document.getElementById('fcStimaProgressRaccolte');
+            const aggiuntiveBarEl = document.getElementById('fcStimaProgressAggiuntive');
 
-            if (ringEl && ringValueEl && data.max_raggiungibile > 0) {
+            if (raccolteBarEl && data.max_raggiungibile > 0) {
                 const raccolte = data.max_raggiungibile - data.stima_aggiuntive;
-                const ringPct = Math.min(100, Math.round((raccolte / data.max_raggiungibile) * 100));
-                ringEl.style.setProperty('--ring-pct', ringPct);
-                ringValueEl.textContent = ringPct + '%';
+                const raccoltePct = Math.min(100, Math.round((raccolte / data.max_raggiungibile) * 100));
+                raccolteBarEl.style.width = raccoltePct + '%';
+
+                if (aggiuntiveBarEl) {
+                    aggiuntiveBarEl.style.width = Math.max(0, 100 - raccoltePct) + '%';
+                    aggiuntiveBarEl.style.left = raccoltePct + '%';
+                }
             }
 
             if (infoEl) {

@@ -4503,16 +4503,15 @@ h3 {font-size: 15px!important;}
 
 .fc-stima-main{
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column;
+    gap: .7rem;
 }
 
-.fc-stima-ring{
-    cursor: help;
+.fc-stima-progress{
+    height: 10px;
 }
 
 .fc-stima-grid{
-    flex: 1 1 auto;
     display: grid;
     grid-template-columns: repeat(3, minmax(0,1fr));
     gap: .6rem;
@@ -4587,8 +4586,4 @@ h3 {font-size: 15px!important;}
 
 @media (max-width: 991.98px){
     .fc-stima-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-}
-
-@media (max-width: 575.98px){
-    .fc-stima-main{ flex-wrap: wrap; justify-content: center; }
 }
