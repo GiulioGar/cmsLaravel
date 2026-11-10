@@ -1028,24 +1028,23 @@
     }
 
     function bindQuotaDemographicConfirm() {
-        const tableBody = document.getElementById('quotaFattibilitaTableBody');
+        const list = document.querySelector('.fc-stima-quote-fattibilita-list');
 
-        if (!tableBody) {
+        if (!list) {
             return;
         }
 
-        tableBody.addEventListener('click', function (event) {
-            const confirmBtn = event.target.closest('.quota-demo-btn.is-confirm');
-            const rejectBtn = event.target.closest('.quota-demo-btn.is-reject');
+        list.addEventListener('click', function (event) {
+            const confirmBtn = event.target.closest('.fc-quote-demo-btn.is-confirm');
+            const rejectBtn = event.target.closest('.fc-quote-demo-btn.is-reject');
             const btn = confirmBtn || rejectBtn;
 
             if (!btn) {
                 return;
             }
 
-            const row = btn.closest('tr');
-            const suggestWrap = btn.closest('.quota-demo-suggest');
-            const quotaName = row ? row.getAttribute('data-quota-name') : null;
+            const suggestWrap = btn.closest('.fc-quote-demo-suggest');
+            const quotaName = suggestWrap ? suggestWrap.getAttribute('data-quota-name') : null;
 
             if (!quotaName) {
                 return;

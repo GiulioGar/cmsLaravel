@@ -788,13 +788,12 @@
                                 <th class="text-center"><i class="fa-solid fa-bullseye me-1"></i>Totale</th>
                                 <th class="text-center"><i class="fa-solid fa-arrow-trend-up me-1"></i>Entrate / IR</th>
                                 <th class="text-center"><i class="fa-solid fa-triangle-exclamation me-1"></i>Missing</th>
-                                <th class="text-center"><i class="fa-solid fa-chart-pie me-1"></i>Fattibilità</th>
                             </tr>
                         </thead>
-                        <tbody id="quotaFattibilitaTableBody">
+                        <tbody>
                         @if($quotaData->isEmpty())
                             <tr>
-                                <td colspan="5" class="p-0">
+                                <td colspan="4" class="p-0">
                                     <div class="fc-empty-inline">
                                         <div class="fc-empty-icon sm">
                                             <i class="fas fa-layer-group"></i>
@@ -828,7 +827,7 @@
                     }
                 @endphp
 
-                <tr class="quota-row {{ $isTotalRow ? 'quota-row-total' : '' }}" data-quota-name="{{ $quota->quota_raw }}">
+                <tr class="quota-row {{ $isTotalRow ? 'quota-row-total' : '' }}">
                     <td>
                         <div class="quota-name-wrap">
                             <div class="quota-name">
@@ -877,34 +876,6 @@
                         @else
                             <span class="quota-missing-pill is-ok">
                                 <i class="fas fa-check me-1"></i>0
-                            </span>
-                        @endif
-                    </td>
-
-                    <td class="text-center quota-fattibilita-cell">
-                        @if($isTotalRow)
-                            <span class="quota-fattibilita-dash">—</span>
-                        @elseif($quota->demographic_confirmed)
-                            <span class="quota-fattibilita-pill is-demografica"
-                                  data-bs-toggle="tooltip"
-                                  title="Stima basata sulle persone disponibili del panel che corrispondono a questo filtro ({{ ucfirst($quota->demographic_confirmed['tipo']) }}).">
-                                +{{ $quota->fattibilita }}
-                            </span>
-                        @elseif(!empty($quota->demographic_suggestion))
-                            <div class="quota-demo-suggest" data-quota-tipo="{{ $quota->demographic_suggestion['tipo'] }}" data-quota-filtro='@json($quota->demographic_suggestion['filtro'])'>
-                                <span class="quota-demo-suggest-label">{{ $quota->demographic_suggestion['label'] }}?</span>
-                                <button type="button" class="quota-demo-btn is-confirm" title="Conferma">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                                <button type="button" class="quota-demo-btn is-reject" title="Non è demografica">
-                                    <i class="fas fa-xmark"></i>
-                                </button>
-                            </div>
-                        @else
-                            <span class="quota-fattibilita-pill is-generica"
-                                  data-bs-toggle="tooltip"
-                                  title="Stima generica: proietta sul totale residuo l'incidenza osservata finora ({{ $quota->fattibilita_incidenza ?? 0 }}% delle interviste completate finora rientrava in questa quota).">
-                                {{ $quota->fattibilita_incidenza ?? 0 }}%
                             </span>
                         @endif
                     </td>
@@ -1018,9 +989,52 @@
                         </div>
                     </div>
 
+                    @if($quotaData->isNotEmpty())
+                        <div class="fc-stima-quote-fattibilita mt-3">
+                            <div class="fc-stima-quote-fattibilita-head">
+                                <i class="fa-solid fa-chart-pie me-1"></i>Fattibilità per quota
+                            </div>
+                            <div class="fc-stima-quote-fattibilita-list">
+                                @foreach ($quotaData as $quota)
+                                    @continue($quota->quota === 'Interviste Totali')
+                                    <div class="fc-quote-fattibilita-row">
+                                        <span class="fc-quote-fattibilita-label">{{ $quota->quota }}</span>
+
+                                        @if($quota->demographic_confirmed)
+                                            <span class="fc-quote-fattibilita-pill is-demografica"
+                                                  data-bs-toggle="tooltip"
+                                                  title="Stima basata sulle persone disponibili del panel che corrispondono a questo filtro ({{ ucfirst($quota->demographic_confirmed['tipo']) }}).">
+                                                +{{ $quota->fattibilita }}
+                                            </span>
+                                        @elseif(!empty($quota->demographic_suggestion))
+                                            <div class="fc-quote-demo-suggest"
+                                                 data-quota-name="{{ $quota->quota_raw }}"
+                                                 data-quota-tipo="{{ $quota->demographic_suggestion['tipo'] }}"
+                                                 data-quota-filtro='@json($quota->demographic_suggestion['filtro'])'>
+                                                <span class="fc-quote-demo-suggest-label">{{ $quota->demographic_suggestion['label'] }}?</span>
+                                                <button type="button" class="fc-quote-demo-btn is-confirm" title="Conferma">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button type="button" class="fc-quote-demo-btn is-reject" title="Non è demografica">
+                                                    <i class="fas fa-xmark"></i>
+                                                </button>
+                                            </div>
+                                        @else
+                                            <span class="fc-quote-fattibilita-pill is-generica"
+                                                  data-bs-toggle="tooltip"
+                                                  title="Stima generica: proietta sul totale residuo l'incidenza osservata finora ({{ $quota->fattibilita_incidenza ?? 0 }}% delle interviste completate finora rientrava in questa quota).">
+                                                {{ $quota->fattibilita_incidenza ?? 0 }}%
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="fc-stima-note">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <span>La stima non considera eventuali chiusure di quote ed è relativa al panel Interactive.</span>
+                        <span>È relativa al panel Interactive{{ $quotaData->isNotEmpty() ? '; la fattibilità per quota qui sopra è una stima, non una garanzia' : '' }}.</span>
                     </div>
                 @else
                     <div class="fc-empty-card">

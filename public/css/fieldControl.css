@@ -2280,69 +2280,104 @@ h3 {font-size: 15px!important;}
   box-shadow: 0 4px 10px rgba(16,185,129,.16);
 }
 
-.quota-fattibilita-dash{
-  color: #cbd5e1;
-  font-weight: 700;
+/* ---- Stima interviste: fattibilita' per quota ---- */
+.fc-stima-quote-fattibilita{
+  border-top: 1px dashed rgba(22,163,74,.25);
+  padding-top: .6rem;
 }
 
-.quota-fattibilita-pill{
+.fc-stima-quote-fattibilita-head{
+  font-size: .72rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: .5rem;
+}
+
+.fc-stima-quote-fattibilita-list{
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.fc-quote-fattibilita-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  min-width: 0;
+}
+
+.fc-quote-fattibilita-label{
+  font-size: .72rem;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.fc-quote-fattibilita-pill{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 54px;
-  height: 26px;
-  padding: 0 .55rem;
-  border-radius: 8px;
-  font-size: .74rem;
+  min-width: 46px;
+  height: 22px;
+  padding: 0 .5rem;
+  border-radius: 7px;
+  font-size: .7rem;
   font-weight: 800;
   cursor: help;
+  flex: none;
 }
 
-.quota-fattibilita-pill.is-demografica{
+.fc-quote-fattibilita-pill.is-demografica{
   background: rgba(37,99,235,.12);
   color: var(--fc-accent-blue, #2563eb);
 }
 
-.quota-fattibilita-pill.is-generica{
+.fc-quote-fattibilita-pill.is-generica{
   background: #f1f5f9;
   color: #64748b;
 }
 
-.quota-demo-suggest{
+.fc-quote-demo-suggest{
   display: inline-flex;
   align-items: center;
   gap: .3rem;
   background: #fffbeb;
   border: 1px solid #fde68a;
-  border-radius: 8px;
-  padding: .2rem .4rem;
+  border-radius: 7px;
+  padding: .15rem .35rem;
+  flex: none;
 }
 
-.quota-demo-suggest-label{
-  font-size: .68rem;
+.fc-quote-demo-suggest-label{
+  font-size: .66rem;
   font-weight: 700;
   color: #92400e;
   white-space: nowrap;
 }
 
-.quota-demo-btn{
+.fc-quote-demo-btn{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
   border: none;
-  font-size: .64rem;
+  font-size: .6rem;
   flex: none;
 }
 
-.quota-demo-btn.is-confirm{
+.fc-quote-demo-btn.is-confirm{
   background: #10b981;
   color: #fff;
 }
 
-.quota-demo-btn.is-reject{
+.fc-quote-demo-btn.is-reject{
   background: #e2e8f0;
   color: #475569;
 }
