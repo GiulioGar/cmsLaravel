@@ -1452,7 +1452,7 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
         return $line ? explode(';', $line) : [];
     }
 
-    private function getSreColumnMap(array $data): array
+    public function getSreColumnMap(array $data): array
     {
         $hasVersion = isset($data[0]) && $data[0] === '2.0';
 

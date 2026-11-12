@@ -47,6 +47,13 @@
                 </ul>
             </li>
 
+            <!-- Panoramica -->
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('panoramica.index', ['prj' => $prj, 'sid' => $sid]) }}">
+                    <i class="fas fa-magnifying-glass-chart me-1"></i> Panoramica
+                </a>
+            </li>
+
             <!-- Imposta Target -->
             <li class="nav-item">
                 <a class="nav-link"
@@ -385,7 +392,7 @@
                         <span class="fc-header-mini-icon"><i class="fa-solid fa-arrows-down-to-people"></i></span>
                         <div>
                             <span class="fc-header-mini-key">Target</span>
-                            <span class="fc-header-mini-val">
+                            <span class="fc-header-mini-val fc-target-row">
                                 <span class="fc-target-sex" data-bs-toggle="tooltip" title="Target: {{ $sexLabel }}">
                                     @foreach($sexIcons as $sexIcon)
                                         <i class="{{ $sexIcon }}"></i>

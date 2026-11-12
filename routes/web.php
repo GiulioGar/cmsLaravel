@@ -7,6 +7,7 @@ use App\Http\Controllers\SurveyController;
 use App\Http\Controllers\FieldControlController;
 use App\Http\Controllers\PrimisController;
 use App\Http\Controllers\TargetFieldController;
+use App\Http\Controllers\PanoramicaController;
 use App\Http\Controllers\FieldQualityController;
 use App\Http\Controllers\CampionamentoController;
 use App\Http\Controllers\AbilitaUidController;
@@ -217,6 +218,12 @@ Route::middleware(['auth.custom'])->group(function () {
     Route::get('/fieldControl/targetField/fetchTargets', [TargetFieldController::class, 'fetchTargets'])->name('targetField.fetchTargets');
     Route::post('/fieldControl/targetField/addTarget', [TargetFieldController::class, 'addTarget'])->name('targetField.addTarget');
     Route::post('/fieldControl/targetField/assignTarget', [TargetFieldController::class, 'assignTarget'])->name('targetField.assignTarget');
+
+    // ============================================
+    // PANORAMICA (analisi field domanda per domanda)
+    // ============================================
+    Route::get('/fieldControl/panoramica', [PanoramicaController::class, 'index'])->name('panoramica.index');
+    Route::get('/fieldControl/panoramica/question', [PanoramicaController::class, 'question'])->name('panoramica.question');
 
     // ============================================
     // PREMI PANEL

@@ -43,6 +43,13 @@
                 </ul>
             </li>
 
+            <!-- Panoramica -->
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('panoramica.index', ['prj' => $prj, 'sid' => $sid]) }}">
+                    <i class="fas fa-magnifying-glass-chart me-1"></i> Panoramica
+                </a>
+            </li>
+
             <!-- Imposta Target -->
             <li class="nav-item">
                 <a class="nav-link"

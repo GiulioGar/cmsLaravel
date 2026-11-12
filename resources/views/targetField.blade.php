@@ -43,6 +43,11 @@ use Illuminate\Support\Str;
                     </ul>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="{{ route('panoramica.index', ['prj' => $prj, 'sid' => $sid]) }}">
+                        <i class="fas fa-magnifying-glass-chart me-1"></i> Panoramica
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link active" href="#">
                         <i class="fas fa-bullseye me-1"></i> Imposta Target
                     </a>
