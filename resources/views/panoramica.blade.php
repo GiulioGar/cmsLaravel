@@ -13,6 +13,7 @@ $typeLabels = [
     'open'   => 'Aperta',
 ];
 $crossVariables = $summary['variables'] ?? [];
+$sospese = max(0, ($summary['files'] ?? 0) - ($summary['complete'] ?? 0) - ($summary['screenout'] ?? 0) - ($summary['quotafull'] ?? 0));
 
 // Menu laterale: le domande in loop (stesso prefisso SDL) diventano una famiglia,
 // posizionata dove compare il primo elemento
@@ -117,6 +118,10 @@ foreach ($sidebarEntries as $i => $entry) {
                 <span class="pn-kpi-icon"><i class="fas fa-arrow-trend-up"></i></span>
                 <div><span class="pn-kpi-val">{{ number_format($summary['quotafull'] ?? 0, 0, ',', '.') }}</span><span class="pn-kpi-key">Quotafull</span></div>
             </div>
+            <div class="pn-kpi pn-kpi--pending">
+                <span class="pn-kpi-icon"><i class="fas fa-hourglass-half"></i></span>
+                <div><span class="pn-kpi-val">{{ number_format($sospese, 0, ',', '.') }}</span><span class="pn-kpi-key">Sospese / in corso</span></div>
+            </div>
             <div class="pn-kpi">
                 <span class="pn-kpi-icon"><i class="fas fa-file-lines"></i></span>
                 <div><span class="pn-kpi-val">{{ number_format($summary['files'] ?? 0, 0, ',', '.') }}</span><span class="pn-kpi-key">Interviste totali</span></div>
@@ -152,19 +157,27 @@ foreach ($sidebarEntries as $i => $entry) {
                                 $familyExits += ($perQuestion[$fq['id']]['screenout'] ?? 0) + ($perQuestion[$fq['id']]['quotafull'] ?? 0);
                             }
                             $first = $entry['questions'][0];
+                            $familyTextShort = Str::limit($first['text'], 110, '…');
+                            $familyTextTruncated = $familyTextShort !== $first['text'];
                         @endphp
                         <div class="pn-qfamily" data-family="{{ $entry['prefix'] }}">
-                            <button type="button" class="pn-qfamily-head" aria-expanded="false" title="{{ $first['text'] }}">
-                                <span class="pn-qitem-type"><i class="fas fa-repeat"></i></span>
-                                <span class="pn-qitem-body">
-                                    <span class="pn-qitem-code">{{ rtrim($entry['prefix'], '.') }} <span class="pn-qfamily-count">loop · {{ count($entry['questions']) }}</span></span>
-                                    <span class="pn-qitem-text">{{ $first['text'] }}</span>
-                                </span>
-                                @if($familyExits > 0)
-                                    <span class="pn-qitem-exits" title="Uscite su queste domande">{{ $familyExits }}</span>
-                                @endif
-                                <i class="fas fa-chevron-down pn-qfamily-caret"></i>
-                            </button>
+                            <div class="pn-qfamily-row">
+                                <button type="button" class="pn-qfamily-head" aria-expanded="false">
+                                    <span class="pn-qitem-type"><i class="fas fa-repeat"></i></span>
+                                    <span class="pn-qitem-body">
+                                        <span class="pn-qitem-code">{{ rtrim($entry['prefix'], '.') }} <span class="pn-qfamily-count">loop · {{ count($entry['questions']) }}</span></span>
+                                        <span class="pn-qitem-text"@if($familyTextTruncated) data-bs-toggle="tooltip" data-bs-custom-class="pn-text-tooltip" title="{{ $first['text'] }}"@endif>{{ $familyTextShort }}</span>
+                                    </span>
+                                    @if($familyExits > 0)
+                                        <span class="pn-qitem-exits" title="Uscite su queste domande">{{ $familyExits }}</span>
+                                    @endif
+                                    <i class="fas fa-chevron-down pn-qfamily-caret"></i>
+                                </button>
+                                <button type="button" class="pn-qfamily-agg-btn" data-family-agg="{{ $entry['prefix'] }}"
+                                        data-bs-toggle="tooltip" data-bs-custom-class="pn-text-tooltip" title="Vista aggregata: confronta tutte le domande del ciclo in un unico grafico">
+                                    <i class="fas fa-chart-column"></i>
+                                </button>
+                            </div>
                             <div class="pn-qfamily-items">
                                 @foreach($entry['questions'] as $fq)
                                     @include('partials.panoramica-qitem', ['q' => $fq, 'inFamily' => true])
@@ -292,6 +305,27 @@ foreach ($sidebarEntries as $i => $entry) {
                 </section>
             </div>
 
+            <div id="pnFamilyContent" class="d-none">
+                <section class="pn-card pn-qcard">
+                    <div class="pn-qcard-top">
+                        <span class="pn-qcard-code" id="pnFamCode"></span>
+                        <span class="pn-chip pn-chip--cross"><i class="fas fa-repeat me-1"></i>Vista aggregata · loop</span>
+                    </div>
+                    <div class="pn-qcard-text" id="pnFamText"></div>
+                </section>
+
+                <section class="pn-card">
+                    <div class="pn-card-head pn-card-head--cross">
+                        <div class="pn-card-title"><i class="fas fa-ranking-star pn-ico pn-ico--cross"></i>Classifica tra le domande del ciclo</div>
+                    </div>
+                    <div id="pnFamNav"></div>
+                    <div class="pn-card-body">
+                        <div class="pn-xs-chart" id="pnFamChart"></div>
+                        <div class="pn-legend-note" id="pnFamNote"></div>
+                    </div>
+                </section>
+            </div>
+
             <div class="pn-loading d-none" id="pnLoading">
                 <div class="spinner-border" role="status"></div>
                 <span>Analisi in corso...</span>
@@ -308,7 +342,8 @@ foreach ($sidebarEntries as $i => $entry) {
     window.PanoramicaConfig = {
         prj: @json($prj),
         sid: @json($sid),
-        questionUrl: @json(route('panoramica.question'))
+        questionUrl: @json(route('panoramica.question')),
+        familyUrl: @json(route('panoramica.family'))
     };
 </script>
 <script src="{{ asset('js/panoramica.js') }}?v={{ @filemtime(public_path('js/panoramica.js')) }}"></script>

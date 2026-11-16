@@ -67,4 +67,33 @@ class PanoramicaController extends Controller
             'data' => $panoramica->analyzeQuestion($prj, $sid, $question, $cross),
         ]);
     }
+
+    /**
+     * Vista aggregata di una famiglia loop (es. Q12p per tutti i personaggi):
+     * una riga per domanda del ciclo, invece di aprirle una per una.
+     */
+    public function family(Request $request, PrimisApiService $primis, PanoramicaService $panoramica)
+    {
+        $prj = (string) $request->query('prj');
+        $sid = (string) $request->query('sid');
+        $prefix = (string) $request->query('prefix');
+
+        if ($prj === '' || $sid === '' || $prefix === '') {
+            return response()->json(['success' => false, 'message' => 'Parametri mancanti (prj, sid o prefix).']);
+        }
+
+        $catalog = $panoramica->getQuestionCatalog($primis, $prj, $sid);
+        $members = array_values(array_filter($catalog, function ($q) use ($prefix) {
+            return ($q['loop'] ?? null) === $prefix;
+        }));
+
+        if (count($members) < 2) {
+            return response()->json(['success' => false, 'message' => 'Famiglia non trovata.']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $panoramica->analyzeFamily($prj, $sid, $members),
+        ]);
+    }
 }

@@ -34,6 +34,10 @@
     --pn-cross: #7c3aed;
     --pn-cross-soft: #f5f3ff;
 
+    --pn-pending: #3b82f6;
+    --pn-pending-soft: #eff6ff;
+    --pn-pending-line: #bfdbfe;
+
     --pn-radius: 14px;
     --pn-shadow: 0 1px 2px rgba(15,30,61,.04), 0 2px 8px rgba(15,30,61,.04);
 }
@@ -149,6 +153,8 @@
 .pn-kpi--screenout .pn-kpi-icon{ background: #fff; color: var(--pn-screenout); }
 .pn-kpi--quotafull{ background: var(--pn-quotafull-soft); border-color: var(--pn-quotafull-line); }
 .pn-kpi--quotafull .pn-kpi-icon{ background: #fff; color: var(--pn-quotafull); }
+.pn-kpi--pending{ background: var(--pn-pending-soft); border-color: var(--pn-pending-line); }
+.pn-kpi--pending .pn-kpi-icon{ background: #fff; color: var(--pn-pending); }
 
 /* ---------- Layout ---------- */
 .pn-layout{
@@ -260,6 +266,16 @@
 }
 
 /* Famiglie loop */
+.pn-qfamily-row{ display: flex; align-items: stretch; gap: .3rem; }
+.pn-qfamily-row .pn-qfamily-head{ flex: 1 1 auto; min-width: 0; width: auto; }
+.pn-qfamily-agg-btn{
+    flex: none; align-self: center; margin-right: .4rem;
+    width: 30px; height: 30px; border-radius: 8px;
+    border: 1px solid var(--pn-line); background: #fff; color: var(--pn-cross);
+    display: flex; align-items: center; justify-content: center; font-size: .8rem;
+}
+.pn-qfamily-agg-btn:hover{ background: var(--pn-cross-soft); border-color: var(--pn-cross); }
+.pn-qfamily.is-agg-active .pn-qfamily-agg-btn{ background: var(--pn-cross); border-color: var(--pn-cross); color: #fff; }
 .pn-qfamily-head .pn-qitem-type{ background: var(--pn-cross-soft); color: var(--pn-cross); }
 .pn-qfamily-count{
     display: inline-block; margin-left: .3rem; padding: .02rem .45rem; border-radius: 999px;
@@ -307,6 +323,8 @@
 .pn-qstat--screenout i{ color: var(--pn-screenout); }
 .pn-qstat--quotafull{ background: var(--pn-quotafull-soft); }
 .pn-qstat--quotafull i{ color: var(--pn-quotafull); }
+.pn-qstat--pending{ background: var(--pn-pending-soft); }
+.pn-qstat--pending i{ color: var(--pn-pending); }
 
 /* ---------- Report complete + Uscite affiancati ---------- */
 .pn-duo{ display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 1rem; align-items: start; }
@@ -333,9 +351,29 @@
 }
 .pn-bar.is-top .pn-bar-fill{ background: var(--pn-complete); }
 .pn-bar.is-zero .pn-bar-label{ color: var(--pn-faint); font-weight: 500; }
-.pn-bar-val{ min-width: 64px; text-align: right; font-variant-numeric: tabular-nums; line-height: 1.25; }
-.pn-bar-pct{ display: block; font-weight: 800; font-size: .92rem; color: var(--pn-ink); }
-.pn-bar-n{ display: block; font-size: .8rem; color: var(--pn-muted); }
+.pn-bar-val{ min-width: 84px; text-align: right; font-variant-numeric: tabular-nums; line-height: 1.25; white-space: nowrap; }
+.pn-bar-n{ font-weight: 800; font-size: .92rem; color: var(--pn-ink); }
+.pn-bar-pct{ margin-left: .3rem; font-size: .8rem; font-weight: 600; color: var(--pn-muted); }
+.pn-bars--screenout .pn-bar-val,
+.pn-bars--quotafull .pn-bar-val{ min-width: 180px; white-space: normal; }
+.pn-bar-global{ display: block; margin-top: .15rem; font-size: .72rem; font-weight: 600; color: var(--pn-faint); white-space: nowrap; }
+
+.pn-text-tooltip .tooltip-inner{
+    max-width: 280px;
+    padding: .6rem .8rem;
+    background: var(--pn-ink);
+    color: #f1f5f9;
+    font-size: .8rem;
+    font-weight: 500;
+    line-height: 1.45;
+    text-align: left;
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(15,30,61,.22);
+}
+.pn-text-tooltip .tooltip-arrow::before{
+    border-top-color: var(--pn-ink) !important;
+    border-bottom-color: var(--pn-ink) !important;
+}
 
 .pn-bars--screenout .pn-bar-fill{ background: var(--pn-screenout); }
 .pn-bars--quotafull .pn-bar-fill{ background: var(--pn-quotafull); }
@@ -383,9 +421,17 @@
 .pn-exit-main-key{ font-size: .86rem; font-weight: 700; color: var(--pn-screenout); }
 .pn-exit--quotafull .pn-exit-main{ border-color: var(--pn-quotafull-line); background: var(--pn-quotafull-soft); }
 .pn-exit--quotafull .pn-exit-main-key{ color: var(--pn-quotafull); }
-.pn-exit-kpi{ padding: .45rem .2rem; min-width: 0; }
-.pn-exit-kpi-val{ display: block; font-size: 1.1rem; font-weight: 800; color: var(--pn-ink); font-variant-numeric: tabular-nums; }
-.pn-exit-kpi-key{ display: block; font-size: .8rem; color: var(--pn-muted); line-height: 1.35; }
+.pn-exit-kpi{
+    padding: .55rem .7rem; min-width: 0;
+    border-radius: 11px; border: 1px solid var(--pn-line); background: var(--pn-bg-soft);
+}
+.pn-exit-kpi-val{
+    display: flex; align-items: center; gap: .4rem;
+    font-size: 1.1rem; font-weight: 800; color: var(--pn-ink); font-variant-numeric: tabular-nums;
+}
+.pn-exit-kpi-val i{ font-size: .8rem; color: var(--pn-faint); }
+.pn-exit-kpi-key{ display: block; margin-top: .1rem; font-size: .8rem; color: var(--pn-muted); line-height: 1.35; }
+.pn-exit-kpi-base{ color: var(--pn-faint); font-weight: 600; }
 .pn-exit-sub{ font-size: .84rem; font-weight: 700; color: var(--pn-text); margin-bottom: .2rem; }
 
 /* ---------- Incrocio ---------- */

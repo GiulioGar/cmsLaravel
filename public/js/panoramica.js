@@ -7,6 +7,7 @@
     var config = window.PanoramicaConfig || {};
     var currentRequest = 0;
     var currentQuestionId = null;
+    var currentFamilyPrefix = null;
     var currentCross = '';
     var trendMode = 'daily';
     var lastData = null;
@@ -81,7 +82,14 @@
         family.querySelector('.pn-qfamily-head').setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
+    function initTextTooltips(root) {
+        [].slice.call((root || document).querySelectorAll('[data-bs-toggle="tooltip"]')).forEach(function (el) {
+            return new bootstrap.Tooltip(el);
+        });
+    }
+
     function initSidebar() {
+        initTextTooltips();
         $('pnQuestionSearch').addEventListener('input', applySidebarFilter);
 
         document.querySelectorAll('.pn-filter-btn').forEach(function (btn) {
@@ -101,8 +109,15 @@
 
         document.querySelectorAll('.pn-qfamily-head').forEach(function (head) {
             head.addEventListener('click', function () {
-                var family = head.parentNode;
+                var family = head.closest('.pn-qfamily');
                 setFamilyOpen(family, !family.classList.contains('is-open'));
+            });
+        });
+
+        document.querySelectorAll('.pn-qfamily-agg-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                selectFamily(btn.getAttribute('data-family-agg'));
             });
         });
     }
@@ -112,6 +127,7 @@
     --------------------------------------------------------------- */
     function selectQuestion(questionId) {
         currentQuestionId = questionId;
+        currentFamilyPrefix = null;
         syncCrossSelect();
 
         document.querySelectorAll('.pn-qitem').forEach(function (item) {
@@ -120,6 +136,11 @@
             var family = item.closest('.pn-qfamily');
             if (isActive && family) { setFamilyOpen(family, true); }
         });
+        document.querySelectorAll('.pn-qfamily.is-agg-active').forEach(function (family) {
+            family.classList.remove('is-agg-active');
+        });
+
+        $('pnFamilyContent').classList.add('d-none');
 
         try {
             history.replaceState(null, '', '#q=' + questionId + (currentCross ? '&x=' + encodeURIComponent(currentCross) : ''));
@@ -155,8 +176,211 @@
     function showError(message) {
         $('pnPlaceholder').classList.remove('d-none');
         $('pnContent').classList.add('d-none');
+        $('pnFamilyContent').classList.add('d-none');
         $('pnPlaceholder').querySelector('.pn-empty-title').textContent = 'Impossibile caricare la domanda';
         $('pnPlaceholder').querySelector('.pn-empty-sub').textContent = message;
+    }
+
+    /* ---------------------------------------------------------------
+       Vista aggregata famiglia loop
+    --------------------------------------------------------------- */
+    var familyState = { key: '', option: 0, row: 0 };
+    var familyChart = null;
+
+    function selectFamily(prefix) {
+        currentFamilyPrefix = prefix;
+        currentQuestionId = null;
+
+        document.querySelectorAll('.pn-qitem.is-active').forEach(function (item) { item.classList.remove('is-active'); });
+        document.querySelectorAll('.pn-qfamily').forEach(function (family) {
+            family.classList.toggle('is-agg-active', family.getAttribute('data-family') === prefix);
+        });
+
+        try { history.replaceState(null, '', '#fam=' + encodeURIComponent(prefix)); } catch (e) { /* ignore */ }
+
+        var requestId = ++currentRequest;
+        $('pnLoading').classList.remove('d-none');
+
+        var url = config.familyUrl
+            + '?prj=' + encodeURIComponent(config.prj)
+            + '&sid=' + encodeURIComponent(config.sid)
+            + '&prefix=' + encodeURIComponent(prefix);
+
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.json(); })
+            .then(function (json) {
+                if (requestId !== currentRequest) { return; }
+                if (!json.success) {
+                    showError(json.message || 'Errore durante l\'analisi.');
+                    return;
+                }
+                renderFamily(prefix, json.data);
+            })
+            .catch(function () {
+                if (requestId === currentRequest) { showError('Errore di rete durante l\'analisi.'); }
+            })
+            .finally(function () {
+                if (requestId === currentRequest) { $('pnLoading').classList.add('d-none'); }
+            });
+    }
+
+    function renderFamily(prefix, data) {
+        if (familyChart) { familyChart.dispose(); familyChart = null; }
+
+        $('pnPlaceholder').classList.add('d-none');
+        $('pnContent').classList.add('d-none');
+        $('pnFamilyContent').classList.remove('d-none');
+
+        $('pnFamCode').textContent = rtrimDot(prefix);
+        $('pnFamText').textContent = fmtInt(data.items.length) + ' domande in loop, confrontate sulle complete che hanno risposto';
+
+        var stateKey = prefix;
+        if (familyState.key !== stateKey) {
+            familyState = { key: stateKey, option: 0, row: 0 };
+        }
+
+        if (data.type === 'choice') { renderFamilyChoice(data); }
+        else if (data.type === 'scale') { renderFamilyScale(data); }
+        else { renderFamilyOpen(data); }
+    }
+
+    function rtrimDot(code) { return code.replace(/\.$/, ''); }
+
+    function familyRanked(items, metric) {
+        return items
+            .map(function (it, idx) { return { idx: idx, item: it, value: metric(it) }; })
+            .filter(function (r) { return r.value !== null; })
+            .sort(function (a, b) { return b.value - a.value; });
+    }
+
+    function familyItemLabel(item) {
+        return item.context || item.code;
+    }
+
+    function renderFamilyBarChart(ranked, valueFormatter, tooltipExtra) {
+        var categories = ranked.map(function (r) { return familyItemLabel(r.item) + '\n{n|base ' + fmtInt(r.item.dist.base) + '}'; });
+        var el = $('pnFamChart');
+        el.style.height = Math.max(200, ranked.length * 34 + 50) + 'px';
+        familyChart = echarts.init(el);
+        familyChart.setOption({
+            animationDuration: 300,
+            grid: { left: 8, right: 56, top: 8, bottom: 8, containLabel: true },
+            tooltip: {
+                trigger: 'axis', axisPointer: { type: 'shadow' },
+                formatter: function (items) {
+                    var r = ranked[items[0].dataIndex];
+                    return '<b>' + esc(familyItemLabel(r.item)) + '</b> · base ' + fmtInt(r.item.dist.base)
+                        + '<br>' + valueFormatter(r.value) + (tooltipExtra ? tooltipExtra(r) : '');
+                }
+            },
+            xAxis: { type: 'value', axisLabel: { color: '#64748b' }, splitLine: { lineStyle: { color: '#eef2f6' } } },
+            yAxis: {
+                type: 'category', inverse: true, data: categories,
+                axisTick: { show: false }, axisLine: { show: false },
+                axisLabel: {
+                    color: '#334155', fontSize: 12, width: 220, overflow: 'break', lineHeight: 15,
+                    rich: { n: { color: '#94a3b8', fontSize: 10 } }
+                }
+            },
+            series: [{
+                type: 'bar', barWidth: 18, data: ranked.map(function (r, pos) {
+                    return { value: r.value, itemStyle: { color: pos === 0 ? '#2563eb' : '#60a5fa', borderRadius: [0, 4, 4, 0], opacity: r.item.dist.base < LOW_BASE ? 0.4 : 1 } };
+                }),
+                label: { show: true, position: 'right', color: '#0f172a', fontWeight: 700, formatter: function (p) { return valueFormatter(p.value); } }
+            }]
+        }, true);
+    }
+
+    function renderFamilyChoice(data) {
+        var options = data.options || [];
+        var indexes = options.map(function (_, idx) { return idx; }).filter(function (idx) {
+            return data.items.some(function (it) { return (it.dist.counts[idx] || 0) > 0; });
+        });
+        if (!indexes.length) {
+            $('pnFamNav').innerHTML = '';
+            $('pnFamChart').innerHTML = emptyInline('Nessuna risposta per questa famiglia di domande');
+            $('pnFamNote').textContent = '';
+            return;
+        }
+        if (indexes.indexOf(familyState.option) === -1) {
+            // Default: la risposta scelta piu' spesso in totale
+            var totals = options.map(function (_, idx) {
+                return data.items.reduce(function (sum, it) { return sum + (it.dist.counts[idx] || 0); }, 0);
+            });
+            familyState.option = indexes.reduce(function (best, idx) { return totals[idx] > totals[best] ? idx : best; }, indexes[0]);
+        }
+        var option = familyState.option;
+
+        $('pnFamNav').innerHTML = optionNavigatorHtml('pnFamOptNav', 'Risposta', options, indexes, option);
+        bindOptionNavigator('pnFamOptNav', indexes, option, function (idx) {
+            familyState.option = idx;
+            renderFamilyChoice(data);
+        });
+
+        var ranked = familyRanked(data.items, function (it) {
+            return it.dist.base > 0 ? Math.round(pct(it.dist.counts[option] || 0, it.dist.base) * 10) / 10 : null;
+        });
+        if (!ranked.length) {
+            $('pnFamChart').innerHTML = emptyInline('Nessuna risposta per questa selezione');
+            $('pnFamNote').textContent = '';
+            return;
+        }
+        renderFamilyBarChart(ranked, function (v) { return fmtNum(v) + '%'; }, function (r) {
+            return '<br>' + esc(labelOf(options, option, 'Opzione')) + ': <b>' + fmtInt(r.item.dist.counts[option] || 0) + '</b>';
+        });
+        $('pnFamNote').textContent = 'Quota di chi ha scelto "' + labelOf(options, option, 'Opzione') + '" per ciascuna domanda del ciclo, ordinate dalla più alta · base inferiore a ' + LOW_BASE + ' in trasparenza';
+    }
+
+    function renderFamilyScale(data) {
+        var rowCount = (data.rows || []).length;
+        var rows = [];
+        for (var r = 0; r < Math.max(1, rowCount); r++) {
+            if (data.items.some(function (it) { return (it.dist.row_bases && it.dist.row_bases[r]) > 0; })) { rows.push(r); }
+        }
+        if (!rows.length) {
+            $('pnFamNav').innerHTML = '';
+            $('pnFamChart').innerHTML = emptyInline('Nessuna risposta per questa famiglia di domande');
+            $('pnFamNote').textContent = '';
+            return;
+        }
+        if (rows.indexOf(familyState.row) === -1) { familyState.row = rows[0]; }
+        var row = familyState.row;
+
+        if (rows.length > 1) {
+            $('pnFamNav').innerHTML = optionNavigatorHtml('pnFamOptNav', 'Riga della griglia', data.rows, rows, row);
+            bindOptionNavigator('pnFamOptNav', rows, row, function (idx) {
+                familyState.row = idx;
+                renderFamilyScale(data);
+            });
+        } else {
+            $('pnFamNav').innerHTML = '';
+        }
+
+        var values = columnValues({ cols: data.cols || [] });
+        var ranked = familyRanked(data.items, function (it) {
+            return rowMean(it.dist, row, values);
+        });
+        if (!ranked.length) {
+            $('pnFamChart').innerHTML = emptyInline('Nessuna risposta per questa selezione');
+            $('pnFamNote').textContent = '';
+            return;
+        }
+        renderFamilyBarChart(ranked, function (v) { return fmtNum(v); });
+        $('pnFamNote').textContent = 'Media delle risposte per ciascuna domanda del ciclo, ordinate dalla più alta · base inferiore a ' + LOW_BASE + ' in trasparenza';
+    }
+
+    function renderFamilyOpen(data) {
+        $('pnFamNav').innerHTML = '';
+        var ranked = familyRanked(data.items, function (it) {
+            return it.dist.stats ? it.dist.stats.mean : null;
+        });
+        if (!ranked.length) {
+            $('pnFamChart').innerHTML = emptyInline('Nessuna risposta numerica per questa famiglia di domande');
+            $('pnFamNote').textContent = '';
+            return;
+        }
+        renderFamilyBarChart(ranked, function (v) { return fmtNum(v); });
+        $('pnFamNote').textContent = 'Media delle risposte numeriche per ciascuna domanda del ciclo, ordinate dalla più alta · base inferiore a ' + LOW_BASE + ' in trasparenza';
     }
 
     /* ---------------------------------------------------------------
@@ -179,7 +403,8 @@
             qstat(data.reached.total, 'arrivati alla domanda', 'fas fa-users', '') +
             qstat(data.reached.complete, 'complete', 'fas fa-circle-check', 'complete') +
             (data.exit_counts.screenout > 0 ? qstat(data.exit_counts.screenout, 'screenout qui', 'fas fa-bullseye', 'screenout') : '') +
-            (data.exit_counts.quotafull > 0 ? qstat(data.exit_counts.quotafull, 'quotafull qui', 'fas fa-arrow-trend-up', 'quotafull') : '');
+            (data.exit_counts.quotafull > 0 ? qstat(data.exit_counts.quotafull, 'quotafull qui', 'fas fa-arrow-trend-up', 'quotafull') : '') +
+            (data.reached.pending > 0 ? qstat(data.reached.pending, 'ancora in corso (sospese)', 'fas fa-hourglass-half', 'pending') : '');
 
         renderComplete(data);
         renderExits(data);
@@ -206,13 +431,13 @@
             + renderDistribution(q, dist, '');
     }
 
-    function renderDistribution(q, dist, variant) {
-        if (q.type === 'choice') { return renderBars(q.options, dist.counts, dist.base, variant); }
+    function renderDistribution(q, dist, variant, totalBase, variantLabel) {
+        if (q.type === 'choice') { return renderBars(q.options, dist.counts, dist.base, variant, totalBase, variantLabel); }
         if (q.type === 'scale') { return renderGrid(q, dist, variant); }
         return renderOpen(dist);
     }
 
-    function renderBars(labels, counts, base, variant) {
+    function renderBars(labels, counts, base, variant, totalBase, variantLabel) {
         var max = Math.max.apply(null, counts.concat([0]));
         var html = '<div class="pn-bars' + (variant ? ' pn-bars--' + variant : '') + '">';
 
@@ -221,10 +446,13 @@
             if (variant && count === 0) { return; }
             var value = pct(count, base);
             var cls = 'pn-bar' + (count > 0 && count === max ? ' is-top' : '') + (count === 0 ? ' is-zero' : '');
+            var globalBadge = (variant && totalBase > 0)
+                ? '<span class="pn-bar-global">' + fmtPct(pct(count, totalBase)) + ' del totale ' + esc(variantLabel) + '</span>'
+                : '';
             html += '<div class="' + cls + '">'
                 + '<div class="pn-bar-label">' + esc(labelOf(labels, idx, 'Opzione')) + '</div>'
                 + '<div class="pn-bar-track"><div class="pn-bar-fill" style="width:' + Math.min(100, value).toFixed(2) + '%"></div></div>'
-                + '<div class="pn-bar-val"><span class="pn-bar-pct">' + fmtPct(value) + '</span><span class="pn-bar-n">' + fmtInt(count) + '</span></div>'
+                + '<div class="pn-bar-val"><span class="pn-bar-n">' + fmtInt(count) + '</span><span class="pn-bar-pct">(' + fmtPct(value) + ')</span>' + globalBadge + '</div>'
                 + '</div>';
         });
 
@@ -305,8 +533,13 @@
             }
         });
 
-        $('pnExitBase').textContent = 'Base: ' + fmtInt(data.reached.total);
-        $('pnExitBase').title = 'Interviste arrivate alla domanda';
+        var baseText = 'Base: ' + fmtInt(data.reached.total);
+        if (data.reached.pending > 0) {
+            baseText += ' (' + fmtInt(data.reached.pending) + ' ancora in corso)';
+        }
+        $('pnExitBase').textContent = baseText;
+        $('pnExitBase').title = 'Interviste arrivate alla domanda'
+            + (data.reached.pending > 0 ? ', di cui ' + fmtInt(data.reached.pending) + ' sospese (non ancora complete né uscite)' : '');
         card.classList.toggle('d-none', visible === 0);
 
         // Affiancati solo se ci sono uscite e la domanda non e' una griglia (tabelle larghe)
@@ -322,14 +555,14 @@
 
         el.className = 'pn-exit pn-exit--' + status;
         var html = '<div class="pn-exit-kpis">'
-            + '<div class="pn-exit-main"><span class="pn-exit-main-val">' + fmtInt(count) + '</span><span class="pn-exit-main-key">' + title + '</span></div>'
-            + exitKpi(fmtPct(pct(count, data.reached.total)), 'degli arrivati alla domanda (' + fmtInt(data.reached.total) + ')')
-            + exitKpi(fmtPct(pct(count, totalStatus)), 'del totale ' + title + ' (' + fmtInt(totalStatus) + ')')
+            + '<div class="pn-exit-main"><span class="pn-exit-main-val">' + fmtInt(count) + '</span><span class="pn-exit-main-key">' + title + ' qui</span></div>'
+            + exitKpi('fas fa-location-dot', fmtPct(pct(count, data.reached.total)), 'sugli arrivati a questa domanda', fmtInt(data.reached.total))
+            + exitKpi('fas fa-chart-pie', fmtPct(pct(count, totalStatus)), 'sul totale ' + title + ' della ricerca', fmtInt(totalStatus))
             + '</div>';
 
         if (dist.base > 0) {
             html += '<div class="pn-exit-sub">Risposta che genera l\'uscita</div>'
-                + renderDistribution(data.question, dist, status);
+                + renderDistribution(data.question, dist, status, totalStatus, title);
         } else {
             html += emptyInline('Uscite senza una risposta registrata alla domanda');
         }
@@ -337,8 +570,9 @@
         el.innerHTML = html;
     }
 
-    function exitKpi(value, label) {
-        return '<div class="pn-exit-kpi"><span class="pn-exit-kpi-val">' + value + '</span><span class="pn-exit-kpi-key">' + esc(label) + '</span></div>';
+    function exitKpi(icon, value, label, base) {
+        return '<div class="pn-exit-kpi"><span class="pn-exit-kpi-val"><i class="' + icon + '"></i>' + value + '</span>'
+            + '<span class="pn-exit-kpi-key">' + esc(label) + ' <span class="pn-exit-kpi-base">(' + base + ')</span></span></div>';
     }
 
     /* ---------------------------------------------------------------

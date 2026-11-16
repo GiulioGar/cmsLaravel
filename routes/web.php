@@ -224,6 +224,7 @@ Route::middleware(['auth.custom'])->group(function () {
     // ============================================
     Route::get('/fieldControl/panoramica', [PanoramicaController::class, 'index'])->name('panoramica.index');
     Route::get('/fieldControl/panoramica/question', [PanoramicaController::class, 'question'])->name('panoramica.question');
+    Route::get('/fieldControl/panoramica/family', [PanoramicaController::class, 'family'])->name('panoramica.family');
 
     // ============================================
     // PREMI PANEL

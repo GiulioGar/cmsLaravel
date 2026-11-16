@@ -517,6 +517,9 @@ class PanoramicaService
 
         ksort($daily);
 
+        // Arrivate alla domanda ma non (ancora) complete né uscite: sospese/in corso
+        $reached['pending'] = max(0, $reached['total'] - $reached['complete'] - $reached['screenout'] - $reached['quotafull']);
+
         return [
             'question'    => $question,
             'is_multiple' => $isMultiple,
@@ -584,6 +587,53 @@ class PanoramicaService
             'missing' => $missing,
             // Con etichette risolte mostriamo anche il valore grezzo (es. leg 3)
             'show_keys' => !empty($cross['raw_values']) ? ($cross['key'] ?? '') : '',
+        ];
+    }
+
+    /**
+     * Vista aggregata di una famiglia loop: una riga (base + distribuzione)
+     * per ogni domanda del ciclo, lette in un solo passaggio sui .sre.
+     * Richiede domande con lo stesso tipo (garantito dall'SDL: stesso prefisso).
+     */
+    public function analyzeFamily(string $prj, string $sid, array $questions): array
+    {
+        $files = $this->sre->getSreFiles($this->sre->resolveResultsDirectory($prj, $sid));
+        $type = $questions[0]['type'];
+
+        $dists = [];
+        foreach ($questions as $q) {
+            $dists[$q['id']] = $this->emptyDistribution($q);
+        }
+
+        foreach ($files as $file) {
+            $interview = $this->readInterview($file);
+            if ($interview === null || $interview['status'] !== self::STATUS_COMPLETE) {
+                continue;
+            }
+            foreach ($questions as $q) {
+                $qid = $q['id'];
+                if (isset($interview['rows'][$qid])) {
+                    $this->accumulate($dists[$qid], $q, $interview['rows'][$qid]);
+                }
+            }
+        }
+
+        $items = [];
+        foreach ($questions as $q) {
+            $items[] = [
+                'id'      => $q['id'],
+                'code'    => $q['code'],
+                'context' => $q['context'],
+                'dist'    => $this->finalizeDistribution($dists[$q['id']], $type),
+            ];
+        }
+
+        return [
+            'type'    => $type,
+            'options' => $questions[0]['options'] ?? [],
+            'rows'    => $questions[0]['rows'] ?? [],
+            'cols'    => $questions[0]['cols'] ?? [],
+            'items'   => $items,
         ];
     }
 
