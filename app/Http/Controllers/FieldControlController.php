@@ -1373,6 +1373,16 @@ private function calcolaFattibilitaQuote(
         'quota_vincolante' => null,
     ];
 
+    // Default sempre presenti sulla riga, anche quando si esce prima del
+    // calcolo vero e proprio (es. ricerca nuova, nessun dato di field
+    // ancora): la view li legge senza "??" e va in errore se mancano.
+    foreach ($quotaData as $item) {
+        $item->demographic_confirmed = null;
+        $item->demographic_suggestion = null;
+        $item->fattibilita = null;
+        $item->fattibilita_tipo = $item->quota === 'Interviste Totali' ? 'obiettivo_generale' : null;
+    }
+
     if ($stimaInterviste === null || $panelRateInfo === null || $quotaData->isEmpty()) {
         return $result;
     }
