@@ -14,6 +14,14 @@ $typeLabels = [
 ];
 $crossVariables = $summary['variables'] ?? [];
 $sospese = max(0, ($summary['files'] ?? 0) - ($summary['complete'] ?? 0) - ($summary['screenout'] ?? 0) - ($summary['quotafull'] ?? 0));
+$totalFiles = max(1, (int) ($summary['files'] ?? 0));
+$heroKpis = [
+    ['variant' => 'complete', 'icon' => 'fas fa-circle-check', 'label' => 'Complete', 'value' => $summary['complete'] ?? 0],
+    ['variant' => 'screenout', 'icon' => 'fas fa-bullseye', 'label' => 'Screenout', 'value' => $summary['screenout'] ?? 0],
+    ['variant' => 'quotafull', 'icon' => 'fas fa-arrow-trend-up', 'label' => 'Quotafull', 'value' => $summary['quotafull'] ?? 0],
+    ['variant' => 'pending', 'icon' => 'fas fa-hourglass-half', 'label' => 'Sospese / in corso', 'value' => $sospese],
+    ['variant' => '', 'icon' => 'fas fa-file-lines', 'label' => 'Interviste totali', 'value' => $summary['files'] ?? 0],
+];
 
 // Menu laterale: le domande in loop (stesso prefisso SDL) diventano una famiglia,
 // posizionata dove compare il primo elemento
@@ -106,26 +114,20 @@ foreach ($sidebarEntries as $i => $entry) {
             <div class="pn-hero-sub">{{ $panelData->description ?? '' }}</div>
         </div>
         <div class="pn-kpis">
-            <div class="pn-kpi pn-kpi--complete">
-                <span class="pn-kpi-icon"><i class="fas fa-circle-check"></i></span>
-                <div><span class="pn-kpi-val">{{ number_format($summary['complete'] ?? 0, 0, ',', '.') }}</span><span class="pn-kpi-key">Complete</span></div>
-            </div>
-            <div class="pn-kpi pn-kpi--screenout">
-                <span class="pn-kpi-icon"><i class="fas fa-bullseye"></i></span>
-                <div><span class="pn-kpi-val">{{ number_format($summary['screenout'] ?? 0, 0, ',', '.') }}</span><span class="pn-kpi-key">Screenout</span></div>
-            </div>
-            <div class="pn-kpi pn-kpi--quotafull">
-                <span class="pn-kpi-icon"><i class="fas fa-arrow-trend-up"></i></span>
-                <div><span class="pn-kpi-val">{{ number_format($summary['quotafull'] ?? 0, 0, ',', '.') }}</span><span class="pn-kpi-key">Quotafull</span></div>
-            </div>
-            <div class="pn-kpi pn-kpi--pending">
-                <span class="pn-kpi-icon"><i class="fas fa-hourglass-half"></i></span>
-                <div><span class="pn-kpi-val">{{ number_format($sospese, 0, ',', '.') }}</span><span class="pn-kpi-key">Sospese / in corso</span></div>
-            </div>
-            <div class="pn-kpi">
-                <span class="pn-kpi-icon"><i class="fas fa-file-lines"></i></span>
-                <div><span class="pn-kpi-val">{{ number_format($summary['files'] ?? 0, 0, ',', '.') }}</span><span class="pn-kpi-key">Interviste totali</span></div>
-            </div>
+            @foreach($heroKpis as $kpi)
+                @php $kpiPct = round($kpi['value'] / $totalFiles * 100, 1); @endphp
+                <div class="pn-kpi{{ $kpi['variant'] ? ' pn-kpi--'.$kpi['variant'] : '' }}">
+                    <div class="pn-kpi-top">
+                        <span class="pn-kpi-icon"><i class="{{ $kpi['icon'] }}"></i></span>
+                        <div>
+                            <span class="pn-kpi-val">{{ number_format($kpi['value'], 0, ',', '.') }}</span>
+                            <span class="pn-kpi-key">{{ $kpi['label'] }}</span>
+                        </div>
+                    </div>
+                    <div class="pn-kpi-pct">{{ number_format($kpiPct, 1, ',', '.') }}%</div>
+                    <div class="pn-kpi-bar"><div class="pn-kpi-bar-fill" style="width: {{ min(100, $kpiPct) }}%"></div></div>
+                </div>
+            @endforeach
         </div>
     </div>
 
@@ -209,13 +211,27 @@ foreach ($sidebarEntries as $i => $entry) {
             <div id="pnContent" class="d-none">
                 {{-- Domanda selezionata --}}
                 <section class="pn-card pn-qcard">
-                    <div class="pn-qcard-top">
-                        <span class="pn-qcard-code" id="pnQCode"></span>
-                        <span class="pn-chip" id="pnQType"></span>
-                        <span class="pn-chip pn-chip--cross d-none" id="pnQCtx"></span>
+                    <div class="pn-qcard-grid">
+                        <div class="pn-qcard-left">
+                            <div class="pn-qcard-top">
+                                <span class="pn-qcard-code" id="pnQCode"></span>
+                                <span class="pn-chip" id="pnQType"></span>
+                                <span class="pn-chip pn-chip--cross d-none" id="pnQCtx"></span>
+                            </div>
+                            <div class="pn-qcard-text" id="pnQText"></div>
+                        </div>
+                        <div class="pn-qcard-right">
+                            <div class="pn-qcard-right-head">
+                                <span class="pn-qcard-right-title">Esiti della domanda</span>
+                                <span class="pn-qcard-right-note">% sugli arrivati</span>
+                            </div>
+                            <div class="pn-qoutcomes" id="pnQOutcomes"></div>
+                            <div class="pn-qcard-reach">
+                                <div class="pn-qcard-reach-key">Arrivati alla domanda</div>
+                                <div class="pn-qcard-reach-val" id="pnQReached"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="pn-qcard-text" id="pnQText"></div>
-                    <div class="pn-qcard-stats" id="pnQStats"></div>
                 </section>
 
                 {{-- Report complete e uscite: affiancati su desktop --}}
@@ -230,13 +246,14 @@ foreach ($sidebarEntries as $i => $entry) {
 
                     <section class="pn-card d-none" id="pnExitCard">
                         <div class="pn-card-head">
-                            <div class="pn-card-title"><i class="fas fa-shuffle pn-ico pn-ico--exit"></i>Uscite sulla domanda</div>
+                            <div class="pn-card-title"><i class="fas fa-shuffle pn-ico pn-ico--exit"></i>Uscite e sospensioni</div>
                             <div class="pn-card-base" id="pnExitBase"></div>
                         </div>
                         <div class="pn-card-body">
-                            <div class="pn-exit" id="pnExitScreenout"></div>
-                            <div class="pn-exit" id="pnExitQuotafull"></div>
-                            <div class="pn-card-foot">Interviste chiuse su questa domanda (ultima domanda nel File Dati)</div>
+                            <div class="pn-exit-tabs" id="pnExitTabs"></div>
+                            <div class="pn-exit" id="pnExitDetail"></div>
+                            <div class="pn-card-foot">Interviste ferme su questa domanda (ultima domanda nel File Dati)</div>
+                            <div class="pn-exit-summary" id="pnExitSummary"></div>
                         </div>
                     </section>
                 </div>

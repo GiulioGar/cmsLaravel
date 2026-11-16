@@ -88,6 +88,17 @@
         });
     }
 
+    // Bootstrap appende il popup del tooltip al <body>, separato dal trigger:
+    // sostituire l'HTML del contenitore con innerHTML non lo rimuove, e resta
+    // una bolla orfana che si sovrappone al tooltip successivo. Va quindi
+    // smontato PRIMA di riscrivere l'HTML che contiene quei trigger.
+    function disposeTextTooltips(root) {
+        [].slice.call((root || document).querySelectorAll('[data-bs-toggle="tooltip"]')).forEach(function (el) {
+            var instance = bootstrap.Tooltip.getInstance(el);
+            if (instance) { instance.dispose(); }
+        });
+    }
+
     function initSidebar() {
         initTextTooltips();
         $('pnQuestionSearch').addEventListener('input', applySidebarFilter);
@@ -173,12 +184,48 @@
             });
     }
 
+    // La sidebar non deve mai superare l'altezza del contenuto a destra:
+    // il tetto si ricalcola sull'altezza reale di #pnMain (non il contenuto
+    // intero della lista domande, che scorre al suo interno se piu' lunga),
+    // ma mai sotto l'altezza di MIN_VISIBLE_ITEMS domande visibili.
+    var SIDEBAR_BREAKPOINT = 991.98;
+    var MIN_VISIBLE_ITEMS = 6;
+
+    // Altezza minima per mostrare almeno MIN_VISIBLE_ITEMS voci: intestazione
+    // + ricerca/filtri + altezza reale delle prime N righe (famiglie incluse
+    // come una riga sola, essendo chiuse di default).
+    function minSidebarHeight(sidebar) {
+        var head = sidebar.querySelector('.pn-sidebar-head');
+        var list = sidebar.querySelector('.pn-qlist');
+        if (!head || !list) { return 0; }
+
+        var rows = Array.prototype.slice.call(list.children, 0, MIN_VISIBLE_ITEMS);
+        var rowsHeight = rows.reduce(function (sum, el) { return sum + el.offsetHeight; }, 0);
+        var listStyle = window.getComputedStyle(list);
+        var listPadding = parseFloat(listStyle.paddingTop || 0) + parseFloat(listStyle.paddingBottom || 0);
+
+        return head.offsetHeight + rowsHeight + listPadding;
+    }
+
+    function syncSidebarHeight() {
+        var main = $('pnMain');
+        var sidebar = document.querySelector('.pn-sidebar');
+        if (!main || !sidebar) { return; }
+
+        if (window.innerWidth <= SIDEBAR_BREAKPOINT) {
+            sidebar.style.maxHeight = '';
+            return;
+        }
+        sidebar.style.maxHeight = Math.max(minSidebarHeight(sidebar), main.offsetHeight) + 'px';
+    }
+
     function showError(message) {
         $('pnPlaceholder').classList.remove('d-none');
         $('pnContent').classList.add('d-none');
         $('pnFamilyContent').classList.add('d-none');
         $('pnPlaceholder').querySelector('.pn-empty-title').textContent = 'Impossibile caricare la domanda';
         $('pnPlaceholder').querySelector('.pn-empty-sub').textContent = message;
+        syncSidebarHeight();
     }
 
     /* ---------------------------------------------------------------
@@ -242,6 +289,8 @@
         if (data.type === 'choice') { renderFamilyChoice(data); }
         else if (data.type === 'scale') { renderFamilyScale(data); }
         else { renderFamilyOpen(data); }
+
+        syncSidebarHeight();
     }
 
     function rtrimDot(code) { return code.replace(/\.$/, ''); }
@@ -395,25 +444,47 @@
 
         $('pnQCode').textContent = q.code;
         $('pnQType').textContent = (TYPE_LABELS[q.type] || q.type) + (data.is_multiple ? ' multipla' : (q.type === 'choice' ? ' singola' : ''));
-        $('pnQText').textContent = q.text;
+
+        var qTextEl = $('pnQText');
+        disposeTextTooltips(qTextEl);
+        var qTextShort = truncateText(q.text, QTEXT_MAX);
+        qTextEl.textContent = qTextShort.text;
+        if (qTextShort.truncated) {
+            qTextEl.setAttribute('data-bs-toggle', 'tooltip');
+            qTextEl.setAttribute('data-bs-custom-class', 'pn-text-tooltip');
+            qTextEl.setAttribute('title', q.text);
+            initTextTooltips(qTextEl.parentElement);
+        } else {
+            qTextEl.removeAttribute('data-bs-toggle');
+            qTextEl.removeAttribute('data-bs-custom-class');
+            qTextEl.removeAttribute('title');
+        }
+
         $('pnQCtx').textContent = q.context ? (q.loop ? 'Ciclo: ' : '') + q.context : '';
         $('pnQCtx').classList.toggle('d-none', !q.context);
 
-        $('pnQStats').innerHTML =
-            qstat(data.reached.total, 'arrivati alla domanda', 'fas fa-users', '') +
-            qstat(data.reached.complete, 'complete', 'fas fa-circle-check', 'complete') +
-            (data.exit_counts.screenout > 0 ? qstat(data.exit_counts.screenout, 'screenout qui', 'fas fa-bullseye', 'screenout') : '') +
-            (data.exit_counts.quotafull > 0 ? qstat(data.exit_counts.quotafull, 'quotafull qui', 'fas fa-arrow-trend-up', 'quotafull') : '') +
-            (data.reached.pending > 0 ? qstat(data.reached.pending, 'ancora in corso (sospese)', 'fas fa-hourglass-half', 'pending') : '');
+        var nonConcluse = data.reached.sospese + data.reached.bloccate + data.reached.pending;
+        $('pnQReached').textContent = fmtInt(data.reached.total);
+
+        var outcomes = [
+            { key: 'complete', label: 'Complete', value: data.reached.complete },
+            { key: 'screenout', label: 'Screenout qui', value: data.exit_counts.screenout },
+            { key: 'quotafull', label: 'Quotafull qui', value: data.exit_counts.quotafull },
+            { key: 'pending', label: 'In corso / sospese', value: nonConcluse }
+        ].filter(function (o) { return o.value > 0; });
+
+        $('pnQOutcomes').innerHTML = outcomes.map(function (o) {
+            return '<div class="pn-qoutcome">'
+                + '<div class="pn-qoutcome-label"><span class="pn-qoutcome-dot pn-qoutcome-dot--' + o.key + '"></span>' + esc(o.label) + '</div>'
+                + '<div class="pn-qoutcome-val"><b>' + fmtInt(o.value) + '</b><span class="pn-qoutcome-pct">' + fmtPct(pct(o.value, data.reached.total)) + '</span></div>'
+                + '</div>';
+        }).join('');
 
         renderComplete(data);
         renderExits(data);
         renderCross(data);
         renderTrend(data);
-    }
-
-    function qstat(value, label, icon, variant) {
-        return '<span class="pn-qstat' + (variant ? ' pn-qstat--' + variant : '') + '"><i class="' + icon + '"></i><b>' + fmtInt(value) + '</b>' + esc(label) + '</span>';
+        syncSidebarHeight();
     }
 
     function renderComplete(data) {
@@ -422,6 +493,8 @@
         $('pnCompleteNote').textContent = 'Base: ' + fmtInt(dist.base);
         $('pnCompleteNote').title = 'Interviste complete che hanno risposto alla domanda';
 
+        disposeTextTooltips($('pnCompleteBody'));
+
         if (dist.base === 0) {
             $('pnCompleteBody').innerHTML = emptyInline('Nessuna intervista completa ha ancora risposto a questa domanda');
             return;
@@ -429,12 +502,23 @@
         $('pnCompleteBody').innerHTML =
             (data.is_multiple ? '<div class="pn-card-foot pn-card-foot--top">Risposta multipla: il totale delle percentuali può superare il 100%</div>' : '')
             + renderDistribution(q, dist, '');
+        initTextTooltips($('pnCompleteBody'));
     }
 
     function renderDistribution(q, dist, variant, totalBase, variantLabel) {
         if (q.type === 'choice') { return renderBars(q.options, dist.counts, dist.base, variant, totalBase, variantLabel); }
         if (q.type === 'scale') { return renderGrid(q, dist, variant); }
         return renderOpen(dist);
+    }
+
+    // Label troppo lunghe: troncate con tooltip grafico invece di andare a capo all'infinito
+    var BAR_LABEL_MAX = 90;
+    var QTEXT_MAX = 220;
+
+    function truncateText(text, max) {
+        text = String(text == null ? '' : text);
+        if (text.length <= max) { return { text: text, truncated: false }; }
+        return { text: text.slice(0, max - 1).replace(/\s+$/, '') + '…', truncated: true };
     }
 
     function renderBars(labels, counts, base, variant, totalBase, variantLabel) {
@@ -449,10 +533,16 @@
             var globalBadge = (variant && totalBase > 0)
                 ? '<span class="pn-bar-global">' + fmtPct(pct(count, totalBase)) + ' del totale ' + esc(variantLabel) + '</span>'
                 : '';
+            var label = truncateText(labelOf(labels, idx, 'Opzione'), BAR_LABEL_MAX);
+            var labelAttrs = label.truncated
+                ? ' data-bs-toggle="tooltip" data-bs-custom-class="pn-text-tooltip" title="' + esc(labelOf(labels, idx, 'Opzione')) + '"'
+                : '';
             html += '<div class="' + cls + '">'
-                + '<div class="pn-bar-label">' + esc(labelOf(labels, idx, 'Opzione')) + '</div>'
+                + '<div class="pn-bar-row">'
                 + '<div class="pn-bar-track"><div class="pn-bar-fill" style="width:' + Math.min(100, value).toFixed(2) + '%"></div></div>'
                 + '<div class="pn-bar-val"><span class="pn-bar-n">' + fmtInt(count) + '</span><span class="pn-bar-pct">(' + fmtPct(value) + ')</span>' + globalBadge + '</div>'
+                + '</div>'
+                + '<div class="pn-bar-label"' + labelAttrs + '>' + esc(label.text) + '</div>'
                 + '</div>';
         });
 
@@ -462,7 +552,9 @@
     var GRID_COLORS = {
         '': '22,163,74',
         screenout: '234,88,12',
-        quotafull: '220,38,38'
+        quotafull: '220,38,38',
+        bloccate: '71,85,105',
+        sospese: '59,130,246'
     };
 
     function renderGrid(q, dist, variant) {
@@ -517,62 +609,147 @@
     }
 
     /* ---------------------------------------------------------------
-       Uscite: box solo per gli stati con almeno un'uscita
+       Uscite e sospensioni: un'unica card con un tab per stato (solo
+       quelli con almeno un caso), per non impilare piu' box in verticale
     --------------------------------------------------------------- */
-    function renderExits(data) {
-        var card = $('pnExitCard');
-        var visible = 0;
+    var EXIT_STATUSES = [
+        { key: 'screenout', label: 'Screenout', icon: 'fas fa-bullseye' },
+        { key: 'quotafull', label: 'Quotafull', icon: 'fas fa-arrow-trend-up' },
+        { key: 'bloccate', label: 'Bloccate', icon: 'fas fa-ban' },
+        { key: 'sospese', label: 'Sospese', icon: 'fas fa-hourglass-half' }
+    ];
+    var currentExitTab = null;
+    var lastExitData = null;
 
-        ['screenout', 'quotafull'].forEach(function (status) {
-            var el = $(status === 'screenout' ? 'pnExitScreenout' : 'pnExitQuotafull');
-            var hasExits = data.exit_counts[status] > 0;
-            el.classList.toggle('d-none', !hasExits);
-            if (hasExits) {
-                renderExit(el, status, data);
-                visible++;
-            }
+    function debounce(fn, wait) {
+        var t;
+        return function () {
+            clearTimeout(t);
+            t = setTimeout(fn, wait);
+        };
+    }
+
+    function renderExits(data) {
+        lastExitData = data;
+        var card = $('pnExitCard');
+        var active = EXIT_STATUSES.filter(function (s) { return data.exit_counts[s.key] > 0; });
+
+        if (!active.length) {
+            card.classList.add('d-none');
+            $('pnDuo').classList.remove('is-split');
+            return;
+        }
+        card.classList.remove('d-none');
+        $('pnDuo').classList.toggle('is-split', data.question.type !== 'scale');
+
+        if (!currentExitTab || !active.some(function (s) { return s.key === currentExitTab; })) {
+            currentExitTab = active[0].key;
+        }
+
+        // Sempre e solo icone: l'etichetta e il numero restano nel tooltip,
+        // mai nel bottone (niente logica legata allo spazio disponibile)
+        var tabsEl = $('pnExitTabs');
+        disposeTextTooltips(tabsEl);
+        tabsEl.innerHTML = active.map(function (s) {
+            return '<button type="button" class="pn-exit-tab' + (s.key === currentExitTab ? ' is-active' : '') + '" data-exit-tab="' + s.key + '"'
+                + ' data-bs-toggle="tooltip" data-bs-custom-class="pn-text-tooltip" title="' + esc(s.label) + ': ' + fmtInt(data.exit_counts[s.key]) + '">'
+                + '<span class="pn-exit-tab-icon"><i class="' + s.icon + '"></i></span>'
+                + '</button>';
+        }).join('');
+        initTextTooltips(tabsEl);
+
+        tabsEl.querySelectorAll('.pn-exit-tab').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                currentExitTab = btn.getAttribute('data-exit-tab');
+                renderExits(data);
+            });
         });
 
+        var nonConcluse = data.reached.sospese + data.reached.bloccate + data.reached.pending;
         var baseText = 'Base: ' + fmtInt(data.reached.total);
-        if (data.reached.pending > 0) {
-            baseText += ' (' + fmtInt(data.reached.pending) + ' ancora in corso)';
+        if (nonConcluse > 0) {
+            baseText += ' (' + fmtInt(nonConcluse) + ' ancora in corso)';
         }
         $('pnExitBase').textContent = baseText;
         $('pnExitBase').title = 'Interviste arrivate alla domanda'
-            + (data.reached.pending > 0 ? ', di cui ' + fmtInt(data.reached.pending) + ' sospese (non ancora complete né uscite)' : '');
-        card.classList.toggle('d-none', visible === 0);
+            + (nonConcluse > 0 ? ', di cui ' + fmtInt(nonConcluse) + ' sospese o bloccate (non ancora complete né uscite)' : '');
 
-        // Affiancati solo se ci sono uscite e la domanda non e' una griglia (tabelle larghe)
-        $('pnDuo').classList.toggle('is-split', visible > 0 && data.question.type !== 'scale');
+        renderExitDetail(currentExitTab, data);
+        renderExitSummary(data);
     }
 
-    function renderExit(el, status, data) {
-        var isScreenout = status === 'screenout';
-        var title = isScreenout ? 'screenout' : 'quotafull';
-        var count = data.exit_counts[status];
-        var totalStatus = data.totals[status];
-        var dist = data[status];
+    /* Riepilogo sempre visibile con tutti gli stati (non solo quello
+       selezionato nelle tab), ordinato dal piu' numeroso */
+    function renderExitSummary(data) {
+        var rows = [{ key: 'complete', label: 'Complete', value: data.reached.complete }]
+            .concat(EXIT_STATUSES.map(function (s) {
+                return { key: s.key, label: s.label + ' qui', value: data.exit_counts[s.key] };
+            }))
+            .filter(function (r) { return r.value > 0; })
+            .sort(function (a, b) { return b.value - a.value; });
 
-        el.className = 'pn-exit pn-exit--' + status;
+        var max = rows.reduce(function (m, r) { return Math.max(m, r.value); }, 0);
+
+        $('pnExitSummary').innerHTML = '<div class="pn-exit-summary-title">Riepilogo per stato</div>'
+            + '<div class="pn-exit-summary-list">' + rows.map(function (r) {
+                var width = max > 0 ? Math.max(3, Math.round(r.value / max * 100)) : 0;
+                return '<div class="pn-exit-summary-row">'
+                    + '<span class="pn-exit-summary-dot pn-exit-summary-dot--' + r.key + '"></span>'
+                    + '<span class="pn-exit-summary-label">' + esc(r.label) + '</span>'
+                    + '<div class="pn-exit-summary-track"><div class="pn-exit-summary-fill pn-exit-summary-fill--' + r.key + '" style="width:' + width + '%"></div></div>'
+                    + '<span class="pn-exit-summary-val"><b>' + fmtInt(r.value) + '</b><small>' + fmtPct(pct(r.value, data.reached.total)) + '</small></span>'
+                    + '</div>';
+            }).join('') + '</div>';
+    }
+
+    var exitDistOpen = false;
+
+    function renderExitDetail(statusKey, data) {
+        var meta = EXIT_STATUSES.filter(function (s) { return s.key === statusKey; })[0];
+        var title = meta.label.toLowerCase();
+        var count = data.exit_counts[statusKey];
+        var totalStatus = data.totals[statusKey];
+        var dist = data[statusKey];
+        var el = $('pnExitDetail');
+
+        disposeTextTooltips(el);
+        el.className = 'pn-exit pn-exit--' + statusKey;
         var html = '<div class="pn-exit-kpis">'
-            + '<div class="pn-exit-main"><span class="pn-exit-main-val">' + fmtInt(count) + '</span><span class="pn-exit-main-key">' + title + ' qui</span></div>'
-            + exitKpi('fas fa-location-dot', fmtPct(pct(count, data.reached.total)), 'sugli arrivati a questa domanda', fmtInt(data.reached.total))
-            + exitKpi('fas fa-chart-pie', fmtPct(pct(count, totalStatus)), 'sul totale ' + title + ' della ricerca', fmtInt(totalStatus))
+            + '<div class="pn-exit-main"><span class="pn-exit-main-val">' + fmtInt(count) + '</span><span class="pn-exit-main-key">' + esc(title) + ' qui</span></div>'
+            + '<div class="pn-exit-kpi-row">'
+            + exitKpi(fmtPct(pct(count, data.reached.total)), 'degli arrivati qui', fmtInt(data.reached.total))
+            + exitKpi(fmtPct(pct(count, totalStatus)), 'del totale ' + title, fmtInt(totalStatus))
+            + '</div>'
             + '</div>';
 
         if (dist.base > 0) {
-            html += '<div class="pn-exit-sub">Risposta che genera l\'uscita</div>'
-                + renderDistribution(data.question, dist, status, totalStatus, title);
+            html += '<div class="pn-collapsible' + (exitDistOpen ? ' is-open' : '') + '">'
+                + '<button type="button" class="pn-exit-sub pn-collapse-head" id="pnExitDistToggle" aria-expanded="' + (exitDistOpen ? 'true' : 'false') + '" aria-controls="pnExitDistBody">'
+                + '<span>Risposta all\'ultima domanda nel File Dati</span>'
+                + '<i class="fas fa-chevron-down pn-collapse-caret"></i>'
+                + '</button>'
+                + '<div class="pn-exit-dist-body" id="pnExitDistBody">' + renderDistribution(data.question, dist, statusKey, totalStatus, title) + '</div>'
+                + '</div>';
         } else {
-            html += emptyInline('Uscite senza una risposta registrata alla domanda');
+            html += emptyInline('Nessuna risposta registrata alla domanda per queste interviste');
         }
 
         el.innerHTML = html;
+        initTextTooltips(el);
+
+        var distToggle = $('pnExitDistToggle');
+        if (distToggle) {
+            distToggle.addEventListener('click', function () {
+                exitDistOpen = !exitDistOpen;
+                renderExitDetail(statusKey, data);
+            });
+        }
     }
 
-    function exitKpi(icon, value, label, base) {
-        return '<div class="pn-exit-kpi"><span class="pn-exit-kpi-val"><i class="' + icon + '"></i>' + value + '</span>'
-            + '<span class="pn-exit-kpi-key">' + esc(label) + ' <span class="pn-exit-kpi-base">(' + base + ')</span></span></div>';
+    function exitKpi(value, label, base) {
+        return '<div class="pn-exit-kpi"><span class="pn-exit-kpi-val">' + value + '</span>'
+            + '<span class="pn-exit-kpi-key">' + esc(label) + '</span>'
+            + '<span class="pn-exit-kpi-base">(' + base + ')</span></div>';
     }
 
     /* ---------------------------------------------------------------
@@ -1381,6 +1558,12 @@
             return { idx: idx, label: labelOf(answerLabels, idx, 'Opzione'), totalPct: pct(count, totalBase) };
         });
 
+        // Troppe risposte rispetto ai gruppi: la tabella resta leggibile solo
+        // invertendola (risposte in riga, gruppi in colonna)
+        if (answers.length > groups.length) {
+            return crossTableSwapped(groups, answers, isMultiple);
+        }
+
         var html = '<div class="table-responsive pn-xtab-wrap"><table class="table table-sm pn-xtab mb-0"><thead><tr>'
             + '<th class="pn-xtab-rowhead">Gruppo</th>';
         answers.forEach(function (a) {
@@ -1393,6 +1576,31 @@
             answers.forEach(function (a) { html += crossCells(g, a); });
             html += '<td class="pn-xtab-num pn-xtab-basecol">' + fmtInt(g.base) + (isLowBase(g) ? ' *' : '') + '</td></tr>';
         });
+
+        return html + '</tbody></table></div>' + crossLegend(isMultiple);
+    }
+
+    /* Vista invertita: risposte in riga, gruppi in colonna, Base dei gruppi
+       spostata sull'ultima riga (non ha piu' senso come colonna) */
+    function crossTableSwapped(groups, answers, isMultiple) {
+        var html = '<div class="table-responsive pn-xtab-wrap"><table class="table table-sm pn-xtab mb-0"><thead><tr>'
+            + '<th class="pn-xtab-rowhead">Risposta</th>';
+        groups.forEach(function (g) {
+            html += '<th class="pn-xtab-num" colspan="2">' + (g.header || '<b>' + esc(g.label) + '</b>') + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+
+        answers.forEach(function (a) {
+            html += '<tr><td class="pn-xtab-rowhead">' + esc(a.label) + '</td>';
+            groups.forEach(function (g) { html += crossCells(g, a); });
+            html += '</tr>';
+        });
+
+        html += '<tr class="is-total"><td class="pn-xtab-rowhead"><b>Base</b></td>';
+        groups.forEach(function (g) {
+            html += '<td class="pn-xtab-num" colspan="2">' + fmtInt(g.base) + (isLowBase(g) ? ' *' : '') + '</td>';
+        });
+        html += '</tr>';
 
         return html + '</tbody></table></div>' + crossLegend(isMultiple);
     }
@@ -1793,6 +2001,16 @@
         initSidebar();
         initCross();
         initTrendMode();
+
+        // Ricalcola il tetto della sidebar a ogni cambio di dimensione del
+        // contenuto a destra (collapse aperti/chiusi, cambio vista incrocio,
+        // resize finestra...), oltre alle chiamate esplicite dopo i render.
+        syncSidebarHeight();
+        var mainEl = $('pnMain');
+        if (mainEl && window.ResizeObserver) {
+            new ResizeObserver(syncSidebarHeight).observe(mainEl);
+        }
+        window.addEventListener('resize', debounce(syncSidebarHeight, 150));
 
         var hash = window.location.hash || '';
         var match = /#q=(\d+)/.exec(hash);

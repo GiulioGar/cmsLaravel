@@ -17,6 +17,8 @@ class PanoramicaService
     const STATUS_COMPLETE  = 3;
     const STATUS_SCREENOUT = 4;
     const STATUS_QUOTAFULL = 5;
+    const STATUS_SOSPESE   = 0;
+    const STATUS_BLOCCATE  = 7;
 
     // Tipi di domanda mostrati nel menu laterale
     const SUPPORTED_TYPES = ['choice', 'scale', 'open'];
@@ -427,10 +429,12 @@ class PanoramicaService
         $exits = [
             'screenout' => $this->emptyDistribution($question),
             'quotafull' => $this->emptyDistribution($question),
+            'bloccate'  => $this->emptyDistribution($question),
+            'sospese'   => $this->emptyDistribution($question),
         ];
-        $reached = ['total' => 0, 'complete' => 0, 'screenout' => 0, 'quotafull' => 0];
-        $totals = ['complete' => 0, 'screenout' => 0, 'quotafull' => 0];
-        $exitCounts = ['screenout' => 0, 'quotafull' => 0];
+        $reached = ['total' => 0, 'complete' => 0, 'screenout' => 0, 'quotafull' => 0, 'bloccate' => 0, 'sospese' => 0];
+        $totals = ['complete' => 0, 'screenout' => 0, 'quotafull' => 0, 'bloccate' => 0, 'sospese' => 0];
+        $exitCounts = ['screenout' => 0, 'quotafull' => 0, 'bloccate' => 0, 'sospese' => 0];
         $daily = [];
         $isMultiple = false;
         $crossDist = [];
@@ -465,7 +469,7 @@ class PanoramicaService
             $day = $interview['day'];
             if ($day !== null && !isset($daily[$day])) {
                 $daily[$day] = [
-                    'complete' => 0, 'screenout' => 0, 'quotafull' => 0,
+                    'complete' => 0, 'screenout' => 0, 'quotafull' => 0, 'bloccate' => 0, 'sospese' => 0,
                     'answered' => 0, 'options' => [], 'num_sum' => 0, 'num_n' => 0,
                 ];
             }
@@ -517,8 +521,9 @@ class PanoramicaService
 
         ksort($daily);
 
-        // Arrivate alla domanda ma non (ancora) complete né uscite: sospese/in corso
-        $reached['pending'] = max(0, $reached['total'] - $reached['complete'] - $reached['screenout'] - $reached['quotafull']);
+        // Residuo per status non riconosciuti (rari): non dovrebbe mai capitare
+        $reached['pending'] = max(0, $reached['total'] - $reached['complete'] - $reached['screenout']
+            - $reached['quotafull'] - $reached['bloccate'] - $reached['sospese']);
 
         return [
             'question'    => $question,
@@ -529,6 +534,8 @@ class PanoramicaService
             'complete'    => $this->finalizeDistribution($complete, $type),
             'screenout'   => $this->finalizeDistribution($exits['screenout'], $type),
             'quotafull'   => $this->finalizeDistribution($exits['quotafull'], $type),
+            'bloccate'    => $this->finalizeDistribution($exits['bloccate'], $type),
+            'sospese'     => $this->finalizeDistribution($exits['sospese'], $type),
             'daily'       => $daily,
             'cross'       => $cross !== null ? $this->finalizeCross($cross, $crossDist, $crossMissing, $type) : null,
         ];
@@ -862,6 +869,12 @@ class PanoramicaService
         }
         if ($status === self::STATUS_QUOTAFULL) {
             return 'quotafull';
+        }
+        if ($status === self::STATUS_BLOCCATE) {
+            return 'bloccate';
+        }
+        if ($status === self::STATUS_SOSPESE) {
+            return 'sospese';
         }
         return null;
     }
