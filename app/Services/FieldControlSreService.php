@@ -212,55 +212,35 @@ class FieldControlSreService
         }
 
         $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
-        if (!is_file($configPath) || !is_readable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
-        }
 
-        $content = @file_get_contents($configPath);
-        if ($content === false || trim($content) === '') {
-            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
-        }
-
-        $config = json_decode($content, true);
-        if (!is_array($config) || !isset($config['interview']['production']['redirections']) || !is_array($config['interview']['production']['redirections'])) {
-            return ['success' => false, 'message' => 'Struttura redirections non trovata nel config.json.'];
-        }
-
-        $original = $config['interview']['production']['redirections'];
-
-        $filtered = array_values(array_filter($original, function ($entry) use ($parameterName, $parameterValue) {
-            if (!is_array($entry)) {
-                return true;
+        return $this->withConfigJsonLock($configPath, function (array $config) use ($parameterName, $parameterValue) {
+            if (!isset($config['interview']['production']['redirections']) || !is_array($config['interview']['production']['redirections'])) {
+                return ['success' => false, 'message' => 'Struttura redirections non trovata nel config.json.'];
             }
 
-            $matches = (string) ($entry['parameter_name'] ?? '') === $parameterName
-                && (string) ($entry['parameter_value'] ?? '') === $parameterValue;
+            $original = $config['interview']['production']['redirections'];
 
-            return !$matches;
-        }));
+            $filtered = array_values(array_filter($original, function ($entry) use ($parameterName, $parameterValue) {
+                if (!is_array($entry)) {
+                    return true;
+                }
 
-        $removedCount = count($original) - count($filtered);
+                $matches = (string) ($entry['parameter_name'] ?? '') === $parameterName
+                    && (string) ($entry['parameter_value'] ?? '') === $parameterValue;
 
-        if ($removedCount === 0) {
-            return ['success' => false, 'message' => 'Nessuna redirection trovata per questo panel.'];
-        }
+                return !$matches;
+            }));
 
-        if (!is_writable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non scrivibile.'];
-        }
+            $removedCount = count($original) - count($filtered);
 
-        $config['interview']['production']['redirections'] = $filtered;
+            if ($removedCount === 0) {
+                return ['success' => false, 'message' => 'Nessuna redirection trovata per questo panel.'];
+            }
 
-        $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($encoded === false) {
-            return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
-        }
+            $config['interview']['production']['redirections'] = $filtered;
 
-        if (@file_put_contents($configPath, $encoded) === false) {
-            return ['success' => false, 'message' => 'Errore durante la scrittura del config.json.'];
-        }
-
-        return ['success' => true, 'removed' => $removedCount];
+            return ['success' => true, 'config' => $config, 'removed' => $removedCount];
+        });
     }
 
     /**
@@ -283,60 +263,40 @@ class FieldControlSreService
         }
 
         $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
-        if (!is_file($configPath) || !is_readable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
-        }
 
-        $content = @file_get_contents($configPath);
-        if ($content === false || trim($content) === '') {
-            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
-        }
-
-        $config = json_decode($content, true);
-        if (!is_array($config) || !isset($config['interview']['production']['redirections']) || !is_array($config['interview']['production']['redirections'])) {
-            return ['success' => false, 'message' => 'Struttura redirections non trovata nel config.json.'];
-        }
-
-        $updatedCount = 0;
-
-        foreach ($updates as $update) {
-            if (!is_array($update)) {
-                continue;
+        return $this->withConfigJsonLock($configPath, function (array $config) use ($updates) {
+            if (!isset($config['interview']['production']['redirections']) || !is_array($config['interview']['production']['redirections'])) {
+                return ['success' => false, 'message' => 'Struttura redirections non trovata nel config.json.'];
             }
 
-            $index = (int) ($update['index'] ?? -1);
-            $redirectTo = trim((string) ($update['redirect_to'] ?? ''));
+            $updatedCount = 0;
 
-            if ($redirectTo === '') {
-                continue;
+            foreach ($updates as $update) {
+                if (!is_array($update)) {
+                    continue;
+                }
+
+                $index = (int) ($update['index'] ?? -1);
+                $redirectTo = trim((string) ($update['redirect_to'] ?? ''));
+
+                if ($redirectTo === '') {
+                    continue;
+                }
+
+                if (!isset($config['interview']['production']['redirections'][$index]) || !is_array($config['interview']['production']['redirections'][$index])) {
+                    continue;
+                }
+
+                $config['interview']['production']['redirections'][$index]['redirect_to'] = $redirectTo;
+                $updatedCount++;
             }
 
-            if (!isset($config['interview']['production']['redirections'][$index]) || !is_array($config['interview']['production']['redirections'][$index])) {
-                continue;
+            if ($updatedCount === 0) {
+                return ['success' => false, 'message' => 'Nessuna redirection valida da aggiornare.'];
             }
 
-            $config['interview']['production']['redirections'][$index]['redirect_to'] = $redirectTo;
-            $updatedCount++;
-        }
-
-        if ($updatedCount === 0) {
-            return ['success' => false, 'message' => 'Nessuna redirection valida da aggiornare.'];
-        }
-
-        if (!is_writable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non scrivibile.'];
-        }
-
-        $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($encoded === false) {
-            return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
-        }
-
-        if (@file_put_contents($configPath, $encoded) === false) {
-            return ['success' => false, 'message' => 'Errore durante la scrittura del config.json.'];
-        }
-
-        return ['success' => true, 'updated' => $updatedCount];
+            return ['success' => true, 'config' => $config, 'updated' => $updatedCount];
+        });
     }
 
     /**
@@ -356,67 +316,43 @@ class FieldControlSreService
         }
 
         $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
-        if (!is_file($configPath) || !is_readable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
-        }
 
-        $content = @file_get_contents($configPath);
-        if ($content === false || trim($content) === '') {
-            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
-        }
-
-        $config = json_decode($content, true);
-        if (!is_array($config)) {
-            return ['success' => false, 'message' => 'File config.json non valido.'];
-        }
-
-        if (!isset($config['interview']['production']['redirections']) || !is_array($config['interview']['production']['redirections'])) {
-            $config['interview']['production']['redirections'] = [];
-        }
-
-        $addedCount = 0;
-
-        foreach ($newEntries as $entry) {
-            if (!is_array($entry)) {
-                continue;
+        return $this->withConfigJsonLock($configPath, function (array $config) use ($newEntries) {
+            if (!isset($config['interview']['production']['redirections']) || !is_array($config['interview']['production']['redirections'])) {
+                $config['interview']['production']['redirections'] = [];
             }
 
-            $parameterValue = trim((string) ($entry['parameter_value'] ?? ''));
-            $exitCode = isset($entry['exit_code']) && $entry['exit_code'] !== '' ? (int) $entry['exit_code'] : null;
-            $redirectTo = trim((string) ($entry['redirect_to'] ?? ''));
-            $parameterName = trim((string) ($entry['parameter_name'] ?? 'pan'));
+            $addedCount = 0;
 
-            if ($parameterValue === '' || $exitCode === null || $redirectTo === '') {
-                continue;
+            foreach ($newEntries as $entry) {
+                if (!is_array($entry)) {
+                    continue;
+                }
+
+                $parameterValue = trim((string) ($entry['parameter_value'] ?? ''));
+                $exitCode = isset($entry['exit_code']) && $entry['exit_code'] !== '' ? (int) $entry['exit_code'] : null;
+                $redirectTo = trim((string) ($entry['redirect_to'] ?? ''));
+                $parameterName = trim((string) ($entry['parameter_name'] ?? 'pan'));
+
+                if ($parameterValue === '' || $exitCode === null || $redirectTo === '') {
+                    continue;
+                }
+
+                $config['interview']['production']['redirections'][] = [
+                    'parameter_name' => $parameterName !== '' ? $parameterName : 'pan',
+                    'parameter_value' => $parameterValue,
+                    'exit_code' => $exitCode,
+                    'redirect_to' => $redirectTo,
+                ];
+                $addedCount++;
             }
 
-            $config['interview']['production']['redirections'][] = [
-                'parameter_name' => $parameterName !== '' ? $parameterName : 'pan',
-                'parameter_value' => $parameterValue,
-                'exit_code' => $exitCode,
-                'redirect_to' => $redirectTo,
-            ];
-            $addedCount++;
-        }
+            if ($addedCount === 0) {
+                return ['success' => false, 'message' => 'Nessuna redirection valida da aggiungere (controlla panel, esito e link).'];
+            }
 
-        if ($addedCount === 0) {
-            return ['success' => false, 'message' => 'Nessuna redirection valida da aggiungere (controlla panel, esito e link).'];
-        }
-
-        if (!is_writable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non scrivibile.'];
-        }
-
-        $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($encoded === false) {
-            return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
-        }
-
-        if (@file_put_contents($configPath, $encoded) === false) {
-            return ['success' => false, 'message' => 'Errore durante la scrittura del config.json.'];
-        }
-
-        return ['success' => true, 'added' => $addedCount];
+            return ['success' => true, 'config' => $config, 'added' => $addedCount];
+        });
     }
 
     /**
@@ -519,82 +455,69 @@ class FieldControlSreService
         }
 
         $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
-        if (!is_file($configPath) || !is_readable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
-        }
 
-        $content = @file_get_contents($configPath);
-        if ($content === false || trim($content) === '') {
-            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
-        }
-
-        $config = json_decode($content, true);
-        if (!is_array($config)) {
-            return ['success' => false, 'message' => 'File config.json non valido.'];
-        }
-
-        if (!isset($config['quota']) || !is_array($config['quota'])) {
-            $config['quota'] = [];
-        }
-        if (!isset($config['quota']['targets']) || !is_array($config['quota']['targets'])) {
-            $config['quota']['targets'] = [];
-        }
-
-        $name = trim((string) ($entry['name'] ?? ''));
-        $description = trim((string) ($entry['description'] ?? ''));
-        $value = (isset($entry['value']) && $entry['value'] !== '' && is_numeric($entry['value'])) ? (int) $entry['value'] : null;
-        $questionId = (isset($entry['question_id']) && $entry['question_id'] !== '' && is_numeric($entry['question_id'])) ? (int) $entry['question_id'] : null;
-        $optionIds = $entry['option_id'] ?? [];
-        $parameterName = trim((string) ($entry['parameter_name'] ?? ''));
-        $parameterValue = trim((string) ($entry['parameter_value'] ?? ''));
-
-        if ($name === '' || $value === null) {
-            return ['success' => false, 'message' => 'Nome e valore della quota sono obbligatori.'];
-        }
-
-        foreach ($config['quota']['targets'] as $existing) {
-            if (is_array($existing) && (string) ($existing['name'] ?? '') === $name) {
-                return ['success' => false, 'message' => 'Esiste gia\' una quota con questo nome.'];
+        return $this->withConfigJsonLock($configPath, function (array $config) use ($entry) {
+            if (!isset($config['quota']) || !is_array($config['quota'])) {
+                $config['quota'] = [];
             }
-        }
+            if (!isset($config['quota']['targets']) || !is_array($config['quota']['targets'])) {
+                $config['quota']['targets'] = [];
+            }
 
-        $newTarget = [
-            'name' => $name,
-            'description' => $description !== '' ? $description : $name,
-            'value' => $value,
-        ];
+            $name = trim((string) ($entry['name'] ?? ''));
+            $description = trim((string) ($entry['description'] ?? ''));
+            $value = (isset($entry['value']) && $entry['value'] !== '' && is_numeric($entry['value'])) ? (int) $entry['value'] : null;
+            $questionId = (isset($entry['question_id']) && $entry['question_id'] !== '' && is_numeric($entry['question_id'])) ? (int) $entry['question_id'] : null;
+            $optionIds = $entry['option_id'] ?? [];
+            $parameterName = trim((string) ($entry['parameter_name'] ?? ''));
+            $parameterValue = trim((string) ($entry['parameter_value'] ?? ''));
 
-        if ($questionId !== null && is_array($optionIds) && !empty($optionIds)) {
-            $newTarget['question_id'] = $questionId;
-            $newTarget['option_id'] = array_values(array_map('intval', $optionIds));
-        } elseif ($parameterName !== '' && $parameterValue !== '') {
-            $newTarget['parameter_name'] = $parameterName;
-            $newTarget['parameter_value'] = $parameterValue;
-        } else {
-            return ['success' => false, 'message' => 'Specifica domanda + opzioni oppure parametro + valore per questa quota.'];
-        }
+            if ($name === '' || $value === null) {
+                return ['success' => false, 'message' => 'Nome e valore della quota sono obbligatori.'];
+            }
 
-        $newIndex = count($config['quota']['targets']);
-        $config['quota']['targets'][] = $newTarget;
+            foreach ($config['quota']['targets'] as $existing) {
+                if (is_array($existing) && (string) ($existing['name'] ?? '') === $name) {
+                    return ['success' => false, 'message' => 'Esiste gia\' una quota con questo nome.'];
+                }
+            }
 
-        $result = $this->writeConfigJson($configPath, $config);
+            $newTarget = [
+                'name' => $name,
+                'description' => $description !== '' ? $description : $name,
+                'value' => $value,
+            ];
 
-        if ($result['success']) {
+            if ($questionId !== null && is_array($optionIds) && !empty($optionIds)) {
+                $newTarget['question_id'] = $questionId;
+                $newTarget['option_id'] = array_values(array_map('intval', $optionIds));
+            } elseif ($parameterName !== '' && $parameterValue !== '') {
+                $newTarget['parameter_name'] = $parameterName;
+                $newTarget['parameter_value'] = $parameterValue;
+            } else {
+                return ['success' => false, 'message' => 'Specifica domanda + opzioni oppure parametro + valore per questa quota.'];
+            }
+
+            $newIndex = count($config['quota']['targets']);
+            $config['quota']['targets'][] = $newTarget;
+
             // Stessa forma di getQuotaTargetsList(), cosi' il frontend puo'
             // aggiungere la riga in tabella senza ricaricare la pagina.
-            $result['target'] = [
-                'index' => $newIndex,
-                'name' => $newTarget['name'],
-                'description' => $newTarget['description'],
-                'question_id' => $newTarget['question_id'] ?? null,
-                'option_id' => $newTarget['option_id'] ?? [],
-                'parameter_name' => $newTarget['parameter_name'] ?? null,
-                'parameter_value' => $newTarget['parameter_value'] ?? null,
-                'value' => $newTarget['value'],
+            return [
+                'success' => true,
+                'config' => $config,
+                'target' => [
+                    'index' => $newIndex,
+                    'name' => $newTarget['name'],
+                    'description' => $newTarget['description'],
+                    'question_id' => $newTarget['question_id'] ?? null,
+                    'option_id' => $newTarget['option_id'] ?? [],
+                    'parameter_name' => $newTarget['parameter_name'] ?? null,
+                    'parameter_value' => $newTarget['parameter_value'] ?? null,
+                    'value' => $newTarget['value'],
+                ],
             ];
-        }
-
-        return $result;
+        });
     }
 
     /**
@@ -612,44 +535,37 @@ class FieldControlSreService
         }
 
         $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
-        if (!is_file($configPath) || !is_readable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
-        }
 
-        $content = @file_get_contents($configPath);
-        if ($content === false || trim($content) === '') {
-            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
-        }
-
-        $config = json_decode($content, true);
-        if (!is_array($config) || !isset($config['quota']['targets'][$index]) || !is_array($config['quota']['targets'][$index])) {
-            return ['success' => false, 'message' => 'Quota non trovata nel config.json.'];
-        }
-
-        $target = $config['quota']['targets'][$index];
-
-        if (array_key_exists('description', $entry)) {
-            $description = trim((string) $entry['description']);
-            if ($description !== '') {
-                $target['description'] = $description;
+        return $this->withConfigJsonLock($configPath, function (array $config) use ($index, $entry) {
+            if (!isset($config['quota']['targets'][$index]) || !is_array($config['quota']['targets'][$index])) {
+                return ['success' => false, 'message' => 'Quota non trovata nel config.json.'];
             }
-        }
 
-        if (array_key_exists('value', $entry) && $entry['value'] !== '' && is_numeric($entry['value'])) {
-            $target['value'] = (int) $entry['value'];
-        }
+            $target = $config['quota']['targets'][$index];
 
-        if (array_key_exists('option_id', $entry) && is_array($entry['option_id']) && !empty($entry['option_id'])) {
-            $target['option_id'] = array_values(array_map('intval', $entry['option_id']));
-        }
+            if (array_key_exists('description', $entry)) {
+                $description = trim((string) $entry['description']);
+                if ($description !== '') {
+                    $target['description'] = $description;
+                }
+            }
 
-        if (array_key_exists('parameter_value', $entry) && trim((string) $entry['parameter_value']) !== '') {
-            $target['parameter_value'] = trim((string) $entry['parameter_value']);
-        }
+            if (array_key_exists('value', $entry) && $entry['value'] !== '' && is_numeric($entry['value'])) {
+                $target['value'] = (int) $entry['value'];
+            }
 
-        $config['quota']['targets'][$index] = $target;
+            if (array_key_exists('option_id', $entry) && is_array($entry['option_id']) && !empty($entry['option_id'])) {
+                $target['option_id'] = array_values(array_map('intval', $entry['option_id']));
+            }
 
-        return $this->writeConfigJson($configPath, $config);
+            if (array_key_exists('parameter_value', $entry) && trim((string) $entry['parameter_value']) !== '') {
+                $target['parameter_value'] = trim((string) $entry['parameter_value']);
+            }
+
+            $config['quota']['targets'][$index] = $target;
+
+            return ['success' => true, 'config' => $config];
+        });
     }
 
     /**
@@ -664,32 +580,19 @@ class FieldControlSreService
         }
 
         $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
-        if (!is_file($configPath) || !is_readable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
-        }
 
-        $content = @file_get_contents($configPath);
-        if ($content === false || trim($content) === '') {
-            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
-        }
+        return $this->withConfigJsonLock($configPath, function (array $config) use ($index) {
+            if (!isset($config['quota']['targets'][$index]) || !is_array($config['quota']['targets'][$index])) {
+                return ['success' => false, 'message' => 'Quota non trovata nel config.json.'];
+            }
 
-        $config = json_decode($content, true);
-        if (!is_array($config) || !isset($config['quota']['targets'][$index]) || !is_array($config['quota']['targets'][$index])) {
-            return ['success' => false, 'message' => 'Quota non trovata nel config.json.'];
-        }
+            $removedName = $config['quota']['targets'][$index]['name'] ?? null;
 
-        $removedName = $config['quota']['targets'][$index]['name'] ?? null;
+            unset($config['quota']['targets'][$index]);
+            $config['quota']['targets'] = array_values($config['quota']['targets']);
 
-        unset($config['quota']['targets'][$index]);
-        $config['quota']['targets'] = array_values($config['quota']['targets']);
-
-        $result = $this->writeConfigJson($configPath, $config);
-
-        if ($result['success']) {
-            $result['removed_name'] = $removedName;
-        }
-
-        return $result;
+            return ['success' => true, 'config' => $config, 'removed_name' => $removedName];
+        });
     }
 
     /**
@@ -704,50 +607,96 @@ class FieldControlSreService
         }
 
         $configPath = $resourcesDirectory . DIRECTORY_SEPARATOR . 'config.json';
+
+        return $this->withConfigJsonLock($configPath, function (array $config) use ($value) {
+            if (!isset($config['quota']) || !is_array($config['quota'])) {
+                $config['quota'] = [];
+            }
+
+            $config['quota']['total_interviews'] = $value;
+
+            return ['success' => true, 'config' => $config];
+        });
+    }
+
+    /**
+     * Serializza le operazioni di lettura-modifica-scrittura su config.json
+     * tra richieste concorrenti (es. "Aggiungi redirection" e "Salva quota"
+     * quasi in contemporanea): senza lock, l'ultima scrittura sovrascriverebbe
+     * silenziosamente le modifiche dell'altra ("lost update"), rischio piu'
+     * concreto ora che le azioni rapide non ricaricano piu' la pagina tra
+     * una richiesta e l'altra.
+     *
+     * Il lock e' su un file .lock dedicato accanto al config.json (non sul
+     * config.json stesso), cosi' la scrittura finale resta un semplice
+     * file temporaneo + rename (stesso pattern gia' usato per i .sre) senza
+     * conflitti con l'handle di lock aperto - anche su filesystem Windows,
+     * dove rename() su un file con handle aperti altrove puo' fallire.
+     *
+     * $mutator riceve l'array $config decodificato e deve restituire
+     * ['success' => false, 'message' => ...] per annullare senza scrivere,
+     * oppure ['success' => true, 'config' => array modificato, ...] - i campi
+     * extra oltre 'config' vengono restituiti cosi' come sono al chiamante.
+     */
+    private function withConfigJsonLock(string $configPath, callable $mutator): array
+    {
         if (!is_file($configPath) || !is_readable($configPath)) {
             return ['success' => false, 'message' => 'File config.json non trovato o non leggibile.'];
         }
 
-        $content = @file_get_contents($configPath);
-        if ($content === false || trim($content) === '') {
-            return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
+        $lockHandle = @fopen($configPath . '.lock', 'c');
+        if (!$lockHandle) {
+            return ['success' => false, 'message' => 'Impossibile creare il lock su config.json.'];
         }
 
-        $config = json_decode($content, true);
-        if (!is_array($config)) {
-            return ['success' => false, 'message' => 'File config.json non valido.'];
+        if (!flock($lockHandle, LOCK_EX)) {
+            fclose($lockHandle);
+            return ['success' => false, 'message' => 'Impossibile ottenere il lock su config.json (riprova tra poco).'];
         }
 
-        if (!isset($config['quota']) || !is_array($config['quota'])) {
-            $config['quota'] = [];
+        try {
+            $content = @file_get_contents($configPath);
+            if ($content === false || trim($content) === '') {
+                return ['success' => false, 'message' => 'File config.json vuoto o illeggibile.'];
+            }
+
+            $config = json_decode($content, true);
+            if (!is_array($config)) {
+                return ['success' => false, 'message' => 'File config.json non valido.'];
+            }
+
+            $result = $mutator($config);
+
+            if (!is_array($result) || empty($result['success']) || !isset($result['config']) || !is_array($result['config'])) {
+                return is_array($result) ? $result : ['success' => false, 'message' => 'Operazione non riuscita.'];
+            }
+
+            if (!is_writable($configPath)) {
+                return ['success' => false, 'message' => 'File config.json non scrivibile.'];
+            }
+
+            $encoded = json_encode($result['config'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if ($encoded === false) {
+                return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
+            }
+
+            $tmpFile = $configPath . '.tmp' . uniqid('', true);
+            if (@file_put_contents($tmpFile, $encoded) === false) {
+                @unlink($tmpFile);
+                return ['success' => false, 'message' => 'Errore durante la scrittura del config.json.'];
+            }
+
+            if (!@rename($tmpFile, $configPath)) {
+                @unlink($tmpFile);
+                return ['success' => false, 'message' => 'Errore durante la sostituzione del config.json.'];
+            }
+
+            unset($result['config']);
+            return $result;
+        } finally {
+            flock($lockHandle, LOCK_UN);
+            fclose($lockHandle);
         }
-
-        $config['quota']['total_interviews'] = $value;
-
-        return $this->writeConfigJson($configPath, $config);
-    }
-
-    /**
-     * Helper comune di scrittura per le funzioni quota.*: codifica e
-     * salva l'array di config aggiornato, con gli stessi controlli e lo
-     * stesso formato di output (success/message) usati per le redirection.
-     */
-    private function writeConfigJson(string $configPath, array $config): array
-    {
-        if (!is_writable($configPath)) {
-            return ['success' => false, 'message' => 'File config.json non scrivibile.'];
-        }
-
-        $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($encoded === false) {
-            return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
-        }
-
-        if (@file_put_contents($configPath, $encoded) === false) {
-            return ['success' => false, 'message' => 'Errore durante la scrittura del config.json.'];
-        }
-
-        return ['success' => true];
     }
 
     /**
@@ -797,8 +746,8 @@ class FieldControlSreService
             }
 
             // Caso 1: label e URL sulla stessa riga (tabelle incollate da email,
-            // separate da tab o da uno o più ":" seguiti da spazi).
-            if (preg_match('/^(.*?)[:\t]+\s*(https?:\/\/\S+)\s*$/i', $line, $m)) {
+            // separate da tab, "=" o uno o più ":" seguiti da spazi).
+            if (preg_match('/^(.*?)[:=\t]+\s*(https?:\/\/\S+)\s*$/i', $line, $m)) {
                 $rawLabel = trim($m[1]);
                 $url = trim($m[2]);
 

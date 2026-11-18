@@ -626,14 +626,17 @@
     function bindRedirectionsModal() {
         const saveAllBtn = document.getElementById('redirectionsSaveAllBtn');
         const saveAllStatus = document.getElementById('redirectionsSaveAllStatus');
-        const tableBody = document.getElementById('redirectionsTableBody');
+        // Contenitore stabile (presente sia nello stato vuoto che con la lista):
+        // #redirectionsTableBody invece viene ricreato a ogni re-render dinamico
+        // (aggiunta/eliminazione), quindi i listener vanno agganciati qui sopra.
+        const listContainer = document.getElementById('redirectionsListContainer');
 
-        if (!tableBody || !routes.updateRedirections) {
+        if (!listContainer || !routes.updateRedirections) {
             return;
         }
 
         function showRowStatus(index, success, message) {
-            const el = tableBody.querySelector('.fc-redirect-row-status[data-index="' + index + '"]');
+            const el = listContainer.querySelector('.fc-redirect-row-status[data-index="' + index + '"]');
             if (!el) {
                 return;
             }
@@ -673,7 +676,7 @@
             });
         }
 
-        tableBody.addEventListener('click', function (event) {
+        listContainer.addEventListener('click', function (event) {
             const deleteBtn = event.target.closest('.fc-redirect-delete-group');
             if (deleteBtn) {
                 const parameterName = deleteBtn.getAttribute('data-parameter-name');
@@ -706,7 +709,9 @@
                     })
                     .then(function (data) {
                         if (data.success) {
-                            window.location.reload();
+                            if (data.list_html !== undefined) {
+                                listContainer.innerHTML = data.list_html;
+                            }
                             return;
                         }
 
@@ -726,7 +731,7 @@
             }
 
             const index = btn.getAttribute('data-index');
-            const input = tableBody.querySelector('.fc-redirect-input[data-index="' + index + '"]');
+            const input = listContainer.querySelector('.fc-redirect-input[data-index="' + index + '"]');
 
             if (!input) {
                 return;
@@ -752,7 +757,7 @@
             saveAllBtn.addEventListener('click', function () {
                 const updates = [];
 
-                tableBody.querySelectorAll('.fc-redirect-input').forEach(function (input) {
+                listContainer.querySelectorAll('.fc-redirect-input').forEach(function (input) {
                     const value = input.value.trim();
                     if (value !== '') {
                         updates.push({ index: parseInt(input.getAttribute('data-index'), 10), redirect_to: value });
@@ -821,24 +826,43 @@
             return select;
         }
 
+        // Il campo "codice personalizzato" accetta sia un semplice codice panel
+        // (es. "12" -> parameter_name "pan", parameter_value "12") sia una
+        // coppia parametro=valore esplicita (es. "db=1" -> parameter_name
+        // "db", parameter_value "1"), per redirection non legate al panel.
+        function parsePanelCustomValue(raw) {
+            const trimmed = String(raw || '').trim();
+            const eqIndex = trimmed.indexOf('=');
+
+            if (eqIndex > 0) {
+                return {
+                    name: trimmed.slice(0, eqIndex).trim().toLowerCase(),
+                    value: trimmed.slice(eqIndex + 1).trim()
+                };
+            }
+
+            return { name: 'pan', value: trimmed };
+        }
+
         function getDefaultPanelValue() {
             const customInput = document.getElementById('redirectImportPanelCustom');
             const customValue = customInput ? customInput.value.trim() : '';
             if (customValue !== '') {
-                return customValue;
+                return parsePanelCustomValue(customValue);
             }
 
             const globalSelect = document.getElementById('redirectImportPanelSelect');
-            return globalSelect ? globalSelect.value : '';
+            return { name: 'pan', value: globalSelect ? globalSelect.value : '' };
         }
 
-        function buildPanelSelect(defaultValue) {
+        function buildPanelSelect(defaultSpec) {
             const select = document.createElement('select');
             select.className = 'form-select form-select-sm fc-redirect-import-panel';
 
             const emptyOpt = document.createElement('option');
             emptyOpt.value = '';
             emptyOpt.textContent = '-- panel --';
+            emptyOpt.setAttribute('data-parameter-name', 'pan');
             select.appendChild(emptyOpt);
 
             let hasMatch = false;
@@ -847,18 +871,23 @@
                 const optionEl = document.createElement('option');
                 optionEl.value = code;
                 optionEl.textContent = panelNamesMap[code];
-                if (defaultValue && String(defaultValue) === String(code)) {
+                optionEl.setAttribute('data-parameter-name', 'pan');
+                if (defaultSpec.name === 'pan' && defaultSpec.value && String(defaultSpec.value) === String(code)) {
                     optionEl.selected = true;
                     hasMatch = true;
                 }
                 select.appendChild(optionEl);
             });
 
-            // Codice personalizzato (non presente nell'elenco panel noti)
-            if (defaultValue && !hasMatch) {
+            // Codice personalizzato: panel non in elenco (es. "12") oppure una
+            // coppia parametro=valore diversa da "pan" (es. "db=1").
+            if (defaultSpec.value && !hasMatch) {
                 const customOpt = document.createElement('option');
-                customOpt.value = defaultValue;
-                customOpt.textContent = 'Codice #' + defaultValue;
+                customOpt.value = defaultSpec.value;
+                customOpt.setAttribute('data-parameter-name', defaultSpec.name);
+                customOpt.textContent = defaultSpec.name === 'pan'
+                    ? ('Codice #' + defaultSpec.value)
+                    : (defaultSpec.name + ' = ' + defaultSpec.value);
                 customOpt.selected = true;
                 select.appendChild(customOpt);
             }
@@ -985,8 +1014,11 @@
                         return;
                     }
 
+                    const selectedPanelOption = panelSelect.selectedOptions[0];
+                    const parameterName = selectedPanelOption ? (selectedPanelOption.getAttribute('data-parameter-name') || 'pan') : 'pan';
+
                     entries.push({
-                        parameter_name: 'pan',
+                        parameter_name: parameterName,
                         parameter_value: panelSelect.value,
                         exit_code: parseInt(exitSelect.value, 10),
                         redirect_to: linkInput.value.trim()
@@ -1016,8 +1048,15 @@
                     })
                     .then(function (data) {
                         if (data.success) {
-                            alert((data.added || entries.length) + ' redirection aggiunte con successo.');
-                            window.location.reload();
+                            const listContainer = document.getElementById('redirectionsListContainer');
+                            if (listContainer && data.list_html !== undefined) {
+                                listContainer.innerHTML = data.list_html;
+                            }
+
+                            reviewWrap.style.display = 'none';
+                            reviewBody.innerHTML = '';
+                            textarea.value = '';
+                            setStatus(true, (data.added || entries.length) + ' redirection aggiunte con successo.');
                             return;
                         }
 

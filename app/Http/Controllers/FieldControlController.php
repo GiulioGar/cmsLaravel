@@ -624,6 +624,10 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
 
         $result = $sreService->addRedirections($prj, $sid, $entries);
 
+        if ($result['success']) {
+            $result['list_html'] = $this->renderRedirectionsList($prj, $sid, $sreService);
+        }
+
         return response()->json($result, $result['success'] ? 200 : 422);
     }
 
@@ -640,7 +644,23 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
 
         $result = $sreService->deleteRedirectionsGroup($prj, $sid, $parameterName, $parameterValue);
 
+        if ($result['success']) {
+            $result['list_html'] = $this->renderRedirectionsList($prj, $sid, $sreService);
+        }
+
         return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Ri-renderizza il partial della lista redirection dopo un'aggiunta/eliminazione,
+     * cosi' il JS puo' aggiornare la modale senza ricaricare l'intera pagina.
+     */
+    private function renderRedirectionsList(string $prj, string $sid, FieldControlSreService $sreService): string
+    {
+        return view('partials.field-redirections-list', [
+            'redirections' => $sreService->getRedirectionsList($prj, $sid),
+            'panelNamesMap' => $this->getPanelNamesMap(),
+        ])->render();
     }
 
     public function updateRedirections(Request $request, FieldControlSreService $sreService)
