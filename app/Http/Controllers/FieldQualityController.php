@@ -1091,12 +1091,60 @@ class FieldQualityController extends Controller
             ];
         }
 
+        // detectPanel() etichetta "Interactive" per default quando il .sre non
+        // contiene il campo pan= (vale per i veri panelisti Interactive, ma anche,
+        // erroneamente, per alcuni panel esterni che non scrivono quel campo).
+        // Corretto qui con un'unica query batch su tutti gli array, cosi' la
+        // pagina live e t_user_quality vedono sempre la stessa etichetta - prima
+        // la correzione avveniva solo al momento di persistere (persistQualityScores),
+        // quando la pagina aveva gia' mostrato "Interactive" per errore.
+        $this->correctMislabeledInteractivePanel($completeInterviews, $loiData, $openQuestionsData, $scaleData);
+
         return [
             'interviews'    => $completeInterviews,
             'loiData'       => $loiData,
             'openQuestions' => $openQuestionsData,
             'scaleData'     => $scaleData,
         ];
+    }
+
+    /**
+     * Un uid reale Interactive esiste sempre in t_user_info (user_id
+     * varchar(10), niente GUID esterni può starci): lo usiamo come verifica
+     * per correggere le righe erroneamente etichettate "Interactive" da
+     * detectPanel() quando il .sre non contiene pan=.
+     */
+    private function correctMislabeledInteractivePanel(array &$completeInterviews, array &$loiData, array &$openQuestionsData, array &$scaleData): void
+    {
+        $interactiveUids = [];
+        foreach ($completeInterviews as $iv) {
+            if (($iv['panel'] ?? '') === 'Interactive') {
+                $interactiveUids[(string) ($iv['uid'] ?? '')] = true;
+            }
+        }
+
+        if (empty($interactiveUids)) {
+            return;
+        }
+
+        $realInteractiveUids = DB::table('t_user_info')
+            ->whereIn('user_id', array_keys($interactiveUids))
+            ->pluck('user_id')
+            ->flip();
+
+        $fix = function (array &$rows) use ($realInteractiveUids) {
+            foreach ($rows as &$row) {
+                if (($row['panel'] ?? '') === 'Interactive' && !$realInteractiveUids->has((string) ($row['uid'] ?? ''))) {
+                    $row['panel'] = 'Sconosciuto';
+                }
+            }
+            unset($row);
+        };
+
+        $fix($completeInterviews);
+        $fix($loiData);
+        $fix($openQuestionsData);
+        $fix($scaleData);
     }
 
     private function formatSeconds(int $seconds): string
@@ -2331,19 +2379,9 @@ class FieldQualityController extends Controller
         $now  = now()->toDateTimeString();
         $rows = [];
 
-        // detectPanel() etichetta "Interactive" per default quando il file .sre non
-        // contiene il campo pan= — vale per i veri panelisti Interactive, ma anche
-        // (erroneamente) per alcuni panel esterni che non scrivono quel campo. Un uid
-        // reale Interactive esiste sempre in t_user_info (user_id varchar(10), niente
-        // GUID esterni può starci): usiamo questo come verifica per correggere l'etichetta.
-        $interactiveUids = array_unique(array_map(
-            fn ($iv) => (string) ($iv['uid'] ?? ''),
-            array_filter($interviews, fn ($iv) => ($iv['panel'] ?? '') === 'Interactive')
-        ));
-        $realInteractiveUids = !empty($interactiveUids)
-            ? DB::table('t_user_info')->whereIn('user_id', $interactiveUids)->pluck('user_id')->flip()
-            : collect();
-
+        // Nota: il panel "Interactive" già arriva corretto qui (vedi
+        // correctMislabeledInteractivePanel(), applicata in parseSreFiles()
+        // prima che $interviews raggiunga sia la view che questo metodo).
         foreach ($interviews as $iv) {
             $iid   = (string) ($iv['iid'] ?? '');
             $score = $iv['score'] ?? null;
@@ -2353,19 +2391,14 @@ class FieldQualityController extends Controller
             }
 
             $tier = $score >= 70 ? 'regolare' : ($score >= 50 ? 'incerta' : 'anomala');
-
-            $panel = $iv['panel'] ?? null;
-            $uid   = (string) ($iv['uid'] ?? '');
-            if ($panel === 'Interactive' && !$realInteractiveUids->has($uid)) {
-                $panel = 'Sconosciuto';
-            }
+            $uid  = (string) ($iv['uid'] ?? '');
 
             $rows[] = [
                 'prj'                => $prj,
                 'sid'                => $sid,
                 'iid'                => $iid,
                 'uid'                => $uid,
-                'panel'              => $panel,
+                'panel'              => $iv['panel'] ?? null,
                 'quality_score'      => (int) $score,
                 'quality_tier'       => $tier,
                 'quality_risk_total' => $iv['quality_risk_total'] ?? null,
