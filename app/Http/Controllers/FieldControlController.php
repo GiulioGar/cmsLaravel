@@ -194,29 +194,44 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         0 => ['key' => 'sospese', 'label' => 'Sospese', 'title' => 'Domanda sospese', 'subtitle' => 'principali domande di sospensione', 'icon' => 'fa-pause', 'emptyTitle' => 'Nessuna intervista sospesa da analizzare', 'emptySubtitle' => "Quando ci saranno interviste in corso/sospese, qui vedrai a che domanda sono ferme."],
     ];
 
-    $exitCountsByStatus = $sreService->buildQuestionCountsByStatusFromInterviews($interviews, $questionMap, array_keys($exitStatusTabs));
+    // Doppia fonte per la "domanda di uscita": 'file' (ultima domanda nel
+    // File Dati, default) e 'system' (ultima domanda da sistema, campo
+    // "ultima domanda" del .sre) - toggle lato UI nella card Uscite.
+    $exitSources = ['file', 'system'];
 
-    $hasExitDataByStatus = [];
+    $exitCountsByStatusBySource = [];
+    $hasExitDataByStatusBySource = [];
+    $exitCountsByKeyBySource = [];
 
-    foreach ($exitStatusTabs as $statusCode => $meta) {
-        $exitCountsByStatus[$statusCode] = $this->sortPanelsForDisplay($exitCountsByStatus[$statusCode] ?? []);
+    foreach ($exitSources as $source) {
+        $exitCountsByStatus = $sreService->buildQuestionCountsByStatusFromInterviews($interviews, $questionMap, array_keys($exitStatusTabs), $source);
 
-        $hasData = false;
-        foreach ($exitCountsByStatus[$statusCode] as $rows) {
-            if (!empty($rows) && array_sum($rows) > 0) {
-                $hasData = true;
-                break;
+        $hasExitDataByStatus = [];
+
+        foreach ($exitStatusTabs as $statusCode => $meta) {
+            $exitCountsByStatus[$statusCode] = $this->sortPanelsForDisplay($exitCountsByStatus[$statusCode] ?? []);
+
+            $hasData = false;
+            foreach ($exitCountsByStatus[$statusCode] as $rows) {
+                if (!empty($rows) && array_sum($rows) > 0) {
+                    $hasData = true;
+                    break;
+                }
             }
+            $hasExitDataByStatus[$statusCode] = $hasData;
         }
-        $hasExitDataByStatus[$statusCode] = $hasData;
-    }
 
-    // Stessi dati di $exitCountsByStatus, ma chiave = $meta['key'] (es. "screenout")
-    // invece dello status_code numerico: usata lato JS per costruire gli id dei
-    // canvas (chart-{key}-{panel}), piu' leggibile che usare direttamente il codice.
-    $exitCountsByKey = [];
-    foreach ($exitStatusTabs as $statusCode => $meta) {
-        $exitCountsByKey[$meta['key']] = $exitCountsByStatus[$statusCode];
+        // Stessi dati di $exitCountsByStatus, ma chiave = $meta['key'] (es. "screenout")
+        // invece dello status_code numerico: usata lato JS per costruire gli id dei
+        // canvas (chart-{key}-{panel}-{source}), piu' leggibile che usare direttamente il codice.
+        $exitCountsByKey = [];
+        foreach ($exitStatusTabs as $statusCode => $meta) {
+            $exitCountsByKey[$meta['key']] = $exitCountsByStatus[$statusCode];
+        }
+
+        $exitCountsByStatusBySource[$source] = $exitCountsByStatus;
+        $hasExitDataByStatusBySource[$source] = $hasExitDataByStatus;
+        $exitCountsByKeyBySource[$source] = $exitCountsByKey;
     }
 
     /*
@@ -266,9 +281,10 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'ondateInfo',
         'stimaDiagnostica',
         'exitStatusTabs',
-        'exitCountsByStatus',
-        'exitCountsByKey',
-        'hasExitDataByStatus',
+        'exitSources',
+        'exitCountsByStatusBySource',
+        'exitCountsByKeyBySource',
+        'hasExitDataByStatusBySource',
         'quotaData',
         'stimaVincolataDaQuote',
         'quotaVincolante',

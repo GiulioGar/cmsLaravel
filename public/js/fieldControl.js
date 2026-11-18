@@ -6,7 +6,7 @@
     const prj = config.prj || '';
     const sid = config.sid || '';
     const routes = config.routes || {};
-    const exitCountsByKey = config.exitCountsByKey || {};
+    const exitCountsByKeyBySource = config.exitCountsByKeyBySource || {};
     const dailySeriesData = config.dailySeriesByPanel || {};
 
     function initTooltips() {
@@ -91,6 +91,9 @@
         const rowHeight = 34;
         const chartVerticalPadding = 20;
 
+        Object.keys(exitCountsByKeyBySource).forEach(function (source) {
+        const exitCountsByKey = exitCountsByKeyBySource[source] || {};
+
         Object.keys(exitCountsByKey).forEach(function (statusKey) {
         const chartsData = exitCountsByKey[statusKey] || {};
 
@@ -170,7 +173,7 @@
             });
             const hasDenseBars = visibleLabels.length > denseLabelsThreshold;
 
-            const canvasId = 'chart-' + statusKey + '-' + buildPanelSlug(panelName);
+            const canvasId = 'chart-' + statusKey + '-' + buildPanelSlug(panelName) + '-' + source;
             const chartElement = document.getElementById(canvasId);
 
             if (!chartElement) {
@@ -381,6 +384,7 @@
             });
 
             chart.resize();
+        });
         });
         });
     }
@@ -2030,6 +2034,25 @@ function initDropdowns() {
 
         document.querySelectorAll('[data-bs-toggle="pill"]').forEach(function (trigger) {
             trigger.addEventListener('shown.bs.tab', function () {
+                resizeVisibleCharts();
+            });
+        });
+
+        const exitCard = document.getElementById('exitCard');
+        document.querySelectorAll('.fc-exit-source-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const source = btn.getAttribute('data-exit-source-btn');
+
+                if (!exitCard || exitCard.getAttribute('data-exit-source') === source) {
+                    return;
+                }
+
+                exitCard.setAttribute('data-exit-source', source);
+
+                document.querySelectorAll('.fc-exit-source-btn').forEach(function (otherBtn) {
+                    otherBtn.classList.toggle('is-active', otherBtn === btn);
+                });
+
                 resizeVisibleCharts();
             });
         });

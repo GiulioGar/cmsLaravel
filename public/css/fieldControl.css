@@ -4372,12 +4372,68 @@ h3 {font-size: 15px!important;}
     color: #fff !important;
 }
 
-.fc-exit-status-tabs{
+.fc-exit-toolbar{
     display: flex;
-    gap: .4rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
     border-bottom: 1px solid #e2e8f0;
     padding-bottom: .6rem;
     margin-bottom: .2rem;
+}
+
+.fc-exit-status-tabs{
+    display: flex;
+    gap: .4rem;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.fc-exit-source-toggle{
+    display: flex;
+    gap: .3rem;
+    flex: 0 0 auto;
+    padding-left: .5rem;
+    border-left: 1px solid #e2e8f0;
+}
+
+.fc-exit-source-btn{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 9px;
+    font-size: .82rem;
+    color: #94a3b8;
+    background: #f8fafc;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.fc-exit-source-btn:hover{
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.fc-exit-source-btn.is-active{
+    background: rgba(37, 99, 235, .12);
+    color: #2563eb;
+    border-color: rgba(37, 99, 235, .3);
+}
+
+.fc-exit-source-pane[data-exit-source-pane="system"]{
+    display: none;
+}
+
+#exitCard[data-exit-source="system"] .fc-exit-source-pane[data-exit-source-pane="file"]{
+    display: none;
+}
+
+#exitCard[data-exit-source="system"] .fc-exit-source-pane[data-exit-source-pane="system"]{
+    display: block;
 }
 
 .fc-exit-status-tab-link{

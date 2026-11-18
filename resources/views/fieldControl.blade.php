@@ -671,51 +671,68 @@
                 </div>
             </div>
 
-            <div class="card-body">
-                <ul class="nav fc-exit-status-tabs" id="exit-status-nav">
-                    @foreach ($exitStatusTabs as $statusCode => $meta)
-                        <li class="nav-item">
-                            <a class="nav-link fc-exit-status-tab-link fc-exit-tab-{{ $meta['key'] }} {{ $loop->first ? 'active' : '' }}"
-                               data-bs-toggle="pill"
-                               data-exit-title="{{ $meta['title'] }}"
-                               title="{{ $meta['title'] }}"
-                               href="#tab-exit-{{ $meta['key'] }}">
-                                <i class="fas {{ $meta['icon'] }}"></i>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
+            <div class="card-body" id="exitCard" data-exit-source="file">
+                <div class="fc-exit-toolbar">
+                    <ul class="nav fc-exit-status-tabs" id="exit-status-nav">
+                        @foreach ($exitStatusTabs as $statusCode => $meta)
+                            <li class="nav-item">
+                                <a class="nav-link fc-exit-status-tab-link fc-exit-tab-{{ $meta['key'] }} {{ $loop->first ? 'active' : '' }}"
+                                   data-bs-toggle="pill"
+                                   data-exit-title="{{ $meta['title'] }}"
+                                   title="{{ $meta['title'] }}"
+                                   href="#tab-exit-{{ $meta['key'] }}">
+                                    <i class="fas {{ $meta['icon'] }}"></i>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <div class="fc-exit-source-toggle" role="group" aria-label="Fonte ultima domanda">
+                        <button type="button" class="fc-exit-source-btn is-active" data-exit-source-btn="file"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Conta per ultima domanda nel File Dati">
+                            <i class="fas fa-file-lines"></i>
+                        </button>
+                        <button type="button" class="fc-exit-source-btn" data-exit-source-btn="system"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Conta per ultima domanda da sistema (.sre)">
+                            <i class="fas fa-microchip"></i>
+                        </button>
+                    </div>
+                </div>
 
                 <div class="tab-content mt-2">
                     @foreach ($exitStatusTabs as $statusCode => $meta)
                         <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-exit-{{ $meta['key'] }}">
-                            @if($hasExitDataByStatus[$statusCode])
-                                <ul class="nav nav-pills fc-mini-tabs" id="panel-nav-{{ $meta['key'] }}">
-                                    @foreach ($exitCountsByStatus[$statusCode] as $panelName => $rows)
-                                        <li class="nav-item">
-                                            <a class="nav-link fc-mini-tab-link {{ $loop->first ? 'active' : '' }}"
-                                               data-bs-toggle="pill" href="#tab-{{ $meta['key'] }}-panel-{{ $loop->index }}">{{ $panelName }}</a>
-                                        </li>
-                                    @endforeach
-                                </ul>
+                            @foreach ($exitSources as $source)
+                                <div class="fc-exit-source-pane" data-exit-source-pane="{{ $source }}">
+                                    @if($hasExitDataByStatusBySource[$source][$statusCode])
+                                        <ul class="nav nav-pills fc-mini-tabs" id="panel-nav-{{ $meta['key'] }}-{{ $source }}">
+                                            @foreach ($exitCountsByStatusBySource[$source][$statusCode] as $panelName => $rows)
+                                                <li class="nav-item">
+                                                    <a class="nav-link fc-mini-tab-link {{ $loop->first ? 'active' : '' }}"
+                                                       data-bs-toggle="pill" href="#tab-{{ $meta['key'] }}-{{ $source }}-panel-{{ $loop->index }}">{{ $panelName }}</a>
+                                                </li>
+                                            @endforeach
+                                        </ul>
 
-                                <div class="tab-content mt-2">
-                                    @foreach ($exitCountsByStatus[$statusCode] as $panelName => $rows)
-                                        <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-{{ $meta['key'] }}-panel-{{ $loop->index }}">
-                                            <div class="fc-screenout-subtitle">Panel: <b>{{ $panelName }}</b> — {{ $meta['subtitle'] }}</div>
-                                            <div class="fc-chart-canvas">
-                                                <div id="chart-{{ $meta['key'] }}-{{ \Illuminate\Support\Str::slug($panelName, '-') }}" style="width: 100%; height: 100%;"></div>
-                                            </div>
+                                        <div class="tab-content mt-2">
+                                            @foreach ($exitCountsByStatusBySource[$source][$statusCode] as $panelName => $rows)
+                                                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="tab-{{ $meta['key'] }}-{{ $source }}-panel-{{ $loop->index }}">
+                                                    <div class="fc-screenout-subtitle">Panel: <b>{{ $panelName }}</b> — {{ $meta['subtitle'] }}</div>
+                                                    <div class="fc-chart-canvas">
+                                                        <div id="chart-{{ $meta['key'] }}-{{ \Illuminate\Support\Str::slug($panelName, '-') }}-{{ $source }}" style="width: 100%; height: 100%;"></div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
                                         </div>
-                                    @endforeach
+                                    @else
+                                        <div class="fc-empty-card">
+                                            <div class="fc-empty-icon"><i class="fas {{ $meta['icon'] }}"></i></div>
+                                            <div class="fc-empty-title">{{ $meta['emptyTitle'] }}</div>
+                                            <div class="fc-empty-subtitle">{{ $meta['emptySubtitle'] }}</div>
+                                        </div>
+                                    @endif
                                 </div>
-                            @else
-                                <div class="fc-empty-card">
-                                    <div class="fc-empty-icon"><i class="fas {{ $meta['icon'] }}"></i></div>
-                                    <div class="fc-empty-title">{{ $meta['emptyTitle'] }}</div>
-                                    <div class="fc-empty-subtitle">{{ $meta['emptySubtitle'] }}</div>
-                                </div>
-                            @endif
+                            @endforeach
                         </div>
                     @endforeach
                 </div>
@@ -1698,7 +1715,7 @@
 @section('scripts')
 <script>
     window.FieldControlConfig = {
-        exitCountsByKey: @json($exitCountsByKey),
+        exitCountsByKeyBySource: @json($exitCountsByKeyBySource),
         dailySeriesByPanel: @json($dailySeriesByPanel)
     };
 </script>

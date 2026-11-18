@@ -1279,15 +1279,16 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
      * passaggio su $interviews per tutti gli stati, invece di una scansione
      * per stato, visto che $interviews puo' contenere migliaia di righe.
      *
-     * Usa sempre last_file_question_code ("ultima domanda nel File Dati",
-     * verificata scorrendo l'ultima riga del .sre) con fallback su
-     * last_question_code ("ultima domanda da sistema") solo se il file non
-     * ha un valore valido - vedi nota in buildLogDataFromInterviews() sulla
-     * stessa distinzione.
+     * $source distingue la fonte della "domanda di uscita" (stessa
+     * distinzione gia' nota per il Log Attivita', vedi buildLogDataFromInterviews()):
+     * - 'file' (default): usa last_file_question_code ("ultima domanda nel
+     *   File Dati", verificata scorrendo l'ultima riga del .sre), con
+     *   fallback su last_question_code solo se il file non ha un valore valido.
+     * - 'system': usa sempre last_question_code ("ultima domanda da sistema").
      *
      * Ritorna [status_code => [panel => [label => count]]].
      */
-    public function buildQuestionCountsByStatusFromInterviews(array $interviews, array $questionMap, array $statusCodes = [4, 5, 7, 0]): array
+    public function buildQuestionCountsByStatusFromInterviews(array $interviews, array $questionMap, array $statusCodes = [4, 5, 7, 0], string $source = 'file'): array
     {
         $countsByStatus = array_fill_keys($statusCodes, []);
 
@@ -1299,8 +1300,13 @@ public function buildDataSummaryByDateFromInterviews(array $interviews): array
             }
 
             $panel = $interview['panel'];
-            $lastFileQuestionCode = (int) ($interview['last_file_question_code'] ?? 0);
-            $questionId = $lastFileQuestionCode > 0 ? $lastFileQuestionCode : (int) $interview['last_question_code'];
+
+            if ($source === 'system') {
+                $questionId = (int) $interview['last_question_code'];
+            } else {
+                $lastFileQuestionCode = (int) ($interview['last_file_question_code'] ?? 0);
+                $questionId = $lastFileQuestionCode > 0 ? $lastFileQuestionCode : (int) $interview['last_question_code'];
+            }
 
             if (!isset($countsByStatus[$statusCode][$panel])) {
                 $countsByStatus[$statusCode][$panel] = [];
