@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 
 @section('head')
 <link rel="stylesheet" href="{{ asset('css/fieldControl.css') }}">
+<link rel="stylesheet" href="{{ asset('css/targetField.css') }}">
 @endsection
 
 @section('content')
@@ -64,34 +65,39 @@ use Illuminate\Support\Str;
     <div class="row mt-4">
         {{-- Colonna sinistra: elenco domande con testo max 70 caratteri e tooltip --}}
         <div class="col-md-4">
-            <h5>Domande ({{ count($questions) }})</h5>
-            <div class="list-group" style="max-height: 70vh; overflow-y: auto;">
-                @forelse($questions as $q)
-                    @php
-                        $fullText = $q['text'] ?? '';
-                        $shortText = Str::limit($fullText, 70, '...');
-                    @endphp
-                    <a href="#"
-                       class="list-group-item list-group-item-action question-item"
-                       data-question-id="{{ $q['id'] }}"
-                       data-code="{{ $q['code'] }}"
-                       data-bs-toggle="tooltip"
-                       data-bs-placement="right"
-                       title="{{ $fullText }}">
-                        <strong class="question-code">{{ $q['code'] }})</strong>
-                        {{ $shortText }}
-                    </a>
-                @empty
-                    <div class="alert alert-warning">
-                        Nessuna domanda di tipo choice/scale single trovata
-                    </div>
-                @endforelse
+            <div class="tf-sidebar">
+                <div class="tf-sidebar-head">
+                    <span class="tf-sidebar-title"><i class="fas fa-list-ul"></i> Domande</span>
+                    <span class="tf-count">{{ count($questions) }}</span>
+                </div>
+                <div class="list-group tf-qlist">
+                    @forelse($questions as $q)
+                        @php
+                            $fullText = $q['text'] ?? '';
+                            $shortText = Str::limit($fullText, 70, '...');
+                        @endphp
+                        <a href="#"
+                           class="list-group-item list-group-item-action question-item"
+                           data-question-id="{{ $q['id'] }}"
+                           data-code="{{ $q['code'] }}"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="right"
+                           title="{{ $fullText }}">
+                            <strong class="question-code">{{ $q['code'] }}</strong>
+                            {{ $shortText }}
+                        </a>
+                    @empty
+                        <div class="alert alert-warning">
+                            Nessuna domanda di tipo choice/scale single trovata
+                        </div>
+                    @endforelse
+                </div>
             </div>
         </div>
 
         {{-- Colonna destra: card con i dettagli della domanda --}}
         <div class="col-md-8">
-            <div class="card">
+            <div class="card tf-detail">
                 <div class="card-header">
                     <h5 id="questionTitle" class="mb-0">Seleziona una domanda</h5>
                 </div>
@@ -106,12 +112,12 @@ use Illuminate\Support\Str;
 
 
 <!-- Modale per mostrare gli UID target -->
-<div class="modal fade" id="modalTarget" tabindex="-1" aria-labelledby="modalTargetLabel" aria-hidden="true">
+<div class="modal fade tf-modal" id="modalTarget" tabindex="-1" aria-labelledby="modalTargetLabel" aria-hidden="true">
     <div class="modal-dialog modal-md">
-      <div class="modal-content" style="border-radius: 6px;">
-        <div class="modal-header" style="background-color: #222E3C;">
-          <h5 style="color:aliceblue!important" class="modal-title" id="modalTargetLabel">Target - Opzione selezionata</h5>
-          <button type="button" class="btn btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTargetLabel">Target - Opzione selezionata</h5>
+          <button type="button" class="btn btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" id="modalTargetBody">
 
@@ -127,7 +133,7 @@ use Illuminate\Support\Str;
               <!-- popolato dinamicamente da JS -->
             </select>
             <!-- Icona per aggiungere un nuovo target -->
-            <i class="fas fa-plus-square" id="btnAddNewTarget" style="font-size:1.25rem; cursor:pointer;"
+            <i class="fas fa-plus-square tf-add-target-icon" id="btnAddNewTarget"
                data-bs-toggle="tooltip" title="Crea nuovo target"></i>
           </div>
 
@@ -400,6 +406,11 @@ document.addEventListener("DOMContentLoaded", function() {
     items.forEach(function(item){
         item.addEventListener("click", function(e){
             e.preventDefault();
+
+            // Solo evidenziazione visiva della domanda selezionata (stile Panoramica),
+            // nessun impatto sulla logica di caricamento sottostante
+            items.forEach(function(i){ i.classList.remove("is-active"); });
+            this.classList.add("is-active");
 
             titleEl.textContent = "Caricamento...";
             detailEl.innerHTML  = "";

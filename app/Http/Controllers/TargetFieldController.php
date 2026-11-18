@@ -34,14 +34,11 @@ class TargetFieldController extends Controller
             //
         }
 
+        // Solo le domande "choice" permettono di catturare un target (icona
+        // mirino sulle opzioni): le "scale" qui sarebbero solo una tabella di
+        // sola lettura, duplicato inutile di quanto gia' mostrato in Panoramica.
         $filtered = array_filter($questions, function($q) {
-            if (($q['type'] ?? '') === 'choice') {
-                return true;
-            }
-            if (($q['type'] ?? '') === 'scale') {
-                return ($q['selection'] ?? '') === 'single';
-            }
-            return false;
+            return ($q['type'] ?? '') === 'choice';
         });
 
         $filtered = array_values($filtered);

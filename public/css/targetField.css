@@ -1,0 +1,219 @@
+/* ==========================================================================
+   Imposta Target - stile grafico allineato a Panoramica (public/css/panoramica.css)
+   Solo presentazione: nessuna classe/ID letto da JS viene rimosso, le regole
+   qui sotto sovrascrivono con selettori piu' specifici quelle di fieldControl.css
+   (.card, .option-row, ecc.) senza toccarla, per non avere effetti sulle altre
+   pagine (fieldControl/fieldQuality) che la condividono.
+   ========================================================================== */
+
+:root{
+    --tf-ink: #0f1e3d;
+    --tf-text: #1e293b;
+    --tf-muted: #64748b;
+    --tf-faint: #94a3b8;
+    --tf-line: #e5e9f0;
+    --tf-line-soft: #f0f3f7;
+    --tf-surface: #ffffff;
+    --tf-bg-soft: #f7f9fc;
+    --tf-zebra: rgba(122, 179, 62, .09);
+    --tf-accent: #2563eb;
+    --tf-accent-soft: #eef4ff;
+    --tf-accent-line: #bfd3fb;
+    --tf-radius: 14px;
+    --tf-shadow: 0 1px 2px rgba(15,30,61,.04), 0 2px 8px rgba(15,30,61,.04);
+}
+
+/* ---------- Sidebar domande ---------- */
+.tf-sidebar{
+    background: var(--tf-surface);
+    border: 1px solid var(--tf-line);
+    border-radius: var(--tf-radius);
+    box-shadow: var(--tf-shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 7rem);
+    position: sticky;
+    top: 1rem;
+}
+.tf-sidebar-head{
+    padding: 1rem 1.1rem .85rem;
+    border-bottom: 1px solid var(--tf-line);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.tf-sidebar-title{ font-weight: 800; color: var(--tf-ink); font-size: 1.02rem; display: flex; align-items: center; gap: .5rem; }
+.tf-count{
+    padding: .08rem .55rem;
+    border-radius: 999px;
+    background: var(--tf-accent-soft);
+    color: var(--tf-accent);
+    font-size: .8rem;
+    font-weight: 700;
+}
+.tf-qlist{ overflow-y: auto; padding: .5rem .55rem .6rem; flex: 1 1 auto; }
+
+/* Sovrascrive .list-group-item.question-item di fieldControl.css: selettore
+   piu' specifico (.tf-qlist ... ), stessa classe "question-item" letta dal JS */
+.tf-qlist .list-group-item.question-item{
+    display: block;
+    width: 100%;
+    padding: .6rem .65rem;
+    margin-bottom: 0;
+    border: 1px solid transparent;
+    border-bottom-color: var(--tf-line-soft);
+    border-radius: 0;
+    background: transparent;
+    color: var(--tf-text);
+    font-size: .85rem;
+    font-weight: 500;
+    box-shadow: none;
+}
+.tf-qlist .list-group-item.question-item:last-child{ border-bottom-color: transparent; }
+.tf-qlist .list-group-item.question-item:nth-child(even){ background: var(--tf-zebra); }
+.tf-qlist .list-group-item.question-item:hover{
+    background: var(--tf-bg-soft);
+    border-color: transparent;
+    border-bottom-color: var(--tf-line-soft);
+    box-shadow: none;
+}
+.tf-qlist .list-group-item.question-item.is-active{
+    background: var(--tf-accent-soft);
+    border-color: var(--tf-accent-line);
+    border-radius: 10px;
+    box-shadow: inset 3px 0 0 var(--tf-accent);
+}
+.tf-qlist .list-group-item.question-item .question-code{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 22px;
+    padding: 0 .35rem;
+    margin-right: .5rem;
+    border-radius: 6px;
+    background: #f1f4f9;
+    color: var(--tf-muted);
+    font-size: .76rem;
+    font-weight: 800;
+    vertical-align: middle;
+}
+.tf-qlist .list-group-item.question-item.is-active .question-code{ background: var(--tf-accent); color: #fff; }
+
+/* ---------- Card dettaglio domanda ---------- */
+.tf-detail.card{
+    border: 1px solid var(--tf-line);
+    border-radius: var(--tf-radius);
+    box-shadow: var(--tf-shadow);
+}
+.tf-detail .card-header{
+    background: var(--tf-surface);
+    border-bottom: 1px solid var(--tf-line-soft);
+    border-radius: var(--tf-radius) var(--tf-radius) 0 0;
+    padding: .95rem 1.2rem .8rem;
+}
+.tf-detail .card-header h5{
+    color: var(--tf-ink);
+    font-weight: 800;
+    font-size: 1rem;
+}
+.tf-detail .card-body{
+    padding: 1.1rem 1.25rem 1.25rem;
+    background: var(--tf-surface);
+    min-height: 220px;
+}
+
+/* ---------- Righe opzione (choice): generate via JS, classi invariate ---------- */
+#questionDetail .option-row{
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: .55rem;
+    padding: .55rem 0;
+    background: transparent;
+    border-bottom: 1px solid var(--tf-line-soft);
+    border-radius: 0;
+}
+#questionDetail .option-row:last-child{ border-bottom: 0; margin-bottom: 0; }
+#questionDetail .option-row:hover{ background: var(--tf-bg-soft); }
+#questionDetail .option-text{
+    width: 200px;
+    flex: none;
+    margin-right: 0;
+    color: var(--tf-text);
+    font-size: .86rem;
+    font-weight: 600;
+}
+#questionDetail .option-progress{
+    flex: 1 1 auto;
+    background: var(--tf-line-soft);
+    height: 8px;
+    border-radius: 999px;
+    margin-right: 0;
+    overflow: hidden;
+}
+#questionDetail .option-progress-fill{
+    background: var(--tf-accent);
+    height: 100%;
+    border-radius: 999px;
+}
+#questionDetail .option-badge{
+    background: var(--tf-ink);
+    color: #fff;
+    padding: .18rem .55rem;
+    border-radius: 7px;
+    font-size: .74rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    margin-right: 0;
+}
+#questionDetail .option-target-icon{
+    color: var(--tf-accent);
+    font-size: .95rem;
+    cursor: pointer;
+    flex: none;
+}
+#questionDetail .option-target-icon:hover{ color: var(--tf-ink); }
+
+/* ---------- Tabella scale (griglia): generata via JS, classi invariate ---------- */
+#questionDetail table.table-bordered{
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 3px;
+    font-size: .84rem;
+}
+#questionDetail table.table-bordered thead tr th{
+    background: var(--tf-bg-soft);
+    color: var(--tf-muted);
+    font-weight: 700;
+    font-size: .8rem;
+    border: 0;
+    padding: .5rem .5rem;
+}
+#questionDetail table.table-bordered tbody tr td{
+    border: 1px solid var(--tf-line-soft);
+    border-radius: 6px;
+    color: var(--tf-ink);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding: .45rem .5rem;
+}
+#questionDetail table.table-bordered tbody tr td strong{ color: var(--tf-text); font-weight: 700; }
+
+/* ---------- Modale Target ---------- */
+.tf-modal .modal-content{ border-radius: var(--tf-radius); border: 1px solid var(--tf-line); overflow: hidden; }
+.tf-modal .modal-header{
+    background: var(--tf-surface);
+    border-bottom: 1px solid var(--tf-line-soft);
+    padding: 1rem 1.25rem;
+}
+.tf-modal .modal-title{ color: var(--tf-ink) !important; font-weight: 800; font-size: 1.02rem; }
+.tf-modal .modal-body{ padding: 1.1rem 1.25rem; }
+.tf-modal .modal-footer{ border-top: 1px solid var(--tf-line-soft); padding: .9rem 1.25rem; }
+#modalTargetCountBox p{ font-size: .92rem; font-weight: 600; color: var(--tf-text); margin: 0 .25rem .25rem 0; }
+#btnAddNewTarget.tf-add-target-icon{
+    color: var(--tf-accent);
+    font-size: 1.2rem;
+}
+#btnAddNewTarget.tf-add-target-icon:hover{ color: var(--tf-ink); }
