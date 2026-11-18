@@ -328,9 +328,16 @@
     color: var(--pn-text);
     overflow-wrap: anywhere;
 }
-.pn-qcard-reach{ margin-top: 1.1rem; }
-.pn-qcard-reach-key{ font-size: .82rem; color: var(--pn-muted); font-weight: 600; margin-bottom: .25rem; }
-.pn-qcard-reach-val{ font-size: 1.75rem; font-weight: 800; color: var(--pn-ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
+/* "Arrivati alla domanda": chip piccolo accanto a codice/tipologia invece di
+   un blocco grande a parte, per lasciare piu' spazio alla card Esiti. */
+.pn-qcard-reach-inline{
+    display: inline-flex; align-items: center; gap: .3rem;
+    margin-left: auto;
+    font-size: .76rem; font-weight: 600; color: var(--pn-muted);
+    white-space: nowrap;
+}
+.pn-qcard-reach-inline i{ font-size: .7rem; color: var(--pn-faint); }
+.pn-qcard-reach-inline b{ color: var(--pn-ink); font-weight: 800; font-variant-numeric: tabular-nums; }
 
 .pn-qcard-right{ min-width: 0; border-left: 1px solid var(--pn-line-soft); padding-left: 1.5rem; }
 .pn-qcard-right-head{ display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: 1rem; }
@@ -495,7 +502,14 @@
 .pn-collapsible:not(.is-open) > .pn-exit-dist-body{ display: none; }
 
 /* Riepilogo ordinato di tutti gli stati, sotto le tab/dettaglio */
-.pn-exit-summary{ margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--pn-line-soft); }
+/* Dettaglio stato + Riepilogo per stato affiancati quando c'e' spazio
+   (desktop), impilati con il vecchio divider orizzontale sotto i 900px */
+.pn-exit-layout{ display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap; }
+.pn-exit-layout > .pn-exit{ flex: 1 1 320px; min-width: 280px; }
+.pn-exit-summary{ flex: 1 1 280px; min-width: 260px; margin-top: 0; padding-top: 0; border-top: 0; padding-left: 1.25rem; border-left: 1px solid var(--pn-line-soft); }
+@media (max-width: 900px){
+    .pn-exit-summary{ flex-basis: 100%; margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--pn-line-soft); padding-left: 0; border-left: 0; }
+}
 .pn-exit-summary-title{ font-size: .84rem; font-weight: 700; color: var(--pn-text); margin-bottom: .7rem; }
 .pn-exit-summary-list{ display: flex; flex-direction: column; gap: .55rem; }
 .pn-exit-summary-row{ display: flex; align-items: center; gap: .55rem; }
@@ -577,6 +591,11 @@
 .pn-xtab-key{ color: var(--pn-muted); font-weight: 500; }
 .pn-cell-pct{ font-weight: 800; color: var(--pn-ink); }
 .pn-cell-n{ color: var(--pn-faint); }
+/* Incrocio con % numerosita' primaria (vedi crossCells()): stesso identico
+   peso visivo di pn-cell-pct/pn-cell-n ma invertito, in classi dedicate per
+   non toccare il "Media" (scale) che riusa pn-cell-pct per un valore singolo. */
+.pn-xtab-val .pn-cell-n{ font-weight: 800; color: var(--pn-ink); }
+.pn-xtab-val .pn-cell-pct{ font-weight: 400; color: var(--pn-faint); }
 
 .pn-xtab th.is-total, .pn-xtab td.is-total{ background: #f3f7ff; }
 .pn-xtab tr.is-total > td{ background: #eef4ff; font-weight: 700; }

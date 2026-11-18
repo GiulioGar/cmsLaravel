@@ -217,6 +217,10 @@ foreach ($sidebarEntries as $i => $entry) {
                                 <span class="pn-qcard-code" id="pnQCode"></span>
                                 <span class="pn-chip" id="pnQType"></span>
                                 <span class="pn-chip pn-chip--cross d-none" id="pnQCtx"></span>
+                                <span class="pn-qcard-reach-inline" title="Interviste arrivate a questa domanda">
+                                    <i class="fas fa-user-check"></i>
+                                    <b id="pnQReached"></b> arrivati alla domanda
+                                </span>
                             </div>
                             <div class="pn-qcard-text" id="pnQText"></div>
                         </div>
@@ -226,10 +230,6 @@ foreach ($sidebarEntries as $i => $entry) {
                                 <span class="pn-qcard-right-note">% sugli arrivati</span>
                             </div>
                             <div class="pn-qoutcomes" id="pnQOutcomes"></div>
-                            <div class="pn-qcard-reach">
-                                <div class="pn-qcard-reach-key">Arrivati alla domanda</div>
-                                <div class="pn-qcard-reach-val" id="pnQReached"></div>
-                            </div>
                         </div>
                     </div>
                 </section>
@@ -251,9 +251,11 @@ foreach ($sidebarEntries as $i => $entry) {
                         </div>
                         <div class="pn-card-body">
                             <div class="pn-exit-tabs" id="pnExitTabs"></div>
-                            <div class="pn-exit" id="pnExitDetail"></div>
+                            <div class="pn-exit-layout">
+                                <div class="pn-exit" id="pnExitDetail"></div>
+                                <div class="pn-exit-summary" id="pnExitSummary"></div>
+                            </div>
                             <div class="pn-card-foot">Interviste ferme su questa domanda (ultima domanda nel File Dati)</div>
-                            <div class="pn-exit-summary" id="pnExitSummary"></div>
                         </div>
                     </section>
                 </div>

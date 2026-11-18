@@ -576,8 +576,8 @@
                 var alpha = rowBase > 0 ? (0.06 + (value / 100) * 0.6).toFixed(3) : 0;
                 var light = value >= 55;
                 html += '<td style="background:rgba(' + rgb + ',' + alpha + ');' + (light ? 'color:#fff' : '') + '">'
-                    + (rowBase > 0 ? fmtPct(value) : '–')
-                    + '<small' + (light ? ' style="color:rgba(255,255,255,.85)"' : '') + '>' + fmtInt(count) + '</small></td>';
+                    + fmtInt(count)
+                    + '<small' + (light ? ' style="color:rgba(255,255,255,.85)"' : '') + '>' + (rowBase > 0 ? fmtPct(value) : '–') + '</small></td>';
             });
             html += '<td class="pn-grid-base">' + fmtInt(rowBase) + '</td></tr>';
         });
@@ -647,8 +647,11 @@
         }
 
         // Sempre e solo icone: l'etichetta e il numero restano nel tooltip,
-        // mai nel bottone (niente logica legata allo spazio disponibile)
+        // mai nel bottone (niente logica legata allo spazio disponibile).
+        // Con un solo stato disponibile non c'e' nulla da scegliere: il menu
+        // tab verrebbe mostrato vuoto di significato, meglio nasconderlo.
         var tabsEl = $('pnExitTabs');
+        tabsEl.classList.toggle('d-none', active.length <= 1);
         disposeTextTooltips(tabsEl);
         tabsEl.innerHTML = active.map(function (s) {
             return '<button type="button" class="pn-exit-tab' + (s.key === currentExitTab ? ' is-active' : '') + '" data-exit-tab="' + s.key + '"'
@@ -1613,8 +1616,8 @@
         var count = group.counts[answer.idx] || 0;
         var value = pct(count, group.base);
         var valueCell = '<td class="pn-xtab-num pn-xtab-val">'
-            + '<span class="pn-cell-pct">' + (group.base > 0 ? fmtPct(value) : '–') + '</span>'
-            + ' <span class="pn-cell-n">(' + fmtInt(count) + ')</span></td>';
+            + '<span class="pn-cell-n">' + fmtInt(count) + '</span>'
+            + ' <span class="pn-cell-pct">(' + (group.base > 0 ? fmtPct(value) : '–') + ')</span></td>';
 
         if (group.isTotal || group.base < LOW_BASE) {
             return valueCell + '<td class="pn-xtab-delta"></td>';
