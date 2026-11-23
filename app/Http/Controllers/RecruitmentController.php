@@ -56,30 +56,30 @@ class RecruitmentController extends Controller
 
     public function daily(Request $request)
     {
-        $year = (int) $request->get('year', now()->year);
-        $month = (int) $request->get('month', now()->month);
+        $minDate = '2021-01-01';
+        $maxDate = Carbon::now()->addYear()->format('Y-m-d');
 
-        if ($month < 1 || $month > 12) {
-            $month = (int) now()->month;
+        $startDate = $this->parseBoundedDate($request->get('date_from'), now()->startOfMonth()->format('Y-m-d'), $minDate, $maxDate);
+        $endDate = $this->parseBoundedDate($request->get('date_to'), now()->format('Y-m-d'), $minDate, $maxDate);
+
+        if ($endDate->lt($startDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
         }
 
-        if ($year < 2021 || $year > ((int) now()->year + 1)) {
-            $year = (int) now()->year;
-        }
-
-        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
-        $referenceDate = $startDate->format('Y-m-d');
+        $rangeFrom = $startDate->format('Y-m-d');
+        $rangeTo = $endDate->format('Y-m-d');
 
         $referrals = $this->getActiveReferrals();
 
-        // CPI per il mese selezionato
+        // CPI per il periodo selezionato (sovrapposizione: una campagna che tocca
+        // anche solo in parte il periodo viene conteggiata per intero, coerente col
+        // conteggio registrati che resta una singola query aggregata sull'intero range)
         $cpiRows = DB::table('t_recruitment_referral_costs')
             ->select('referral_id', 'start_date', 'end_date', 'cpi', 'age_min', 'age_max')
             ->where('is_active', 1)
-            ->whereDate('start_date', '<=', $endDate->format('Y-m-d'))
-            ->where(function ($q) use ($referenceDate) {
-                $q->whereNull('end_date')->orWhereDate('end_date', '>=', $referenceDate);
+            ->whereDate('start_date', '<=', $rangeTo)
+            ->where(function ($q) use ($rangeFrom) {
+                $q->whereNull('end_date')->orWhereDate('end_date', '>=', $rangeFrom);
             })
             ->orderBy('start_date')
             ->get();
@@ -125,8 +125,8 @@ class RecruitmentController extends Controller
 
         $rows = DB::table('t_user_info')
             ->select($selectClauses)
-            ->where('reg_date', '>=', $startDate->format('Y-m-d'))
-            ->where('reg_date', '<', $startDate->copy()->addMonth()->format('Y-m-d'))
+            ->where('reg_date', '>=', $rangeFrom)
+            ->where('reg_date', '<', $endDate->copy()->addDay()->format('Y-m-d'))
             ->where('email', 'not like', '%.top')
             ->whereNotNull('provenienza')
             ->where('provenienza', '<>', '')
@@ -175,7 +175,7 @@ class RecruitmentController extends Controller
 
             if ($monthSourceData['registered'] <= 0) continue;
 
-            $cost = round($this->computeSegmentedCost($referral->id, $referenceDate, $monthSourceData, $cpiByReferral, $ageBreakpoints), 2);
+            $cost = round($this->computeSegmentedCostForRange($referral->id, $rangeFrom, $rangeTo, $monthSourceData, $cpiByReferral, $ageBreakpoints), 2);
 
             $groupedReferrals[] = [
                 'code'    => $referral->code,
@@ -204,7 +204,7 @@ class RecruitmentController extends Controller
             }
 
             if ($monthSourceData['registered'] > 0) {
-                $cost = round($this->computeSegmentedCost($fallbackReferral->id, $referenceDate, $monthSourceData, $cpiByReferral, $ageBreakpoints), 2);
+                $cost = round($this->computeSegmentedCostForRange($fallbackReferral->id, $rangeFrom, $rangeTo, $monthSourceData, $cpiByReferral, $ageBreakpoints), 2);
                 $groupedReferrals[] = [
                     'code'    => $fallbackReferral->code,
                     'label'   => $fallbackReferral->title,
@@ -223,13 +223,15 @@ class RecruitmentController extends Controller
 
         $totalRegistered = array_sum(array_column($groupedReferrals, 'total'));
 
-        $monthLabel = ucfirst($startDate->locale('it')->translatedFormat('F Y'));
+        $periodLabel = $startDate->isSameDay($endDate)
+            ? $startDate->locale('it')->translatedFormat('d F Y')
+            : $startDate->locale('it')->translatedFormat('d/m/Y') . ' - ' . $endDate->locale('it')->translatedFormat('d/m/Y');
 
         return response()->json([
             'success'          => true,
-            'month'            => str_pad($month, 2, '0', STR_PAD_LEFT),
-            'year'             => $year,
-            'month_label'      => $monthLabel,
+            'date_from'        => $rangeFrom,
+            'date_to'          => $rangeTo,
+            'period_label'     => $periodLabel,
             'total_registered' => $totalRegistered,
             'referrals'        => array_map(function ($item) {
                 unset($item['sort_order']);
@@ -1215,6 +1217,88 @@ private function computeSegmentedCost(
     }
 
     return $cost;
+}
+
+/**
+ * Variante di computeSegmentedCost() per un periodo Dal/Al arbitrario (non necessariamente
+ * un mese intero): una campagna CPI e' valida se si sovrappone, anche solo in parte, al
+ * periodo [$rangeFrom, $rangeTo]. Usata solo da daily().
+ */
+private function computeSegmentedCostForRange(
+    $referralId,
+    string $rangeFrom,
+    string $rangeTo,
+    array $rangeSourceData,
+    array $cpiByReferral,
+    array $ageBreakpoints
+): float {
+    if (!isset($cpiByReferral[$referralId])) {
+        return 0.0;
+    }
+
+    $validPeriods = array_values(array_filter($cpiByReferral[$referralId], function ($p) use ($rangeFrom, $rangeTo) {
+        $start = substr($p['start_date'], 0, 10);
+        $end   = $p['end_date'] !== null ? substr($p['end_date'], 0, 10) : null;
+        return $start <= $rangeTo && ($end === null || $end >= $rangeFrom);
+    }));
+
+    if (empty($validPeriods)) {
+        return 0.0;
+    }
+
+    $totalRegistered = (int) ($rangeSourceData['registered'] ?? 0);
+    $hasBirthDate    = (int) ($rangeSourceData['has_birth_date'] ?? 0);
+    $cost = 0.0;
+
+    foreach ($validPeriods as $segment) {
+        $ageMin = $segment['age_min'];
+        $ageMax = $segment['age_max'];
+
+        if ($ageMin === null && $ageMax === null) {
+            $cost += $totalRegistered * $segment['cpi'];
+            continue;
+        }
+
+        $upperCount = $ageMax !== null
+            ? (int) ($rangeSourceData['age_under_' . $ageMax] ?? 0)
+            : $hasBirthDate;
+
+        $lowerCount = $ageMin !== null
+            ? (int) ($rangeSourceData['age_under_' . ($ageMin - 1)] ?? 0)
+            : 0;
+
+        $cost += max(0, $upperCount - $lowerCount) * $segment['cpi'];
+    }
+
+    return $cost;
+}
+
+/**
+ * Parsa una data Y-m-d dalla request, con fallback e clamp su un range valido.
+ */
+private function parseBoundedDate($value, string $fallback, string $minDate, string $maxDate): Carbon
+{
+    $date = null;
+
+    if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        try {
+            $date = Carbon::createFromFormat('Y-m-d', $value)->startOfDay();
+        } catch (\Exception $e) {
+            $date = null;
+        }
+    }
+
+    if ($date === null) {
+        $date = Carbon::createFromFormat('Y-m-d', $fallback)->startOfDay();
+    }
+
+    $min = Carbon::createFromFormat('Y-m-d', $minDate)->startOfDay();
+    $max = Carbon::createFromFormat('Y-m-d', $maxDate)->startOfDay();
+
+    if ($date->lt($min)) $date = $min;
+    if ($date->gt($max)) $date = $max;
+
+    return $date;
 }
 
 public function latestRegistrations()

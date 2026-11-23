@@ -126,42 +126,42 @@
             {{-- COLONNA DESTRA --}}
             <div class="col-xl-6">
 
-                {{-- BOX RIEPILOGO MENSILE --}}
+                {{-- BOX RIEPILOGO PER REFERRAL --}}
                 <div class="card recruitment-card mb-4">
-                    <div class="card-header recruitment-card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <div>
-                            <h5 class="mb-0">Riepilogo mensile per referral</h5>
-                            <small class="text-muted">Conteggi mensili filtrati per mese e anno</small>
+                    <div class="card-header recruitment-card-header daily-card-header">
+                        <div class="daily-header-top">
+                            <div>
+                                <h5 class="mb-0">Riepilogo per referral</h5>
+                                <small class="text-muted">Conteggi filtrati per periodo</small>
+                            </div>
+
+                            <div class="daily-date-range">
+                                <div class="filter-box">
+                                    <label for="filterDailyFrom" class="form-label mb-1">Dal</label>
+                                    <input type="date" id="filterDailyFrom" class="form-control form-control-sm">
+                                </div>
+
+                                <div class="filter-box">
+                                    <label for="filterDailyTo" class="form-label mb-1">Al</label>
+                                    <input type="date" id="filterDailyTo" class="form-control form-control-sm">
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="d-flex gap-2">
-                            <div class="filter-box">
-                                <label for="filterDailyMonth" class="form-label mb-1">Mese</label>
-                                <select id="filterDailyMonth" class="form-select form-select-sm">
-                                    @foreach($months as $monthNumber => $monthLabel)
-                                        <option value="{{ $monthNumber }}" {{ $monthNumber == $currentMonth ? 'selected' : '' }}>
-                                            {{ $monthLabel }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="filter-box">
-                                <label for="filterDailyYear" class="form-label mb-1">Anno</label>
-                                <select id="filterDailyYear" class="form-select form-select-sm">
-                                    @foreach($years as $year)
-                                        <option value="{{ $year }}" {{ $year == $currentYear ? 'selected' : '' }}>
-                                            {{ $year }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        <div class="daily-period-shortcuts" id="dailyPeriodShortcuts">
+                            <button type="button" class="period-shortcut-btn" data-shortcut="today">Oggi</button>
+                            <button type="button" class="period-shortcut-btn" data-shortcut="last7">Ultimi 7 giorni</button>
+                            <button type="button" class="period-shortcut-btn" data-shortcut="last30">Ultimi 30 giorni</button>
+                            <button type="button" class="period-shortcut-btn" data-shortcut="month">Mese attuale</button>
+                            <button type="button" class="period-shortcut-btn" data-shortcut="prev_month">Mese scorso</button>
+                            <button type="button" class="period-shortcut-btn" data-shortcut="year">Anno attuale</button>
+                            <button type="button" class="period-shortcut-btn" data-shortcut="prev_year">Anno scorso</button>
                         </div>
                     </div>
 
                     <div class="card-body">
                         <div id="dailyBox" class="placeholder-box">
-                            Box riepilogo mensile
+                            Box riepilogo per referral
                         </div>
                     </div>
                 </div>
@@ -518,8 +518,9 @@
 document.addEventListener('DOMContentLoaded', function () {
 
     const dailyBox = document.getElementById('dailyBox');
-    const filterDailyMonth = document.getElementById('filterDailyMonth');
-    const filterDailyYear = document.getElementById('filterDailyYear');
+    const filterDailyFrom = document.getElementById('filterDailyFrom');
+    const filterDailyTo = document.getElementById('filterDailyTo');
+    const dailyPeriodShortcuts = document.getElementById('dailyPeriodShortcuts');
 
     const costsBox = document.getElementById('costsBox');
     const filterCostsYear = document.getElementById('filterCostsYear');
@@ -1001,9 +1002,9 @@ function renderDailyBox(data) {
         <div class="daily-month-shell">
             <div class="daily-month-top">
                 <div class="daily-month-summary">
-                    <div class="daily-month-summary-label">Registrati mese</div>
+                    <div class="daily-month-summary-label">Registrati nel periodo</div>
                     <div class="daily-month-summary-value">${formatNumber(data.total_registered)}</div>
-                    <div class="daily-month-summary-subtitle">${escapeHtml(data.month_label)}</div>
+                    <div class="daily-month-summary-subtitle">${escapeHtml(data.period_label)}</div>
                 </div>
 
                 <div class="daily-month-badge">
@@ -1079,13 +1080,91 @@ function renderDailyBox(data) {
     dailyBox.innerHTML = html;
 }
 
+    function pad2(n) {
+        return String(n).padStart(2, '0');
+    }
+
+    function toIsoDate(d) {
+        return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    }
+
+    function updateActiveShortcut() {
+        const from = filterDailyFrom.value;
+        const to = filterDailyTo.value;
+        const today = new Date();
+
+        const ranges = {
+            today: [toIsoDate(today), toIsoDate(today)],
+            last7: [toIsoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6)), toIsoDate(today)],
+            last30: [toIsoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29)), toIsoDate(today)],
+            month: [toIsoDate(new Date(today.getFullYear(), today.getMonth(), 1)), toIsoDate(today)],
+            prev_month: [toIsoDate(new Date(today.getFullYear(), today.getMonth() - 1, 1)), toIsoDate(new Date(today.getFullYear(), today.getMonth(), 0))],
+            year: [toIsoDate(new Date(today.getFullYear(), 0, 1)), toIsoDate(today)],
+            prev_year: [toIsoDate(new Date(today.getFullYear() - 1, 0, 1)), toIsoDate(new Date(today.getFullYear() - 1, 11, 31))],
+        };
+
+        dailyPeriodShortcuts.querySelectorAll('.period-shortcut-btn').forEach(function(btn) {
+            const r = ranges[btn.dataset.shortcut];
+            btn.classList.toggle('active', !!r && r[0] === from && r[1] === to);
+        });
+    }
+
+    function applyShortcut(key) {
+        const today = new Date();
+        let from, to;
+
+        switch (key) {
+            case 'today':
+                from = to = toIsoDate(today);
+                break;
+            case 'last7':
+                from = toIsoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6));
+                to = toIsoDate(today);
+                break;
+            case 'last30':
+                from = toIsoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29));
+                to = toIsoDate(today);
+                break;
+            case 'month':
+                from = toIsoDate(new Date(today.getFullYear(), today.getMonth(), 1));
+                to = toIsoDate(today);
+                break;
+            case 'prev_month':
+                from = toIsoDate(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+                to = toIsoDate(new Date(today.getFullYear(), today.getMonth(), 0));
+                break;
+            case 'year':
+                from = toIsoDate(new Date(today.getFullYear(), 0, 1));
+                to = toIsoDate(today);
+                break;
+            case 'prev_year':
+                from = toIsoDate(new Date(today.getFullYear() - 1, 0, 1));
+                to = toIsoDate(new Date(today.getFullYear() - 1, 11, 31));
+                break;
+            default:
+                return;
+        }
+
+        filterDailyFrom.value = from;
+        filterDailyTo.value = to;
+        loadDailyBox();
+    }
+
     function loadDailyBox() {
-        const month = filterDailyMonth.value;
-        const year = filterDailyYear.value;
+        let from = filterDailyFrom.value;
+        let to = filterDailyTo.value;
 
-        dailyBox.innerHTML = `<div class="daily-loading">Caricamento riepilogo mensile...</div>`;
+        if (from && to && from > to) {
+            [from, to] = [to, from];
+            filterDailyFrom.value = from;
+            filterDailyTo.value = to;
+        }
 
-        fetch(`{{ route('recruitment.daily') }}?month=${month}&year=${year}`, {
+        updateActiveShortcut();
+
+        dailyBox.innerHTML = `<div class="daily-loading">Caricamento riepilogo...</div>`;
+
+        fetch(`{{ route('recruitment.daily') }}?date_from=${from}&date_to=${to}`, {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
@@ -1099,11 +1178,14 @@ function renderDailyBox(data) {
             return response.json();
         })
         .then(function(data) {
+            if (data.date_from) filterDailyFrom.value = data.date_from;
+            if (data.date_to) filterDailyTo.value = data.date_to;
+            updateActiveShortcut();
             renderDailyBox(data);
         })
         .catch(function(error) {
             console.error(error);
-            dailyBox.innerHTML = `<div class="daily-empty">Impossibile caricare i dati del riepilogo mensile</div>`;
+            dailyBox.innerHTML = `<div class="daily-empty">Impossibile caricare i dati del riepilogo</div>`;
         });
     }
 
@@ -1917,14 +1999,19 @@ function showCampaignSuccess(message) {
     campaignSuccess.classList.remove('d-none');
 }
 
-    filterDailyMonth.addEventListener('change', loadDailyBox);
-    filterDailyYear.addEventListener('change', loadDailyBox);
+    filterDailyFrom.addEventListener('change', loadDailyBox);
+    filterDailyTo.addEventListener('change', loadDailyBox);
+    dailyPeriodShortcuts.addEventListener('click', function(e) {
+        const btn = e.target.closest('.period-shortcut-btn');
+        if (!btn) return;
+        applyShortcut(btn.dataset.shortcut);
+    });
     filterCostsYear.addEventListener('change', loadCostsBox);
     filterActivityYear.addEventListener('change', loadActivityBox);
     filterStatsYear.addEventListener('change', loadStatsBox);
     filterSummaryYear.addEventListener('change', loadSummaryYearBox);
 
-    loadDailyBox();
+    applyShortcut('month');
     loadCostsBox();
     loadActivityBox();
     loadStatsBox();

@@ -40,8 +40,84 @@
     color: #6b7280;
 }
 
-.filter-box .form-select {
+.filter-box .form-select,
+.filter-box .form-control {
     border-radius: 10px;
+}
+
+.daily-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.daily-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.daily-date-range {
+    display: flex;
+    gap: 10px;
+}
+
+.daily-date-range .filter-box {
+    min-width: 0;
+}
+
+.daily-date-range .form-control {
+    width: 150px;
+}
+
+.daily-period-shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-top: 2px;
+    border-top: 1px solid #edf2f7;
+    padding-top: 12px;
+}
+
+.period-shortcut-btn {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 5px 14px;
+    line-height: 1.4;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.period-shortcut-btn:hover {
+    border-color: #94a3b8;
+    color: #1f2937;
+}
+
+.period-shortcut-btn.active {
+    background: #1f2937;
+    border-color: #1f2937;
+    color: #ffffff;
+}
+
+@media (max-width: 575.98px) {
+    .daily-date-range {
+        width: 100%;
+    }
+
+    .daily-date-range .filter-box {
+        flex: 1;
+    }
+
+    .daily-date-range .form-control {
+        width: 100%;
+    }
 }
 
 .placeholder-box {
