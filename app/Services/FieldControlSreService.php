@@ -545,6 +545,59 @@ class FieldControlSreService
         return ['success' => true];
     }
 
+    /**
+     * Dati per il box header "Costi totali" + il suo tooltip di dettaglio:
+     * un valore per panel (CPI + totale), compreso Interactive (bytes/1000 *
+     * complete, stessa formula di FieldControlController::updatePanelControl()
+     * usata per popolare t_panel_control.costo - non e' "gratis"). Panel con
+     * zero contatti non vengono proprio inclusi (niente righe a vuoto/zero
+     * nel riepilogo). 'Da lista' non ha un costo applicabile per definizione.
+     */
+    public function buildHeaderPanelCosts($panelData, array $panelCounts, array $panelCosts): array
+    {
+        $panelCostsByName = collect($panelCosts)->keyBy('panel_name');
+        $rows = [];
+
+        foreach ($panelCounts as $pName => $pVal) {
+            if ((int) ($pVal['contatti'] ?? 0) === 0) {
+                continue;
+            }
+
+            if ($pName === 'Interactive') {
+                $rows[] = [
+                    'label' => $pName,
+                    'cpi' => round(((float) ($panelData->bytes ?? 0)) / 1000, 2),
+                    'value' => round((float) ($panelData->costo ?? 0), 2),
+                    'applicable' => true,
+                ];
+                continue;
+            }
+
+            if ($pName === 'Da lista') {
+                $rows[] = ['label' => $pName, 'cpi' => null, 'value' => null, 'applicable' => false];
+                continue;
+            }
+
+            $costRow = $panelCostsByName->get($pName);
+            $cpi = null;
+            $value = null;
+            if ($costRow) {
+                $cpi = $costRow['cpi'] !== null ? $costRow['cpi'] : $costRow['cpi_display'];
+                $value = $costRow['costo_totale'] !== null ? $costRow['costo_totale'] : $costRow['costo_display'];
+            }
+
+            $rows[] = ['label' => $pName, 'cpi' => $cpi, 'value' => $value, 'applicable' => true];
+        }
+
+        $applicable = collect($rows)->where('applicable', true);
+
+        return [
+            'rows' => $rows,
+            'total' => $applicable->sum('value'),
+            'has_unconfigured' => $applicable->contains(fn($hc) => $hc['value'] === null),
+        ];
+    }
+
     public function deletePanelCost(string $prj, string $sid, string $panelName): array
     {
         $deleted = PanelControlCost::where('prj', $prj)

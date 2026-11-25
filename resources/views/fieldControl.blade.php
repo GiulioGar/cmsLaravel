@@ -225,73 +225,16 @@
         fn($name) => !in_array($name, ['Interactive', 'Da lista'], true)
     ));
 
-    // Box header "Costi per panel": a differenza dell'Azione Rapida Costi
-    // (solo panel esterni, dove ha senso impostare un CPI manuale), qui
-    // mostriamo TUTTI i panel della ricerca per una vista d'insieme.
-    // Interactive non e' "gratis": il costo reale (bytes/1000 * complete,
-    // stessa formula di updatePanelControl() usata per popolare
-    // t_panel_control.costo) lo riprendiamo da $panelData invece di
-    // azzerarlo, cosi' CPI e totale sono coerenti col resto della pagina.
-    // Da lista invece non ha un costo per definizione (nessun panel/CPI
-    // associato): resta "—", non entra ne' nel totale ne' nel "parziale".
-    $panelCostsByName = collect($panelCosts)->keyBy('panel_name');
-    $headerPanelCosts = [];
-    foreach ($panelCounts as $pName => $pVal) {
-        if ($pName === 'Interactive') {
-            $completeInteractive = (int) ($pVal['complete'] ?? 0);
-            $cpiInteractive = round(((float) ($panelData->bytes ?? 0)) / 1000, 2);
-            $headerPanelCosts[] = [
-                'label' => $pName,
-                'cpi' => $cpiInteractive,
-                'value' => round((float) ($panelData->costo ?? 0), 2),
-                'applicable' => true,
-            ];
-            continue;
-        }
-
-        if ($pName === 'Da lista') {
-            $headerPanelCosts[] = ['label' => $pName, 'cpi' => null, 'value' => null, 'applicable' => false];
-            continue;
-        }
-
-        $costRow = $panelCostsByName->get($pName);
-        $cpi = null;
-        $value = null;
-        if ($costRow) {
-            $cpi = $costRow['cpi'] !== null ? $costRow['cpi'] : $costRow['cpi_display'];
-            $value = $costRow['costo_totale'] !== null ? $costRow['costo_totale'] : $costRow['costo_display'];
-        }
-
-        $headerPanelCosts[] = ['label' => $pName, 'cpi' => $cpi, 'value' => $value, 'applicable' => true];
-    }
-
-    // Un solo valore in vista (stile LOI media), dettaglio per panel nel
-    // tooltip: una lista di righe nel box header diventava illeggibile con
-    // piu' di 2-3 panel. Il totale somma solo i panel "applicabili" (esclusa
-    // Da lista); se tra questi manca un costo lo segnaliamo come "parziale".
-    $applicablePanelCosts = collect($headerPanelCosts)->where('applicable', true);
-    $hasUnconfiguredPanelCost = $applicablePanelCosts->contains(fn($hc) => $hc['value'] === null);
-    $totalPanelCost = $applicablePanelCosts->sum('value');
-
-    // Niente tag <table>/<tr>/<td>: il sanitizer HTML di default di
-    // Bootstrap 5 per i tooltip (data-bs-html="true") non li ammette e li
-    // rimuove in silenzio, lasciando visibile solo il resto del contenuto.
-    // Stessa tabella ricostruita con <div>/<span> (sempre ammessi) in una
-    // griglia CSS a 3 colonne.
-    $panelCostsTooltipHtml = '<div class="fc-question-tooltip-content">'
-        . '<div class="fc-question-tooltip-label">Costi per panel</div>'
-        . '<div class="fc-question-tooltip-divider"></div>'
-        . '<div class="fc-cost-tooltip-grid">'
-        . '<span class="fc-cost-tooltip-head">Panel</span><span class="fc-cost-tooltip-head">CPI</span><span class="fc-cost-tooltip-head">Totale</span>';
-    foreach ($headerPanelCosts as $hc) {
-        $cpiCell = $hc['cpi'] !== null ? '€ ' . $fmtIt($hc['cpi'], 2) : '—';
-        $valueCell = $hc['value'] !== null ? '€ ' . $fmtIt($hc['value'], 2) : ($hc['applicable'] ? 'N/D' : '—');
-
-        $panelCostsTooltipHtml .= '<span class="fc-cost-tooltip-name">' . e($hc['label']) . '</span>'
-            . '<span class="fc-cost-tooltip-value">' . $cpiCell . '</span>'
-            . '<span class="fc-cost-tooltip-value">' . $valueCell . '</span>';
-    }
-    $panelCostsTooltipHtml .= '</div></div>';
+    // Box header "Costi per panel": vista TUTTI i panel coinvolti (non solo
+    // gli esterni dell'Azione Rapida Costi), Interactive incluso col suo
+    // costo reale. Logica in FieldControlSreService::buildHeaderPanelCosts()
+    // perche' va richiamata identica anche dopo un salvataggio/eliminazione
+    // via AJAX (vedi FieldControlController::savePanelCost/deletePanelCost),
+    // per aggiornare il box in tempo reale senza reload.
+    $headerCostSummary = $sreService->buildHeaderPanelCosts($panelData, $panelCounts, $panelCosts);
+    $hasUnconfiguredPanelCost = $headerCostSummary['has_unconfigured'];
+    $totalPanelCost = $headerCostSummary['total'];
+    $panelCostsTooltipHtml = view('partials.field-panel-costs-tooltip', ['rows' => $headerCostSummary['rows']])->render();
 
     // Sezioni "Andamento Field": Totale + ogni panel, stesse formule/denominatori di prima
     $outcomeKeys = ['complete', 'non_target', 'over_quota', 'sospese', 'bloccate', 'bad_quality'];

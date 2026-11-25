@@ -298,7 +298,8 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'quotaTargetsData',
         'panelNamesMap',
         'questionMap',
-        'panelCosts'
+        'panelCosts',
+        'sreService'
     ));
 }
 
@@ -682,7 +683,7 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
         $result = $sreService->savePanelCost($prj, $sid, $panelName, $cpi, $costoTotale, $referente, $note);
 
         if ($result['success']) {
-            $result['list_html'] = $this->renderPanelCostsList($prj, $sid, $primis, $sreService);
+            $result += $this->renderPanelCostsData($prj, $sid, $primis, $sreService);
         }
 
         return response()->json($result, $result['success'] ? 200 : 422);
@@ -697,23 +698,33 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
         $result = $sreService->deletePanelCost($prj, $sid, $panelName);
 
         if ($result['success']) {
-            $result['list_html'] = $this->renderPanelCostsList($prj, $sid, $primis, $sreService);
+            $result += $this->renderPanelCostsData($prj, $sid, $primis, $sreService);
         }
 
         return response()->json($result, $result['success'] ? 200 : 422);
     }
 
     /**
-     * Ri-renderizza il partial dei costi panel dopo un salvataggio/eliminazione,
-     * stesso pattern gia' usato per redirection/quote (niente reload pagina).
+     * Ri-renderizza il partial dei costi panel (modale) E i dati del box
+     * header "Costi totali" dopo un salvataggio/eliminazione, cosi' il JS
+     * puo' aggiornare entrambi senza reload - stesso pattern gia' usato per
+     * redirection/quote, esteso anche al box in header.
      */
-    private function renderPanelCostsList(string $prj, string $sid, PrimisApiService $primis, FieldControlSreService $sreService): string
+    private function renderPanelCostsData(string $prj, string $sid, PrimisApiService $primis, FieldControlSreService $sreService): array
     {
-        $panelCounts = $this->buildStimaEFattibilita($prj, $sid, $primis, $sreService)['panelCounts'];
+        $stima = $this->buildStimaEFattibilita($prj, $sid, $primis, $sreService);
+        $panelCounts = $stima['panelCounts'];
+        $panelData = $stima['panelData'];
 
-        return view('partials.field-panel-costs-list', [
-            'panelCosts' => $sreService->getPanelCostsList($prj, $sid, $panelCounts),
-        ])->render();
+        $panelCosts = $sreService->getPanelCostsList($prj, $sid, $panelCounts);
+        $headerCostSummary = $sreService->buildHeaderPanelCosts($panelData, $panelCounts, $panelCosts);
+
+        return [
+            'list_html' => view('partials.field-panel-costs-list', ['panelCosts' => $panelCosts])->render(),
+            'header_total' => number_format($headerCostSummary['total'], 2, ',', '.'),
+            'header_has_unconfigured' => $headerCostSummary['has_unconfigured'],
+            'header_tooltip_html' => view('partials.field-panel-costs-tooltip', ['rows' => $headerCostSummary['rows']])->render(),
+        ];
     }
 
     public function updateRedirections(Request $request, FieldControlSreService $sreService)

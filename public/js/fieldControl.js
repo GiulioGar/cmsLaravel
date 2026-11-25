@@ -809,6 +809,41 @@
             }, 2500);
         }
 
+        // Box "Costi totali" in header: aggiornato in tempo reale dopo ogni
+        // salva/elimina, nessun reload pagina. Il tooltip Bootstrap legge il
+        // title solo alla creazione dell'istanza: cambiare l'attributo da
+        // solo non basta, va distrutto e ricreato (stesso principio di
+        // [[feedback_tooltip_dispose_before_rewrite]]).
+        function updateHeaderCosts(data) {
+            if (data.header_total === undefined) {
+                return;
+            }
+
+            const box = document.querySelector('.fc-header-costs');
+            if (!box) {
+                return;
+            }
+
+            const valEl = box.querySelector('.fc-header-costs-val');
+            const keyEl = box.querySelector('.fc-header-mini-key');
+
+            if (valEl) {
+                valEl.textContent = '€ ' + data.header_total;
+            }
+            if (keyEl) {
+                keyEl.textContent = 'Costi totali' + (data.header_has_unconfigured ? ' (parziale)' : '');
+            }
+
+            if (data.header_tooltip_html !== undefined) {
+                const existingTooltip = bootstrap.Tooltip.getInstance(box);
+                if (existingTooltip) {
+                    existingTooltip.dispose();
+                }
+                box.setAttribute('title', data.header_tooltip_html);
+                new bootstrap.Tooltip(box);
+            }
+        }
+
         // Mutua esclusivita' CPI/Costo totale: appena uno dei due campi ha un
         // valore, l'altro si disabilita (si riabilita svuotando il campo).
         listContainer.addEventListener('input', function (event) {
@@ -851,6 +886,7 @@
                     .then(function (data) {
                         if (data.success && data.list_html !== undefined) {
                             listContainer.innerHTML = data.list_html;
+                            updateHeaderCosts(data);
                             return;
                         }
                         alert(data.message || 'Errore durante l\'eliminazione.');
@@ -909,6 +945,7 @@
                 .then(function (data) {
                     if (data.success && data.list_html !== undefined) {
                         listContainer.innerHTML = data.list_html;
+                        updateHeaderCosts(data);
                         return;
                     }
                     showRowStatus(panelName, !!data.success, data.message);
