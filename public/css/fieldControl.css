@@ -725,6 +725,26 @@ h3 {font-size: 15px!important;}
     background-color: #1f2937 !important;
   }
 
+  /* Tooltip "Costi per panel": stessa base scura di fc-question-tooltip, ma
+     classe dedicata perche' la tabella (nome panel + 2 colonne numeriche)
+     non ci sta leggibile nei 320px di fc-question-tooltip. */
+  .fc-cost-tooltip .tooltip-inner {
+    background-color: #1f2937 !important;
+    color: #ffffff !important;
+    text-align: left;
+    max-width: 420px;
+    width: max-content;
+    padding: 10px 12px;
+  }
+
+  .fc-cost-tooltip.bs-tooltip-auto[x-placement^=top] .tooltip-arrow::before,
+  .fc-cost-tooltip.bs-tooltip-auto[x-placement^=bottom] .tooltip-arrow::before,
+  .fc-cost-tooltip.bs-tooltip-auto[x-placement^=left] .tooltip-arrow::before,
+  .fc-cost-tooltip.bs-tooltip-auto[x-placement^=right] .tooltip-arrow::before,
+  .fc-cost-tooltip .tooltip-arrow::before {
+    background-color: #1f2937 !important;
+  }
+
   /* =========================
    CARD STYLING
    ========================= */
@@ -3147,6 +3167,81 @@ h3 {font-size: 15px!important;}
     line-height: 1.3;
 }
 
+.fc-header-costs{
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .5rem .7rem;
+    border-radius: 10px;
+    background: rgba(245,158,11,.08);
+    align-self: flex-start;
+    margin-top: .55rem;
+    cursor: help;
+}
+
+.fc-header-costs-icon{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: rgba(245,158,11,.16);
+    color: var(--fc-warn, #f59e0b);
+    font-size: .95rem;
+    flex: none;
+}
+
+.fc-header-costs-val{
+    display: block;
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 1.1rem;
+    line-height: 1.3;
+}
+
+/* Dettaglio nel tooltip scuro (.fc-question-tooltip-content/-label/-divider
+   gia' definiti sopra) a griglia CSS, non <table>: il sanitizer HTML di
+   Bootstrap per i tooltip (data-bs-html="true") rimuove table/tr/td perche'
+   non sono nella sua allowlist di default. */
+.fc-cost-tooltip-grid{
+    display: grid;
+    grid-template-columns: auto auto auto;
+    column-gap: .9rem;
+    row-gap: .25rem;
+    align-items: baseline;
+}
+
+.fc-cost-tooltip-head{
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    text-align: right;
+    padding-bottom: .3rem;
+    border-bottom: 1px solid rgba(255,255,255,.14);
+}
+
+.fc-cost-tooltip-head:first-child{
+    text-align: left;
+}
+
+.fc-cost-tooltip-name{
+    color: #cbd5e1;
+    font-weight: 500;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.fc-cost-tooltip-value{
+    color: #fde68a;
+    font-weight: 700;
+    font-size: 12px;
+    text-align: right;
+    white-space: nowrap;
+}
+
 .fc-header-actions-title{
     font-size: .85rem;
     font-weight: 700;
@@ -3242,6 +3337,88 @@ h3 {font-size: 15px!important;}
     border-radius: 12px;
     background: #f8fafc;
     padding: .65rem .75rem;
+}
+
+.fc-cost-list{
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: .2rem;
+}
+
+.fc-cost-card{
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: .75rem .85rem;
+}
+
+.fc-cost-card-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+    margin-bottom: .65rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid rgba(0,0,0,.07);
+}
+
+.fc-cost-panel-label{
+    font-weight: 800;
+    font-size: .88rem;
+    color: #0f172a;
+}
+
+.fc-cost-complete-badge{
+    font-size: .74rem;
+    font-weight: 700;
+    color: var(--fc-ok, #16a34a);
+    background: rgba(22,163,74,.1);
+    padding: .2rem .55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.fc-cost-card-body{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem .9rem;
+}
+
+.fc-cost-field{
+    min-width: 0;
+}
+
+.fc-cost-field-note{
+    grid-column: 1 / -1;
+}
+
+.fc-cost-optional{
+    font-weight: 500;
+    color: #94a3b8;
+    text-transform: none;
+}
+
+.fc-cost-derived-hint{
+    display: block;
+    font-size: .7rem;
+    color: #64748b;
+    font-style: italic;
+    margin-top: .2rem;
+}
+
+.fc-cost-card-actions{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .6rem;
+    margin-top: .7rem;
+}
+
+@media (max-width: 575.98px){
+    .fc-cost-card-body{ grid-template-columns: 1fr; }
 }
 
 .fc-redirect-group-head{
@@ -4176,6 +4353,62 @@ h3 {font-size: 15px!important;}
     font-weight: 500;
     margin-top: .15rem;
 }
+
+.fc-device-split{
+    margin-top: .55rem;
+}
+
+.fc-device-split-bar{
+    display: flex;
+    width: 100%;
+    height: 7px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #eef1f5;
+}
+
+.fc-device-seg{
+    height: 100%;
+    transition: width .3s ease;
+}
+
+.fc-device-seg-mobile{ background: var(--fc-warn, #f59e0b); }
+.fc-device-seg-desktop{ background: var(--fc-accent-blue, #2563eb); }
+.fc-device-seg-altro{ background: #cbd5e1; }
+
+.fc-device-split-legend{
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    margin-top: .4rem;
+}
+
+.fc-device-legend-item{
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #475569;
+}
+
+.fc-device-legend-item i{
+    font-size: .75rem;
+    width: 1rem;
+    text-align: center;
+}
+
+.fc-device-legend-mobile i{ color: var(--fc-warn, #f59e0b); }
+.fc-device-legend-desktop i{ color: var(--fc-accent-blue, #2563eb); }
+
+.fc-device-info{
+    margin-left: auto;
+    font-size: .78rem;
+    color: #94a3b8;
+    cursor: help;
+}
+
+.fc-device-info:hover{ color: #64748b; }
 
 .fc-afield-activity{
     display: flex;

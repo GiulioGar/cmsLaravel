@@ -178,6 +178,7 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
     $redirections = $sreService->getRedirectionsList($prj, $sid);
     $quotaTargetsData = $sreService->getQuotaTargetsList($prj, $sid);
     $panelNamesMap = $this->getPanelNamesMap();
+    $panelCosts = $sreService->getPanelCostsList($prj, $sid, $panelCounts);
 
     /*
     |--------------------------------------------------------------------------
@@ -296,7 +297,8 @@ public function index(Request $request, PrimisApiService $primis, FieldControlSr
         'redirections',
         'quotaTargetsData',
         'panelNamesMap',
-        'questionMap'
+        'questionMap',
+        'panelCosts'
     ));
 }
 
@@ -660,6 +662,57 @@ public function searchLog(Request $request, PrimisApiService $primis, FieldContr
         return view('partials.field-redirections-list', [
             'redirections' => $sreService->getRedirectionsList($prj, $sid),
             'panelNamesMap' => $this->getPanelNamesMap(),
+        ])->render();
+    }
+
+    public function savePanelCost(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+        $panelName = (string) $request->input('panel_name', '');
+
+        $cpi = $request->input('cpi');
+        $costoTotale = $request->input('costo_totale');
+        $cpi = ($cpi !== null && $cpi !== '') ? (float) $cpi : null;
+        $costoTotale = ($costoTotale !== null && $costoTotale !== '') ? (float) $costoTotale : null;
+
+        $referente = $request->input('referente');
+        $note = $request->input('note');
+
+        $result = $sreService->savePanelCost($prj, $sid, $panelName, $cpi, $costoTotale, $referente, $note);
+
+        if ($result['success']) {
+            $result['list_html'] = $this->renderPanelCostsList($prj, $sid, $primis, $sreService);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    public function deletePanelCost(Request $request, PrimisApiService $primis, FieldControlSreService $sreService)
+    {
+        $prj = $request->input('prj');
+        $sid = $request->input('sid');
+        $panelName = (string) $request->input('panel_name', '');
+
+        $result = $sreService->deletePanelCost($prj, $sid, $panelName);
+
+        if ($result['success']) {
+            $result['list_html'] = $this->renderPanelCostsList($prj, $sid, $primis, $sreService);
+        }
+
+        return response()->json($result, $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Ri-renderizza il partial dei costi panel dopo un salvataggio/eliminazione,
+     * stesso pattern gia' usato per redirection/quote (niente reload pagina).
+     */
+    private function renderPanelCostsList(string $prj, string $sid, PrimisApiService $primis, FieldControlSreService $sreService): string
+    {
+        $panelCounts = $this->buildStimaEFattibilita($prj, $sid, $primis, $sreService)['panelCounts'];
+
+        return view('partials.field-panel-costs-list', [
+            'panelCosts' => $sreService->getPanelCostsList($prj, $sid, $panelCounts),
         ])->render();
     }
 

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use App\Models\PanelControlCost;
 
 class FieldControlSreService
 {
@@ -441,6 +442,123 @@ class FieldControlSreService
         ];
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | COSTI PANEL ESTERNI (t_panel_control_costs)
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Una riga per ogni panel ESTERNO coinvolto nella ricerca (esclude sempre
+     * 'Interactive' e 'Da lista', che non sono panel a pagamento), con il
+     * valore salvato (cpi o costo_totale, uno dei due) e l'altro calcolato
+     * al volo dalle complete correnti di quel panel - mai persistito come
+     * numero fisso, cosi' resta coerente anche quando arrivano nuove complete
+     * dopo il salvataggio.
+     */
+    public function getPanelCostsList(string $prj, string $sid, array $panelCounts): array
+    {
+        $externalPanelNames = array_filter(
+            array_keys($panelCounts),
+            fn($name) => !in_array($name, ['Interactive', 'Da lista'], true)
+        );
+
+        if (empty($externalPanelNames)) {
+            return [];
+        }
+
+        $savedByPanel = PanelControlCost::where('prj', $prj)
+            ->where('sur_id', $sid)
+            ->get()
+            ->keyBy('panel_name');
+
+        $rows = [];
+
+        foreach ($externalPanelNames as $panelName) {
+            $complete = (int) ($panelCounts[$panelName]['complete'] ?? 0);
+            $saved = $savedByPanel->get($panelName);
+
+            $cpi = $saved && $saved->cpi !== null ? (float) $saved->cpi : null;
+            $costoTotale = $saved && $saved->costo_totale !== null ? (float) $saved->costo_totale : null;
+
+            $cpiIsDerived = false;
+            $costoIsDerived = false;
+            $cpiDisplay = $cpi;
+            $costoDisplay = $costoTotale;
+
+            if ($cpi !== null && $costoTotale === null) {
+                $costoIsDerived = true;
+                $costoDisplay = $complete > 0 ? round($cpi * $complete, 2) : null;
+            } elseif ($costoTotale !== null && $cpi === null) {
+                $cpiIsDerived = true;
+                $cpiDisplay = $complete > 0 ? round($costoTotale / $complete, 2) : null;
+            }
+
+            $rows[] = [
+                'panel_name' => $panelName,
+                'complete' => $complete,
+                'cpi' => $cpi,
+                'costo_totale' => $costoTotale,
+                'cpi_display' => $cpiDisplay,
+                'costo_display' => $costoDisplay,
+                'cpi_is_derived' => $cpiIsDerived,
+                'costo_is_derived' => $costoIsDerived,
+                'referente' => $saved->referente ?? null,
+                'note' => $saved->note ?? null,
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Crea/aggiorna il costo di un panel esterno per questa ricerca. cpi e
+     * costo_totale sono mutuamente esclusivi (richiesta esplicita utente):
+     * quello non fornito viene sempre azzerato nel DB, cosi' se l'utente
+     * passa da un tipo di valore all'altro non resta un valore vecchio
+     * "fantasma" usato per i calcoli.
+     */
+    public function savePanelCost(string $prj, string $sid, string $panelName, ?float $cpi, ?float $costoTotale, ?string $referente, ?string $note): array
+    {
+        if ($panelName === '') {
+            return ['success' => false, 'message' => 'Panel non specificato.'];
+        }
+
+        if ($cpi !== null && $costoTotale !== null) {
+            return ['success' => false, 'message' => 'Inserisci solo CPI oppure Costo totale, non entrambi.'];
+        }
+
+        if ($cpi === null && $costoTotale === null) {
+            return ['success' => false, 'message' => 'Inserisci almeno un valore (CPI o Costo totale).'];
+        }
+
+        PanelControlCost::updateOrCreate(
+            ['prj' => $prj, 'sur_id' => $sid, 'panel_name' => $panelName],
+            [
+                'cpi' => $cpi,
+                'costo_totale' => $costoTotale,
+                'referente' => $referente !== '' ? $referente : null,
+                'note' => $note !== '' ? $note : null,
+            ]
+        );
+
+        return ['success' => true];
+    }
+
+    public function deletePanelCost(string $prj, string $sid, string $panelName): array
+    {
+        $deleted = PanelControlCost::where('prj', $prj)
+            ->where('sur_id', $sid)
+            ->where('panel_name', $panelName)
+            ->delete();
+
+        if ($deleted === 0) {
+            return ['success' => false, 'message' => 'Nessun costo salvato per questo panel.'];
+        }
+
+        return ['success' => true];
+    }
+
     /**
      * Aggiunge una nuova quota in coda a quota.targets nel config.json.
      * Supporta le due forme viste nei config.json reali: quota legata a
@@ -648,6 +766,11 @@ class FieldControlSreService
         if (!$lockHandle) {
             return ['success' => false, 'message' => 'Impossibile creare il lock su config.json.'];
         }
+        // Allineato alla convenzione di permessi della cartella risorse
+        // (file caricati via FTP/Primis a 664): senza questo, il file .lock
+        // nasce con l'owner/permessi di default del processo PHP e puo'
+        // restare non scrivibile da altri utenti del gruppo.
+        @chmod($configPath . '.lock', 0664);
 
         if (!flock($lockHandle, LOCK_EX)) {
             fclose($lockHandle);
@@ -665,6 +788,14 @@ class FieldControlSreService
                 return ['success' => false, 'message' => 'File config.json non valido.'];
             }
 
+            // Decodifica "gemella" senza assoc=true, usata solo per sapere quali
+            // contenitori vuoti erano oggetti JSON ({}) nel file originale: con
+            // assoc=true un {} e un [] diventano entrambi un array PHP vuoto, e
+            // in riscrittura json_encode() sceglierebbe sempre [] per entrambi,
+            // corrompendo silenziosamente chiavi come "interview.development"
+            // (vuota per design, mai toccata da nessun mutator qui sotto).
+            $typedReference = json_decode($content);
+
             $result = $mutator($config);
 
             if (!is_array($result) || empty($result['success']) || !isset($result['config']) || !is_array($result['config'])) {
@@ -675,7 +806,12 @@ class FieldControlSreService
                 return ['success' => false, 'message' => 'File config.json non scrivibile.'];
             }
 
-            $encoded = json_encode($result['config'], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            $configToWrite = $result['config'];
+            if ($typedReference !== null) {
+                $configToWrite = $this->preserveEmptyObjectShapes($configToWrite, $typedReference);
+            }
+
+            $encoded = json_encode($configToWrite, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             if ($encoded === false) {
                 return ['success' => false, 'message' => 'Errore durante la codifica del config.json.'];
             }
@@ -691,12 +827,55 @@ class FieldControlSreService
                 return ['success' => false, 'message' => 'Errore durante la sostituzione del config.json.'];
             }
 
+            // Stessa ragione del chmod sul .lock qui sopra: rename() crea di
+            // fatto un file nuovo con owner/permessi del processo PHP (es.
+            // www-data:644), perdendo il 664 con cui gli altri file della
+            // cartella sono caricati via FTP - il file diventava poi non
+            // sovrascrivibile a mano dall'utente FTP.
+            @chmod($configPath, 0664);
+
             unset($result['config']);
             return $result;
         } finally {
             flock($lockHandle, LOCK_UN);
             fclose($lockHandle);
         }
+    }
+
+    /**
+     * Ripristina ricorsivamente la forma "oggetto JSON" per i contenitori
+     * rimasti vuoti dopo la mutazione, confrontando con $typedReference
+     * (stesso contenuto decodificato senza assoc=true, dove un {} originale
+     * resta uno stdClass invece di un array PHP). Tocca solo i rami rimasti
+     * vuoti e invariati: una redirection list svuotata intenzionalmente da
+     * un mutator resta comunque [], perche' nel $typedReference originale
+     * non era mai uno stdClass.
+     */
+    private function preserveEmptyObjectShapes($value, $typedReference)
+    {
+        if (is_array($value) && empty($value) && $typedReference instanceof \stdClass) {
+            return new \stdClass();
+        }
+
+        if (is_array($value) && $typedReference instanceof \stdClass) {
+            foreach ($value as $key => $item) {
+                if (property_exists($typedReference, $key)) {
+                    $value[$key] = $this->preserveEmptyObjectShapes($item, $typedReference->$key);
+                }
+            }
+            return $value;
+        }
+
+        if (is_array($value) && is_array($typedReference)) {
+            foreach ($value as $key => $item) {
+                if (array_key_exists($key, $typedReference)) {
+                    $value[$key] = $this->preserveEmptyObjectShapes($item, $typedReference[$key]);
+                }
+            }
+            return $value;
+        }
+
+        return $value;
     }
 
     /**
@@ -879,7 +1058,25 @@ class FieldControlSreService
             'status_code' => (int) $this->getSreValue($data, $columns['status'], -1),
             'last_question_code' => (int) $this->getSreValue($data, $columns['last_question_code'], 0),
             'last_file_question_code' => $this->extractLastQuestionCodeFromFile($file),
+            'device' => $this->normalizeDevice($this->extractTaggedFieldValue($data, 'device')),
         ];
+    }
+
+    /**
+     * Il tag `device=` nella prima riga del .sre arriva da Primis come
+     * stringa libera (visti finora solo "mobile"/"desktop"); normalizzato
+     * a 3 bucket per il conteggio, con fallback "altro" per valori
+     * mancanti/inattesi cosi' da non far sballare i totali.
+     */
+    private function normalizeDevice(string $rawDevice): string
+    {
+        $value = strtolower(trim($rawDevice));
+
+        if ($value === 'mobile' || $value === 'desktop') {
+            return $value;
+        }
+
+        return 'altro';
     }
 
     /*
@@ -1016,6 +1213,9 @@ class FieldControlSreService
             'bloccate' => 0,
             'bad_quality' => 0,
             'contatti' => $totalFiles,
+            'device_mobile' => 0,
+            'device_desktop' => 0,
+            'device_altro' => 0,
             'last_complete_at' => null,
             'last_activity_at' => null,
         ];
@@ -1036,12 +1236,19 @@ class FieldControlSreService
                     'bad_quality' => 0,
                     'contatti' => 0,
                     'redemption' => 0,
+                    'device_mobile' => 0,
+                    'device_desktop' => 0,
+                    'device_altro' => 0,
                     'last_complete_at' => null,
                     'last_activity_at' => null,
                 ];
             }
 
             $panelCounts[$panel]['contatti']++;
+
+            $deviceKey = 'device_' . ($interview['device'] ?? 'altro');
+            $counts[$deviceKey]++;
+            $panelCounts[$panel][$deviceKey]++;
 
             // "Ultima attivita'": end_date se presente (intervista conclusa,
             // in un esito qualsiasi), altrimenti start_date per le sospese

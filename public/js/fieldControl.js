@@ -787,6 +787,139 @@
         }
     }
 
+    function bindPanelCostsModal() {
+        const listContainer = document.getElementById('panelCostsListContainer');
+
+        if (!listContainer || !routes.savePanelCost || !routes.deletePanelCost) {
+            return;
+        }
+
+        function showRowStatus(panelName, success, message) {
+            const el = listContainer.querySelector('.fc-redirect-row-status[data-panel-status="' + panelName + '"]');
+            if (!el) {
+                return;
+            }
+
+            el.textContent = success ? 'Salvato' : (message || 'Errore');
+            el.classList.toggle('is-error', !success);
+            el.classList.add('is-visible');
+
+            setTimeout(function () {
+                el.classList.remove('is-visible');
+            }, 2500);
+        }
+
+        // Mutua esclusivita' CPI/Costo totale: appena uno dei due campi ha un
+        // valore, l'altro si disabilita (si riabilita svuotando il campo).
+        listContainer.addEventListener('input', function (event) {
+            const cpiInput = event.target.closest('.fc-cost-input-cpi');
+            const totaleInput = event.target.closest('.fc-cost-input-totale');
+
+            if (cpiInput) {
+                const card = cpiInput.closest('.fc-cost-card');
+                const sibling = card ? card.querySelector('.fc-cost-input-totale') : null;
+                if (sibling) {
+                    sibling.disabled = cpiInput.value.trim() !== '';
+                }
+            } else if (totaleInput) {
+                const card = totaleInput.closest('.fc-cost-card');
+                const sibling = card ? card.querySelector('.fc-cost-input-cpi') : null;
+                if (sibling) {
+                    sibling.disabled = totaleInput.value.trim() !== '';
+                }
+            }
+        });
+
+        listContainer.addEventListener('click', function (event) {
+            const deleteBtn = event.target.closest('.fc-cost-delete-row');
+            if (deleteBtn) {
+                const panelName = deleteBtn.getAttribute('data-panel');
+
+                if (!confirm('Eliminare il costo salvato per "' + panelName + '"?')) {
+                    return;
+                }
+
+                fetch(routes.deletePanelCost, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ prj: prj, sid: sid, panel_name: panelName })
+                })
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        if (data.success && data.list_html !== undefined) {
+                            listContainer.innerHTML = data.list_html;
+                            return;
+                        }
+                        alert(data.message || 'Errore durante l\'eliminazione.');
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        alert('Errore di rete durante l\'eliminazione.');
+                    });
+
+                return;
+            }
+
+            const saveBtn = event.target.closest('.fc-cost-save-row');
+            if (!saveBtn) {
+                return;
+            }
+
+            const panelName = saveBtn.getAttribute('data-panel');
+            const card = saveBtn.closest('.fc-cost-card');
+            if (!card) {
+                return;
+            }
+
+            const cpiValue = card.querySelector('.fc-cost-input-cpi').value.trim();
+            const totaleValue = card.querySelector('.fc-cost-input-totale').value.trim();
+            const referente = card.querySelector('.fc-cost-input-referente').value.trim();
+            const note = card.querySelector('.fc-cost-input-note').value.trim();
+
+            if (cpiValue !== '' && totaleValue !== '') {
+                showRowStatus(panelName, false, 'Inserisci solo CPI oppure Costo totale');
+                return;
+            }
+
+            if (cpiValue === '' && totaleValue === '') {
+                showRowStatus(panelName, false, 'Inserisci almeno un valore');
+                return;
+            }
+
+            fetch(routes.savePanelCost, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    prj: prj,
+                    sid: sid,
+                    panel_name: panelName,
+                    cpi: cpiValue !== '' ? cpiValue : null,
+                    costo_totale: totaleValue !== '' ? totaleValue : null,
+                    referente: referente,
+                    note: note
+                })
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (data.success && data.list_html !== undefined) {
+                        listContainer.innerHTML = data.list_html;
+                        return;
+                    }
+                    showRowStatus(panelName, !!data.success, data.message);
+                })
+                .catch(function (error) {
+                    console.error(error);
+                    showRowStatus(panelName, false, 'Errore di rete');
+                });
+        });
+    }
+
     function bindRedirectImport() {
         const analyzeBtn = document.getElementById('redirectImportAnalyzeBtn');
         const textarea = document.getElementById('redirectImportTextarea');
@@ -2066,6 +2199,7 @@ function initDropdowns() {
         bindResetBloccate();
         bindRedirectionsModal();
         bindRedirectImport();
+        bindPanelCostsModal();
         bindQuotaTargetsModal();
         bindQuotaDemographicConfirm();
         bindLogFilter();

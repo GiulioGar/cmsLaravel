@@ -218,6 +218,81 @@
         }
     }
 
+    // Azione Rapida "Costi" visibile solo se nella ricerca e' coinvolto
+    // almeno un panel esterno (niente costi su Interactive/Da lista).
+    $hasExternalPanel = !empty(array_filter(
+        array_keys($panelCounts),
+        fn($name) => !in_array($name, ['Interactive', 'Da lista'], true)
+    ));
+
+    // Box header "Costi per panel": a differenza dell'Azione Rapida Costi
+    // (solo panel esterni, dove ha senso impostare un CPI manuale), qui
+    // mostriamo TUTTI i panel della ricerca per una vista d'insieme.
+    // Interactive non e' "gratis": il costo reale (bytes/1000 * complete,
+    // stessa formula di updatePanelControl() usata per popolare
+    // t_panel_control.costo) lo riprendiamo da $panelData invece di
+    // azzerarlo, cosi' CPI e totale sono coerenti col resto della pagina.
+    // Da lista invece non ha un costo per definizione (nessun panel/CPI
+    // associato): resta "—", non entra ne' nel totale ne' nel "parziale".
+    $panelCostsByName = collect($panelCosts)->keyBy('panel_name');
+    $headerPanelCosts = [];
+    foreach ($panelCounts as $pName => $pVal) {
+        if ($pName === 'Interactive') {
+            $completeInteractive = (int) ($pVal['complete'] ?? 0);
+            $cpiInteractive = round(((float) ($panelData->bytes ?? 0)) / 1000, 2);
+            $headerPanelCosts[] = [
+                'label' => $pName,
+                'cpi' => $cpiInteractive,
+                'value' => round((float) ($panelData->costo ?? 0), 2),
+                'applicable' => true,
+            ];
+            continue;
+        }
+
+        if ($pName === 'Da lista') {
+            $headerPanelCosts[] = ['label' => $pName, 'cpi' => null, 'value' => null, 'applicable' => false];
+            continue;
+        }
+
+        $costRow = $panelCostsByName->get($pName);
+        $cpi = null;
+        $value = null;
+        if ($costRow) {
+            $cpi = $costRow['cpi'] !== null ? $costRow['cpi'] : $costRow['cpi_display'];
+            $value = $costRow['costo_totale'] !== null ? $costRow['costo_totale'] : $costRow['costo_display'];
+        }
+
+        $headerPanelCosts[] = ['label' => $pName, 'cpi' => $cpi, 'value' => $value, 'applicable' => true];
+    }
+
+    // Un solo valore in vista (stile LOI media), dettaglio per panel nel
+    // tooltip: una lista di righe nel box header diventava illeggibile con
+    // piu' di 2-3 panel. Il totale somma solo i panel "applicabili" (esclusa
+    // Da lista); se tra questi manca un costo lo segnaliamo come "parziale".
+    $applicablePanelCosts = collect($headerPanelCosts)->where('applicable', true);
+    $hasUnconfiguredPanelCost = $applicablePanelCosts->contains(fn($hc) => $hc['value'] === null);
+    $totalPanelCost = $applicablePanelCosts->sum('value');
+
+    // Niente tag <table>/<tr>/<td>: il sanitizer HTML di default di
+    // Bootstrap 5 per i tooltip (data-bs-html="true") non li ammette e li
+    // rimuove in silenzio, lasciando visibile solo il resto del contenuto.
+    // Stessa tabella ricostruita con <div>/<span> (sempre ammessi) in una
+    // griglia CSS a 3 colonne.
+    $panelCostsTooltipHtml = '<div class="fc-question-tooltip-content">'
+        . '<div class="fc-question-tooltip-label">Costi per panel</div>'
+        . '<div class="fc-question-tooltip-divider"></div>'
+        . '<div class="fc-cost-tooltip-grid">'
+        . '<span class="fc-cost-tooltip-head">Panel</span><span class="fc-cost-tooltip-head">CPI</span><span class="fc-cost-tooltip-head">Totale</span>';
+    foreach ($headerPanelCosts as $hc) {
+        $cpiCell = $hc['cpi'] !== null ? '€ ' . $fmtIt($hc['cpi'], 2) : '—';
+        $valueCell = $hc['value'] !== null ? '€ ' . $fmtIt($hc['value'], 2) : ($hc['applicable'] ? 'N/D' : '—');
+
+        $panelCostsTooltipHtml .= '<span class="fc-cost-tooltip-name">' . e($hc['label']) . '</span>'
+            . '<span class="fc-cost-tooltip-value">' . $cpiCell . '</span>'
+            . '<span class="fc-cost-tooltip-value">' . $valueCell . '</span>';
+    }
+    $panelCostsTooltipHtml .= '</div></div>';
+
     // Sezioni "Andamento Field": Totale + ogni panel, stesse formule/denominatori di prima
     $outcomeKeys = ['complete', 'non_target', 'over_quota', 'sospese', 'bloccate', 'bad_quality'];
     $outcomeLabels = [
@@ -231,6 +306,25 @@
 
     $afieldSections = [];
 
+    // Split mobile/desktop/altro sui contatti: stessa formula percentuale
+    // delle altre distribuzioni, denominatore = somma dei 3 bucket (coincide
+    // con 'contatti' quando il parsing del tag device= va a buon fine).
+    $buildDeviceSplit = function (array $data) {
+        $mobile = (int) ($data['device_mobile'] ?? 0);
+        $desktop = (int) ($data['device_desktop'] ?? 0);
+        $altro = (int) ($data['device_altro'] ?? 0);
+        $tot = max(1, $mobile + $desktop + $altro);
+
+        return [
+            'mobile' => $mobile,
+            'desktop' => $desktop,
+            'altro' => $altro,
+            'mobile_pct' => round($mobile / $tot * 100, 1),
+            'desktop_pct' => round($desktop / $tot * 100, 1),
+            'altro_pct' => round($altro / $tot * 100, 1),
+        ];
+    };
+
     $totContattiAF = max(1, (int) ($counts['contatti'] ?? 0));
     $totPercAF = [];
     foreach ($outcomeKeys as $k) {
@@ -243,6 +337,7 @@
         'contatti' => (int) ($counts['contatti'] ?? 0),
         'counts' => $counts,
         'perc' => $totPercAF,
+        'device' => $buildDeviceSplit($counts),
         'goal' => $goal,
         'complete' => $complete,
         'pct' => $pct,
@@ -266,6 +361,7 @@
             'contatti' => (int) ($pData['contatti'] ?? 0),
             'counts' => $pData,
             'perc' => $pPerc,
+            'device' => $buildDeviceSplit($pData),
             'goal' => null,
             'complete' => (int) ($pData['complete'] ?? 0),
             'pct' => null,
@@ -384,6 +480,16 @@
                             <span class="fc-header-loi-val">{{ $panelData->durata ?? 'N/A' }} min</span>
                         </div>
                     </div>
+
+                    <div class="fc-header-costs" data-bs-toggle="tooltip" data-bs-html="true"
+                         data-bs-custom-class="fc-cost-tooltip" data-bs-placement="bottom"
+                         title="{{ $panelCostsTooltipHtml }}">
+                        <span class="fc-header-costs-icon"><i class="fa-solid fa-coins"></i></span>
+                        <div>
+                            <span class="fc-header-mini-key">Costi totali{{ $hasUnconfiguredPanelCost ? ' (parziale)' : '' }}</span>
+                            <span class="fc-header-costs-val">€ {{ $fmtIt($totalPanelCost, 2) }}</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Area C: Target e Timing -->
@@ -460,6 +566,13 @@
                            title="Quote" aria-label="Quote">
                             <span class="fc-header-action-icon"><i class="fas fa-chart-line"></i></span>
                         </a>
+
+                        @if($hasExternalPanel)
+                            <a href="#" class="fc-header-action-btn" data-bs-toggle="modal" data-bs-target="#panelCostsModal"
+                               title="Costi" aria-label="Costi">
+                                <span class="fc-header-action-icon"><i class="fa-solid fa-coins"></i></span>
+                            </a>
+                        @endif
                     </div>
                 </div>
 
@@ -562,6 +675,26 @@
                                             </div>
                                             <div class="fc-metric-card-value">{{ $fmtIt($section['contatti']) }}</div>
                                             <div class="fc-metric-card-sub">{{ $section['is_total'] ? 'Interviste avviate' : 'Contatti del panel' }}</div>
+
+                                            <div class="fc-device-split">
+                                                <div class="fc-device-split-bar">
+                                                    <div class="fc-device-seg fc-device-seg-mobile" style="width: {{ $section['device']['mobile_pct'] }}%"
+                                                         data-bs-toggle="tooltip" title="Mobile: {{ $fmtIt($section['device']['mobile_pct'], 1) }}%"></div>
+                                                    <div class="fc-device-seg fc-device-seg-desktop" style="width: {{ $section['device']['desktop_pct'] }}%"
+                                                         data-bs-toggle="tooltip" title="Desktop: {{ $fmtIt($section['device']['desktop_pct'], 1) }}%"></div>
+                                                    @if($section['device']['altro'] > 0)
+                                                        <div class="fc-device-seg fc-device-seg-altro" style="width: {{ $section['device']['altro_pct'] }}%"
+                                                             data-bs-toggle="tooltip" title="Altro/non rilevato: {{ $fmtIt($section['device']['altro_pct'], 1) }}%"></div>
+                                                    @endif
+                                                </div>
+                                                <div class="fc-device-split-legend">
+                                                    <span class="fc-device-legend-item fc-device-legend-mobile"><i class="fas fa-mobile-screen-button"></i>{{ $fmtIt($section['device']['mobile_pct'], 1) }}%</span>
+                                                    <span class="fc-device-legend-item fc-device-legend-desktop"><i class="fas fa-desktop"></i>{{ $fmtIt($section['device']['desktop_pct'], 1) }}%</span>
+                                                    <i class="fas fa-circle-info fc-device-info" data-bs-toggle="tooltip" data-bs-html="true"
+                                                       data-bs-custom-class="fc-question-tooltip"
+                                                       title="Da quale dispositivo i contatti hanno avviato l'intervista.<br>Mobile = smartphone/tablet, Desktop = computer."></i>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div class="fc-metrics-stack-item fc-metrics-stack-item-bottom">
@@ -1367,6 +1500,30 @@
     </div>
 </div>
 <!-- ================= FINE MODALE REDIRECTION ================= -->
+
+@if($hasExternalPanel)
+<!-- ================= MODALE COSTI PANEL ================= -->
+<div class="modal fade" id="panelCostsModal" tabindex="-1" aria-labelledby="panelCostsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="panelCostsModalLabel"><i class="fa-solid fa-coins me-2"></i>Costi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fc-redirect-import-hint">Per ogni panel esterno inserisci il CPI oppure il costo totale: l'altro valore viene calcolato automaticamente in base alle complete attuali del panel.</p>
+                <div id="panelCostsListContainer">
+                    @include('partials.field-panel-costs-list', ['panelCosts' => $panelCosts])
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ================= FINE MODALE COSTI PANEL ================= -->
+@endif
 
 <!-- ================= MODALE QUOTE ================= -->
 <div class="modal fade" id="quotaTargetsModal" tabindex="-1" aria-labelledby="quotaTargetsModalLabel" aria-hidden="true">

@@ -19,7 +19,9 @@
             searchLog: @json(route('fieldControl.searchLog')),
             confirmQuotaDemographic: @json(route('quotaDemographic.confirm')),
             rejectQuotaDemographic: @json(route('quotaDemographic.reject')),
-            confirmAllQuotaDemographic: @json(route('quotaDemographic.confirmAll'))
+            confirmAllQuotaDemographic: @json(route('quotaDemographic.confirmAll')),
+            savePanelCost: @json(route('panelCosts.save')),
+            deletePanelCost: @json(route('panelCosts.delete'))
         },
         panelNamesMap: @json($panelNamesMap ?? []),
         questionMap: @json($questionMap ?? [])
